@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>Godevilution.Tools.Setup</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Cathedral.Playtest/Cathedral.Playtest.csproj" />
+    <ProjectReference Include="../Native.ObjectArt/Native.ObjectArt.csproj" />
+    <ProjectReference Include="../Native.SceneArt/Native.SceneArt.csproj" />
+  </ItemGroup>
+</Project>

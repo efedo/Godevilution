@@ -14,6 +14,25 @@ Use the [work plan](../work-plan.md) for near-term order and
 application journey below has not passed; do not confuse its procedure with
 the accepted Town/L1/L2 scope in [test history](../test-history.md).
 
+## First-run native setup (normal launch)
+
+`./run-godot-client.ps1` runs `tools/Native.Setup`, which finds `DIABDAT.MPQ`
+(`-DiabloArchive <path>`, remembered in `.local/godot/native/archive-path.txt`;
+then `GODEVILUTION_DIABDAT`, the DevilutionX data folder, the GOG registry entry
+and the usual install folders), builds the Warrior and Sorcerer Town profiles
+from the archive (see below) and imports player, scene, resident and object art
+straight from it, layering the open `assets` as native does. It then starts a
+windowed single-player Warrior game in native Town (`-NativeClass sorcerer` for
+the other class). Profiles live in `.local/godot/native/build-<fingerprint>`;
+art in the ignored `assets/native-*/setup-<fingerprint>` client folders; saves in
+`.local/godot/native/sessions/<class>-<content hash>`. The first build takes a
+few minutes; later launches reuse it until the archive, an input asset, the base
+content or any tool or game-module source changes, which rebuilds it. With no
+archive the launcher says how to supply one and starts the authored content;
+`-AuthoredContent` skips setup. `-SetupOnly` builds and prints the configuration.
+The four art importers below also accept `--archive <DIABDAT.MPQ> --assets-directory assets`
+in place of `--source-root`.
+
 ## Explicit native Town profiles
 
 Compile an additive format-5 profile from a qualified format-4 Warrior/Sorcerer

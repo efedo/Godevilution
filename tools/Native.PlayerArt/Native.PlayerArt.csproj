@@ -9,5 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="../../server/src/Devilution.Data/Devilution.Data.csproj" />
     <ProjectReference Include="../../server/src/Devilution.Diablo/Devilution.Diablo.csproj" />
+    <ProjectReference Include="../Native.Archive/Native.Archive.csproj" />
   </ItemGroup>
 </Project>

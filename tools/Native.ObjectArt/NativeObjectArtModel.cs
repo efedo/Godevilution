@@ -32,10 +32,12 @@ public sealed record NativeObjectArtCatalog(
     IReadOnlyList<NativeObjectSpriteMetadata> Sprites,
     IReadOnlyList<NativeObjectDefinitionMetadata> Objects);
 
+/** SourceRoot is an extracted tree; with Archive set it is ignored and files come from the MPQ. */
 public sealed record NativeObjectImportOptions(
     string SourceRoot,
     string TextDataRoot,
     IReadOnlyList<string> ProfileDirectories,
-    string OutputRoot);
+    string OutputRoot,
+    Godevilution.Tools.Archive.NativeArchiveSource? Archive = null);
 
 public sealed record NativeObjectImportResult(string OutputDirectory, string PackId, int SpriteCount, int ObjectCount);

@@ -15,15 +15,21 @@ internal static class NativePlayerArtProgram
             var values = ParseArguments(args);
             var profiles = NativePlayerArtProfiles.LoadDirectories(
                 values.TryGetValue("--profile-directory", out var profileDirectories) ? profileDirectories : []);
+            if (values.ContainsKey("--source-root") == values.ContainsKey("--archive")
+                || (values.ContainsKey("--assets-directory") && !values.ContainsKey("--archive")))
+                throw new ArgumentException("Supply exactly one of --source-root or --archive; --assets-directory requires --archive.");
+            using var archive = values.ContainsKey("--archive") ? Godevilution.Tools.Archive.MpqArchive.Open(Required(values, "--archive")) : null;
             var options = new NativePlayerArtImportOptions(
-                Required(values, "--source-root"),
+                values.ContainsKey("--source-root") ? Required(values, "--source-root") : string.Empty,
                 Required(values, "--metadata-root"),
                 Required(values, "--game-content-directory"),
                 Required(values, "--output-root"),
                 Required(values, "--town-palette"),
                 Required(values, "--cathedral-palette"),
                 profiles.ContentManifestHashes,
-                profiles.LevelBindings);
+                profiles.LevelBindings,
+                archive is null ? null : new Godevilution.Tools.Archive.NativeArchiveSource(archive,
+                    values.ContainsKey("--assets-directory") ? Required(values, "--assets-directory") : null));
             var result = NativePlayerArtCompiler.Import(options);
             Console.WriteLine($"Published native player pack '{result.PackId}' with {result.ClipCount} clips to {result.OutputDirectory}.");
             if (result.MissingAssets.Count != 0) {
@@ -46,7 +52,7 @@ internal static class NativePlayerArtProgram
         var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         for (var index = 0; index < args.Count; index++) {
             var flag = args[index];
-            if (flag is not "--source-root" and not "--metadata-root" and not "--game-content-directory"
+            if (flag is not "--source-root" and not "--archive" and not "--assets-directory" and not "--metadata-root" and not "--game-content-directory"
                 and not "--output-root" and not "--town-palette" and not "--cathedral-palette"
                 and not "--profile-directory")
                 throw new ArgumentException($"Unknown option '{flag}'.");
@@ -77,7 +83,7 @@ internal static class NativePlayerArtProgram
 
     private static void PrintUsage(TextWriter output)
     {
-        output.WriteLine("Usage: Native.PlayerArt --source-root DIR --metadata-root DIR --game-content-directory DIR");
+        output.WriteLine("Usage: Native.PlayerArt (--source-root DIR | --archive DIABDAT.MPQ [--assets-directory ASSETS]) --metadata-root DIR --game-content-directory DIR");
         output.WriteLine("       --output-root NEW_DIR --town-palette RELATIVE_PAL --cathedral-palette RELATIVE_PAL");
         output.WriteLine("       --profile-directory COMPILED_PROFILE_DIR [--profile-directory COMPILED_PROFILE_DIR ...]");
         output.WriteLine("Only validated native Cathedral class-progression (Warrior/Sorcerer) and depth-progression (Rogue) profiles are admitted.");

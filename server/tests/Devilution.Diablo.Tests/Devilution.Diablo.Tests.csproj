@@ -18,5 +18,6 @@
     <ProjectReference Include="../../src/Devilution.Server.Diablo/Devilution.Server.Diablo.csproj" />
     <ProjectReference Include="../../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" Aliases="ServerProtocol" />
     <ProjectReference Include="../../../tools/Cathedral.Playtest/Cathedral.Playtest.csproj" />
+    <ProjectReference Include="../../../tools/Native.Setup/Native.Setup.csproj" />
   </ItemGroup>
 </Project>

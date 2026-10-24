@@ -13,7 +13,8 @@ public sealed record NativePlayerArtImportOptions(
     string TownPaletteRelativePath,
     string CathedralPaletteRelativePath,
     IReadOnlyList<string> ContentManifestHashes,
-    IReadOnlyList<NativePlayerArtLevelBinding> LevelBindings);
+    IReadOnlyList<NativePlayerArtLevelBinding> LevelBindings,
+    Godevilution.Tools.Archive.NativeArchiveSource? Archive = null);
 
 public sealed record NativePlayerArtImportResult(
     string OutputDirectory,
@@ -93,7 +94,9 @@ public static class NativePlayerArtCompiler
     public static NativePlayerArtImportResult Import(NativePlayerArtImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var sourceRoot = RequireDirectory(options.SourceRoot, "source root");
+        // SourceRoot is an extracted tree; with Archive set it is ignored and files come from the MPQ.
+        var source = new SourceFiles(options.Archive is null ? RequireDirectory(options.SourceRoot, "source root") : string.Empty,
+            options.Archive);
         var textDataRoot = RequireDirectory(options.TextDataRoot, "text data root");
         var gameContentDirectory = RequireDirectory(options.GameContentDirectory, "game content directory");
         var outputRoot = Path.GetFullPath(options.OutputRoot);
@@ -102,10 +105,8 @@ public static class NativePlayerArtCompiler
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
             throw new IOException($"Output root already exists: {outputRoot}");
 
-        var townPalettePath = ResolveSourcePath(sourceRoot, options.TownPaletteRelativePath);
-        var cathedralPalettePath = ResolveSourcePath(sourceRoot, options.CathedralPaletteRelativePath);
-        var townPalette = NativePlayerPalette.Parse(File.ReadAllBytes(townPalettePath), "Town palette");
-        var cathedralPalette = NativePlayerPalette.Parse(File.ReadAllBytes(cathedralPalettePath), "Cathedral palette");
+        var townPalette = NativePlayerPalette.Parse(source.Read(options.TownPaletteRelativePath), "Town palette");
+        var cathedralPalette = NativePlayerPalette.Parse(source.Read(options.CathedralPaletteRelativePath), "Cathedral palette");
         var metadata = NativePlayerArtMetadata.Load(textDataRoot, gameContentDirectory);
 
         var outputParent = Path.GetDirectoryName(outputRoot)
@@ -132,8 +133,7 @@ public static class NativePlayerArtCompiler
             foreach (var playerClass in metadata.Classes) {
                 byte[]? classTranslation;
                 try {
-                    var classTranslationPath = Path.Combine(sourceRoot, "plrgfx", $"{playerClass.ClassTranslation}.trn");
-                    classTranslation = ReadOptionalTranslation(classTranslationPath, "class");
+                    classTranslation = ReadOptionalTranslation(source, $"plrgfx/{playerClass.ClassTranslation}.trn", "class");
                 } catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException) {
                     throw new InvalidDataException($"Native player class translation 'plrgfx/{playerClass.ClassTranslation}.trn' is malformed: {exception.Message}", exception);
                 }
@@ -153,28 +153,25 @@ public static class NativePlayerArtCompiler
                             var anchorWidth = playerClass.GetWidth(graphicSpec.Graphic, weapon);
                             var prefix = string.Concat(playerClass.ClassCharacter, ArmorCharacters[armor], WeaponCharacters[weapon]);
                             var relativeSource = $"plrgfx/{playerClass.SpritePath}/{prefix}/{prefix}{graphicSpec.SourceSuffix}.cl2";
-                            var sourcePath = ResolveSourcePath(sourceRoot, relativeSource);
                             var clipKey = $"classId={playerClass.ClassId} location={graphicSpec.Location} armor={armor} weapon={weapon} graphic={graphicSpec.Graphic}";
-                            if (!File.Exists(sourcePath)) {
+                            if (!source.Exists(relativeSource)) {
                                 missing.Add($"{clipKey} source={relativeSource}");
                                 continue;
                             }
 
-                            var fileInfo = new FileInfo(sourcePath);
-                            if (fileInfo.Length is < 1 or > NativeCl2SpriteSheetDecoder.MaximumInputBytes)
+                            if (source.Length(relativeSource) is < 1 or > NativeCl2SpriteSheetDecoder.MaximumInputBytes)
                                 throw new InvalidDataException($"CL2 input '{relativeSource}' exceeds the supported size bounds.");
                             byte[] cl2Data;
                             NativeCl2Sheet sheet;
                             try {
-                                cl2Data = File.ReadAllBytes(sourcePath);
+                                cl2Data = source.Read(relativeSource);
                                 sheet = NativeCl2SpriteSheetDecoder.Decode(cl2Data, anchorWidth, frameCount, allowAdditionalFrames: true);
                             } catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException) {
                                 throw new InvalidDataException($"CL2 source '{relativeSource}' is malformed: {exception.Message}", exception);
                             }
                             byte[] png;
                             try {
-                                var graphicTranslationPath = Path.ChangeExtension(sourcePath, ".trn");
-                                var graphicTranslation = ReadOptionalTranslation(graphicTranslationPath, "graphic");
+                                var graphicTranslation = ReadOptionalTranslation(source, Path.ChangeExtension(relativeSource, ".trn"), "graphic");
                                 var palette = graphicSpec.Location == NativePlayerArtNames.TownLocation ? townPalette : cathedralPalette;
                                 ReadOnlyMemory<byte>? graphicTranslationMemory = graphicTranslation is null
                                     ? (ReadOnlyMemory<byte>?)null
@@ -386,14 +383,30 @@ public static class NativePlayerArtCompiler
         return normalizedCandidate.StartsWith(normalizedRoot, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
     }
 
-    private static byte[]? ReadOptionalTranslation(string path, string description)
+    private static byte[]? ReadOptionalTranslation(SourceFiles source, string relativePath, string description)
     {
-        if (!File.Exists(path))
+        if (!source.Exists(relativePath))
             return null;
-        var translation = File.ReadAllBytes(path);
+        var translation = source.Read(relativePath);
         if (translation.Length != NativePlayerPalette.ColorCount)
-            throw new InvalidDataException($"{description} translation '{path}' must contain exactly 256 bytes; found {translation.Length}.");
+            throw new InvalidDataException($"{description} translation '{source.Describe(relativePath)}' must contain exactly 256 bytes; found {translation.Length}.");
         return translation;
+    }
+
+    /** Original files from an extracted tree (contained relative paths) or from the archive. */
+    private sealed class SourceFiles(string root, Godevilution.Tools.Archive.NativeArchiveSource? archive)
+    {
+        public bool Exists(string relativePath)
+            => archive?.Exists(relativePath) ?? File.Exists(ResolveSourcePath(root, relativePath));
+
+        public long Length(string relativePath)
+            => archive?.Length(relativePath) ?? new FileInfo(ResolveSourcePath(root, relativePath)).Length;
+
+        public byte[] Read(string relativePath)
+            => archive?.Read(relativePath) ?? File.ReadAllBytes(ResolveSourcePath(root, relativePath));
+
+        public string Describe(string relativePath)
+            => archive is null ? ResolveSourcePath(root, relativePath) : Godevilution.Tools.Archive.NativeArchiveSource.ToArchiveName(relativePath);
     }
 
     private static void ValidateTranslation(byte[]? translation, string description)

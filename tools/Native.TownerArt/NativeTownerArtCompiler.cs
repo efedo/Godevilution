@@ -48,7 +48,7 @@ public static class NativeTownerArtCompiler
     public static NativeTownerImportResult Import(NativeTownerImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var sourceRoot = RequireDirectory(options.SourceRoot, "source root");
+        var sourceRoot = options.Archive is null ? RequireDirectory(options.SourceRoot, "source root") : string.Empty;
         var textDataRoot = RequireDirectory(options.TextDataRoot, "text-data root");
         var outputRoot = Path.GetFullPath(options.OutputRoot);
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
@@ -73,8 +73,8 @@ public static class NativeTownerArtCompiler
             .Select(sprite => (sprite.SpriteId, sprite.SourcePath, sprite.AlignmentWidth, sprite.AnimationFrames, sprite.TicksPerFrame, sprite.AnimationOrder))
             .ToArray();
 
-        var palettePath = ResolveFile(sourceRoot, TownPalettePath, "Town palette");
-        var paletteBytes = ReadBoundedFile(palettePath, NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, "Town palette");
+        var paletteBytes = ReadSourceFile(options.Archive, sourceRoot, TownPalettePath,
+            NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, "Town palette", "Town palette");
         var palette = NativePlayerPalette.Parse(paletteBytes, "Town palette");
 
         var outputParent = Path.GetDirectoryName(outputRoot)
@@ -99,8 +99,8 @@ public static class NativeTownerArtCompiler
             long aggregateAtlasPixels = 0;
 
             foreach (var spriteSpec in sourcePaths) {
-                var sourcePath = ResolveFile(sourceRoot, spriteSpec.SourcePath, $"Towner CEL {spriteSpec.SourcePath}");
-                var celBytes = ReadBoundedFile(sourcePath, NativeTownerCelDecoder.MaximumInputBytes, "Towner CEL");
+                var celBytes = ReadSourceFile(options.Archive, sourceRoot, spriteSpec.SourcePath,
+                    NativeTownerCelDecoder.MaximumInputBytes, "Towner CEL", $"Towner CEL {spriteSpec.SourcePath}");
                 sourceHashes.Add(new NativeTownerSourceHash(spriteSpec.SourcePath, NativeTownerArtPng.Sha256Hex(celBytes)));
                 NativeTownerCelSheet sheet;
                 try {
@@ -322,6 +322,11 @@ public static class NativeTownerArtCompiler
     private static bool TryParseInt(string value, int minimum, int maximum, out int result)
         => int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out result)
             && result >= minimum && result <= maximum;
+
+    private static byte[] ReadSourceFile(Godevilution.Tools.Archive.NativeArchiveSource? archive, string sourceRoot,
+        string relativePath, int maximumBytes, string description, string pathDescription)
+        => archive?.ReadBounded(relativePath, maximumBytes, description)
+            ?? ReadBoundedFile(ResolveFile(sourceRoot, relativePath, pathDescription), maximumBytes, description);
 
     private static byte[] ReadBoundedFile(string path, int maximumBytes, string description)
     {

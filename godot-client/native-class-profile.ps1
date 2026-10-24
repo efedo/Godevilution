@@ -119,7 +119,7 @@ function Get-CathedralNativeClassProfile([string]$Directory, [string]$Session) {
             throw 'The native character-start table contains a non-CRLF line ending.'
         }
     }
-    $tableLines = $tableText.Split("`r`n", [StringSplitOptions]::None)
+    $tableLines = $tableText.Split([string[]]@("`r`n"), [StringSplitOptions]::None)
     $expectedHeader = "class_id`tclass_symbol`thero_base_life_maximum`thero_base_mana_maximum`thero_light_radius`thero_idle_frames"
     if ($tableLines.Length -ne 3 -or $tableLines[0] -cne $expectedHeader -or $tableLines[2] -cne '') {
         throw 'The native character-start table must have one row and the exact ordered schema.'

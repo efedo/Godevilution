@@ -312,4 +312,25 @@ public sealed class NativeArchiveTests : IDisposable
         Assert.Contains("corrupt sector offsets", Assert.Throws<MpqException>(() => archive.ReadFile("reversed.bin")).Message);
         Assert.Contains("missing sector offset table", Assert.Throws<MpqException>(() => archive.ReadFile("single-imploded.bin")).Message);
     }
+
+    [Fact]
+    public void ArchiveSourceReadsImporterPathsAndLayersTheOpenAssets()
+    {
+        var path = new TestArchiveBuilder()
+            .AddStored(@"plrgfx\warrior\whu\whufm.cl2", Bytes("sprite"))
+            .WriteTo(directory);
+        var assets = Directory.CreateDirectory(Path.Combine(directory, "assets", "plrgfx", "warrior", "whu")).FullName;
+        File.WriteAllBytes(Path.Combine(assets, "whufm.trn"), Bytes("fix"));
+        using var archive = MpqArchive.Open(path);
+        var source = new NativeArchiveSource(archive, Path.Combine(directory, "assets"));
+        Assert.Equal(Bytes("sprite"), source.Read("plrgfx/warrior/whu/whufm.cl2"));
+        Assert.Equal(Bytes("fix"), source.Read("plrgfx/warrior/whu/whufm.trn"));
+        Assert.Equal(3, source.Length("plrgfx/warrior/whu/whufm.trn"));
+        Assert.False(new NativeArchiveSource(archive).Exists("plrgfx/warrior/whu/whufm.trn"));
+        Assert.False(source.Exists("plrgfx/warrior/whu/missing.cl2"));
+        Assert.Contains("missing from the archive", Assert.Throws<InvalidDataException>(() => source.ReadBounded("missing.cel", 10, "CEL")).Message);
+        Assert.Throws<InvalidDataException>(() => source.ReadBounded("plrgfx/warrior/whu/whufm.cl2", 5, "CL2"));
+        foreach (var unsafePath in new[] { "../x.cel", "a//b.cel", "C:/x.cel", "/x.cel" })
+            Assert.Throws<InvalidDataException>(() => NativeArchiveSource.ToArchiveName(unsafePath));
+    }
 }

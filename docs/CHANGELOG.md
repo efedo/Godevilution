@@ -7,6 +7,19 @@ contracts stay in their existing guides.
 
 ## 2026-10-24
 
+- First-run native setup (batch 1.1c): `run-godot-client.ps1` now finds the
+  player's `DIABDAT.MPQ` (remembered `-DiabloArchive`, `GODEVILUTION_DIABDAT`, the
+  DevilutionX data folder, the GOG registry, usual install folders), builds the
+  Warrior and Sorcerer Town profiles and all four art packs once per input
+  fingerprint with the new `tools/Native.Setup`, and starts native Town; without
+  an archive it explains and starts the authored content. The art importers take
+  `--archive` (with the open `assets` layered in as native does) instead of an
+  extracted tree. Fix two launcher profile checks that split CRLF rows wrongly on
+  Windows PowerShell 5.1.
+- Assign planning to Claude Opus 5.5 and supervision to Astra 5 (medium), with
+  a fixed pool of two Sol 5.6 implementers and one Sol 5.6 reviewer at
+  extra-high effort. Workers run focused checks only; the supervisor runs the
+  broad suites once per batch.
 - Add `Cathedral.Playtest --export-native-sources` (batch 1.1b): C# ports of the
   native item, spell, monster, object, unique-monster, level-rule, Cathedral SOL
   and cursor-footprint loaders build every native profile compiler input from the

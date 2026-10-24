@@ -49,7 +49,7 @@ public static class NativeObjectArtCompiler
     public static NativeObjectImportResult Import(NativeObjectImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var sourceRoot = RequireDirectory(options.SourceRoot, "original source root");
+        var sourceRoot = options.Archive is null ? RequireDirectory(options.SourceRoot, "original source root") : string.Empty;
         var textDataRoot = RequireDirectory(options.TextDataRoot, "text-data root");
         var outputRoot = Path.GetFullPath(options.OutputRoot);
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
@@ -81,8 +81,8 @@ public static class NativeObjectArtCompiler
                 MinimumFrameCounts[spriteId]))
             .ToArray();
 
-        var palettePath = ResolveFile(sourceRoot, CathedralPalettePath, "Cathedral palette");
-        var paletteBytes = ReadBoundedFile(palettePath, NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, "Cathedral palette");
+        var paletteBytes = ReadSourceFile(options.Archive, sourceRoot, CathedralPalettePath,
+            NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, "Cathedral palette", "Cathedral palette");
         var palette = NativePlayerPalette.Parse(paletteBytes, "Cathedral palette");
 
         var outputParent = Path.GetDirectoryName(outputRoot)
@@ -107,8 +107,8 @@ public static class NativeObjectArtCompiler
             long aggregateFileBytes = 0;
 
             foreach (var spriteSpec in spriteSpecs) {
-                var sourcePath = ResolveFile(sourceRoot, spriteSpec.SourcePath, $"native object CEL {spriteSpec.SourcePath}");
-                var celBytes = ReadBoundedFile(sourcePath, MaximumSourceBytes, "native object CEL");
+                var celBytes = ReadSourceFile(options.Archive, sourceRoot, spriteSpec.SourcePath, MaximumSourceBytes,
+                    "native object CEL", $"native object CEL {spriteSpec.SourcePath}");
                 sourceHashes.Add(new NativeObjectSourceHash(spriteSpec.SourcePath, Sha256Hex(celBytes)));
                 NativeTownerCelSheet sheet;
                 try {
@@ -276,6 +276,11 @@ public static class NativeObjectArtCompiler
     private static bool TryParseInt(string value, int minimum, int maximum, out int result)
         => int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out result)
             && result >= minimum && result <= maximum;
+
+    private static byte[] ReadSourceFile(Godevilution.Tools.Archive.NativeArchiveSource? archive, string sourceRoot,
+        string relativePath, int maximumBytes, string description, string pathDescription)
+        => archive?.ReadBounded(relativePath, maximumBytes, description)
+            ?? ReadBoundedFile(ResolveFile(sourceRoot, relativePath, pathDescription), maximumBytes, description);
 
     private static byte[] ReadBoundedFile(string path, int maximumBytes, string description)
     {

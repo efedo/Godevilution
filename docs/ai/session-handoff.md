@@ -42,7 +42,8 @@ separate. The server owns gameplay, RNG, world state and persistence. The
 - No reset, bulk commit, security changes or new archives. Push only on explicit
   user instruction. Git history holds past versions; do not create backup
   documentation or QA dumps.
-- Use the [fixed worker policy](../completion-plan.md#worker-delegation). Root
-  owns batch selection, integration, verification, concise documentation and
-  cohesive commits; every worker and reviewer follows the
+- Use the [fixed worker policy](../completion-plan.md#worker-delegation).
+  Claude Opus 5.5 plans and selects batches; Astra 5 at medium effort
+  supervises the Sol 5.6 workers and owns integration, verification, concise
+  documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).

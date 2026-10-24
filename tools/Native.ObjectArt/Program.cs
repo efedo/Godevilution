@@ -11,6 +11,8 @@ internal static class Program
             }
 
             string? sourceRoot = null;
+            string? archivePath = null;
+            string? assetsDirectory = null;
             string? textDataRoot = null;
             string? outputRoot = null;
             var profiles = new List<string>();
@@ -22,6 +24,12 @@ internal static class Program
                 switch (option) {
                 case "--source-root":
                     sourceRoot = SetOnce(sourceRoot, value, option);
+                    break;
+                case "--archive":
+                    archivePath = SetOnce(archivePath, value, option);
+                    break;
+                case "--assets-directory":
+                    assetsDirectory = SetOnce(assetsDirectory, value, option);
                     break;
                 case "--text-data-root":
                     textDataRoot = SetOnce(textDataRoot, value, option);
@@ -37,11 +45,15 @@ internal static class Program
                 }
             }
 
+            if ((sourceRoot is null) == (archivePath is null) || (assetsDirectory is not null && archivePath is null))
+                throw new ArgumentException("Supply exactly one of --source-root or --archive; --assets-directory requires --archive.");
+            using var archive = archivePath is null ? null : Godevilution.Tools.Archive.MpqArchive.Open(archivePath);
             var result = NativeObjectArtCompiler.Import(new NativeObjectImportOptions(
-                sourceRoot ?? throw new ArgumentException("--source-root is required."),
+                sourceRoot ?? string.Empty,
                 textDataRoot ?? throw new ArgumentException("--text-data-root is required."),
                 profiles,
-                outputRoot ?? throw new ArgumentException("--output-root is required.")));
+                outputRoot ?? throw new ArgumentException("--output-root is required."),
+                archive is null ? null : new Godevilution.Tools.Archive.NativeArchiveSource(archive, assetsDirectory)));
             Console.WriteLine($"Published {result.SpriteCount} native Cathedral object sprites and {result.ObjectCount} object definitions.");
             Console.WriteLine($"Pack: {result.PackId}");
             Console.WriteLine($"Output: {result.OutputDirectory}");
@@ -62,7 +74,7 @@ internal static class Program
     private static void PrintUsage()
     {
         Console.WriteLine("Native Cathedral object art importer");
-        Console.WriteLine("  --source-root <extracted-original-files>");
+        Console.WriteLine("  --source-root <extracted-original-files> | --archive <DIABDAT.MPQ> [--assets-directory <repository-assets>]");
         Console.WriteLine("  --text-data-root <repository-assets/txtdata>");
         Console.WriteLine("  --profile-directory <verified-native-Cathedral-profile> (repeatable)");
         Console.WriteLine("  --output-root <new-directory>");

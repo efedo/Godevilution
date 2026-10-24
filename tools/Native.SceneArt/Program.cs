@@ -13,12 +13,18 @@ internal static class NativeSceneArtProgram
 
         try {
             var values = ParseArguments(args);
+            if (values.ContainsKey("--source-root") == values.ContainsKey("--archive")
+                || (values.ContainsKey("--assets-directory") && !values.ContainsKey("--archive")))
+                throw new ArgumentException("Supply exactly one of --source-root or --archive; --assets-directory requires --archive.");
+            using var archive = values.ContainsKey("--archive") ? Godevilution.Tools.Archive.MpqArchive.Open(Required(values, "--archive")) : null;
             var result = NativeSceneArtCompiler.Import(new NativeSceneArtImportOptions(
-                Required(values, "--source-root"),
+                values.ContainsKey("--source-root") ? Required(values, "--source-root") : string.Empty,
                 Required(values, "--output-root"),
                 Required(values, "--town-palette"),
                 Required(values, "--cathedral-palette"),
-                values.TryGetValue("--profile-directory", out var profiles) ? profiles : []));
+                values.TryGetValue("--profile-directory", out var profiles) ? profiles : [],
+                archive is null ? null : new Godevilution.Tools.Archive.NativeArchiveSource(archive,
+                    values.ContainsKey("--assets-directory") ? Required(values, "--assets-directory") : null)));
             Console.WriteLine($"Published native scene pack '{result.PackId}' with {result.PieceCount} d-pieces, {result.FrameCount} frames, and {result.SpecialCount} specials to {result.OutputDirectory}.");
             return 0;
         } catch (InvalidDataException exception) {
@@ -33,7 +39,7 @@ internal static class NativeSceneArtProgram
         var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         for (var index = 0; index < args.Count; index++) {
             var flag = args[index];
-            if (flag is not "--source-root" and not "--output-root" and not "--town-palette"
+            if (flag is not "--source-root" and not "--archive" and not "--assets-directory" and not "--output-root" and not "--town-palette"
                 and not "--cathedral-palette" and not "--profile-directory")
                 throw new ArgumentException($"Unknown option '{flag}'.");
             if (++index >= args.Count || args[index].StartsWith("--", StringComparison.Ordinal))
@@ -63,7 +69,7 @@ internal static class NativeSceneArtProgram
 
     private static void PrintUsage(TextWriter output)
     {
-        output.WriteLine("Usage: Native.SceneArt --source-root EXTRACTED_GAME_ROOT --output-root NEW_DIRECTORY");
+        output.WriteLine("Usage: Native.SceneArt (--source-root EXTRACTED_GAME_ROOT | --archive DIABDAT.MPQ [--assets-directory ASSETS]) --output-root NEW_DIRECTORY");
         output.WriteLine("       --town-palette RELATIVE_PAL --cathedral-palette RELATIVE_PAL");
         output.WriteLine("       --profile-directory COMPILED_PROFILE_DIR [--profile-directory COMPILED_PROFILE_DIR ...]");
         output.WriteLine("Only explicitly extracted source assets and validated compiled native Cathedral profiles are accepted.");

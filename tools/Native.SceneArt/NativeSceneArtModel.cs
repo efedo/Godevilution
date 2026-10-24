@@ -86,12 +86,14 @@ public sealed record NativeSceneArtLevelBinding(string ContentManifestHash, uint
 
 public sealed record NativeSceneRasterReference(int AtlasId, int X, int Y, int Width, int Height);
 
+/** SourceRoot is an extracted tree; with Archive set it is ignored and files come from the MPQ. */
 public sealed record NativeSceneArtImportOptions(
     string SourceRoot,
     string OutputRoot,
     string TownPaletteRelativePath,
     string CathedralPaletteRelativePath,
-    IReadOnlyList<string> ProfileDirectories);
+    IReadOnlyList<string> ProfileDirectories,
+    Godevilution.Tools.Archive.NativeArchiveSource? Archive = null);
 
 public sealed record NativeSceneArtImportResult(string OutputDirectory, string PackId, int PieceCount, int FrameCount, int SpecialCount);
 

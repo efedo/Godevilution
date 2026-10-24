@@ -45,10 +45,12 @@ public sealed record NativeTownerArtCatalog(
 
 public sealed record NativeTownerAtlasPixels(byte[] Png, int Width, int Height);
 
+/** SourceRoot is an extracted tree; with Archive set it is ignored and files come from the MPQ. */
 public sealed record NativeTownerImportOptions(
     string SourceRoot,
     string TextDataRoot,
     IReadOnlyList<string> ProfileDirectories,
-    string OutputRoot);
+    string OutputRoot,
+    Godevilution.Tools.Archive.NativeArchiveSource? Archive = null);
 
 public sealed record NativeTownerImportResult(string OutputDirectory, string PackId, int SpriteCount, int ResidentCount);

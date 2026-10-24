@@ -162,7 +162,7 @@ function Assert-CathedralNativeTownCharacterStart([string]$Path, $ClassProfile) 
             throw 'The native character-start table contains a non-CRLF line ending.'
         }
     }
-    $lines = $text.Split("`r`n", [StringSplitOptions]::None)
+    $lines = $text.Split([string[]]@("`r`n"), [StringSplitOptions]::None)
     $header = "class_id`tclass_symbol`thero_base_life_maximum`thero_base_mana_maximum`thero_light_radius`thero_idle_frames"
     $expected = if ($ClassProfile.Id -eq 0) { "0`twarrior`t4480`t640`t10`t10" } else { "2`tsorcerer`t1920`t4480`t10`t8" }
     if ($lines.Length -ne 3 -or $lines[0] -cne $header -or $lines[1] -cne $expected -or $lines[2] -cne '') {

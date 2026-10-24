@@ -9,6 +9,18 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-24 — First-run native setup
+
+From an empty `.local/godot/native`, `Native.Setup` found the GOG archive through
+the registry and built both Town profiles (Warrior byte-identical to the native
+build) and four art packs in about three minutes; an unchanged second run reused
+them in under a second and a tool-source change rebuilt them. Player art matched
+the earlier extracted-tree import byte for byte; Town foliage differs only where
+that tree carried Hellfire `nlevels` files. `test-godot-native-classes.ps1
+-NativeTown` passed Journey/Resume headless on the built profile with all four
+packs. The no-archive path is covered by unit tests only (this machine always
+finds the GOG install); the windowed default launch was not run.
+
 ### 2026-10-24 — C# native-source export
 
 Against a private `DIABDAT.MPQ` and the 2026-10-19 native-built profiles, the C#

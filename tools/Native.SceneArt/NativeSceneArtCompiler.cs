@@ -21,7 +21,8 @@ public static class NativeSceneArtCompiler
     public static NativeSceneArtImportResult Import(NativeSceneArtImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var sourceRoot = RequireDirectory(options.SourceRoot, "source root");
+        var sourceRoot = new SceneSource(options.Archive is null ? RequireDirectory(options.SourceRoot, "source root") : string.Empty,
+            options.Archive);
         var outputRoot = Path.GetFullPath(options.OutputRoot);
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
             throw new IOException($"Output root already exists: {outputRoot}");
@@ -324,17 +325,17 @@ public static class NativeSceneArtCompiler
     }
 
     private static FamilyInputs LoadFamilyInputs(
-        string sourceRoot,
+        SceneSource sourceRoot,
         string location,
         string paletteRelativePath,
         List<SourceFile> sources,
         ref long aggregateSourceBytes)
     {
         var town = location == "town";
-        var cel = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.cel", path => File.Exists(GetSourcePath(sourceRoot, path))) : "levels/l1data/l1.cel", location, sources, ref aggregateSourceBytes);
-        var min = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.min", path => File.Exists(GetSourcePath(sourceRoot, path))) : "levels/l1data/l1.min", location, sources, ref aggregateSourceBytes);
-        var til = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.til", path => File.Exists(GetSourcePath(sourceRoot, path))) : "levels/l1data/l1.til", location, sources, ref aggregateSourceBytes);
-        var sol = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.sol", path => File.Exists(GetSourcePath(sourceRoot, path))) : "levels/l1data/l1.sol", location, sources, ref aggregateSourceBytes);
+        var cel = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.cel", sourceRoot.Exists) : "levels/l1data/l1.cel", location, sources, ref aggregateSourceBytes);
+        var min = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.min", sourceRoot.Exists) : "levels/l1data/l1.min", location, sources, ref aggregateSourceBytes);
+        var til = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.til", sourceRoot.Exists) : "levels/l1data/l1.til", location, sources, ref aggregateSourceBytes);
+        var sol = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.sol", sourceRoot.Exists) : "levels/l1data/l1.sol", location, sources, ref aggregateSourceBytes);
         var palette = ReadRequired(sourceRoot, paletteRelativePath, location, sources, ref aggregateSourceBytes,
             expectedLength: NativeSceneArtDecoder.PaletteByteCount);
         var specials = ReadRequired(sourceRoot,
@@ -356,17 +357,53 @@ public static class NativeSceneArtCompiler
     }
 
     private static SourceFile ReadRequired(
-        string sourceRoot,
+        SceneSource sourceRoot,
         string relativePath,
         string location,
         List<SourceFile> sources,
         ref long aggregateSourceBytes,
         long? expectedLength = null)
     {
-        var fullPath = ResolveSourcePath(sourceRoot, relativePath);
-        var file = ReadResolved(fullPath, relativePath, location, ref aggregateSourceBytes, expectedLength);
+        var file = sourceRoot.Archive is null
+            ? ReadResolved(ResolveSourcePath(sourceRoot.Root, relativePath), relativePath, location, ref aggregateSourceBytes, expectedLength)
+            : ReadArchived(sourceRoot.Archive, relativePath, location, ref aggregateSourceBytes, expectedLength);
         sources.Add(file);
         return file;
+    }
+
+    /** Extracted tree or archive; Town source selection asks it which files exist. */
+    private sealed record SceneSource(string Root, Godevilution.Tools.Archive.NativeArchiveSource? Archive)
+    {
+        public bool Exists(string relativePath)
+            => Archive?.Exists(relativePath) ?? File.Exists(GetSourcePath(Root, relativePath));
+    }
+
+    private static SourceFile ReadArchived(
+        Godevilution.Tools.Archive.NativeArchiveSource archive,
+        string relativePath,
+        string location,
+        ref long aggregateSourceBytes,
+        long? expectedLength)
+    {
+        var normalized = NormalizeSafeRelativePath(relativePath);
+        var length = archive.Length(normalized);
+        if (length == 0)
+            throw new FileNotFoundException($"Native scene input is missing: {relativePath}");
+        CheckSourceLength(relativePath, location, length, aggregateSourceBytes, expectedLength);
+        var bytes = archive.Read(normalized);
+        aggregateSourceBytes = checked(aggregateSourceBytes + bytes.LongLength);
+        return new SourceFile(normalized, location, bytes);
+    }
+
+    private static void CheckSourceLength(string relativePath, string location, long length, long aggregateSourceBytes, long? expectedLength)
+    {
+        if (length < 1 || length > GetMaximumSourceLength(relativePath, location))
+            throw new InvalidDataException($"Native {location} source '{relativePath}' is outside the supported size bound.");
+        if (expectedLength is not null && length != expectedLength.Value)
+            throw new InvalidDataException($"Native {location} source '{relativePath}' must contain exactly {expectedLength.Value} bytes.");
+        ValidateSourceLength(relativePath, location, length);
+        if (length > MaximumAggregateSourceBytes - aggregateSourceBytes)
+            throw new InvalidDataException($"Native scene source files exceed the {MaximumAggregateSourceBytes}-byte aggregate limit.");
     }
 
     private static SourceFile ReadResolved(
@@ -376,14 +413,7 @@ public static class NativeSceneArtCompiler
         ref long aggregateSourceBytes,
         long? expectedLength)
     {
-        var fileInfo = new FileInfo(fullPath);
-        if (fileInfo.Length < 1 || fileInfo.Length > GetMaximumSourceLength(relativePath, location))
-            throw new InvalidDataException($"Native {location} source '{relativePath}' is outside the supported size bound.");
-        if (expectedLength is not null && fileInfo.Length != expectedLength.Value)
-            throw new InvalidDataException($"Native {location} source '{relativePath}' must contain exactly {expectedLength.Value} bytes.");
-        ValidateSourceLength(relativePath, location, fileInfo.Length);
-        if (fileInfo.Length > MaximumAggregateSourceBytes - aggregateSourceBytes)
-            throw new InvalidDataException($"Native scene source files exceed the {MaximumAggregateSourceBytes}-byte aggregate limit.");
+        CheckSourceLength(relativePath, location, new FileInfo(fullPath).Length, aggregateSourceBytes, expectedLength);
         if ((File.GetAttributes(fullPath) & FileAttributes.ReparsePoint) != 0)
             throw new InvalidDataException($"Native {location} source '{relativePath}' cannot be a reparse point.");
         try {
