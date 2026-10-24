@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -10,10 +11,10 @@ public sealed class MpqException(string message) : IOException(message);
 /**
  * Read-only MPQ v1 archive. Faithful port of the read side of DevilutionX's
  * pinned mpqfs (`mpq_archive.c`, `mpq_stream.c`; MIT, commit c4e1327feb46).
- * Supports what Diablo and Hellfire archives use: PKWARE implode, per-file
- * encryption with optional key adjustment, single-unit and stored files.
- * Multi-method sectors other than PKWARE are refused, as in an mpqfs build
- * without zlib/bzip2. Client-side only; the server never opens archives.
+ * Supports PKWARE implode, multi-method PKWARE/zlib sectors (used by the
+ * redistributable spawn.mpq), per-file encryption with optional key
+ * adjustment, single-unit and stored files. bzip2 sectors are refused.
+ * Client-side only; the server never opens archives.
  */
 public sealed class MpqArchive : IDisposable
 {
@@ -26,6 +27,7 @@ public sealed class MpqArchive : IDisposable
     public const uint FileFixKey = 0x00020000;
     public const uint FileSingleUnit = 0x01000000;
     public const uint FileExists = 0x80000000;
+    private const byte CompressionZlib = 0x02;
     private const byte CompressionPkware = 0x08;
     private const int HeaderSize = 32;
     private const long MaximumHeaderSearch = 128L * 1024 * 1024;
@@ -267,26 +269,56 @@ public sealed class MpqArchive : IDisposable
                 throw new MpqException($"mpq_stream: read error on compressed sector {sector}");
             if (fileKey != 0)
                 Decrypt(source, sectorKey);
-            ReadOnlySpan<byte> payload = source;
-            if ((block.Flags & FileImplode) == 0) {
-                var method = source[0];
-                if ((method & ~CompressionPkware) != 0) {
-                    throw new MpqException(
-                        $"mpq_stream: unsupported compression method 0x{method:X2} on sector {sector}");
-                }
-                if ((method & CompressionPkware) == 0) {
-                    // Native leaves such sectors undecoded; refuse rather than guess.
-                    throw new MpqException(
-                        $"mpq_stream: compression method 0x{method:X2} on sector {sector} names no decoder");
-                }
-                payload = payload[1..];
+            if ((block.Flags & FileImplode) != 0) {
+                // Native leaves bytes past a short explode undefined; they stay zero here.
+                var status = PkwareExplode.Explode(source, target, out _);
+                if (status != PkwareStatus.Ok)
+                    throw new MpqException($"mpq_stream: PKWARE explode failed on sector {sector} (rc={(int)status})");
+                continue;
             }
-            // Native leaves bytes past a short explode undefined; they stay zero here.
-            var status = PkwareExplode.Explode(payload, target, out _);
-            if (status != PkwareStatus.Ok)
-                throw new MpqException($"mpq_stream: PKWARE explode failed on sector {sector} (rc={(int)status})");
+            DecodeMultiCompressed(source, target, sector);
         }
         return output;
+    }
+
+    /**
+     * MPQ_FILE_COMPRESS sector: the first byte names the methods. Like mpqfs,
+     * each supported method decodes the payload after that byte in the order
+     * PKWARE, zlib, bzip2 (no layering), then unsupported bits are refused.
+     * bzip2 is refused here; mpqfs supports it when built with bzip2.
+     */
+    private static void DecodeMultiCompressed(byte[] source, Span<byte> target, uint sector)
+    {
+        var method = source[0];
+        var payload = source.AsSpan(1);
+        const byte supported = CompressionPkware | CompressionZlib;
+        if ((method & supported) == 0 || (method & ~supported) != 0) {
+            // A method byte naming no decoder leaves native memory undefined; refuse it too.
+            throw new MpqException($"mpq_stream: unsupported compression method 0x{method:X2} on sector {sector}");
+        }
+        if ((method & CompressionPkware) != 0) {
+            var status = PkwareExplode.Explode(payload, target, out _);
+            if (status != PkwareStatus.Ok)
+                throw new MpqException($"mpq_stream: PKWARE explode (multi) failed on sector {sector} (rc={(int)status})");
+        }
+        if ((method & CompressionZlib) != 0) {
+            // zlib uncompress(): output may be shorter than the sector, never longer.
+            try {
+                using var input = new MemoryStream(source, 1, source.Length - 1, writable: false);
+                using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+                var written = 0;
+                while (written < target.Length) {
+                    var read = zlib.Read(target[written..]);
+                    if (read == 0)
+                        break;
+                    written += read;
+                }
+                if (written == target.Length && zlib.ReadByte() >= 0)
+                    throw new MpqException($"mpq_stream: zlib uncompress failed on sector {sector} (output exceeds sector)");
+            } catch (InvalidDataException failure) {
+                throw new MpqException($"mpq_stream: zlib uncompress failed on sector {sector} ({failure.Message})");
+            }
+        }
     }
 
     // mpq_decrypt_block on whole little-endian dwords; trailing bytes stay plain.

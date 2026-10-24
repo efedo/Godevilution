@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.IO.Compression;
 using System.Text;
 using Godevilution.Tools.Archive;
 using Xunit;
@@ -197,6 +198,51 @@ public sealed class NativeArchiveTests : IDisposable
     }
 
     [Fact]
+    public void ReadsMultiMethodZlibAndPkwareSectors()
+    {
+        var builder = new TestArchiveBuilder { SectorShift = 0 };
+        var sectorSize = builder.SectorSize;
+        var data = new byte[sectorSize * 2 + 50];
+        for (var i = 0; i < data.Length; i++)
+            data[i] = (byte)(i / 7);
+        static byte[] Zlib(ReadOnlySpan<byte> plain)
+        {
+            using var output = new MemoryStream();
+            output.WriteByte(0x02);
+            using (var zlib = new ZLibStream(output, CompressionLevel.Optimal, leaveOpen: true))
+                zlib.Write(plain);
+            return output.ToArray();
+        }
+        byte[] Payload(int sector)
+        {
+            var plain = data.AsSpan(sector * sectorSize, Math.Min(sectorSize, data.Length - sector * sectorSize));
+            return sector == 1
+                ? [0x08, .. new PkwareTestEncoder(false, 4).Literals(plain).End().ToArray()]
+                : Zlib(plain);
+        }
+        var sectors = Enumerable.Range(0, 3).Select(Payload).ToArray();
+        var table = new List<byte>();
+        var offset = (uint)(sectors.Length + 1) * 4;
+        foreach (var sector in sectors.Prepend([]).Select((value, index) => (value, index))) {
+            if (sector.index > 0)
+                offset += (uint)sectors[sector.index - 1].Length;
+            table.AddRange(BitConverter.GetBytes(sector.index == 0 ? (uint)(sectors.Length + 1) * 4 : offset));
+        }
+        var payload = table.Concat(sectors.SelectMany(sector => sector)).ToArray();
+        var tooLong = new List<byte>(BitConverter.GetBytes(8u));
+        var oversized = Zlib(new byte[sectorSize + 1]);
+        tooLong.AddRange(BitConverter.GetBytes(8u + (uint)oversized.Length));
+        tooLong.AddRange(oversized);
+        var path = builder
+            .AddRaw("multi.bin", payload, (uint)data.Length, MpqArchive.FileCompress)
+            .AddRaw("too-long.bin", tooLong.ToArray(), (uint)sectorSize, MpqArchive.FileCompress)
+            .WriteTo(directory);
+        using var archive = MpqArchive.Open(path);
+        Assert.Equal(data, archive.ReadFile("multi.bin"));
+        Assert.Contains("zlib uncompress failed", Assert.Throws<MpqException>(() => archive.ReadFile("too-long.bin")).Message);
+    }
+
+    [Fact]
     public void ReadsSingleUnitFilesLargerThanASector()
     {
         var data = Pattern(9000, 6);
@@ -250,19 +296,19 @@ public sealed class NativeArchiveTests : IDisposable
         var unsupported = new byte[12 + 5];
         BinaryPrimitives.WriteUInt32LittleEndian(unsupported, 8);
         BinaryPrimitives.WriteUInt32LittleEndian(unsupported.AsSpan(4), 13);
-        unsupported[8] = 0x02; // zlib
+        unsupported[8] = 0x10; // bzip2
         var reversed = new byte[12];
         BinaryPrimitives.WriteUInt32LittleEndian(reversed, 8);
         BinaryPrimitives.WriteUInt32LittleEndian(reversed.AsSpan(4), 4);
         var path = new TestArchiveBuilder()
             .AddRaw("bad-table.bin", badTable, 100, MpqArchive.FileImplode)
-            .AddRaw("zlib.bin", unsupported, 100, MpqArchive.FileCompress)
+            .AddRaw("bzip2.bin", unsupported, 100, MpqArchive.FileCompress)
             .AddRaw("reversed.bin", reversed, 100, MpqArchive.FileImplode)
             .AddRaw("single-imploded.bin", [0, 6, 0], 100, MpqArchive.FileImplode | MpqArchive.FileSingleUnit)
             .WriteTo(directory);
         using var archive = MpqArchive.Open(path);
         Assert.Contains("sector offset table validation failed", Assert.Throws<MpqException>(() => archive.ReadFile("bad-table.bin")).Message);
-        Assert.Contains("unsupported compression method 0x02", Assert.Throws<MpqException>(() => archive.ReadFile("zlib.bin")).Message);
+        Assert.Contains("unsupported compression method 0x10", Assert.Throws<MpqException>(() => archive.ReadFile("bzip2.bin")).Message);
         Assert.Contains("corrupt sector offsets", Assert.Throws<MpqException>(() => archive.ReadFile("reversed.bin")).Message);
         Assert.Contains("missing sector offset table", Assert.Throws<MpqException>(() => archive.ReadFile("single-imploded.bin")).Message);
     }

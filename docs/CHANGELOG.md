@@ -53,6 +53,8 @@ contracts stay in their existing guides.
   (1.1b) and first-run setup (1.1c). Add `tools/Native.Archive`, a faithful C# port
   of the pinned `mpqfs` read side (crypto, sector streams, PKWARE explode), with a
   native `mpqfs` oracle run in CI against a synthetic archive and `spawn.mpq`.
+  The redistributable `spawn.mpq` uses multi-method zlib sectors, so the reader
+  decodes PKWARE and zlib sectors as `mpqfs` does; bzip2 sectors are refused.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
