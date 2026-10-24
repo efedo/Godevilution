@@ -39,9 +39,12 @@ contracts stay in their existing guides.
   Sol reviewer that never reviews its own work.
 - Run the Sol implementers at medium reasoning effort and the reviewer at
   extra-high effort.
-- Report per-attempt attacker/victim state when the live PvP shield-block test
-  fails, and let the live towner-travel helper retry a move rejected `TooLate`
-  after catching its model up to the host tick instead of failing.
+- Fix the intermittent live PvP shield-block test: the legacy seeded hit roll
+  depends only on `(tick ^ ids) mod 4` early in a game, so attempts that kept
+  landing on one tick residue could all miss. Attempts now cycle residues, and
+  failures report per-attempt state. The roll itself is an open defect
+  (inventory 2.8). The live towner-travel helper now retries a move rejected
+  `TooLate` after catching its model up to the host tick.
 - Revise the work plan: mark Phase 0 done, move a rendered human-playable
   Town→L4 slice and a two-player smoke into Phase 1 ahead of the refactors,
   specify first-run setup end to end with automatic profile rebuilds, and record

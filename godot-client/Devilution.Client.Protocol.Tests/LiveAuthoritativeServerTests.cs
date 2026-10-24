@@ -2889,11 +2889,18 @@ public sealed partial class LiveAuthoritativeServerTests
                     + $"victim ({v.PositionX},{v.PositionY}) {v.CombatMode} until {v.CombatModeEndTick} life {v.Life}";
             }
             for (var attempt = 0; attempt < 8 && blockedVictim is null; attempt++) {
+                // The legacy PvP melee hit roll is (seed * 1664525 + 1013904223) % 100
+                // with seed = tick ^ target ^ attacker. For early ticks and small IDs
+                // it depends only on seed mod 4 (23/48/73/98), so attempts that keep
+                // landing on one tick residue can miss every time. Cycle residues so
+                // at least three of every four attempts roll a hit.
+                var requestedTick = attackerClient.SuggestedCommandTick(model.CurrentTick);
+                requestedTick += (ulong)((attempt - (int)(requestedTick % 4) + 4) % 4);
                 var sequence = attackerClient.Queue(new Command {
                     AttackRequested = new AttackRequested {
                         TargetEntityId = victim.EntityId,
                     },
-                }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+                }, requestedTick);
                 await attackerClient.PollAsync(TestContext.Current.CancellationToken);
                 var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
                 Assert.True(
@@ -2931,7 +2938,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 model.Apply(resolved);
                 var candidate = resolved.Snapshot!.Players.Single(
                     player => player.EntityId == victim.EntityId);
-                attemptTrace.Add($"attempt {attempt}: ack {acknowledgement.AppliedTick}, effect {effectTick}, end {endTick}; "
+                attemptTrace.Add($"attempt {attempt}: requested {requestedTick}, ack {acknowledgement.AppliedTick}, effect {effectTick}, end {endTick}; "
                     + $"action [{Describe(action.Snapshot)}]; resolved [{Describe(resolved.Snapshot)}]");
                 if (candidate.CombatMode == PlayerCombatMode.Block) {
                     blockedVictim = candidate;

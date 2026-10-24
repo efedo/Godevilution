@@ -51,10 +51,6 @@ failure-reporting race, Linux portability and the dropped Cathedral chest
 capture lane were fixed; the client renders with Vulkan. Retail-archive oracles
 stay local (public repository). See the [changelog](CHANGELOG.md) for detail.
 Catacombs-only parity work stays frozen until Phase 2 reaches that family.
-Open: `LiveServerResolvesShieldBlockForAPlayerTargetedMeleeAttack` fails in about
-one of ten full CI pipelines and never in isolation or locally. Elimination points
-to the victim not standing or attacking at first impact; the test now reports
-per-attempt state, so the next failure identifies the cause.
 
 ### Phase 1: Playable native Cathedral
 
@@ -82,6 +78,9 @@ contract; do not add, drop or reorder batches without the planner.
   translates the rest; the shelved Magma/Acid caster chains are reviewed for
   reuse, not merged wholesale.
 - Every new native comparison must be CI-runnable (see the worker guide).
+- Replace the legacy seeded `(seed * 1664525 + 1013904223) % N` rolls (PvP melee
+  hit, item affix/unique rolls, C++ replay model) with the native RNG stream as
+  part of the combat and item ports; see inventory 2.8.
 
 ### Phase 3: Complete client
 
