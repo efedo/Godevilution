@@ -2880,6 +2880,14 @@ public sealed partial class LiveAuthoritativeServerTests
             var model = new AuthoritativeClientModel();
             model.Apply(attackerInitial);
             PlayerSnapshot? blockedVictim = null;
+            var attemptTrace = new List<string>();
+            string Describe(Snapshot snapshot)
+            {
+                var a = snapshot.Players.Single(player => player.EntityId == attackerEntityId);
+                var v = snapshot.Players.Single(player => player.EntityId == victim.EntityId);
+                return $"tick {snapshot.Tick}: attacker ({a.PositionX},{a.PositionY}) {a.CombatMode} action {a.CurrentAction?.Kind}; "
+                    + $"victim ({v.PositionX},{v.PositionY}) {v.CombatMode} until {v.CombatModeEndTick} life {v.Life}";
+            }
             for (var attempt = 0; attempt < 8 && blockedVictim is null; attempt++) {
                 var sequence = attackerClient.Queue(new Command {
                     AttackRequested = new AttackRequested {
@@ -2923,13 +2931,17 @@ public sealed partial class LiveAuthoritativeServerTests
                 model.Apply(resolved);
                 var candidate = resolved.Snapshot!.Players.Single(
                     player => player.EntityId == victim.EntityId);
+                attemptTrace.Add($"attempt {attempt}: ack {acknowledgement.AppliedTick}, effect {effectTick}, end {endTick}; "
+                    + $"action [{Describe(action.Snapshot)}]; resolved [{Describe(resolved.Snapshot)}]");
                 if (candidate.CombatMode == PlayerCombatMode.Block) {
                     blockedVictim = candidate;
                     Assert.Equal(victimLifeBeforeImpact, candidate.Life);
                 }
             }
 
-            Assert.NotNull(blockedVictim);
+            Assert.True(blockedVictim is not null,
+                "No melee attempt observed a block:" + Environment.NewLine
+                    + string.Join(Environment.NewLine, attemptTrace));
             Assert.Equal(PlayerCombatMode.Block, blockedVictim!.CombatMode);
         } finally {
             if (Directory.Exists(overlayRoot))
