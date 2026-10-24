@@ -160,7 +160,7 @@ correction. Do not broaden them to ordinary gameplay work. If a conflict arises,
 identify the exact human instruction rather than creating a new restriction.
 
 The [worker policy](completion-plan.md#worker-delegation) specifies two GPT-6.1
-Sol/xhigh implementers and one separate GPT-6.1 Sol/medium independent reviewer. Create
+Sol/medium implementers and one separate GPT-6.1 Sol/xhigh independent reviewer. Create
 one reusable pool in a clean session; do not assume old chat handles exist there.
 No model substitution, replacement per package or nested delegation. Root owns
 integration, necessary verification and selective cohesive commits.

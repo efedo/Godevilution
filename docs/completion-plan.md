@@ -23,8 +23,8 @@ embedded Lua nor the C++/SDL runtime.
 Execute this goal through the milestone dependencies and acceptance gates in
 this plan, with accepted verification summarized in `test-history.md`. The primary
 agent owns planning, integration, acceptance, documentation, and cohesive
-commits. Use a fixed pool of two GPT-6.1 Sol implementation workers at extra-high
-reasoning effort and one separate, independent GPT-6.1 Sol reviewer at medium effort.
+commits. Use a fixed pool of two GPT-6.1 Sol implementation workers at medium
+reasoning effort and one separate, independent GPT-6.1 Sol reviewer at extra-high effort.
 Reuse these same workers for successive bounded packages until completion,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
@@ -938,8 +938,8 @@ universal product gates.
 ### Worker delegation
 
 - Use a fixed pool of two GPT-6.1 Sol (`gpt-6.1-sol`) implementation workers
-  with `xhigh` reasoning effort and one separate, independent GPT-6.1 Sol
-  reviewer with `medium` reasoning effort. This supersedes all earlier worker
+  with `medium` reasoning effort and one separate, independent GPT-6.1 Sol
+  reviewer with `xhigh` reasoning effort. This supersedes all earlier worker
   models (including GPT-6 Luna implementers), effort settings, and five-worker
   policies. Do not silently substitute another model or effort setting; report
   unavailability and obtain direction.
@@ -961,7 +961,7 @@ universal product gates.
   references, and acceptance criteria. Require a handoff before reassigning a
   worker. Assign disjoint files/contracts; serialize shared simulation, protocol,
   fixture-hash, and status edits.
-- Have the same independent GPT-6.1 Sol reviewer at medium effort critically
+- Have the same independent GPT-6.1 Sol reviewer at extra-high effort critically
   review each substantial package. The reviewer inspects the actual diff, native
   behavior, test evidence, compatibility, and plan acceptance criteria, and identifies
   missing branches or regressions instead of relying on the implementer's
