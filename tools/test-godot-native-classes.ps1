@@ -4,7 +4,9 @@ param(
     [string]$GodotExecutable,
     [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 900,
-    [switch]$NativeTown
+    [switch]$NativeTown,
+    # Required for an all-class Town profile; class-bound profiles imply their class.
+    [ValidateSet('warrior', 'rogue', 'sorcerer')] [string]$Class
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,7 +21,7 @@ function Test-NativeClassIntegerInRange([object]$Value, [decimal]$Minimum, [deci
 }
 
 function Assert-NativeClassEvidence($Scene, $ProcessEvidence, [int]$ExpectedClassId, [string]$Phase) {
-    if ($ExpectedClassId -notin @(0, 2) -or $Scene.Passed -isnot [bool] -or -not $Scene.Passed -or
+    if ($ExpectedClassId -notin @(0, 1, 2) -or $Scene.Passed -isnot [bool] -or -not $Scene.Passed -or
         $Scene.Mode -cne 'SinglePlayer' -or
         -not (Test-NativeClassIntegerInRange $Scene.ClassId 0 2) -or $Scene.ClassId -ne $ExpectedClassId -or
         -not (Test-NativeClassIntegerInRange $ProcessEvidence.ClassId 0 2) -or $ProcessEvidence.ClassId -ne $ExpectedClassId) {
@@ -214,17 +216,21 @@ $evidenceMetadataPath = $metadataPath
 $contentManifestHash = [string]$metadata.contentManifestHash
 $profileKind = 'cathedral-native-class-progression-playtest'
 $adapterId = 'devilution.diablo.cathedral-native-class-progression.v1'
+$allClass = $NativeTown -and (Test-Path -LiteralPath (Join-Path $profileRoot 'cathedral-native-all-class-town-playtest.json') -PathType Leaf)
+if ($allClass -ne [bool]$Class) { throw '-Class is required for, and only for, an all-class native Town profile.' }
 if ($NativeTown) {
-    $evidenceMetadataPath = Join-Path $profileRoot 'cathedral-native-town-progression-playtest.json'
+    $townFile = if ($allClass) { 'cathedral-native-all-class-town-playtest.json' } else { 'cathedral-native-town-progression-playtest.json' }
+    $evidenceMetadataPath = Join-Path $profileRoot $townFile
     $townMetadata = Get-Content -LiteralPath $evidenceMetadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
-    if ($townMetadata.formatVersion -ne 5 -or
-        $townMetadata.adapterId -cne 'devilution.diablo.cathedral-native-town-progression.v1' -or
+    $expectedTownAdapter = if ($allClass) { 'devilution.diablo.cathedral-native-all-class-town.v1' } else { 'devilution.diablo.cathedral-native-town-progression.v1' }
+    if ($townMetadata.formatVersion -ne $(if ($allClass) { 6 } else { 5 }) -or
+        $townMetadata.adapterId -cne $expectedTownAdapter -or
         ($townMetadata.classProfile | ConvertTo-Json -Depth 64 -Compress) -cne
             ($metadata | ConvertTo-Json -Depth 64 -Compress)) {
         throw 'The supplied Town profile does not retain the exact format-4 class identity.'
     }
     $contentManifestHash = [string]$townMetadata.contentManifestHash
-    $profileKind = 'cathedral-native-town-progression-playtest'
+    $profileKind = if ($allClass) { 'cathedral-native-all-class-town-playtest' } else { 'cathedral-native-town-progression-playtest' }
     $adapterId = [string]$townMetadata.adapterId
     if ([string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_SCENE_PACK) -or
         [string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_PLAYER_PACK)) {
@@ -237,21 +243,29 @@ if (($metadata.formatVersion -isnot [int] -and $metadata.formatVersion -isnot [l
     throw 'The supplied profile is not the format-4 class-bound native progression profile.'
 }
 $classFacts = @{
-    warrior = @{ Id = 0; Life = 4480; Mana = 640; Light = 10; Idle = 10 }
-    sorcerer = @{ Id = 2; Life = 1920; Mana = 4480; Light = 10; Idle = 8 }
+    warrior = @{ Id = 0; Life = 4480; Mana = 640; Light = 10; Idle = 10; Phase = 'NativeWarrior' }
+    rogue = @{ Id = 1; Life = 2880; Mana = 1440; Light = 10; Idle = 8; Phase = 'NativeRogue' }
+    sorcerer = @{ Id = 2; Life = 1920; Mana = 4480; Light = 10; Idle = 8; Phase = 'NativeSorcerer' }
 }
-$classSymbol = [string]$metadata.heroClassSymbol
-if (-not $classFacts.ContainsKey($classSymbol)) {
+# An all-class profile's hero fields describe its default Warrior; the chosen class comes from -Class.
+$classSymbol = if ($allClass) { $Class } else { [string]$metadata.heroClassSymbol }
+if (-not $classFacts.ContainsKey($classSymbol) -or (-not $allClass -and $classSymbol -ceq 'rogue')) {
     throw 'The class-bound native profile must select Warrior or Sorcerer.'
 }
 $facts = $classFacts[$classSymbol]
-if ($metadata.heroBaseLifeMaximum -ne $facts.Life -or $metadata.heroBaseManaMaximum -ne $facts.Mana -or
-    $metadata.heroLightRadius -ne $facts.Light -or $metadata.heroIdleFrames -ne $facts.Idle) {
+$profileFacts = if ($allClass) { @($townMetadata.classes | Where-Object classId -eq $facts.Id)[0] } else { $null }
+if ($allClass -and ($null -eq $profileFacts -or $profileFacts.heroBaseLifeMaximum -ne $facts.Life -or
+        $profileFacts.heroBaseManaMaximum -ne $facts.Mana -or $profileFacts.heroLightRadius -ne $facts.Light -or
+        $profileFacts.heroIdleFrames -ne $facts.Idle)) {
+    throw 'The all-class native profile does not contain the canonical selected-class hero facts.'
+}
+if (-not $allClass -and ($metadata.heroBaseLifeMaximum -ne $facts.Life -or $metadata.heroBaseManaMaximum -ne $facts.Mana -or
+    $metadata.heroLightRadius -ne $facts.Light -or $metadata.heroIdleFrames -ne $facts.Idle)) {
     throw 'The class-bound native profile does not contain the canonical selected-class hero facts.'
 }
 $classId = $facts.Id
-$journeyPhase = if ($classId -eq 0) { 'NativeWarriorJourney' } else { 'NativeSorcererJourney' }
-$resumePhase = if ($classId -eq 0) { 'NativeWarriorResume' } else { 'NativeSorcererResume' }
+$journeyPhase = $facts.Phase + 'Journey'
+$resumePhase = $facts.Phase + 'Resume'
 $sessionDirectory = Join-Path $profileRoot ('sessions/native-class-' + $classSymbol + '-' + [guid]::NewGuid().ToString('N'))
 $sessionsRoot = Join-Path $profileRoot 'sessions'
 New-Item -ItemType Directory -Path $sessionsRoot -Force | Out-Null
@@ -303,11 +317,11 @@ if ($classId -eq 0) {
         $nativeClass.MaxDurabilityAfterRepair -ge $nativeClass.MaxDurabilityBeforeRepair) {
         throw 'The Warrior Journey did not prove natural starting-equipment wear followed by the authoritative Repair mutation.'
     }
-} elseif ($nativeClass.ChargesBefore -le 0 -or
+} elseif ($classId -eq 2 -and ($nativeClass.ChargesBefore -le 0 -or
     $nativeClass.ChargesAfterCast -ne $nativeClass.ChargesBefore - 1 -or
     $nativeClass.ManaAfter -ge $nativeClass.ManaBefore -or
     $nativeClass.ChargesAfterRecharge -ne $nativeClass.MaxChargesAfterRecharge -or
-    $nativeClass.MaxChargesAfterRecharge -ge $nativeClass.MaxChargesBeforeRecharge) {
+    $nativeClass.MaxChargesAfterRecharge -ge $nativeClass.MaxChargesBeforeRecharge)) {
     throw 'The Sorcerer Journey did not prove a charged-staff cast, Mana use and authoritative Recharge mutation.'
 }
 
@@ -355,7 +369,9 @@ if ($NativeTown) {
         throw 'Native Town wire geometry or full fine/coarse/special/protected/RNG checkpoint changed across cold restore.'
     }
 }
-$markerFile = if ($NativeTown) { 'cathedral-native-town-progression-session.json' } else { 'cathedral-native-class-progression-session.json' }
+$markerFile = if ($allClass) { 'cathedral-native-all-class-town-session.json' } elseif ($NativeTown) { 'cathedral-native-town-progression-session.json' } else { 'cathedral-native-class-progression-session.json' }
+$markerClassId = if ($allClass) { -1 } else { $classId }
+$markerClassSymbol = if ($allClass) { 'all' } else { $classSymbol }
 $markerPath = Join-Path $sessionDirectory $markerFile
 $marker = Get-Content -LiteralPath $markerPath -Raw -ErrorAction Stop | ConvertFrom-Json
 $metadataHash = (Get-FileHash -LiteralPath $evidenceMetadataPath -Algorithm SHA256).Hash.ToUpperInvariant()
@@ -364,7 +380,7 @@ if ($marker.FormatVersion -ne 1 -or $marker.ProfileKind -cne $profileKind -or
     $marker.MetadataHash -cne $metadataHash -or $marker.ContentTreeHash -cne $metadata.packFileHash -or
     $marker.PopulationTreeHash -cne $metadata.populationPackFileHash -or
     $marker.RuntimeTreeHash -cne $metadata.runtimePackFileHash -or
-    $marker.ClassId -ne $classId -or $marker.ClassSymbol -cne $classSymbol) {
+    $marker.ClassId -ne $markerClassId -or $marker.ClassSymbol -cne $markerClassSymbol) {
     throw 'The save marker does not bind this session to the selected class-bound profile.'
 }
 
@@ -434,4 +450,5 @@ foreach ($processEvidence in @($journeyProcess, $resumeProcess)) {
         } finally { $ownedProcess.Dispose() }
     }
 }
-Write-Output "Native $classSymbol generated combat, class ability, exact cold resume and fresh-host retention passed. Evidence: $sessionDirectory"
+$checks = if ($classId -eq 1) { 'generated combat' } else { 'generated combat, class ability' }
+Write-Output "Native $classSymbol $checks, exact cold resume and fresh-host retention passed. Evidence: $sessionDirectory"

@@ -47,7 +47,9 @@ public partial class SessionAcceptance
             && pack.ContentManifestHash == main.ObservedIdentity!.ContentManifestHash,
             "The requested native player pack did not bind the admitted content identity.");
         var player = main.ObservedSnapshot!.Players.Single();
-        var weapon = player.CharacterClassId == 0 ? NativePlayerWeapon.SwordShield : NativePlayerWeapon.Staff;
+        var weapon = player.CharacterClassId switch {
+            0 => NativePlayerWeapon.SwordShield, 1 => NativePlayerWeapon.Bow, _ => NativePlayerWeapon.Staff,
+        };
         var expected = new List<NativePlayerClipKey> {
             new(player.CharacterClassId, NativePlayerLocation.Town, NativePlayerArmor.Light, weapon, NativePlayerGraphic.TownStand),
         };
@@ -55,7 +57,7 @@ public partial class SessionAcceptance
             expected.Add(new(player.CharacterClassId, NativePlayerLocation.Town, NativePlayerArmor.Light, weapon, NativePlayerGraphic.TownWalk));
             expected.Add(new(player.CharacterClassId, NativePlayerLocation.Cathedral, NativePlayerArmor.Light, weapon, NativePlayerGraphic.Stand));
             expected.Add(new(player.CharacterClassId, NativePlayerLocation.Cathedral, NativePlayerArmor.Light, weapon, NativePlayerGraphic.Walk));
-            if (player.CharacterClassId == 0)
+            if (player.CharacterClassId != 2)
                 expected.Add(new(player.CharacterClassId, NativePlayerLocation.Cathedral, NativePlayerArmor.Light, weapon, NativePlayerGraphic.Attack));
             else {
                 expected.Add(new(player.CharacterClassId, NativePlayerLocation.Cathedral, NativePlayerArmor.Light, weapon, NativePlayerGraphic.Lightning));

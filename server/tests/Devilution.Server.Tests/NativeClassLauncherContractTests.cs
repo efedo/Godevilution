@@ -28,7 +28,7 @@ public sealed class NativeClassLauncherContractTests
             "    AcceptancePhase = 'NativeWarriorJourney'; Headless = $true; Automated = $true; PersistenceMode = 'cohort'; SessionDirectory = $session",
             "}",
             "$classProfile = Join-Path $work 'profile-does-not-need-to-exist'",
-            "Assert-Rejected 'class profile in base Create phase' 'Class-bound native profiles require a direct single-player Warrior or Sorcerer cohort launch or their explicit acceptance phases.' @{",
+            "Assert-Rejected 'class profile in base Create phase' 'Class-bound native profiles require a direct single-player Warrior, Rogue or Sorcerer cohort launch or their explicit acceptance phases.' @{",
             "    AcceptancePhase = 'Create'; CathedralNativeClassProfileDirectory = $classProfile; PersistenceMode = 'cohort'; SessionDirectory = $session",
             "}",
             "Assert-Rejected 'class override on an acceptance phase' 'Native class acceptance requires its explicit class profile and automated headless cohort session.' @{",

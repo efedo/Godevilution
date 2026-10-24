@@ -11,21 +11,20 @@ using Godevilution.Tools.Archive;
 
 namespace Godevilution.Tools.Setup;
 
-public sealed record NativeSetupProfile(string ClassSymbol, string Directory, string ContentManifestHash);
-
 /** The published build the launcher reads from current.json. Pack paths are Godot res:// catalog paths. */
 public sealed record NativeSetupState(
     int SchemaVersion,
     string Fingerprint,
     string Archive,
-    IReadOnlyList<NativeSetupProfile> Profiles,
+    string ProfileDirectory,
+    string ContentManifestHash,
     string PlayerPack,
     string ScenePack,
     string TownerPack,
     string ObjectPack);
 
 /**
- * Builds the native Town profiles and the client art packs from the player's
+ * Builds the all-class native Town profile and the client art packs from the player's
  * archive once per fingerprint and publishes them by writing current.json last.
  * Profiles live under the setup root; packs live in the ignored client asset
  * folders the launcher already stages. Older builds are removed after publish.
@@ -35,7 +34,8 @@ public static class NativeSetupBuilder
     public const string StateFileName = "current.json";
     public const string BuildPrefix = "build-";
     public const string PackPrefix = "setup-";
-    public static readonly IReadOnlyList<string> ClassSymbols = ["warrior", "sorcerer"];
+    public const string ProfileDirectoryName = "all-classes";
+    public const string ProfilePrefix = "profile-";
 
     // The seeds the qualified native class and Town profiles were proven with.
     private const string DepthSeeds = "2588,2588,1,4294967295";
@@ -66,21 +66,20 @@ public static class NativeSetupBuilder
             return null;
         }
         if (state is null || state.SchemaVersion != NativeSetupFingerprint.SchemaVersion || state.Fingerprint != fingerprint
-            || state.Profiles is not { Count: > 0 }
-            || state.Profiles.Any(profile => !File.Exists(Path.Combine(profile.Directory, TownProfileFileName)))
+            || string.IsNullOrEmpty(state.ProfileDirectory)
+            || !File.Exists(Path.Combine(state.ProfileDirectory, TownProfileFileName))
             || new[] { state.PlayerPack, state.ScenePack, state.TownerPack, state.ObjectPack }
                 .Any(pack => !File.Exists(ResourceToFile(repositoryRoot, pack))))
             return null;
         return state;
     }
 
-    public const string TownProfileFileName = "cathedral-native-town-progression-playtest.json";
+    public const string TownProfileFileName = CathedralNativeTownPlaytestCompiler.AllClassProfileFileName;
 
     public static NativeSetupState Build(string setupRoot, string repositoryRoot, string archivePath, string fingerprint, TextWriter log)
     {
         var key = fingerprint[..16];
         var assets = Path.Combine(repositoryRoot, "assets");
-        var buildDirectory = Path.Combine(setupRoot, BuildPrefix + key);
         var staging = Path.Combine(setupRoot, $".{BuildPrefix}{key}.staging-{Guid.NewGuid():N}");
         Directory.CreateDirectory(setupRoot);
         try {
@@ -89,16 +88,14 @@ public static class NativeSetupBuilder
             var sources = NativeSourceExport.Write(archive, assets, Path.Combine(staging, "sources"));
             var metadataDirectory = Path.Combine(staging, "metadata");
             CathedralPopulationMetadataCompiler.CompileDirectory(sources.MetadataDirectory, metadataDirectory);
-            var townProfiles = new List<string>();
-            foreach (var classSymbol in ClassSymbols) {
-                log.WriteLine($"Compiling the native {classSymbol} profile...");
-                var classDirectory = Path.Combine(staging, classSymbol + "-class");
-                CompileClassProfile(repositoryRoot, sources, metadataDirectory, classDirectory, classSymbol);
-                var townDirectory = Path.Combine(staging, classSymbol);
-                CathedralNativeTownPlaytestCompiler.Compile(new(classDirectory, sources.TownSourceDirectory,
-                    Path.Combine(assets, "txtdata", "towners", "towners.tsv"), townDirectory, TownSeed));
-                townProfiles.Add(townDirectory);
-            }
+            log.WriteLine("Compiling the native Warrior, Rogue and Sorcerer profile...");
+            var classDirectory = Path.Combine(staging, "all-classes-progression");
+            CompileClassProfile(repositoryRoot, sources, metadataDirectory, classDirectory);
+            var townDirectory = Path.Combine(staging, ProfileDirectoryName);
+            CathedralNativeTownPlaytestCompiler.Compile(new(classDirectory, sources.TownSourceDirectory,
+                Path.Combine(assets, "txtdata", "towners", "towners.tsv"), townDirectory, TownSeed) { AllClasses = true });
+            Directory.Delete(classDirectory, recursive: true);
+            string[] townProfiles = [townDirectory];
 
             var packs = PackFolders.Select(pack => Path.Combine(ClientAssetsDirectory(repositoryRoot), pack.Folder, PackPrefix + key)).ToArray();
             foreach (var pack in packs.Where(Directory.Exists))
@@ -112,19 +109,10 @@ public static class NativeSetupBuilder
             NativeTownerArtCompiler.Import(new(string.Empty, Path.Combine(assets, "txtdata"), townProfiles, packs[2], source));
             NativeObjectArtCompiler.Import(new(string.Empty, Path.Combine(assets, "txtdata"), townProfiles, packs[3], source));
 
-            // Sources and intermediate class profiles are retail-derived build inputs; keep only the Town profiles.
-            Directory.Delete(sources.GeometryDirectory, recursive: true);
-            Directory.Delete(Path.Combine(staging, "sources"), recursive: true);
-            if (Directory.Exists(buildDirectory))
-                Directory.Delete(buildDirectory, recursive: true);
-            Directory.Move(staging, buildDirectory);
-
-            var state = new NativeSetupState(NativeSetupFingerprint.SchemaVersion, fingerprint, archivePath,
-                ClassSymbols.Select(classSymbol => {
-                    var directory = Path.Combine(buildDirectory, classSymbol);
-                    using var profile = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory, TownProfileFileName)));
-                    return new NativeSetupProfile(classSymbol, directory, profile.RootElement.GetProperty("contentManifestHash").GetString()!);
-                }).ToArray(),
+            var profileDirectory = PublishProfile(setupRoot, townDirectory);
+            using var profile = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(profileDirectory, TownProfileFileName)));
+            var state = new NativeSetupState(NativeSetupFingerprint.SchemaVersion, fingerprint, archivePath, profileDirectory,
+                profile.RootElement.GetProperty("contentManifestHash").GetString()!,
                 FileToResource(repositoryRoot, packs[0], PackFolders[0].Catalog),
                 FileToResource(repositoryRoot, packs[1], PackFolders[1].Catalog),
                 FileToResource(repositoryRoot, packs[2], PackFolders[2].Catalog),
@@ -133,7 +121,7 @@ public static class NativeSetupBuilder
             File.WriteAllText(statePath + ".tmp", JsonSerializer.Serialize(state, Json).Replace("\n", "\r\n", StringComparison.Ordinal),
                 new UTF8Encoding(false));
             File.Move(statePath + ".tmp", statePath, overwrite: true);
-            RemoveOtherBuilds(setupRoot, repositoryRoot, key);
+            RemoveOtherBuilds(setupRoot, repositoryRoot, key, profileDirectory);
             return state;
         } finally {
             if (Directory.Exists(staging))
@@ -141,9 +129,33 @@ public static class NativeSetupBuilder
         }
     }
 
-    /** The --native-cathedral-depth-progression --native-class path of Cathedral.Playtest. */
+    /**
+     * Profiles live at profile-<content hash> with their saves in its sessions folder (the
+     * launcher requires that). A rebuild with unchanged content keeps the existing profile and
+     * its saves; changed metadata for the same content replaces the files but keeps the saves.
+     */
+    private static string PublishProfile(string setupRoot, string builtProfile)
+    {
+        var built = File.ReadAllBytes(Path.Combine(builtProfile, TownProfileFileName));
+        using var document = JsonDocument.Parse(built);
+        var contentHash = document.RootElement.GetProperty("contentManifestHash").GetString()!;
+        var target = Path.Combine(setupRoot, ProfilePrefix + contentHash[..16]);
+        var existingProfile = Path.Combine(target, TownProfileFileName);
+        if (File.Exists(existingProfile) && File.ReadAllBytes(existingProfile).AsSpan().SequenceEqual(built))
+            return target;
+        if (Directory.Exists(target)) {
+            var sessions = Path.Combine(target, "sessions");
+            if (Directory.Exists(sessions))
+                Directory.Move(sessions, Path.Combine(builtProfile, "sessions"));
+            Directory.Delete(target, recursive: true);
+        }
+        Directory.Move(builtProfile, target);
+        return target;
+    }
+
+    /** The --native-cathedral-depth-progression path of Cathedral.Playtest, starting every base-game class. */
     private static void CompileClassProfile(string repositoryRoot, NativeSourceExportLayout sources, string metadataDirectory,
-        string outputDirectory, string classSymbol)
+        string outputDirectory)
     {
         var basePack = ContentPackLoader.LoadManifestDirectory(Path.Combine(repositoryRoot, "server", "content", "base"));
         var metadata = AuthoritativeCathedralPopulationMetadata.Load(ContentPackLoader.LoadManifestDirectory(metadataDirectory));
@@ -153,15 +165,20 @@ public static class NativeSetupBuilder
         var geometry = ContentPackLoader.LoadDirectory("explicit-cathedral-geometry", "1", sources.GeometryDirectory);
         string Table(string name) => geometry.Tables.Single(table => table.SourcePath == name).ToCanonicalTsv();
         var seeds = DepthSeeds.Split(',').Select(seed => uint.Parse(seed, CultureInfo.InvariantCulture)).ToArray();
-        CathedralNativePopulationPlaytestCompiler.CompileClassProgression(new(basePack, metadata, runtime, footprints, outputDirectory,
+        CathedralNativePopulationPlaytestCompiler.CompileAllClassProgression(new(basePack, metadata, runtime, footprints, outputDirectory,
             Table(AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath),
-            Table(AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath), seeds) { NativeClassSymbol = classSymbol });
+            Table(AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath), seeds));
     }
 
-    private static void RemoveOtherBuilds(string setupRoot, string repositoryRoot, string key)
+    /** Removes earlier build folders, art packs, and profiles that hold no saves. */
+    private static void RemoveOtherBuilds(string setupRoot, string repositoryRoot, string key, string currentProfile)
     {
         foreach (var directory in Directory.EnumerateDirectories(setupRoot, BuildPrefix + "*"))
-            if (Path.GetFileName(directory) != BuildPrefix + key)
+            Directory.Delete(directory, recursive: true);
+        foreach (var directory in Directory.EnumerateDirectories(setupRoot, ProfilePrefix + "*"))
+            if (!string.Equals(Path.GetFullPath(directory), Path.GetFullPath(currentProfile), StringComparison.OrdinalIgnoreCase)
+                && !(Directory.Exists(Path.Combine(directory, "sessions"))
+                    && Directory.EnumerateFileSystemEntries(Path.Combine(directory, "sessions")).Any()))
                 Directory.Delete(directory, recursive: true);
         foreach (var (folder, _) in PackFolders) {
             var parent = Path.Combine(ClientAssetsDirectory(repositoryRoot), folder);

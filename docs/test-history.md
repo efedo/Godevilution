@@ -9,6 +9,17 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-24 — One profile, all supported classes
+
+On the setup-built all-class Town profile, `test-godot-native-classes.ps1
+-NativeTown -Class` passed headless Journey/Resume for Warrior (Repair), Rogue
+(bow combat, no class ability step) and Sorcerer (staff cast, Recharge) with all
+four art packs: generated kill, XP, Town services, exact cold resume and the
+next receipt. An explicit server test restored each class's saved cohort into
+only that class run. The 2026-10-19 class-bound Warrior Town profile still
+passed its own pair with art rebuilt through the importers' `--archive` option.
+The windowed default launch was not run.
+
 ### 2026-10-24 — First-run native setup
 
 From an empty `.local/godot/native`, `Native.Setup` found the GOG archive through

@@ -11,7 +11,7 @@ namespace Godevilution.Tools.Setup;
  */
 public static class NativeSetupFingerprint
 {
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
 
     /** Repository-relative inputs; directories are hashed recursively without bin/obj. */
     public static IReadOnlyList<string> InputPaths { get; } = [

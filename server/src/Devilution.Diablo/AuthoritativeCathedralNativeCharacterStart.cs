@@ -37,27 +37,36 @@ public sealed class AuthoritativeCathedralNativeCharacterStart
     /** False only for the compatibility profile synthesized when the table is absent. */
     public bool HasCompiledTable { get; }
 
-    /** Resolves the closed optional table, or the byte-compatible legacy Rogue start. */
+    /**
+     * Resolves the closed optional table, or the byte-compatible legacy Rogue start.
+     * A class-bound profile has one row; an all-class profile has one row per
+     * base-game class and requires the selected class.
+     */
     public static AuthoritativeCathedralNativeCharacterStart Resolve(
         TsvTable? table,
         AuthoritativePlayerClassCatalog playerClasses,
         AuthoritativePlayerAnimationCatalog playerAnimations,
-        AuthoritativePlayerLoadoutCatalog playerLoadouts)
+        AuthoritativePlayerLoadoutCatalog playerLoadouts,
+        uint? selectedClassId = null)
     {
         ArgumentNullException.ThrowIfNull(playerClasses);
         ArgumentNullException.ThrowIfNull(playerAnimations);
         ArgumentNullException.ThrowIfNull(playerLoadouts);
 
-        if (table is null)
+        if (table is null) {
+            if (selectedClassId is not null)
+                throw new InvalidDataException("An all-class native start requires its compiled character-start table.");
             return CreateLegacyRogue(playerClasses, playerAnimations, playerLoadouts);
-        if (!string.Equals(table.SourcePath, TableName, StringComparison.Ordinal)
-            || !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal))
-            throw new InvalidDataException(
-                $"Native character-start table must use its exact ordered schema at '{TableName}'.");
-        if (table.Rows.Count != 1)
+        }
+        var classIds = ClassIds(table);
+        if (selectedClassId is null && classIds.Count != 1)
             throw new InvalidDataException("Native character-start table must contain exactly one class row.");
+        if (selectedClassId is { } selected && !classIds.Contains(selected))
+            throw new NotSupportedException($"The native profile has no start for class {selected}.");
 
-        var row = table.Rows[0];
+        var row = selectedClassId is { } chosen
+            ? table.Rows.Single(candidate => candidate.RequiredUInt32("class_id") == chosen)
+            : table.Rows[0];
         var classId = row.RequiredUInt32("class_id");
         if (classId is not (0U or 1U or 2U))
             throw new InvalidDataException("Native character-start table supports only Warrior, Rogue, or Sorcerer.");
@@ -83,6 +92,20 @@ public sealed class AuthoritativeCathedralNativeCharacterStart
                 "Native character-start hero facts must match the canonical class, loadout, and animation catalogs.");
 
         return new(classId, playerClass.Symbol, hero, hasCompiledTable: true);
+    }
+
+    /** The class IDs of a compiled table, in row order; each row is a distinct base-game class. */
+    public static IReadOnlyList<uint> ClassIds(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!string.Equals(table.SourcePath, TableName, StringComparison.Ordinal)
+            || !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Native character-start table must use its exact ordered schema at '{TableName}'.");
+        var ids = table.Rows.Select(row => row.RequiredUInt32("class_id")).ToArray();
+        if (ids.Length is < 1 or > 3 || ids.Distinct().Count() != ids.Length)
+            throw new InvalidDataException("Native character-start rows must name one to three distinct classes.");
+        return Array.AsReadOnly(ids);
     }
 
     private static AuthoritativeCathedralNativeCharacterStart CreateLegacyRogue(

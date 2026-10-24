@@ -120,11 +120,30 @@ public static class CathedralNativePopulationPlaytestCompiler
     public static Profile CompileClassProgression(CathedralNativePopulationPlaytestCompilerOptions options)
         => CompileCore(options, progression: true, depthProgression: true, classBound: true);
 
+    /**
+     * Builds the four-floor route with one character-start row per base-game class
+     * (Warrior, Rogue, Sorcerer). The profile's hero fields describe the default
+     * Warrior; only the all-class Town profile and adapter consume it.
+     */
+    public static Profile CompileAllClassProgression(CathedralNativePopulationPlaytestCompilerOptions options)
+    {
+        if (options?.NativeClassSymbol is not null)
+            throw new ArgumentException("The all-class progression starts every base-game class.", nameof(options));
+        return CompileCore(options with { NativeClassSymbol = AllClassSymbols[0] },
+            progression: true, depthProgression: true, classBound: true, allClass: true);
+    }
+
+    public const string AllClassPolicy = "original-diablo-single-player-normal-all-classes-town-l1-l4";
+
+    /** Base-game classes in class-ID order. */
+    public static IReadOnlyList<string> AllClassSymbols { get; } = ["warrior", "rogue", "sorcerer"];
+
     private static Profile CompileCore(
         CathedralNativePopulationPlaytestCompilerOptions options,
         bool progression,
         bool depthProgression = false,
-        bool classBound = false)
+        bool classBound = false,
+        bool allClass = false)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.BasePack);
@@ -160,9 +179,9 @@ public static class CathedralNativePopulationPlaytestCompiler
         var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(
             options.InventoryFootprints, semanticsTable);
         if (classBound) {
-            var classId = nativeClassSymbol == "warrior" ? 0U : 2U;
-            ValidateNativeClassStartingItems(baseItems,
-                baseActivation.PlayerLoadouts.GetRequired(classId), itemSidecars);
+            foreach (var classId in allClass ? new[] { 0U, 1U, 2U } : [nativeClassSymbol == "warrior" ? 0U : 2U])
+                ValidateNativeClassStartingItems(baseItems,
+                    baseActivation.PlayerLoadouts.GetRequired(classId), itemSidecars);
         }
         var effectiveItems = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(
             nativeItems, baseItems, baseActivation.Simulation.Spells, itemSidecars);
@@ -179,7 +198,9 @@ public static class CathedralNativePopulationPlaytestCompiler
 
         var populationPack = CreatePopulationSidecar(options.PopulationMetadata);
         var runtimeTable = options.MonsterRuntime.CreateTable();
-        var (hero, characterStartTable) = ResolveHero(baseActivation, nativeClassSymbol);
+        var (hero, characterStartTable) = allClass
+            ? ResolveAllClassHero(baseActivation)
+            : ResolveHero(baseActivation, nativeClassSymbol);
         var runtimePack = CreateRuntimeSidecar(runtimeTable, options.InventoryFootprints, semanticsTable, characterStartTable);
 
         var outputRoot = ValidateFreshOutputPath(options.OutputDirectory);
@@ -214,7 +235,11 @@ public static class CathedralNativePopulationPlaytestCompiler
             var effectiveManifest = new ContentManifest(contentPack.Id, contentPack.Version,
                 [contentPack, publishedPopulationPack, publishedRuntimePack]);
             var composed = ComposedContent.Compose(effectiveManifest);
-            if (depthProgression)
+            if (allClass) {
+                foreach (var classId in new[] { 0U, 1U, 2U })
+                    _ = module.CathedralNativeDepthProgressionContentBootstrap.ActivateNativeDepthProgressionClass(
+                        composed, classId, StorySeed);
+            } else if (depthProgression)
                 _ = module.CathedralNativeDepthProgressionContentBootstrap.ActivateNativeDepthProgression(
                     composed, StorySeed);
             else if (progression)
@@ -250,7 +275,8 @@ public static class CathedralNativePopulationPlaytestCompiler
                 ComputeCanonicalTextHash(options.InventoryFootprints.ToCanonicalTsv()),
                 ComputeCanonicalTextHash(semanticsTable.ToCanonicalTsv()),
                 semanticsTable.Rows.Count,
-                classBound ? ClassProgressionPolicyPrefix + nativeClassSymbol + "-town-l1-l4"
+                allClass ? AllClassPolicy
+                    : classBound ? ClassProgressionPolicyPrefix + nativeClassSymbol + "-town-l1-l4"
                     : depthProgression ? DepthProgressionPolicy : progression ? ProgressionPolicy : PopulationPolicy,
                 depthProgression ? 4 : progression ? 2 : NativeDepth,
                 RequiredDepthSeeds[0],
@@ -350,7 +376,7 @@ public static class CathedralNativePopulationPlaytestCompiler
         }
 
         var lightRadius = template.CreatePlayer().LightRadius;
-        var startTable = CreateNativeCharacterStartTable(new(
+        var startTable = CreateNativeCharacterStartTable(new HeroFacts(
             playerClass.ClassId,
             classSymbol,
             template.BaseLifeMaximum,
@@ -365,22 +391,42 @@ public static class CathedralNativePopulationPlaytestCompiler
             resolved.Hero.MaximumManaBase, resolved.Hero.LightRadius, resolved.Hero.IdleFrames, 57, 40), startTable);
     }
 
-    private static TsvTable CreateNativeCharacterStartTable(HeroFacts hero)
+    /** Warrior hero facts for the profile and one compiled start row per base-game class. */
+    private static (HeroFacts Hero, TsvTable? CharacterStartTable) ResolveAllClassHero(DiabloContentActivation activation)
     {
-        var values = new[] {
+        var rows = AllClassSymbols.Select(symbol => CompiledHero(activation, symbol)).ToArray();
+        var table = CreateNativeCharacterStartTable(rows);
+        foreach (var row in rows)
+            _ = AuthoritativeCathedralNativeCharacterStart.Resolve(table, activation.PlayerClasses,
+                activation.PlayerAnimations, activation.PlayerLoadouts, row.ClassId);
+        return (rows[0], table);
+    }
+
+    /** The canonical class start the class-bound profiles compile, Rogue included (live light radius). */
+    private static HeroFacts CompiledHero(DiabloContentActivation activation, string classSymbol)
+    {
+        var playerClass = activation.PlayerClasses.Definitions.Single(definition =>
+            string.Equals(definition.Symbol, classSymbol, StringComparison.Ordinal));
+        var template = activation.PlayerLoadouts.CreateTemplate(
+            "native-cathedral-population-profile", playerClass.ClassId, null, null, null, 1,
+            startingPositionX: 57, startingPositionY: 40);
+        return new(playerClass.ClassId, classSymbol, template.BaseLifeMaximum, template.BaseManaMaximum,
+            template.CreatePlayer().LightRadius, activation.PlayerAnimations.GetRequired(playerClass.ClassId).IdleFrames, 57, 40);
+    }
+
+    private static TsvTable CreateNativeCharacterStartTable(params HeroFacts[] heroes)
+    {
+        var rows = heroes.Select(hero => string.Join('\t', new[] {
             hero.ClassId.ToString(System.Globalization.CultureInfo.InvariantCulture),
             hero.ClassSymbol,
             hero.BaseLifeMaximum.ToString(System.Globalization.CultureInfo.InvariantCulture),
             hero.BaseManaMaximum.ToString(System.Globalization.CultureInfo.InvariantCulture),
             hero.LightRadius.ToString(System.Globalization.CultureInfo.InvariantCulture),
             hero.IdleFrames.ToString(System.Globalization.CultureInfo.InvariantCulture),
-        };
-        var contents = string.Join("\r\n", [
-            "class_id\tclass_symbol\thero_base_life_maximum\thero_base_mana_maximum\thero_light_radius\thero_idle_frames",
-            string.Join('\t', values),
-            string.Empty,
-        ]);
-        return TsvTable.Parse(NativeCharacterStartTablePath, contents);
+        }));
+        return TsvTable.Parse(NativeCharacterStartTablePath, string.Join("\r\n",
+            ["class_id\tclass_symbol\thero_base_life_maximum\thero_base_mana_maximum\thero_light_radius\thero_idle_frames",
+             .. rows, string.Empty]));
     }
 
     private static ContentPack CreatePopulationSidecar(AuthoritativeCathedralPopulationMetadata metadata)

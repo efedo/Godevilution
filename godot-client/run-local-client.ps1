@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
@@ -134,7 +134,7 @@ if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -a
 if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and -not $cathedralDoors) {
     throw 'Cathedral door acceptance requires an explicit compiled -CathedralDoorProfileDirectory.'
 }
-$nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume')
+$nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
 if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
@@ -147,8 +147,8 @@ if ($nativeClassPhase -and (-not $Headless -or -not $Automated -or $CharacterCla
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
 if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not $nativeClassPhase) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
-    ($CharacterClassId -ge 0 -and $CharacterClassId -notin @(0, 2)))) {
-    throw 'Class-bound native profiles require a direct single-player Warrior or Sorcerer cohort launch or their explicit acceptance phases.'
+    ($CharacterClassId -ge 0 -and $CharacterClassId -notin @(0, 1, 2)))) {
+    throw 'Class-bound native profiles require a direct single-player Warrior, Rogue or Sorcerer cohort launch or their explicit acceptance phases.'
 }
 $cathedralNativePhases = @('CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume')
 if ($AcceptancePhase -in @('CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume') -and -not $cathedralProgression) {
@@ -2017,11 +2017,15 @@ try {
         . (Join-Path $repositoryRoot 'tools/NativeTownProfile.ps1')
         Get-CathedralNativeTownProfile $CathedralNativeTownProfileDirectory $SessionDirectory
     } else { $null }
-    $boundNativeClassId = if ($cathedralNativeTown) { $cathedralNativeTownProfile.ClassId } else { $cathedralNativeClassProfile.ClassId }
+    $allClassNativeTown = $cathedralNativeTown -and $cathedralNativeTownProfile.AllClass
+    $phaseClassId = if ($AcceptancePhase -like 'NativeWarrior*') { 0 } elseif ($AcceptancePhase -like 'NativeRogue*') { 1 } elseif ($AcceptancePhase -like 'NativeSorcerer*') { 2 } else { -1 }
+    # The all-class profile starts the class the player (or the acceptance phase) picks.
+    $boundNativeClassId = if ($allClassNativeTown) { if ($phaseClassId -ge 0) { $phaseClassId } else { $CharacterClassId } }
+        elseif ($cathedralNativeTown) { $cathedralNativeTownProfile.ClassId } else { $cathedralNativeClassProfile.ClassId }
     if (($cathedralClassNative -or $cathedralNativeTown) -and $CharacterClassId -ge 0 -and $CharacterClassId -ne $boundNativeClassId) {
         throw 'The requested character class ID does not match the class-bound native profile.'
     }
-    if ($nativeClassPhase -and (($AcceptancePhase -like 'NativeWarrior*') -ne ($boundNativeClassId -eq 0))) {
+    if ($nativeClassPhase -and $phaseClassId -ne $boundNativeClassId) {
         throw 'The native class acceptance phase does not match the compiled class profile.'
     }
     New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
@@ -2213,8 +2217,13 @@ try {
         if ($cathedralNativeTown) {
             $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeTownProfile.ClassMetadataPath
             $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_TOWN_PROFILE'] = $cathedralNativeTownProfile.MetadataPath
-            $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$cathedralNativeTownProfile.ClassId
-            $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = [string]$cathedralNativeTownProfile.ClassId
+            if ($allClassNativeTown) {
+                if ($boundNativeClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$boundNativeClassId }
+                $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = '0,1,2'
+            } else {
+                $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$cathedralNativeTownProfile.ClassId
+                $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = [string]$cathedralNativeTownProfile.ClassId
+            }
         }
         if ($nativeDepthEntryContinuation) {
             $clientEnvironment['GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE'] = $NativeDepthEntryBaselinePath
@@ -2328,10 +2337,10 @@ try {
                 $processEvidence.TownTreeHash = $cathedralNativeTownProfile.TownTreeHash
                 $processEvidence.TownCatalogFingerprint = $cathedralNativeTownProfile.Metadata.townCatalogFingerprint
                 $processEvidence.TownInitialSeed = $cathedralNativeTownProfile.Metadata.townInitialSeed
-                $processEvidence.ProfileKind = 'cathedral-native-town-progression-playtest'
+                $processEvidence.ProfileKind = if ($allClassNativeTown) { 'cathedral-native-all-class-town-playtest' } else { 'cathedral-native-town-progression-playtest' }
                 $processEvidence.AdapterId = $cathedralNativeTownProfile.Metadata.adapterId
-                $processEvidence.ClassId = $cathedralNativeTownProfile.ClassId
-                $processEvidence.ClassSymbol = $cathedralNativeTownProfile.ClassSymbol
+                $processEvidence.ClassId = if ($allClassNativeTown) { $boundNativeClassId } else { $cathedralNativeTownProfile.ClassId }
+                $processEvidence.ClassSymbol = if ($allClassNativeTown) { @('warrior', 'rogue', 'sorcerer')[[Math]::Max(0, $boundNativeClassId)] } else { $cathedralNativeTownProfile.ClassSymbol }
             } elseif ($cathedralClassNative) {
                 $processEvidence.ProfileHash = $cathedralNativeClassProfile.MetadataHash
                 $processEvidence.ContentTreeHash = $cathedralNativeClassProfile.ContentTreeHash

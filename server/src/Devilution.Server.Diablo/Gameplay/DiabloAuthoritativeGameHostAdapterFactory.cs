@@ -17,6 +17,9 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     public const string CathedralNativeDepthProgressionId = "devilution.diablo.cathedral-native-depth-progression.v1";
     public const string CathedralNativeClassProgressionId = "devilution.diablo.cathedral-native-class-progression.v1";
     public const string CathedralNativeTownProgressionId = "devilution.diablo.cathedral-native-town-progression.v1";
+    /** One native Town profile for Warrior, Rogue and Sorcerer; the first participant's class selects the run. */
+    public const string CathedralNativeAllClassTownId = "devilution.diablo.cathedral-native-all-class-town.v1";
+    private static readonly uint[] AllClassTownClassIds = [0, 1, 2];
     private readonly string adapterId;
 
     public DiabloAuthoritativeGameHostAdapterFactory() : this(false) { }
@@ -29,7 +32,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     {
         if (adapterId is not ("devilution.diablo" or NativeGeneratedId or CathedralDepthId or CathedralDoorId
             or CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId
-            or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId))
+            or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId or CathedralNativeAllClassTownId))
             throw new ArgumentException("Unsupported built-in Diablo adapter profile.", nameof(adapterId));
         this.adapterId = adapterId;
     }
@@ -45,7 +48,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     {
         ArgumentNullException.ThrowIfNull(registry);
         return adapterId switch {
-            CathedralNativeTownProgressionId => registry.TryGetCapability<IDiabloCathedralNativeTownProgressionBootstrap>(out _),
+            CathedralNativeTownProgressionId or CathedralNativeAllClassTownId
+                => registry.TryGetCapability<IDiabloCathedralNativeTownProgressionBootstrap>(out _),
             NativeGeneratedId => registry.TryGetCapability<IDiabloNativeGeneratedContentBootstrap>(out _),
             CathedralDepthId => registry.TryGetCapability<IDiabloCathedralDepthContentBootstrap>(out _),
             CathedralDoorId => registry.TryGetCapability<IDiabloCathedralDoorContentBootstrap>(out _),
@@ -66,7 +70,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerStart);
         if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId
-                or CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId)
+                or CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId
+                or CathedralNativeAllClassTownId)
             && (playerStart.GameMode != AuthoritativeGameMode.SinglePlayer
                 || playerStart.Difficulty != AuthoritativeGameDifficulty.Normal
                 || playerStart.ProceduralMonsterLimit is not null
@@ -89,6 +94,15 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             AuthoritativeGameDifficulty.Hell => DiabloDifficulty.Hell,
             _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
         };
+        if (adapterId == CathedralNativeAllClassTownId) {
+            var town = registry.GetRequiredCapability<IDiabloCathedralNativeTownProgressionBootstrap>();
+            if (!town.GetNativeTownClassIds(content).Order().SequenceEqual(AllClassTownClassIds))
+                throw new InvalidDataException("The all-class native Town profile must start Warrior, Rogue and Sorcerer.");
+            // Each class is its own native run; activate all of them and keep the one the player picks.
+            return new NativeClassSelectingGameHostAdapter(AllClassTownClassIds.ToDictionary(classId => classId,
+                classId => CreateExecutor(town.ActivateNativeTownClass(content, classId, playerStart.RandomSeed),
+                    playerStart, nativePopulation: true, classBound: true, nativeProtocol: true, allClass: true)));
+        }
         var activatedContent = adapterId switch {
             CathedralNativeTownProgressionId => registry.GetRequiredCapability<IDiabloCathedralNativeTownProgressionBootstrap>()
                 .ActivateNativeTownProgression(content, playerStart.RandomSeed),
@@ -108,18 +122,28 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             _ => registry.GetRequiredCapability<IDiabloContentBootstrap>()
                 .Activate(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty),
         };
+        return CreateExecutor(activatedContent, playerStart,
+            nativePopulation: adapterId is CathedralNativePopulationId or CathedralNativeProgressionId
+                or CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId,
+            classBound: adapterId is CathedralNativeClassProgressionId or CathedralNativeTownProgressionId,
+            nativeProtocol: adapterId is CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId);
+    }
+
+    private static StoreSimulationExecutor CreateExecutor(DiabloContentActivation activatedContent,
+        AuthoritativePlayerStartConfiguration playerStart, bool nativePopulation, bool classBound, bool nativeProtocol,
+        bool allClass = false)
+    {
         var startingLevelId = playerStart.StartingLevelId
             ?? activatedContent.DefaultStartingLevelId;
         if (activatedContent.Simulation.WorldState.World is not { } world
             || !world.ContainsLevel(startingLevelId))
             throw new InvalidDataException(
                 $"Starting level {startingLevelId} is not defined by the active content world.");
-        var isNativePopulationProfile = adapterId is CathedralNativePopulationId or CathedralNativeProgressionId
-            or CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId;
-        var isClassBoundNativeProfile = adapterId is CathedralNativeClassProgressionId or CathedralNativeTownProgressionId;
+        var isNativePopulationProfile = nativePopulation;
+        var isClassBoundNativeProfile = classBound;
         var characterStart = activatedContent.NativeCharacterStart;
         if (isClassBoundNativeProfile) {
-            if (characterStart is not { HasCompiledTable: true, ClassId: 0 or 2 })
+            if (characterStart is not { HasCompiledTable: true, ClassId: 0 or 2 } && !(allClass && characterStart is { HasCompiledTable: true, ClassId: 1 }))
                 throw new NotSupportedException(
                     "The class-bound native Cathedral progression requires an explicit Warrior or Sorcerer character-start table.");
         } else if (characterStart?.HasCompiledTable == true) {
@@ -182,7 +206,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                     startingPosition.Y);
             },
             saveCodec: null,
-            supportedProtocolFeatures: adapterId is CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId
+            supportedProtocolFeatures: nativeProtocol
                 ? AuthoritativeProtocolFeatures.TargetCellPathing
                     | AuthoritativeProtocolFeatures.QueuedRangedAttacks
                     | AuthoritativeProtocolFeatures.CommitBoundaryCommandSnapshots
@@ -206,6 +230,7 @@ public static class BuiltInAuthoritativeGameHostAdapters
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeDepthProgressionId
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeClassProgressionId
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeTownProgressionId
+                or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeAllClassTownId
             ? new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId)
             : new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId == DiabloAuthoritativeGameHostAdapterFactory.NativeGeneratedId)];
     }

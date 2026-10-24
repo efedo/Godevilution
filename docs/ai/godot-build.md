@@ -19,17 +19,28 @@ the accepted Town/L1/L2 scope in [test history](../test-history.md).
 `./run-godot-client.ps1` runs `tools/Native.Setup`, which finds `DIABDAT.MPQ`
 (`-DiabloArchive <path>`, remembered in `.local/godot/native/archive-path.txt`;
 then `GODEVILUTION_DIABDAT`, the DevilutionX data folder, the GOG registry entry
-and the usual install folders), builds the Warrior and Sorcerer Town profiles
-from the archive (see below) and imports player, scene, resident and object art
-straight from it, layering the open `assets` as native does. It then starts a
-windowed single-player Warrior game in native Town (`-NativeClass sorcerer` for
-the other class). Profiles live in `.local/godot/native/build-<fingerprint>`;
-art in the ignored `assets/native-*/setup-<fingerprint>` client folders; saves in
-`.local/godot/native/sessions/<class>-<content hash>`. The first build takes a
-few minutes; later launches reuse it until the archive, an input asset, the base
-content or any tool or game-module source changes, which rebuilds it. With no
-archive the launcher says how to supply one and starts the authored content;
-`-AuthoredContent` skips setup. `-SetupOnly` builds and prints the configuration.
+and the usual install folders), builds one all-class native Town profile from the
+archive (see below) and imports player, scene, resident and object art straight
+from it, layering the open `assets` as native does. It then starts a windowed
+single-player game in native Town; the setup screen offers Warrior, Rogue and
+Sorcerer. The profile lives in `.local/godot/native/profile-<content hash>` with
+its saves in `sessions/local`; art in the ignored `assets/native-*/setup-<fingerprint>`
+client folders. The first build takes a few minutes; later launches reuse it until
+the archive, an input asset, the base content or any tool or game-module source
+changes. A rebuild that yields the same profile content keeps the profile and its
+saves; older profiles that hold saves are kept. With no archive the launcher says
+how to supply one and starts the authored content; `-AuthoredContent` skips setup.
+`-SetupOnly` builds and prints the configuration.
+
+The all-class profile is format 6 (`cathedral-native-all-class-town-playtest.json`,
+adapter `devilution.diablo.cathedral-native-all-class-town.v1`): a format-5 Town
+profile whose class progression carries one `native-character-start.tsv` row per
+class. The server activates one native run per class and keeps the run the first
+participant picks (or the one a resumed cohort validates against). Class-bound
+format-4/5 profiles, their adapters and saves are unchanged. Run the headless
+pair for a class with `tools/test-godot-native-classes.ps1 -ProfileDirectory
+<profile> -NativeTown -Class warrior|rogue|sorcerer`; the Rogue pair has no Town
+class ability step.
 The four art importers below also accept `--archive <DIABDAT.MPQ> --assets-directory assets`
 in place of `--source-root`.
 

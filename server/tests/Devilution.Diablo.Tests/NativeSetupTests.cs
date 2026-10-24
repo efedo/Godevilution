@@ -80,7 +80,7 @@ public sealed class NativeSetupTests : IDisposable
     {
         var repository = FakeRepository();
         var setup = Directory.CreateDirectory(Path.Combine(root, "setup")).FullName;
-        var profile = Directory.CreateDirectory(Path.Combine(setup, "build-0123456789abcdef", "warrior")).FullName;
+        var profile = Directory.CreateDirectory(Path.Combine(setup, "profile-0123456789abcdef")).FullName;
         File.WriteAllText(Path.Combine(profile, NativeSetupBuilder.TownProfileFileName), "{}");
         var packs = new[] { "native-players", "native-scenes", "native-towners", "native-objects" }.Select(folder => {
             var directory = Directory.CreateDirectory(Path.Combine(NativeSetupBuilder.ClientAssetsDirectory(repository), folder, "setup-0123456789abcdef")).FullName;
@@ -90,12 +90,12 @@ public sealed class NativeSetupTests : IDisposable
         Assert.Equal("res://assets/native-players/setup-0123456789abcdef/catalog.json", packs[0]);
         var fingerprint = new string('a', 64);
         var state = new NativeSetupState(NativeSetupFingerprint.SchemaVersion, fingerprint, "DIABDAT.MPQ",
-            [new("warrior", profile, new string('b', 64))], packs[0], packs[1], packs[2], packs[3]);
+            profile, new string('b', 64), packs[0], packs[1], packs[2], packs[3]);
         var statePath = Path.Combine(setup, NativeSetupBuilder.StateFileName);
 
         Assert.Null(NativeSetupBuilder.TryReuse(setup, repository, fingerprint));
         File.WriteAllText(statePath, JsonSerializer.Serialize(state, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
-        Assert.Equal(profile, NativeSetupBuilder.TryReuse(setup, repository, fingerprint)!.Profiles.Single().Directory);
+        Assert.Equal(profile, NativeSetupBuilder.TryReuse(setup, repository, fingerprint)!.ProfileDirectory);
         Assert.Null(NativeSetupBuilder.TryReuse(setup, repository, new string('c', 64)));
         File.Delete(NativeSetupBuilder.ResourceToFile(repository, packs[2]));
         Assert.Null(NativeSetupBuilder.TryReuse(setup, repository, fingerprint));

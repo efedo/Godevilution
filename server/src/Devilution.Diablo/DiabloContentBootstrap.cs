@@ -288,12 +288,24 @@ public interface IDiabloCathedralNativeProgressionBootstrap
 public interface IDiabloCathedralNativeDepthProgressionBootstrap
 {
     DiabloContentActivation ActivateNativeDepthProgression(ComposedContent content, uint randomSeed = 0);
+
+    /** Activates one class of an all-class profile's depth content (compile-time validation). */
+    DiabloContentActivation ActivateNativeDepthProgressionClass(ComposedContent content, uint classId, uint randomSeed = 0)
+        => throw new NotSupportedException("This bootstrap does not activate all-class native profiles.");
 }
 
 /** Explicit Town backing and native depth progression; earlier profiles never opt in. */
 public interface IDiabloCathedralNativeTownProgressionBootstrap
 {
     DiabloContentActivation ActivateNativeTownProgression(ComposedContent content, uint randomSeed = 0);
+
+    /** Class IDs an all-class Town profile can start, in table order. */
+    IReadOnlyList<uint> GetNativeTownClassIds(ComposedContent content)
+        => throw new NotSupportedException("This bootstrap does not activate all-class native profiles.");
+
+    /** Activates one class of an all-class Town profile; class-bound profiles use ActivateNativeTownProgression. */
+    DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed = 0)
+        => throw new NotSupportedException("This bootstrap does not activate all-class native profiles.");
 }
 
 internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap, IDiabloCathedralNativeDepthProgressionBootstrap, IDiabloCathedralNativeTownProgressionBootstrap
@@ -392,6 +404,25 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             nativePopulation: true, nativeDepthProgression: true,
             nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth,
             nativeTown: true);
+
+    public DiabloContentActivation ActivateNativeDepthProgressionClass(ComposedContent content, uint classId, uint randomSeed = 0)
+        => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
+            nativePopulation: true, nativeDepthProgression: true,
+            nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth,
+            nativeClassId: classId);
+
+    public IReadOnlyList<uint> GetNativeTownClassIds(ComposedContent content)
+        => LoadNativePopulationSidecars(content).CharacterStartTable is { } table
+            ? AuthoritativeCathedralNativeCharacterStart.ClassIds(table)
+            : throw new InvalidDataException("An all-class native Town profile requires its compiled character-start table.");
+
+    public DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed = 0)
+        => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
+            nativePopulation: true, nativeDepthProgression: true,
+            nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth,
+            nativeTown: true, nativeClassId: classId);
 
     private static NativePopulationSidecarData LoadNativePopulationSidecars(ComposedContent content)
     {
@@ -493,7 +524,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         bool nativeProgression = false,
         bool nativeDepthProgression = false,
         int nativeProgressionMaximumDepth = 2,
-        bool nativeTown = false)
+        bool nativeTown = false,
+        uint? nativeClassId = null)
     {
         ArgumentNullException.ThrowIfNull(content);
         if ((nativeProgression || nativeDepthProgression) && !nativePopulation)
@@ -734,8 +766,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 nativePopulationSidecars.CharacterStartTable,
                 playerClasses,
                 playerAnimations,
-                playerLoadouts);
-        if (nativeTown && nativeCharacterStart is not { HasCompiledTable: true, ClassId: 0 or 2 })
+                playerLoadouts,
+                nativeClassId);
+        // All-class profiles also admit the compiled Rogue start; class-bound Town profiles stay Warrior or Sorcerer.
+        if (nativeTown && nativeCharacterStart is not { HasCompiledTable: true, ClassId: 0 or 2 }
+            && !(nativeClassId is not null && nativeCharacterStart is { HasCompiledTable: true, ClassId: 1 }))
             throw new NotSupportedException("Native Town progression requires an explicit Warrior or Sorcerer class profile.");
 
         var uniqueTable = GetRequiredExternalTable(content, "unique_items.tsv");
@@ -1717,8 +1752,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     nativeTown ? DiabloCohortState.NativeTownProgressionFormatVersion
                         : DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
                         FreshActivation = () => nativeTown
-                            ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownProgression(content, randomSeed)
-                            : new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeDepthProgression(content, randomSeed),
+                            ? nativeClassId is { } freshClassId
+                                ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownClass(content, freshClassId, randomSeed)
+                                : new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownProgression(content, randomSeed)
+                            : nativeClassId is { } depthClassId
+                                ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeDepthProgressionClass(content, depthClassId, randomSeed)
+                                : new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeDepthProgression(content, randomSeed),
                     };
             }
             cathedralDoorCatalog = new AuthoritativeCathedralDoorCatalog([doorDefinition]);

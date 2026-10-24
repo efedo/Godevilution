@@ -15,7 +15,11 @@ public sealed record CathedralNativeTownPlaytestCompilerOptions(
     string TownSourceDirectory,
     string RosterTablePath,
     string OutputDirectory,
-    uint TownSeed);
+    uint TownSeed)
+{
+    /** Wrap an all-class progression profile as the format-6 all-class Town profile. */
+    public bool AllClasses { get; init; }
+}
 
 /** Closed outer profile. The nested format-4 class profile remains the original identity and is copied unchanged. */
 public sealed record CathedralNativeTownPlaytestProfile(
@@ -30,6 +34,24 @@ public sealed record CathedralNativeTownPlaytestProfile(
     uint TownInitialSeed,
     string ContentManifestHash);
 
+/** One class an all-class profile starts, copied from its compiled character-start row. */
+public sealed record CathedralNativeTownClassStart(uint ClassId, string ClassSymbol, int HeroBaseLifeMaximum,
+    int HeroBaseManaMaximum, int HeroLightRadius, int HeroIdleFrames);
+
+/** Format 6: the format-5 fields plus the classes the all-class adapter offers. */
+public sealed record CathedralNativeAllClassTownPlaytestProfile(
+    int FormatVersion,
+    string AdapterId,
+    JsonElement ClassProfile,
+    string TownDirectory,
+    string TownPackId,
+    string TownPackVersion,
+    string TownPackTreeHash,
+    string TownCatalogFingerprint,
+    uint TownInitialSeed,
+    string ContentManifestHash,
+    IReadOnlyList<CathedralNativeTownClassStart> Classes);
+
 /** Compiles private original Town geometry and roster files into an additive semantic pack. */
 public static class CathedralNativeTownPlaytestCompiler
 {
@@ -39,6 +61,9 @@ public static class CathedralNativeTownPlaytestCompiler
     public const string TownPackId = "godevilution.cathedral-native-town-geometry";
     public const string TownPackVersion = "1.0.0";
     public const int FormatVersion = 5;
+    public const string AllClassAdapterId = NativePlayerArtProfiles.AllClassTownAdapterId;
+    public const string AllClassProfileFileName = NativePlayerArtProfiles.AllClassTownProfileFileName;
+    public const int AllClassFormatVersion = 6;
     public const int MaximumRosterBytes = 1024 * 1024;
     public const long MaximumInputPackBytes = 256L * 1024 * 1024;
     public const int MaximumDunBytes = 128 * 1024;
@@ -151,8 +176,22 @@ public static class CathedralNativeTownPlaytestCompiler
                     [contentPack, populationPack, runtimePack, publishedTownPack]);
                 var composed = ComposedContent.Compose(manifest);
                 var townCatalog = AuthoritativeNativeTownCatalog.Load(composed);
-                _ = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap
-                    .ActivateNativeTownProgression(composed, options.TownSeed);
+                var town = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap;
+                if (options.AllClasses) {
+                    var classes = AllClassStarts(runtimePack);
+                    foreach (var start in classes)
+                        _ = town.ActivateNativeTownClass(composed, start.ClassId, options.TownSeed);
+                    var allClassProfile = new CathedralNativeAllClassTownPlaytestProfile(AllClassFormatVersion, AllClassAdapterId,
+                        classProfile, TownDirectoryName, publishedTownPack.Id, publishedTownPack.Version,
+                        ComputePackTreeHash(Path.Combine(stagingRoot, TownDirectoryName)), townCatalog.Fingerprint,
+                        options.TownSeed, manifest.Sha256, classes);
+                    WriteJson(Path.Combine(stagingRoot, AllClassProfileFileName), allClassProfile);
+                    Directory.Move(stagingRoot, outputRoot);
+                    return new CathedralNativeTownPlaytestProfile(AllClassFormatVersion, AllClassAdapterId, classProfile,
+                        TownDirectoryName, publishedTownPack.Id, publishedTownPack.Version, allClassProfile.TownPackTreeHash,
+                        townCatalog.Fingerprint, options.TownSeed, manifest.Sha256);
+                }
+                _ = town.ActivateNativeTownProgression(composed, options.TownSeed);
 
                 var profile = new CathedralNativeTownPlaytestProfile(
                     FormatVersion,
@@ -380,7 +419,23 @@ public static class CathedralNativeTownPlaytestCompiler
             throw new InvalidDataException("Town semantic pack changed during publication.");
     }
 
-    private static void WriteProfile(string path, CathedralNativeTownPlaytestProfile profile)
+    private static void WriteProfile(string path, CathedralNativeTownPlaytestProfile profile) => WriteJson(path, profile);
+
+    /** The all-class progression's start rows, which must be Warrior, Rogue and Sorcerer in class order. */
+    private static CathedralNativeTownClassStart[] AllClassStarts(ContentPack runtimePack)
+    {
+        var table = runtimePack.Tables.SingleOrDefault(candidate =>
+                candidate.SourcePath == "native_cathedral_runtime/" + AuthoritativeCathedralNativeCharacterStart.TableName)
+            ?? throw new InvalidDataException("The all-class Town profile requires a compiled character-start table.");
+        var classes = table.Rows.Select(row => new CathedralNativeTownClassStart(row.RequiredUInt32("class_id"),
+            row.Required("class_symbol"), row.RequiredInt32("hero_base_life_maximum"), row.RequiredInt32("hero_base_mana_maximum"),
+            row.RequiredInt32("hero_light_radius"), row.RequiredInt32("hero_idle_frames"))).ToArray();
+        if (!classes.Select(start => (start.ClassId, start.ClassSymbol)).SequenceEqual([(0U, "warrior"), (1U, "rogue"), (2U, "sorcerer")]))
+            throw new InvalidDataException("The all-class Town profile must start Warrior, Rogue and Sorcerer.");
+        return classes;
+    }
+
+    private static void WriteJson<T>(string path, T profile)
         => File.WriteAllText(path, ToCrLf(JsonSerializer.Serialize(profile, new JsonSerializerOptions {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

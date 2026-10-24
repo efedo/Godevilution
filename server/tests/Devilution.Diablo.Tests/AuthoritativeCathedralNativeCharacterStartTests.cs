@@ -106,6 +106,29 @@ public sealed class AuthoritativeCathedralNativeCharacterStartTests
             reordered, catalogs.Classes, catalogs.Animations, catalogs.Loadouts));
     }
 
+    [Fact]
+    public void AllClassTableResolvesTheSelectedClassRow()
+    {
+        var catalogs = LoadCatalogs();
+        var table = TsvTable.Parse(AuthoritativeCathedralNativeCharacterStart.TableName,
+            "class_id\tclass_symbol\thero_base_life_maximum\thero_base_mana_maximum\thero_light_radius\thero_idle_frames\n"
+                + "0\twarrior\t4480\t640\t10\t10\n1\trogue\t2880\t1440\t10\t8\n2\tsorcerer\t1920\t4480\t10\t8\n");
+
+        Assert.Equal(new uint[] { 0, 1, 2 }, AuthoritativeCathedralNativeCharacterStart.ClassIds(table));
+        foreach (var (classId, symbol, life) in new[] { (0U, "warrior", 4480), (1U, "rogue", 2880), (2U, "sorcerer", 1920) }) {
+            var start = AuthoritativeCathedralNativeCharacterStart.Resolve(
+                table, catalogs.Classes, catalogs.Animations, catalogs.Loadouts, classId);
+            Assert.True(start.HasCompiledTable);
+            Assert.Equal((classId, symbol, life, 10), (start.ClassId, start.ClassSymbol, start.Hero.MaximumLifeBase, start.Hero.LightRadius));
+        }
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralNativeCharacterStart.Resolve(
+            table, catalogs.Classes, catalogs.Animations, catalogs.Loadouts));
+        Assert.Throws<NotSupportedException>(() => AuthoritativeCathedralNativeCharacterStart.Resolve(
+            table, catalogs.Classes, catalogs.Animations, catalogs.Loadouts, 3));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralNativeCharacterStart.Resolve(
+            null, catalogs.Classes, catalogs.Animations, catalogs.Loadouts, 1));
+    }
+
     private static TsvTable CreateTable(
         uint classId,
         string symbol,

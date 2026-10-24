@@ -21,8 +21,11 @@ public partial class SessionAcceptance
         StartNativeSceneArtCapture(main);
         StartNativeTownerCapture(main);
         StartNativeObjectCapture(main);
-        var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U : 2U;
-        var journeyName = classId == 0 ? "nativewarriorjourney.json" : "nativesorcererjourney.json";
+        var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U
+            : phase.StartsWith("NativeRogue", StringComparison.Ordinal) ? 1U : 2U;
+        var journeyName = classId switch { 0 => "nativewarriorjourney.json", 1 => "nativeroguejourney.json", _ => "nativesorcererjourney.json" };
+        // The Rogue fights with its bow and has no Town class ability to exercise here.
+        var ranged = classId != 0;
         var identity = main.ObservedIdentity!;
         var profilePath = System.Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_NATIVE_PROFILE");
         using var profileDocument = JsonDocument.Parse(System.IO.File.ReadAllText(profilePath
@@ -53,8 +56,8 @@ public partial class SessionAcceptance
 
         var initial = main.ObservedSnapshot!.Players.Single();
         Require(previous is null && initial.LevelId == 0 && initial.CharacterClassId == classId
-            && initial.BaseLifeMaximum == (classId == 0 ? 4480 : 1920)
-            && initial.BaseManaMaximum == (classId == 0 ? 640 : 4480)
+            && initial.BaseLifeMaximum == classId switch { 0 => 4480, 1 => 2880, _ => 1920 }
+            && initial.BaseManaMaximum == classId switch { 0 => 640, 1 => 1440, _ => 4480 }
             && initial.LightRadius == 10 && initial.Life > 0,
             "Native class admission did not publish its canonical fresh resources and light.");
         var experienceBefore = initial.Experience;
@@ -86,10 +89,10 @@ public partial class SessionAcceptance
         for (var work = 0; work < 120; work++) {
             var player = main.ObservedSnapshot!.Players.Single();
             Require(player.Life > 0, "The admitted native class died during ordinary combat.");
-            if (defeated != 0 && (classId == 2 || player.Equipment.Any(item => item.State.Durability < initialDurabilities[item.Slot])))
+            if (defeated != 0 && (classId != 0 || player.Equipment.Any(item => item.State.Durability < initialDurabilities[item.Slot])))
                 break;
             await UseNativeHealingPotionIfNeeded(main);
-            var target = await FindNativeClassTargetAsync(main, ranged: classId == 2);
+            var target = await FindNativeClassTargetAsync(main, ranged);
             if (classId == 0 && defeated != 0 && wearObservations++ < 3) {
                 // After a real kill, allow the next ordinary melee encounter to
                 // reach its defensive block/hit phases before dispatching another attack.
@@ -107,7 +110,7 @@ public partial class SessionAcceptance
             }
             var hpBefore = target.HitPointsQ6;
             var sequence = main.ObservedLastQueuedSequence;
-            await ClickWorld(main, target.PositionX, target.PositionY, classId == 0 ? MouseButton.Right : MouseButton.Left);
+            await ClickWorld(main, target.PositionX, target.PositionY, classId == 2 ? MouseButton.Left : MouseButton.Right);
             await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
                 && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
                 "Native class combat did not reach its authoritative receipt and action boundary.", 15);
@@ -131,10 +134,15 @@ public partial class SessionAcceptance
         var combatPlayer = main.ObservedSnapshot!.Players.Single();
         manaAfter = combatPlayer.Mana;
         Require(defeated != 0 && combatPlayer.Experience > experienceBefore
-            && (classId == 0 || manaAfter < manaBefore),
+            && (classId != 2 || manaAfter < manaBefore),
             "The native class did not earn a generated kill/XP with its ordinary attack source.");
         await VerifyNativeObjectInteractionAsync(main);
         await TravelNativeClassRouteAsync(main, directory, 0);
+        if (classId == 1) {
+            await FinishNativeClassJourneyAsync(main, directory, phase, new NativeClassCheckpoint(string.Empty, 0, string.Empty, 0, classId,
+                defeated, experienceBefore, combatPlayer.Experience, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), attacks, refusals);
+            return;
+        }
         var equipment = (ItemList)main.FindChild("EquipmentItems", true, false);
         await RevealControl(sections, 1, equipment);
         var abilityItem = classId == 0
@@ -186,17 +194,28 @@ public partial class SessionAcceptance
             && afterAbilityPlayer.Equipment.Single(item => item.Slot == abilitySlot).Equals(expectedWeapon),
             "Class ability changed paid-service state, Gold, item identity or unrelated carried items/grid.");
         chargesAfterRecharge = classId == 2 ? afterAbility.Charges : 0;
+        await FinishNativeClassJourneyAsync(main, directory, phase, new NativeClassCheckpoint(string.Empty, 0, string.Empty, 0, classId,
+            defeated, experienceBefore, combatPlayer.Experience, chargesBefore, chargesAfterCast, chargesAfterRecharge, manaBefore, manaAfter,
+            classId == 0 ? beforeAbility.Durability : 0, classId == 0 ? afterAbility.Durability : 0,
+            initialDurabilities[abilitySlot], abilitySlot, abilityItem.State.StableItemId, beforeAbility.MaxDurability, afterAbility.MaxDurability,
+            beforeAbility.MaxCharges, afterAbility.MaxCharges), attacks, refusals);
+    }
+
+    /** Town services and roaming, then the exact settled checkpoint the Resume phase restores. */
+    private async Task FinishNativeClassJourneyAsync(Main main, string directory, string phase, NativeClassCheckpoint journey,
+        List<object> attacks, List<object> refusals)
+    {
         if (nativeTownClassProfile)
             await VerifyNativeTownServicesAsync(main, directory);
         await VerifyNativeTownerRoamingAsync(main);
         var snapshotAfter = main.ObservedSnapshot!;
         Require(Settled(main) && snapshotAfter.Players.Single() is { LevelId: 0, Life: > 0 },
             "The native class checkpoint did not finish alive and settled in Town.");
-        var checkpointAfter = new NativeClassCheckpoint(Convert.ToBase64String(snapshotAfter.Players.Single().ToByteArray()),
-            snapshotAfter.RandomState, HashNativeProgressionWorld(snapshotAfter), main.ObservedLastQueuedSequence, classId,
-            defeated, experienceBefore, combatPlayer.Experience, chargesBefore, chargesAfterCast, chargesAfterRecharge, manaBefore, manaAfter,
-            classId == 0 ? beforeAbility.Durability : 0, classId == 0 ? afterAbility.Durability : 0,
-            initialDurabilities[abilitySlot], abilitySlot, abilityItem.State.StableItemId, beforeAbility.MaxDurability, afterAbility.MaxDurability, beforeAbility.MaxCharges, afterAbility.MaxCharges);
+        var checkpointAfter = journey with {
+            PlayerPayload = Convert.ToBase64String(snapshotAfter.Players.Single().ToByteArray()),
+            RandomState = snapshotAfter.RandomState, WorldHash = HashNativeProgressionWorld(snapshotAfter),
+            Sequence = main.ObservedLastQueuedSequence,
+        };
         WriteEvidence(directory, "native-class-attacks.json", new { Passed = true, Attacks = attacks, Refusals = refusals });
         SaveNativeObjectCheckpoint(main, directory);
         WriteNativeClassEvidence(main, directory, phase, checkpointAfter, exactColdBaseline: false);

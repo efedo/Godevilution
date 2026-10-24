@@ -1,4 +1,9 @@
-# Explicit format-5 Town-enabled native progression profile admission.
+# Explicit Town-enabled native progression profile admission: format 5 (class-bound) or format 6 (all classes).
+$script:NativeTownClassFacts = [ordered]@{
+    warrior = @{ Id = 0; Life = 4480; Mana = 640; Light = 10; Idle = 10 }
+    rogue = @{ Id = 1; Life = 2880; Mana = 1440; Light = 10; Idle = 8 }
+    sorcerer = @{ Id = 2; Life = 1920; Mana = 4480; Light = 10; Idle = 8 }
+}
 function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     $root = [IO.Path]::GetFullPath($Directory).TrimEnd('\', '/')
     $sessionRoot = [IO.Path]::GetFullPath($Session)
@@ -11,27 +16,46 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     Assert-NoCathedralReparsePoint $root
     Assert-NoCathedralReparsePoint $sessionRoot
 
-    $metadataPath = Join-Path $root 'cathedral-native-town-progression-playtest.json'
+    $allClassPath = Join-Path $root 'cathedral-native-all-class-town-playtest.json'
+    $allClass = Test-Path -LiteralPath $allClassPath -PathType Leaf
+    $townFileName = if ($allClass) { 'cathedral-native-all-class-town-playtest.json' } else { 'cathedral-native-town-progression-playtest.json' }
+    $metadataPath = Join-Path $root $townFileName
     $classMetadataPath = Join-Path $root 'cathedral-native-class-progression-playtest.json'
     foreach ($path in @($metadataPath, $classMetadataPath)) { Assert-NoCathedralReparsePoint $path }
     $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
     $expectedFields = @(
         'formatVersion', 'adapterId', 'classProfile', 'townDirectory', 'townPackId', 'townPackVersion',
         'townPackTreeHash', 'townCatalogFingerprint', 'townInitialSeed', 'contentManifestHash')
+    if ($allClass) { $expectedFields += 'classes' }
+    $expectedFormat = if ($allClass) { 6 } else { 5 }
+    $expectedAdapter = if ($allClass) { 'devilution.diablo.cathedral-native-all-class-town.v1' } else { 'devilution.diablo.cathedral-native-town-progression.v1' }
     $actualFields = @($metadata.PSObject.Properties | ForEach-Object { $_.Name })
     if ($actualFields.Count -ne $expectedFields.Count -or
         [string]::Join("`n", $actualFields) -cne [string]::Join("`n", $expectedFields)) {
-        throw 'Native Town metadata does not match the closed format-5 schema.'
+        throw "Native Town metadata does not match the closed format-$expectedFormat schema."
     }
     if (($metadata.formatVersion -isnot [int] -and $metadata.formatVersion -isnot [long]) -or
-        $metadata.formatVersion -ne 5 -or
-        $metadata.adapterId -cne 'devilution.diablo.cathedral-native-town-progression.v1' -or
+        $metadata.formatVersion -ne $expectedFormat -or
+        $metadata.adapterId -cne $expectedAdapter -or
         $metadata.townDirectory -cne 'native_town_geometry' -or
         $metadata.townPackId -cne 'godevilution.cathedral-native-town-geometry' -or
         $metadata.townPackVersion -cne '1.0.0' -or
         ($metadata.townInitialSeed -isnot [long] -and $metadata.townInitialSeed -isnot [int]) -or
         $metadata.townInitialSeed -lt 0 -or $metadata.townInitialSeed -gt [uint32]::MaxValue) {
-        throw 'The profile does not select the supported format-5 native Town progression contract.'
+        throw "The profile does not select the supported format-$expectedFormat native Town progression contract."
+    }
+    if ($allClass) {
+        $classes = @($metadata.classes)
+        $symbols = @($script:NativeTownClassFacts.Keys)
+        if ($classes.Count -ne 3) { throw 'The all-class native Town profile must offer Warrior, Rogue and Sorcerer.' }
+        for ($index = 0; $index -lt 3; $index++) {
+            $class = $classes[$index]; $facts = $script:NativeTownClassFacts[$symbols[$index]]
+            if ($class.classId -ne $facts.Id -or $class.classSymbol -cne $symbols[$index] -or
+                $class.heroBaseLifeMaximum -ne $facts.Life -or $class.heroBaseManaMaximum -ne $facts.Mana -or
+                $class.heroLightRadius -ne $facts.Light -or $class.heroIdleFrames -ne $facts.Idle) {
+                throw 'The all-class native Town profile classes do not match their canonical start facts.'
+            }
+        }
     }
     foreach ($name in @('townPackTreeHash', 'townCatalogFingerprint', 'contentManifestHash')) {
         if ($metadata.$name -isnot [string] -or $metadata.$name -cnotmatch '^[0-9A-Fa-f]{64}$') {
@@ -48,10 +72,10 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     if ($nestedCanonical -cne $retainedCanonical) {
         throw 'The nested class profile does not exactly match the retained format-4 class metadata.'
     }
-    $classProfile = Get-CathedralNativeTownClassProfile $classMetadata
+    $classProfile = Get-CathedralNativeTownClassProfile $classMetadata $allClass
 
     $rootEntries = @(
-        'cathedral-native-town-progression-playtest.json', 'cathedral-native-class-progression-playtest.json',
+        $townFileName, 'cathedral-native-class-progression-playtest.json',
         'content', 'native_cathedral_population', 'native_cathedral_runtime', 'native_town_geometry', 'sessions')
     foreach ($entry in Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop) {
         if ($entry.Name -notin $rootEntries -or $entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
@@ -72,7 +96,7 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     }
 
     $classStartPath = Join-Path $runtimeRoot 'native_cathedral_runtime/native-character-start.tsv'
-    Assert-CathedralNativeTownCharacterStart $classStartPath $classProfile
+    Assert-CathedralNativeTownCharacterStart $classStartPath $classProfile $allClass
     $packs = @(
         @{ Root = $contentRoot; Id = $classMetadata.contentId; Version = $classMetadata.contentVersion; Hash = $classMetadata.packFileHash; Label = 'content' },
         @{ Root = $populationRoot; Id = $classMetadata.populationPackId; Version = $classMetadata.populationPackVersion; Hash = $classMetadata.populationPackFileHash; Label = 'population' },
@@ -97,11 +121,11 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
         PopulationTreeHash = Get-CathedralContentTreeHash $populationRoot
         RuntimeTreeHash = Get-CathedralContentTreeHash $runtimeRoot
         TownTreeHash = Get-CathedralContentTreeHash $townRoot
-        ClassId = $classProfile.Id; ClassSymbol = $classProfile.Symbol
+        ClassId = $classProfile.Id; ClassSymbol = $classProfile.Symbol; AllClass = $allClass
     }
 }
 
-function Get-CathedralNativeTownClassProfile($Metadata) {
+function Get-CathedralNativeTownClassProfile($Metadata, [bool]$AllClass = $false) {
     $expectedFields = @(
         'formatVersion', 'adapterId', 'contentDirectory', 'contentId', 'contentVersion', 'contentManifestHash', 'packFileHash',
         'depthSeeds', 'entry', 'placementPolicy', 'nativePopulation', 'nativePopulationClaim', 'populationDirectory',
@@ -117,14 +141,13 @@ function Get-CathedralNativeTownClassProfile($Metadata) {
         [string]::Join("`n", $actualFields) -cne [string]::Join("`n", $expectedFields)) {
         throw 'The retained class profile does not match the closed format-4 class schema.'
     }
-    $facts = @{
-        warrior = @{ Id = 0; Life = 4480; Mana = 640; Light = 10; Idle = 10 }
-        sorcerer = @{ Id = 2; Life = 1920; Mana = 4480; Light = 10; Idle = 8 }
-    }
     $symbol = [string]$Metadata.heroClassSymbol
-    if (-not $facts.ContainsKey($symbol)) { throw 'Native Town progression supports only its bound Warrior or Sorcerer class.' }
-    $class = $facts[$symbol]
-    $policy = "original-diablo-single-player-normal-$symbol-town-l1-l4"
+    # An all-class progression describes its default Warrior under the all-class policy.
+    if (($AllClass -and $symbol -cne 'warrior') -or (-not $AllClass -and $symbol -notin @('warrior', 'sorcerer'))) {
+        throw 'Native Town progression supports only its bound Warrior or Sorcerer class.'
+    }
+    $class = $script:NativeTownClassFacts[$symbol]
+    $policy = if ($AllClass) { 'original-diablo-single-player-normal-all-classes-town-l1-l4' } else { "original-diablo-single-player-normal-$symbol-town-l1-l4" }
     if ($Metadata.formatVersion -ne 4 -or
         $Metadata.adapterId -cne 'devilution.diablo.cathedral-native-class-progression.v1' -or
         $Metadata.contentDirectory -cne 'content' -or $Metadata.contentId -cne 'godevilution.cathedral-doors-playtest' -or
@@ -146,10 +169,11 @@ function Get-CathedralNativeTownClassProfile($Metadata) {
             throw "The retained class profile has an invalid $name identity."
         }
     }
+    if ($AllClass) { return [pscustomobject]@{ Id = -1; Symbol = 'all' } }
     return [pscustomobject]@{ Id = $class.Id; Symbol = $symbol }
 }
 
-function Assert-CathedralNativeTownCharacterStart([string]$Path, $ClassProfile) {
+function Assert-CathedralNativeTownCharacterStart([string]$Path, $ClassProfile, [bool]$AllClass = $false) {
     Assert-NoCathedralReparsePoint $Path
     $bytes = [IO.File]::ReadAllBytes($Path)
     if ($bytes.Length -eq 0 -or ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)) {
@@ -164,8 +188,13 @@ function Assert-CathedralNativeTownCharacterStart([string]$Path, $ClassProfile) 
     }
     $lines = $text.Split([string[]]@("`r`n"), [StringSplitOptions]::None)
     $header = "class_id`tclass_symbol`thero_base_life_maximum`thero_base_mana_maximum`thero_light_radius`thero_idle_frames"
-    $expected = if ($ClassProfile.Id -eq 0) { "0`twarrior`t4480`t640`t10`t10" } else { "2`tsorcerer`t1920`t4480`t10`t8" }
-    if ($lines.Length -ne 3 -or $lines[0] -cne $header -or $lines[1] -cne $expected -or $lines[2] -cne '') {
+    $rows = foreach ($entry in $script:NativeTownClassFacts.GetEnumerator()) {
+        if ($AllClass -or $entry.Value.Id -eq $ClassProfile.Id) {
+            [string]::Join("`t", @($entry.Value.Id, $entry.Key, $entry.Value.Life, $entry.Value.Mana, $entry.Value.Light, $entry.Value.Idle))
+        }
+    }
+    $expectedLines = @($header) + @($rows) + @('')
+    if ($lines.Length -ne $expectedLines.Count -or [string]::Join("`n", $lines) -cne [string]::Join("`n", $expectedLines)) {
         throw 'The native character-start row does not match the nested class profile.'
     }
 }
@@ -202,13 +231,15 @@ function Assert-CathedralNativeTownSettings([string]$Path, [uint32]$Seed) {
 }
 
 function Initialize-CathedralNativeTownSession($Profile, [string]$Session) {
-    $markerFile = 'cathedral-native-town-progression-session.json'
-    $profileKind = 'cathedral-native-town-progression-playtest'
-    $adapterId = 'devilution.diablo.cathedral-native-town-progression.v1'
+    $markerFile = if ($Profile.AllClass) { 'cathedral-native-all-class-town-session.json' } else { 'cathedral-native-town-progression-session.json' }
+    $profileKind = if ($Profile.AllClass) { 'cathedral-native-all-class-town-playtest' } else { 'cathedral-native-town-progression-playtest' }
+    $adapterId = [string]$Profile.Metadata.adapterId
     $markerPath = Join-Path $Session $markerFile
-    foreach ($otherMarker in @('cathedral-session.json', 'cathedral-door-session.json',
-            'cathedral-native-population-session.json', 'cathedral-native-progression-session.json',
-            'cathedral-native-depth-progression-session.json', 'cathedral-native-class-progression-session.json')) {
+    $otherMarkers = @('cathedral-session.json', 'cathedral-door-session.json',
+        'cathedral-native-population-session.json', 'cathedral-native-progression-session.json',
+        'cathedral-native-depth-progression-session.json', 'cathedral-native-class-progression-session.json',
+        'cathedral-native-town-progression-session.json', 'cathedral-native-all-class-town-session.json') | Where-Object { $_ -cne $markerFile }
+    foreach ($otherMarker in $otherMarkers) {
         if (Test-Path -LiteralPath (Join-Path $Session $otherMarker)) {
             throw 'A save marker from another Cathedral profile cannot be reused by native Town progression.'
         }

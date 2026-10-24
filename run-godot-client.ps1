@@ -2,8 +2,6 @@
 param(
     # DIABDAT.MPQ to use; remembered for later launches. Otherwise it is found automatically.
     [string]$DiabloArchive,
-    # The native Town profiles are class-bound until batch 1.2.
-    [ValidateSet('warrior', 'sorcerer')] [string]$NativeClass = 'warrior',
     # Skip native setup and start the authored content.
     [switch]$AuthoredContent,
     # Build or reuse the native setup and print the launch configuration without starting the game.
@@ -44,19 +42,18 @@ if (-not $AuthoredContent) {
         throw "Native setup failed with exit $setupExit."
     } else {
         $state = Get-Content -LiteralPath (Join-Path $setupRoot 'current.json') -Raw | ConvertFrom-Json
-        $nativeProfile = @($state.profiles | Where-Object { $_.classSymbol -ceq $NativeClass })
-        if ($nativeProfile.Count -ne 1) { throw "Native setup has no $NativeClass profile." }
         foreach ($name in $packVariables.Keys) { $packs[$packVariables[$name]] = [string]$state.$name }
-        # Saves follow the profile content: an unchanged profile keeps its save across rebuilds.
-        $sessionDirectory = Join-Path $setupRoot ('sessions/' + $NativeClass + '-' + $nativeProfile[0].contentManifestHash.Substring(0, 16))
+        # One profile offers Warrior, Rogue and Sorcerer. Its saves live in its own sessions folder,
+        # which setup keeps while a rebuild produces the same profile content.
+        $sessionDirectory = Join-Path $state.profileDirectory 'sessions/local'
         $launchArguments = @{
-            CathedralNativeTownProfileDirectory = $nativeProfile[0].directory
+            CathedralNativeTownProfileDirectory = $state.profileDirectory
             PersistenceMode = 'cohort'
             SessionDirectory = $sessionDirectory
         }
         if ($SetupOnly) {
             [ordered]@{
-                ProfileDirectory = $nativeProfile[0].directory
+                ProfileDirectory = $state.profileDirectory
                 SessionDirectory = $sessionDirectory
                 Packs = $packs
             } | ConvertTo-Json -Depth 4

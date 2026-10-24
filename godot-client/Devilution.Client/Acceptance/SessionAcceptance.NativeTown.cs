@@ -17,9 +17,12 @@ public partial class SessionAcceptance
     {
         var townPath = System.Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_NATIVE_TOWN_PROFILE");
         nativeTownClassProfile = !string.IsNullOrWhiteSpace(townPath);
+        // An all-class profile's inner progression describes its default Warrior under the all-class policy.
+        var allClass = profile.GetProperty("populationPolicy").GetString() == "original-diablo-single-player-normal-all-classes-town-l1-l4";
         Require(profile.GetProperty("adapterId").GetString() == "devilution.diablo.cathedral-native-class-progression.v1"
             && profile.GetProperty("formatVersion").GetInt32() == 4
-            && profile.GetProperty("heroClassSymbol").GetString() == (classId == 0 ? "warrior" : "sorcerer"),
+            && profile.GetProperty("heroClassSymbol").GetString() == (allClass ? "warrior" : classId == 0 ? "warrior" : "sorcerer")
+            && (allClass ? nativeTownClassProfile : classId != 1),
             "The native class journey does not match its class-bound profile.");
         if (!nativeTownClassProfile) {
             Require(profile.GetProperty("contentManifestHash").GetString() == contentHash,
@@ -30,9 +33,13 @@ public partial class SessionAcceptance
         var town = document.RootElement;
         var fields = new[] { "formatVersion", "adapterId", "classProfile", "townDirectory", "townPackId",
             "townPackVersion", "townPackTreeHash", "townCatalogFingerprint", "townInitialSeed", "contentManifestHash" };
+        if (allClass)
+            fields = [.. fields, "classes"];
         Require(town.EnumerateObject().Select(property => property.Name).SequenceEqual(fields)
-            && town.GetProperty("formatVersion").GetInt32() == 5
-            && town.GetProperty("adapterId").GetString() == "devilution.diablo.cathedral-native-town-progression.v1"
+            && town.GetProperty("formatVersion").GetInt32() == (allClass ? 6 : 5)
+            && town.GetProperty("adapterId").GetString() == (allClass
+                ? "devilution.diablo.cathedral-native-all-class-town.v1" : "devilution.diablo.cathedral-native-town-progression.v1")
+            && (!allClass || town.GetProperty("classes").EnumerateArray().Any(start => start.GetProperty("classId").GetUInt32() == classId))
             && town.GetProperty("contentManifestHash").GetString() == contentHash
             && town.GetProperty("townDirectory").GetString() == "native_town_geometry"
             && JsonNode.DeepEquals(JsonNode.Parse(profile.GetRawText()),

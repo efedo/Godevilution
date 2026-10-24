@@ -32,6 +32,11 @@ public static class NativePlayerArtProfiles
     public const string ClassProgressionAdapterId = "devilution.diablo.cathedral-native-class-progression.v1";
     public const string DepthProgressionAdapterId = "devilution.diablo.cathedral-native-depth-progression.v1";
     public const string TownProgressionAdapterId = "devilution.diablo.cathedral-native-town-progression.v1";
+    public const string AllClassTownAdapterId = "devilution.diablo.cathedral-native-all-class-town.v1";
+    public const string AllClassTownProfileFileName = "cathedral-native-all-class-town-playtest.json";
+    public const string AllClassPolicy = "original-diablo-single-player-normal-all-classes-town-l1-l4";
+
+    private enum ProfileWrapper { None, Town }
     public const int MaximumProfileBytes = 1024 * 1024;
 
     private static readonly Regex Sha256Pattern = new("^[0-9a-f]{64}$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -61,7 +66,13 @@ public static class NativePlayerArtProfiles
             var townPath = Path.Combine(root, TownProfileFileName);
             var hasClass = File.Exists(classPath);
             var hasDepth = File.Exists(depthPath);
-            var hasTown = File.Exists(townPath);
+            var allClassPath = Path.Combine(root, AllClassTownProfileFileName);
+            var allClass = File.Exists(allClassPath);
+            var hasTown = File.Exists(townPath) || allClass;
+            if (allClass && File.Exists(townPath))
+                throw new InvalidDataException($"Profile directory '{root}' must contain one Town profile metadata file.");
+            if (allClass)
+                townPath = allClassPath;
             if (hasTown) {
                 if (!hasClass || hasDepth)
                     throw new InvalidDataException($"Town profile directory '{root}' must retain exactly one format-4 class profile metadata file.");
@@ -73,8 +84,8 @@ public static class NativePlayerArtProfiles
                 using var retainedClassDocument = ReadProfile(classPath);
                 if (!JsonEquivalent(classDocument.RootElement, retainedClassDocument.RootElement))
                     throw new InvalidDataException($"Town profile '{townPath}' does not match the retained format-4 class profile.");
-                var baseProfile = ValidateBaseProfile(root, classDocument, classPath, classBound: true);
-                var townProfile = ValidateTownProfile(root, townDocument, townPath, baseProfile);
+                var baseProfile = ValidateBaseProfile(root, classDocument, classPath, classBound: true, allClass, ProfileWrapper.Town);
+                var townProfile = ValidateTownProfile(root, townDocument, townPath, baseProfile, allClass);
                 hashes.Add(townProfile.ContentManifestHash);
                 var normalizedFingerprint = townProfile.CatalogFingerprint.ToLowerInvariant();
                 if (townCatalogFingerprints.TryGetValue(townProfile.ContentManifestHash, out var existingFingerprint)
@@ -127,7 +138,9 @@ public static class NativePlayerArtProfiles
         string root,
         JsonDocument document,
         string profilePath,
-        bool classBound)
+        bool classBound,
+        bool allClass = false,
+        ProfileWrapper wrapper = ProfileWrapper.None)
     {
         var expectedAdapter = classBound ? ClassProgressionAdapterId : DepthProgressionAdapterId;
         var expectedFormat = classBound ? 4 : 3;
@@ -136,6 +149,14 @@ public static class NativePlayerArtProfiles
             throw new InvalidDataException($"Native Cathedral profile '{profilePath}' has an unsupported format or adapter.");
 
         var classSymbol = RequiredString(document, "heroClassSymbol");
+        // An all-class progression is recognised by its policy; only the all-class Town profile may wrap it.
+        var declaresAllClass = classBound && document.RootElement.TryGetProperty("populationPolicy", out var policy)
+            && policy.ValueKind == JsonValueKind.String && policy.GetString() == AllClassPolicy;
+        if (allClass != declaresAllClass && !(declaresAllClass && wrapper is ProfileWrapper.None))
+            throw new InvalidDataException($"Profile '{profilePath}' mixes the all-class and class-bound native contracts.");
+        allClass = declaresAllClass;
+        if (allClass && classSymbol != "warrior")
+            throw new InvalidDataException($"All-class profile '{profilePath}' must describe the default Warrior.");
         if (classBound && classSymbol is not "warrior" and not "sorcerer")
             throw new InvalidDataException($"Class-progression profile '{profilePath}' must bind Warrior or Sorcerer.");
         if (!classBound && classSymbol != "rogue")
@@ -156,7 +177,7 @@ public static class NativePlayerArtProfiles
         RequireProfilePackIdentity(document, "contentId", "contentVersion", contentPack, profilePath);
         RequireProfilePackIdentity(document, "populationPackId", "populationPackVersion", populationPack, profilePath);
         RequireProfilePackIdentity(document, "runtimePackId", "runtimePackVersion", runtimePack, profilePath);
-        ValidateRuntimeClassBinding(runtimePack, classSymbol, classBound, profilePath);
+        ValidateRuntimeClassBinding(runtimePack, classSymbol, classBound, profilePath, allClass);
 
         var manifest = new ContentManifest(contentPack.Id, contentPack.Version, [contentPack, populationPack, runtimePack]);
         if (!string.Equals(manifest.Sha256, declaredHash, StringComparison.Ordinal))
@@ -168,10 +189,12 @@ public static class NativePlayerArtProfiles
         string root,
         JsonDocument townDocument,
         string profilePath,
-        VerifiedBaseProfile baseProfile)
+        VerifiedBaseProfile baseProfile,
+        bool allClass = false)
     {
-        if (RequiredInt32(townDocument, "formatVersion") != 5
-            || !string.Equals(RequiredString(townDocument, "adapterId"), TownProgressionAdapterId, StringComparison.Ordinal))
+        if (RequiredInt32(townDocument, "formatVersion") != (allClass ? 6 : 5)
+            || !string.Equals(RequiredString(townDocument, "adapterId"), allClass ? AllClassTownAdapterId : TownProgressionAdapterId,
+                StringComparison.Ordinal))
             throw new InvalidDataException($"Town profile '{profilePath}' has an unsupported format or adapter.");
 
         var townDirectory = ResolveProfileDirectory(root, RequiredString(townDocument, "townDirectory"), profilePath);
@@ -301,7 +324,8 @@ public static class NativePlayerArtProfiles
         return result;
     }
 
-    private static void ValidateRuntimeClassBinding(ContentPack runtimePack, string classSymbol, bool classBound, string profilePath)
+    private static void ValidateRuntimeClassBinding(ContentPack runtimePack, string classSymbol, bool classBound, string profilePath,
+        bool allClass = false)
     {
         const string tableName = "native_cathedral_runtime/native-character-start.tsv";
         string[] columns = [
@@ -316,6 +340,13 @@ public static class NativePlayerArtProfiles
         if (!classBound) {
             if (matches.Length != 0)
                 throw new InvalidDataException($"Legacy Rogue profile '{profilePath}' must retain the table-absent compatibility identity.");
+            return;
+        }
+        if (allClass) {
+            if (matches.Length != 1 || !matches[0].Columns.SequenceEqual(columns, StringComparer.Ordinal)
+                || !matches[0].Rows.Select(row => (row.RequiredUInt32("class_id"), row.Required("class_symbol")))
+                    .SequenceEqual([(0U, "warrior"), (1U, "rogue"), (2U, "sorcerer")]))
+                throw new InvalidDataException($"All-class profile '{profilePath}' must start Warrior, Rogue and Sorcerer in {tableName}.");
             return;
         }
         if (matches.Length != 1

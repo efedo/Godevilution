@@ -7,6 +7,16 @@ contracts stay in their existing guides.
 
 ## 2026-10-24
 
+- One native profile for all supported classes (batch 1.2): native setup now
+  builds a format-6 all-class Town profile whose class progression has one start
+  row each for Warrior, Rogue and Sorcerer. The new all-class adapter activates
+  one native run per class and keeps the run the first participant picks or a
+  resumed cohort validates against; the setup screen offers all three. Add a
+  headless Rogue Journey/Resume (`test-godot-native-classes.ps1 -Class`). Class-bound
+  profiles, adapters and saves are unchanged.
+- Fix the 1.1c default launch, which put saves outside the profile's `sessions`
+  folder that the Town launcher requires: setup now keeps each profile at
+  `profile-<content hash>` with its saves, reused while its content is unchanged.
 - First-run native setup (batch 1.1c): `run-godot-client.ps1` now finds the
   player's `DIABDAT.MPQ` (remembered `-DiabloArchive`, `GODEVILUTION_DIABDAT`, the
   DevilutionX data folder, the GOG registry, usual install folders), builds the
