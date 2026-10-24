@@ -49,6 +49,10 @@ contracts stay in their existing guides.
   Town→L4 slice and a two-player smoke into Phase 1 ahead of the refactors,
   specify first-run setup end to end with automatic profile rebuilds, and record
   which proven Catacombs pieces Phase 2 reuses.
+- Split Phase 1 batch 1.1 into the C# MPQ reader (1.1a), C# semantic table export
+  (1.1b) and first-run setup (1.1c). Add `tools/Native.Archive`, a faithful C# port
+  of the pinned `mpqfs` read side (crypto, sector streams, PKWARE explode), with a
+  native `mpqfs` oracle run in CI against a synthetic archive and `spawn.mpq`.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.

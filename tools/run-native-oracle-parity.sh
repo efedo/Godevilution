@@ -5,7 +5,8 @@
 # Usage: tools/run-native-oracle-parity.sh <native-build-dir> <output-root>
 #
 # Every capture listed here runs only against DevilutionX's bundled assets and
-# txtdata tables; none opens DIABDAT.MPQ, so its output can be generated in CI.
+# txtdata tables, except the MPQ reader oracle, which reads the freely
+# redistributable spawn.mpq; none needs DIABDAT.MPQ, so all run in CI.
 # Oracles that need the retail archive or retail-derived metadata stay local
 # (see docs/ai/msvc-build.md). A skipped capture or managed test is a failure.
 set -euo pipefail
@@ -45,6 +46,8 @@ captures=(
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsChestOperations|GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsRangedReleases|GODEVILUTION_CATACOMBS_RANGED_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsArrowFlightAndImpact|GODEVILUTION_CATACOMBS_ARROW_FLIGHT_ORACLE_DIRECTORY"
+	# Reads spawn.mpq from the build directory, or GODEVILUTION_MPQ_ORACLE_ARCHIVE when set.
+	"native_mpq_oracle_test|NativeMpqOracle.CaptureReaderDigests|GODEVILUTION_MPQ_ORACLE_DIRECTORY"
 )
 
 # Managed consumers whose only external input is one of the corpora above.
@@ -65,6 +68,7 @@ diablo_classes=(
 	AuthoritativeNativeCatacombsRangedNativeOracleTests
 	AuthoritativeNativeCatacombsArrowNativeOracleTests
 )
+client_classes=(NativeArchiveOracleTests)
 
 for entry in "${captures[@]}"; do
 	IFS='|' read -r executable filter variable <<<"$entry"
@@ -110,3 +114,7 @@ mapfile -t diablo_filters < <(filters "${diablo_classes[@]}")
 dotnet run --no-build --configuration Release \
 	--project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj -- \
 	"${diablo_filters[@]}" --explicit on --fail-skips on
+mapfile -t client_filters < <(filters "${client_classes[@]}")
+dotnet run --no-build --configuration Release \
+	--project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj -- \
+	"${client_filters[@]}" --explicit on --fail-skips on

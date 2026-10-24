@@ -76,14 +76,6 @@ jobs:
         dotnet run --project server/tests/Devilution.Engine.Tests/Devilution.Engine.Tests.csproj --configuration Release
         dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --configuration Release
 
-    # Archive-free native oracles are generated here from the open fixtures;
-    # retail-archive corpora are never committed or uploaded (public repository).
-    - name: Build native oracle capture fixtures
-      run: cmake --build build --target animationinfo_test player_animation_context_test theme_item_generation_test -j 2
-
-    - name: Compare managed parity with generated native oracles
-      run: bash tools/run-native-oracle-parity.sh build "$RUNNER_TEMP/native-oracles"
-
     - name: Restore authoritative server tests
       run: dotnet restore server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
 
@@ -98,6 +90,15 @@ jobs:
 
     - name: Build authoritative protocol client tests
       run: dotnet build godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-restore
+
+    # Archive-free native oracles are generated here from the open fixtures;
+    # retail-archive corpora are never committed or uploaded (public repository).
+    # The MPQ reader oracle reads the redistributable spawn.mpq downloaded above.
+    - name: Build native oracle capture fixtures
+      run: cmake --build build --target animationinfo_test player_animation_context_test theme_item_generation_test native_mpq_oracle_test -j 2
+
+    - name: Compare managed parity with generated native oracles
+      run: bash tools/run-native-oracle-parity.sh build "$RUNNER_TEMP/native-oracles"
 
     - name: Run authoritative client/server smoke tests
       run: dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build

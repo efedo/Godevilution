@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-24 — C# MPQ reader
+
+`tools/Native.Archive` passed 27 unit cases (crypto constants, explode in both
+modes and all dictionary sizes, container edge cases and refusals) and matched
+native `mpqfs` on hashes for 80 curated names, all 12 synthetic-archive entries
+and all 76 curated files present in a private `DIABDAT.MPQ`, byte for byte. CI
+repeats the synthetic and real-archive comparison with `spawn.mpq`.
+
 ### 2026-10-22 — Archive-free native oracles in CI
 
 `tools/run-native-oracle-parity.sh` regenerated all 14 archive-free corpora with

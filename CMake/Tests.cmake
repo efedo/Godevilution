@@ -50,6 +50,7 @@ set(tests
   native_scene_art_test
   native_towner_art_test
   native_object_art_test
+  native_mpq_oracle_test
   player_command_phase_test
   player_destination_walk_test
   portal_test
@@ -163,6 +164,8 @@ foreach(test_target ${tests})
 endforeach()
 
 target_include_directories(player_animation_context_test PRIVATE "${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2")
+target_include_directories(native_mpq_oracle_test PRIVATE "${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2")
+target_link_libraries(native_mpq_oracle_test PRIVATE mpqfs::mpqfs)
 target_compile_definitions(player_animation_context_test PRIVATE "GODEVILUTION_CONTEXT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 target_compile_definitions(player_destination_walk_test PRIVATE "GODEVILUTION_DESTINATION_WALK_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 target_compile_definitions(cathedral_monster_loot_test PRIVATE "GODEVILUTION_MONSTER_LOOT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")

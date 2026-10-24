@@ -17,6 +17,13 @@ discovery also finds a GOG install through the registry, so a local pass does
 not prove a capture is archive-free; check that it never calls `LoadGameArchives`.
 Add a capture to the script only with its consumer classes and a clean CI run.
 
+`native_mpq_oracle_test` writes a synthetic archive with the pinned `mpqfs` writer
+and digests curated Diablo paths from one real archive: `spawn.mpq` in the build
+directory (CI), or `GODEVILUTION_MPQ_ORACLE_ARCHIVE` (for example a private
+`DIABDAT.MPQ`). It records only names, sizes and SHA-256 values. The consumer is
+the client test class `NativeArchiveOracleTests`, which checks the C# reader in
+`tools/Native.Archive`.
+
 ## Native Catacombs references
 
 Build the registered `native_catacombs_generation_test` target with the checked

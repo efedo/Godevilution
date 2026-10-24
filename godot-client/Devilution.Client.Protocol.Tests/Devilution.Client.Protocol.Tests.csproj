@@ -39,6 +39,9 @@
     <Compile Include="../../tools/Native.TownerArt/*.cs"
              Exclude="../../tools/Native.TownerArt/Program.cs"
              Link="NativeTownerArt/%(Filename)%(Extension)" />
+    <Compile Include="../../tools/Native.Archive/*.cs"
+             Exclude="../../tools/Native.Archive/Program.cs"
+             Link="NativeArchive/%(Filename)%(Extension)" />
     <Compile Include="../../tools/Native.ObjectArt/*.cs"
              Exclude="../../tools/Native.ObjectArt/Program.cs"
              Link="NativeObjectArt/%(Filename)%(Extension)" />
