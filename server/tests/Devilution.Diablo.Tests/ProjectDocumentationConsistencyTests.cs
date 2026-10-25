@@ -315,7 +315,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("L4.Down has no Catacombs-5 route", contractText, StringComparison.Ordinal);
         Assert.Contains("ai/godot-build.md#generated-cathedral-depths-playtest", contractText, StringComparison.Ordinal);
         var guide = Read(root, "docs", "ai", "godot-build.md");
-        Assert.Contains("run-godot-cathedral-depths-playtest.ps1", guide, StringComparison.Ordinal);
+        Assert.Contains("-CathedralDepthProfileDirectory .local/cathedral-depths-playtest", guide, StringComparison.Ordinal);
         Assert.Contains("-CathedralDepthProfileDirectory", guide, StringComparison.Ordinal);
         Assert.Contains("devilution.diablo.cathedral-depths.v1", guide, StringComparison.Ordinal);
     }

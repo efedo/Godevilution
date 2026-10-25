@@ -242,23 +242,26 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         uint startingLevelId,
         uint? statPointsOverride = null,
         int startingPositionX = 0,
-        int startingPositionY = 0)
+        int startingPositionY = 0,
+        DiabloPlayerTestStart? testStart = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         var playerClass = playerClasses.GetRequired(classId);
         var loadout = GetRequired(classId);
-        var attributes = playerClass.CreateStartingAttributes();
+        var attributes = testStart?.Attributes ?? playerClass.CreateStartingAttributes();
+        var characterLevel = testStart?.CharacterLevel ?? 1U;
         var life = lifeOverride
-            ?? playerClass.CalculateBaseLifeQ6(1, attributes.Vitality.Base);
+            ?? playerClass.CalculateBaseLifeQ6(characterLevel, attributes.Vitality.Base);
         var mana = manaOverride
-            ?? playerClass.CalculateBaseManaQ6(1, attributes.Magic.Base);
+            ?? playerClass.CalculateBaseManaQ6(characterLevel, attributes.Magic.Base);
         var equipment = new List<EquippedStoreItem>();
         var belt = new List<BeltStoreItem>();
         var inventory = new List<OwnedStoreItem>();
         var inventoryGrid = Enumerable.Repeat(-1, InventoryCellCount).ToArray();
         var usedSeeds = new HashSet<uint>();
 
-        foreach (var loadoutItem in loadout.Items.OrderBy(item => item.Order)) {
+        foreach (var startingItem in (testStart?.Apply(loadout.Items) ?? loadout.Items).OrderBy(item => item.Order)) {
+            var loadoutItem = startingItem;
             var seed = CreateUniqueItemSeed(
                 sessionId,
                 classId,
@@ -309,7 +312,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         life = adjustedResources.LifeQ6;
         mana = adjustedResources.ManaQ6;
 
-        var startingGold = goldOverride ?? loadout.StartingGold;
+        var startingGold = goldOverride ?? testStart?.Gold ?? loadout.StartingGold;
         AddStartingGold(
             sessionId,
             classId,
@@ -325,7 +328,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 loadout.StartingSpellLevel)];
         return new DiabloPlayerTemplate(
             startingGold,
-            0,
+            testStart?.Experience ?? 0,
             life,
             mana,
             mana,
@@ -336,7 +339,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             startingPositionX,
             startingPositionY,
             life,
-            1,
+            characterLevel,
             startingLevelId,
             0,
             classId,
@@ -792,5 +795,33 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             if (seed != 0 && usedSeeds.Add(seed))
                 return seed;
         }
+    }
+}
+
+/**
+ * Acceptance-only start for a played character of a given level: base attributes,
+ * level and experience, with equipment and belt slots replaced by catalog items.
+ * Life and mana follow the native class formulas for that level and vitality/magic.
+ */
+public sealed record DiabloPlayerTestStart(
+    uint CharacterLevel,
+    uint Experience,
+    PlayerAttributesState Attributes,
+    IReadOnlyDictionary<uint, uint> EquipmentItemIds,
+    IReadOnlyDictionary<uint, uint> BeltItemIds,
+    uint? Gold)
+{
+    /** The class loadout with the given equipment and belt slots replaced. */
+    public IReadOnlyList<AuthoritativePlayerLoadoutItemDefinition> Apply(IReadOnlyList<AuthoritativePlayerLoadoutItemDefinition> loadout)
+    {
+        var replaced = loadout.Where(item => !(item.Location == DiabloPlayerLoadoutItemLocation.Equipment && EquipmentItemIds.ContainsKey(item.Slot))
+                && !(item.Location == DiabloPlayerLoadoutItemLocation.Belt && BeltItemIds.ContainsKey(item.Slot)))
+            .ToList();
+        var order = loadout.Count == 0 ? 0U : loadout.Max(item => item.Order);
+        foreach (var (slot, itemId) in EquipmentItemIds.OrderBy(pair => pair.Key))
+            replaced.Add(new(++order, itemId, DiabloPlayerLoadoutItemLocation.Equipment, slot));
+        foreach (var (slot, itemId) in BeltItemIds.OrderBy(pair => pair.Key))
+            replaced.Add(new(++order, itemId, DiabloPlayerLoadoutItemLocation.Belt, slot));
+        return replaced;
     }
 }

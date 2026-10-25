@@ -65,17 +65,27 @@ public sealed class LocalLauncherContractTests
     }
 
     [Fact]
-    public void CathedralPlaytestIsAnExplicitIsolatedZeroArgumentLauncher()
+    public void AuthoredCathedralPlaytestsHaveNoRootLaunchersAndStayExplicit()
     {
         var root = FindRepositoryRoot();
-        var launcher = File.ReadAllText(Path.Combine(root, "run-godot-cathedral-playtest.ps1"));
-        Assert.Contains("param()", launcher, StringComparison.Ordinal);
-        Assert.Contains("'.local/cathedral-playtest'", launcher, StringComparison.Ordinal);
-        Assert.Contains("'cathedral-playtest.json'", launcher, StringComparison.Ordinal);
-        Assert.Contains("& $godotLauncher -CathedralProfileDirectory $profileDirectory", launcher, StringComparison.Ordinal);
-        Assert.Contains("not campaign or native population parity", launcher, StringComparison.Ordinal);
+        // The diagnostic authored Cathedral profiles run through run-local-client.ps1 parameters only.
+        foreach (var removed in new[] { "run-godot-cathedral-playtest.ps1", "run-godot-cathedral-depths-playtest.ps1",
+            "run-godot-cathedral-doors-playtest.ps1" })
+            Assert.False(File.Exists(Path.Combine(root, removed)), removed);
         foreach (var existing in new[] { "run-godot-client.ps1", "run-godot-preview.ps1", "run-godot-portal-preview.ps1", "run-godot-multiplayer.ps1" })
             Assert.DoesNotContain("CathedralProfileDirectory", File.ReadAllText(Path.Combine(root, existing)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TestParticipantStaysAnAutomatedNativeAcceptanceOption()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
+        // A played-character test hero never reaches a normal launch.
+        Assert.Contains("if ($TestParticipantPath -and (-not $Automated -or [string]::IsNullOrWhiteSpace($AcceptancePhase) -or", launcher, StringComparison.Ordinal);
+        Assert.Contains("[string]::IsNullOrWhiteSpace($CathedralNativeTownProfileDirectory)", launcher, StringComparison.Ordinal);
+        Assert.Contains("--test-participant", launcher, StringComparison.Ordinal);
+        Assert.DoesNotContain("TestParticipant", File.ReadAllText(Path.Combine(root, "run-godot-client.ps1")), StringComparison.Ordinal);
     }
 
     [Fact]

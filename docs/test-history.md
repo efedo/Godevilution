@@ -9,6 +9,19 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-25 — Cathedral L1-L4 on the default profile
+
+On the setup-built all-class profile, `test-godot-native-depth-progression.ps1
+-TargetDepth n` passed headless Journey and fresh-host Resume for each floor:
+L1 with a new Warrior, L2-L4 with `warrior-l2`..`warrior-l4` (clvl 3/5/7). Each
+run earned one XP kill per floor through the target, restocked at Pepin, returned
+to Town and resumed with an exact cold baseline and every floor retained; L4
+passed twice. One grind run (clvl 1, 826 XP after L1, death on L2) is the only
+measured hero basis; deeper heroes follow native progression. Combat stays as
+native allows: a level-7 Warrior is hit-recovery-locked by L4 Hidden packs, so
+the bot retreats to Town at 60% life with two potions left. Looting, Rogue and
+Sorcerer four-floor journeys and the windowed launch were not run.
+
 ### 2026-10-24 — One profile, all supported classes
 
 On the setup-built all-class Town profile, `test-godot-native-classes.ps1

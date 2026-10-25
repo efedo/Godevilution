@@ -5,6 +5,19 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-25
+
+- Cathedral L1-L4 by default (batch 1.3): the all-class profile's new
+  `NativeDepthJourney`/`NativeDepthResume` phases take an ordinary-melee Warrior
+  from Town to a target floor (one XP kill per floor, Town healer and Pepin's
+  potions between floors) and back, then prove every floor retained on a fresh
+  host. `test-godot-native-depth-progression.ps1` accepts the all-class profile
+  with `-TargetDepth` and `-TestParticipant`; acceptance-only
+  `--test-participant` starts a played hero (level, attributes, gear) from
+  `tools/native-test-heroes/`. Remove the `run-godot-cathedral-playtest.ps1`,
+  `-depths-` and `-doors-` launchers; their profiles stay available through
+  `run-local-client.ps1` parameters.
+
 ## 2026-10-24
 
 - One native profile for all supported classes (batch 1.2): native setup now

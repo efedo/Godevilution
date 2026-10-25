@@ -129,6 +129,48 @@ public sealed class AuthoritativeCathedralNativeCharacterStartTests
             null, catalogs.Classes, catalogs.Animations, catalogs.Loadouts, 1));
     }
 
+    [Fact]
+    public void TestStartBuildsAPlayedCharacterWithNativeLevelResourcesAndReplacedSlots()
+    {
+        var catalogs = LoadCatalogs();
+        var attributes = new PlayerAttributesState(new(45, 45), new(10, 10), new(30, 30), new(40, 40));
+        var testStart = new DiabloPlayerTestStart(5, 5000, attributes,
+            new Dictionary<uint, uint> { [4] = 1 }, new Dictionary<uint, uint> { [2] = 105 }, Gold: 250);
+
+        var template = catalogs.Loadouts.CreateTemplate("played-warrior", 0, null, null, null, 1,
+            startingPositionX: 57, startingPositionY: 40, testStart: testStart);
+
+        var warrior = catalogs.Classes.GetRequired(0);
+        Assert.Equal((5U, 5000U, 250U), (template.CharacterLevel, template.Experience, template.Gold));
+        Assert.Equal(attributes, template.Attributes);
+        Assert.Equal(warrior.CalculateBaseLifeQ6(5, 40), template.BaseLifeMaximum);
+        Assert.Equal(1U, template.Equipment.Single(item => item.Slot == 4).State.StableItemId);
+        Assert.Equal(2, template.Equipment.Count);
+        Assert.Equal(new uint[] { 0, 1, 2 }, template.Belt.Select(item => item.Slot).Order());
+        var fresh = catalogs.Loadouts.CreateTemplate("fresh-warrior", 0, null, null, null, 1, startingPositionX: 57, startingPositionY: 40);
+        Assert.Equal((1U, 0U), (fresh.CharacterLevel, fresh.Experience));
+        Assert.Equal(100U, fresh.Equipment.Single(item => item.Slot == 4).State.StableItemId);
+    }
+
+    [Fact]
+    public void TestStartGearDrivesNativeMeleeDamageAndArmor()
+    {
+        var catalogs = LoadCatalogs();
+        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", ReadBase(FindRepositoryRoot(), "items.tsv"));
+        var attributes = new PlayerAttributesState(new(45, 45), new(10, 10), new(30, 30), new(45, 45));
+        // warrior-l4: helm, broad sword, small shield, ring mail.
+        var testStart = new DiabloPlayerTestStart(7, 24557, attributes,
+            new Dictionary<uint, uint> { [0] = 152, [4] = 130, [5] = 168, [6] = 2173 }, new Dictionary<uint, uint>(), Gold: 1000);
+        var template = catalogs.Loadouts.CreateTemplate("played-warrior", 0, null, null, null, 1,
+            startingPositionX: 57, startingPositionY: 40, testStart: testStart);
+
+        Assert.All(template.Equipment, item => Assert.True(item.State.StatFlag, $"slot {item.Slot}"));
+        var damage = AuthoritativeEquipmentDamageRules.Calculate(7, attributes, template.Equipment,
+            catalogs.Classes.GetRequired(0), items);
+        // Native: broad sword 4-12, _pDamageMod = level * Strength / 100.
+        Assert.Equal((4, 12, 3), (damage.MinimumDamage, damage.MaximumDamage, damage.DamageModifier));
+    }
+
     private static TsvTable CreateTable(
         uint classId,
         string symbol,

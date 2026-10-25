@@ -15,6 +15,10 @@ public partial class SessionAcceptance
         NativeProgressionGoldCollection L1Gold, NativeDepthProgressionCombat[] Combat,
         NativeProgressionHealerStock HealerStock);
 
+    /** The Rogue four-floor journey on the separate native depth-progression profile. */
+    private static bool IsNativeDepthProgressionPhase(string? phase)
+        => phase is "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume";
+
     private async Task VerifyCathedralNativeDepthProgressionAsync(
         Main main, string directory, string phase, bool visible, Evidence? previous)
     {
@@ -166,8 +170,7 @@ public partial class SessionAcceptance
 
     private static uint? FindNativeDepthProgressionStairBlocker(Snapshot snapshot, int stairX, int stairY)
     {
-        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
+        if (!IsNativeDepthProgressionPhase(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE")))
             return null;
         var player = snapshot.Players.Single();
         var planning = snapshot.Clone();
@@ -189,8 +192,7 @@ public partial class SessionAcceptance
 
     private async Task WaitForNativeDepthProgressionCommandBoundary(Main main, string context)
     {
-        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
+        if (!IsNativeDepthProgressionPhase(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE")))
             return;
         await Until(() => main.ObservedPendingCommandCount == 0 && Settled(main)
             && (main.ObservedCommandResult is null

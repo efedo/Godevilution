@@ -23,6 +23,9 @@ public sealed record ServerHostOptions(
     /** Optional server-owned primary-attribute points for development starts. */
     public uint? StartingStatPoints { get; init; }
 
+    /** Acceptance-only participant definition file read by the selected game adapter. */
+    public string? TestParticipantPath { get; init; }
+
     /** Explicit whole-host opt-in; native compatibility retains immediate timing. */
     public bool UseClockGatedCommandScheduling { get; init; }
 
@@ -221,6 +224,14 @@ public sealed record ServerHostOptions(
                 }
                 current = current with { StartingStatPoints = startingStatPoints };
                 break;
+            case "--test-participant":
+                if (string.IsNullOrWhiteSpace(value) || !File.Exists(value)) {
+                    options = current;
+                    error = $"Test participant file '{value}' does not exist.";
+                    return false;
+                }
+                current = current with { TestParticipantPath = Path.GetFullPath(value) };
+                break;
             case "--starting-level":
                 if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var startingLevelId)) {
                     options = current;
@@ -364,6 +375,7 @@ public sealed record ServerHostOptions(
           --starting-life <amount>     Override content-derived initial life (Q6)
           --starting-mana <amount>     Override content-derived initial mana (Q6)
           --starting-stat-points <n>   Seed server-owned attribute points for development starts
+          --test-participant <file>    Acceptance only: start new participants from this definition
           --starting-level <id>        Override the content-defined initial level for new participants
           --random-seed <uint32>       Initial server/world seed (persisted in save root)
           --game-mode <mode>           single-player or multiplayer (default: multiplayer)

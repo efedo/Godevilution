@@ -1,0 +1,25 @@
+{
+  "basis": "Native Warrior entering L3: L1 measured by one grind run (2026-10-25: clvl 1, 826 XP, starter gear after clearing the reachable L1); L2-L4 from native Diablo progression (XP table, 5 points per level into Strength/Vitality, ordinary Cathedral gear and a belt of healing potions).",
+  "classSymbol": "warrior",
+  "characterLevel": 5,
+  "experience": 12489,
+  "strength": 40,
+  "magic": 10,
+  "dexterity": 25,
+  "vitality": 35,
+  "equipment": {
+    "0": "cap",
+    "4": "sabre",
+    "5": "small_shield",
+    "6": "studded_leather_armor"
+  },
+  "belt": {
+    "0": "potion_healing",
+    "1": "potion_healing",
+    "2": "potion_healing",
+    "3": "potion_healing",
+    "4": "potion_healing",
+    "5": "potion_healing"
+  },
+  "gold": 600
+}

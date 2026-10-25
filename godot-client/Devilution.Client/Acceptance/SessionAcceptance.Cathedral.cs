@@ -88,8 +88,9 @@ public partial class SessionAcceptance
     }
 
     private async Task TravelCathedralRoute(Main main, string directory, uint warpId, uint destinationLevel, bool stopEarly,
-        int minimumDistinctPositions = 8, bool distanceBoundedApproachDeadline = false)
+        int minimumDistinctPositions = 8, bool distanceBoundedApproachDeadline = false, Func<bool>? interrupt = null)
     {
+        var interrupted = false;
         await Until(() => Settled(main), "Generated-route start did not settle.");
         var origin = main.ObservedSnapshot!.Players.Single().Clone();
         var routes = main.ObservedSnapshot.LevelGeometry.Single(level => level.LevelId == origin.LevelId)
@@ -135,11 +136,18 @@ public partial class SessionAcceptance
                 }
                 Require(!((Button)main.FindChild("CancelTravel", true, false)).Disabled,
                     $"Generated-route traversal stopped: {main.ObservedCommandResult}; {((Label)main.FindChild("TravelStatus", true, false)).Text}");
+                if (interrupt?.Invoke() == true)
+                    return interrupted = true;
                 if (!stopEarly || positions.Count < 16)
                     return false;
                 boundary = FindAdjacentCathedralWall(main);
                 return boundary is not null;
             }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds);
+            if (interrupted) {
+                // The caller stops travel (for example to heal) and owns the retry.
+                await ClickControl(main, sections, 4, "CancelTravel");
+                throw new InvalidOperationException("Generated-route traversal was interrupted by its caller.");
+            }
             if (stopEarly) {
                 await ClickControl(main, sections, 4, "CancelTravel");
                 await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled

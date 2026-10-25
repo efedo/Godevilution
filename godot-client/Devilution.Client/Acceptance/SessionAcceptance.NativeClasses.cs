@@ -252,22 +252,22 @@ public partial class SessionAcceptance
             "The native class did not reach its ordinary route destination.");
     }
 
-    private async Task<MonsterSnapshot> FindNativeClassTargetAsync(Main main, bool ranged)
+    private async Task<MonsterSnapshot> FindNativeClassTargetAsync(Main main, bool ranged, uint levelId = 1, int maximumMoves = 48)
     {
-        for (var movement = 0; movement < 48; movement++) {
+        for (var movement = 0; movement < maximumMoves; movement++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
-            Require(player.Life > 0 && player.LevelId == 1, "Native class combat left its living L1 context.");
-            var geometry = DepthGeometry(main, 1);
+            Require(player.Life > 0 && player.LevelId == levelId, $"Native class combat left its living L{levelId} context.");
+            var geometry = DepthGeometry(main, levelId);
             var blocked = geometry.MissileBlockedCells.ToHashSet();
             var nativeRangedViewport = ranged && IsNativeSceneViewportActive(main, player.LevelId);
-            var targets = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == 1)
+            var targets = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                 .OrderBy(monster => NativeMonsterDistance(player, monster)).ThenBy(monster => monster.EntityId).Take(12);
             foreach (var target in targets) {
                 bool AttackCell(int x, int y) => ranged
                     ? NativeDistance(x, y, target.PositionX, target.PositionY) <= 6
                         && CanSeeNativeRangedLane(player, target, geometry, x, y, (target.PositionX, target.PositionY))
-                        && HasClearNativeRangedLane(snapshot, geometry, blocked, 1, x, y, target, (target.PositionX, target.PositionY))
+                        && HasClearNativeRangedLane(snapshot, geometry, blocked, levelId, x, y, target, (target.PositionX, target.PositionY))
                     : NativeDistance(x, y, target.PositionX, target.PositionY) <= 1;
                 bool AttackGoal(int x, int y) => AttackCell(x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));

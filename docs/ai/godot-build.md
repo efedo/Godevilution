@@ -41,6 +41,18 @@ format-4/5 profiles, their adapters and saves are unchanged. Run the headless
 pair for a class with `tools/test-godot-native-classes.ps1 -ProfileDirectory
 <profile> -NativeTown -Class warrior|rogue|sorcerer`; the Rogue pair has no Town
 class ability step.
+
+The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
+`tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>
+-TargetDepth 1..4 [-TestParticipant tools/native-test-heroes/warrior-l<n>.json]`
+runs `NativeDepthJourney` (one XP kill per floor down to the target, Town healer
+between floors, return to Town) and the fresh-host `NativeDepthResume` (exact
+cold baseline, every floor retained). Each floor test starts from a played
+hero: a new Warrior for L1, `warrior-l2`..`warrior-l4` for deeper floors. The
+heroes' `basis` notes record how their level, attributes and gear were chosen.
+`--test-participant <file>` (launcher `-TestParticipantPath`, automated native
+acceptance only) replaces the class start's level, experience, attributes,
+Gold and named equipment/belt slots; life and mana follow the native formulas.
 The four art importers below also accept `--archive <DIABDAT.MPQ> --assets-directory assets`
 in place of `--source-root`.
 
@@ -922,7 +934,7 @@ From the repository root, replace the example private geometry directory:
 
 ```powershell
 dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-playtest --seed 2588
-.\run-godot-cathedral-playtest.ps1
+.\godot-client\run-local-client.ps1 -CathedralProfileDirectory .local/cathedral-playtest
 ```
 
 The output directory must not already exist, even if empty. Compilation validates
@@ -979,7 +991,7 @@ catalog used for verification; other inputs must pass validation independently:
 
 ```powershell
 dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-depths-playtest --depth-seeds '2588,2588,1,4294967295' --placement-policy none
-.\run-godot-cathedral-depths-playtest.ps1
+.\godot-client\run-local-client.ps1 -CathedralDepthProfileDirectory .local/cathedral-depths-playtest
 ```
 
 Output must be fresh. Compilation validates all four geometries, ordered identities,
@@ -1071,7 +1083,7 @@ Use a fresh output directory; never overwrite a compiled profile or its saves:
 
 ```powershell
 dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-doors-playtest --depth-seeds '2588,2588,1,4294967295' --cathedral-doors --placement-policy none
-.\run-godot-cathedral-doors-playtest.ps1
+.\godot-client\run-local-client.ps1 -CathedralDoorProfileDirectory .local/cathedral-doors-playtest
 ```
 
 The marker is `cathedral-doors-playtest.json`; the adapter is

@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
@@ -27,7 +27,9 @@ param(
     [string]$NativeDepthEntryBaselinePath,
     [switch]$SessionMenuAcceptance,
     [string]$CathedralNativeClassProfileDirectory,
-    [string]$CathedralNativeTownProfileDirectory
+    [string]$CathedralNativeTownProfileDirectory,
+    # Acceptance only: start new participants as this played-character definition (native profiles).
+    [string]$TestParticipantPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,6 +38,10 @@ if ($SessionMenuAcceptance -and ([string]::IsNullOrWhiteSpace($SessionDirectory)
     $PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or
     $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory -or $CathedralNativeClassProfileDirectory -or $CathedralNativeTownProfileDirectory -or $CathedralNativeProgressionProfileDirectory -or $CathedralNativeDepthProgressionProfileDirectory)) {
     throw 'Session-menu acceptance requires an explicit isolated base single-player Create/Resume profile.'
+}
+if ($TestParticipantPath -and (-not $Automated -or [string]::IsNullOrWhiteSpace($AcceptancePhase) -or
+        [string]::IsNullOrWhiteSpace($CathedralNativeTownProfileDirectory) -or -not (Test-Path -LiteralPath $TestParticipantPath -PathType Leaf))) {
+    throw 'A test participant requires an automated acceptance phase on a native Town profile and an existing definition file.'
 }
 if ($Automated -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
     throw 'Automated launches require an explicit isolated -SessionDirectory.'
@@ -134,7 +140,8 @@ if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -a
 if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and -not $cathedralDoors) {
     throw 'Cathedral door acceptance requires an explicit compiled -CathedralDoorProfileDirectory.'
 }
-$nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume')
+# NativeDepth* is the Warrior Town-L1-L4 journey on the all-class Town profile.
+$nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
 if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
@@ -2018,7 +2025,7 @@ try {
         Get-CathedralNativeTownProfile $CathedralNativeTownProfileDirectory $SessionDirectory
     } else { $null }
     $allClassNativeTown = $cathedralNativeTown -and $cathedralNativeTownProfile.AllClass
-    $phaseClassId = if ($AcceptancePhase -like 'NativeWarrior*') { 0 } elseif ($AcceptancePhase -like 'NativeRogue*') { 1 } elseif ($AcceptancePhase -like 'NativeSorcerer*') { 2 } else { -1 }
+    $phaseClassId = if ($AcceptancePhase -like 'NativeWarrior*' -or $AcceptancePhase -like 'NativeDepth*') { 0 } elseif ($AcceptancePhase -like 'NativeRogue*') { 1 } elseif ($AcceptancePhase -like 'NativeSorcerer*') { 2 } else { -1 }
     # The all-class profile starts the class the player (or the acceptance phase) picks.
     $boundNativeClassId = if ($allClassNativeTown) { if ($phaseClassId -ge 0) { $phaseClassId } else { $CharacterClassId } }
         elseif ($cathedralNativeTown) { $cathedralNativeTownProfile.ClassId } else { $cathedralNativeClassProfile.ClassId }
@@ -2102,7 +2109,8 @@ try {
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments
+        $testParticipantArguments = if ($TestParticipantPath) { '--test-participant "{0}"' -f [IO.Path]::GetFullPath($TestParticipantPath) } else { '' }
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6} {7}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments, $testParticipantArguments
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru

@@ -130,6 +130,7 @@ internal static class Program
             options.StartingLife,
             options.StartingMana) {
             StatPoints = options.StartingStatPoints,
+            TestParticipantDefinition = options.TestParticipantPath is { } testParticipant ? File.ReadAllText(testParticipant) : null,
             StartingLevelId = options.StartingLevelId,
             RandomSeed = randomSeed,
             GameMode = options.GameMode,

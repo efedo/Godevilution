@@ -99,9 +99,14 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             if (!town.GetNativeTownClassIds(content).Order().SequenceEqual(AllClassTownClassIds))
                 throw new InvalidDataException("The all-class native Town profile must start Warrior, Rogue and Sorcerer.");
             // Each class is its own native run; activate all of them and keep the one the player picks.
+            // A test participant belongs to the run of its own class only.
+            var testClass = playerStart.TestParticipantDefinition is { } definition
+                ? NativeTestParticipant.Parse(definition).ClassSymbol : null;
+            string[] classSymbols = ["warrior", "rogue", "sorcerer"];
             return new NativeClassSelectingGameHostAdapter(AllClassTownClassIds.ToDictionary(classId => classId,
                 classId => CreateExecutor(town.ActivateNativeTownClass(content, classId, playerStart.RandomSeed),
-                    playerStart, nativePopulation: true, classBound: true, nativeProtocol: true, allClass: true)));
+                    testClass is null || testClass == classSymbols[classId] ? playerStart : playerStart with { TestParticipantDefinition = null },
+                    nativePopulation: true, classBound: true, nativeProtocol: true, allClass: true)));
         }
         var activatedContent = adapterId switch {
             CathedralNativeTownProgressionId => registry.GetRequiredCapability<IDiabloCathedralNativeTownProgressionBootstrap>()
@@ -155,6 +160,12 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             throw new NotSupportedException(
                 "The native-populated Cathedral profile supports only Town and Cathedral L1 participant starts.");
         var startingPosition = world.GetStartPosition(startingLevelId);
+        var testParticipant = playerStart.TestParticipantDefinition is { } definition
+            ? NativeTestParticipant.Parse(definition) : null;
+        if (testParticipant is not null && !isNativePopulationProfile)
+            throw new NotSupportedException("A test participant is supported only on native-populated profiles.");
+        var testStart = testParticipant?.ToTestStart(activatedContent.Simulation.Items
+            ?? throw new InvalidDataException("A test participant requires the active item catalog."));
         return new StoreSimulationExecutor(
             activatedContent,
             (sessionId, requestedClassId) => {
@@ -178,7 +189,9 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                     && !string.Equals(playerClass.Symbol, "rogue", StringComparison.Ordinal))
                     throw new NotSupportedException(
                         "The native-populated Cathedral profile is generated for the canonical Rogue class.");
-                if (isNativePopulationProfile) {
+                if (testParticipant is not null && !string.Equals(playerClass.Symbol, testParticipant.ClassSymbol, StringComparison.Ordinal))
+                    throw new NotSupportedException($"The test participant is a {testParticipant.ClassSymbol}, not a {playerClass.Symbol}.");
+                if (isNativePopulationProfile && testParticipant is null) {
                     var canonical = activatedContent.PlayerLoadouts.CreateTemplate(
                         "native-cathedral-population-profile",
                         playerClass.ClassId,
@@ -203,7 +216,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                     startingLevelId,
                     playerStart.StatPoints,
                     startingPosition.X,
-                    startingPosition.Y);
+                    startingPosition.Y,
+                    testStart);
             },
             saveCodec: null,
             supportedProtocolFeatures: nativeProtocol

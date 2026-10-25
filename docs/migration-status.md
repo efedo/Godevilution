@@ -48,6 +48,7 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   open assets; the resulting class profiles are byte-identical to native-built ones.
   `run-godot-client.ps1` builds them, with the art, on first launch and starts native Town.
   One all-class profile offers Warrior, Rogue and Sorcerer; class-bound profiles still load.
+  Its headless Warrior journeys reach L1-L4 and back with fresh-host resume (batch 1.3).
 - The pure MPQ-free Town family matches all 191 native cases. Additive format-5
   Warrior/Sorcerer profiles now compile semantic Town inputs and canonical
   residents, retain separate 112x112 fine/special and 40x40 coarse/protected

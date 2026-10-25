@@ -986,6 +986,13 @@ public partial class SessionAcceptance
                 && main.ObservedLastQueuedSequence == expectedSequence,
                 $"Native movement did not produce exact sequence {expectedSequence}; "
                 + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
+            // Native refuses a walk while the player is mid-action (hit recovery). Wait for the
+            // action to end and re-plan; the caller's no-progress bound still limits retries.
+            if (result.Status == CommandStatus.Rejected && result.RejectReason == CommandRejectReason.NotAllowed) {
+                Require(snapshot.Players.Single().Life > 0,
+                    $"The Rogue died while its native movement {expectedSequence} was refused; {DescribeNativeHealingState(main)}.");
+                return main.ObservedPendingCommandCount == 0 && snapshot.Tick >= result.AppliedTick && Settled(main);
+            }
             Require(IsAcceptedOrSuccessfulDuplicate(result),
                 $"Native movement {expectedSequence} was {result.Status}/{result.RejectReason}.");
             if (main.ObservedPendingCommandCount != 0 || snapshot.Tick < result.AppliedTick)
@@ -1309,8 +1316,7 @@ public partial class SessionAcceptance
     private static bool UsesNativeDestinationWalk(Main main, uint levelId)
     {
         var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        return levelId is 3 or 4
-            && phase is "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume";
+        return levelId is 3 or 4 && IsNativeDepthProgressionPhase(phase);
     }
 
     private async Task<bool> AdvanceTowardReachableNativeDoor(
@@ -1916,8 +1922,9 @@ public partial class SessionAcceptance
         var after = main.ObservedSnapshot!.Players.Single();
         var progressionCombat = IsNativeProgressionCombatFloor(main);
         var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+        // Both four-floor journeys (Rogue depth profile, Warrior default profile) fight while drinking.
         var depthProgressionCombat = player.LevelId is >= 1 and <= 4
-            && phase is "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume";
+            && (IsNativeDepthProgressionPhase(phase) || phase is "NativeDepthJourney" or "NativeDepthResume");
         var concurrentCombat = progressionCombat || depthProgressionCombat;
         var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;
         // Damage can arrive between the accepted potion and the settled snapshot.
@@ -1946,8 +1953,7 @@ public partial class SessionAcceptance
         var level = main.ObservedSnapshot?.Players.SingleOrDefault()?.LevelId;
         return level == 2
                 && (phase == "CathedralNativeProgressionJourney" || phase == "CathedralNativeProgressionResume")
-            || level is >= 2 and <= 4
-                && (phase == "CathedralNativeDepthProgressionJourney" || phase == "CathedralNativeDepthProgressionResume");
+            || level is >= 2 and <= 4 && IsNativeDepthProgressionPhase(phase);
     }
 
     private static bool NativeHealingThresholdReached(Main main)

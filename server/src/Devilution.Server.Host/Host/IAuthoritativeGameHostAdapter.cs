@@ -71,6 +71,9 @@ public sealed record AuthoritativePlayerStartConfiguration(
     /** Optional server-owned primary-attribute points for development starts. */
     public uint? StatPoints { get; init; }
 
+    /** Acceptance-only participant definition (adapter-defined JSON); never set by a normal launch. */
+    public string? TestParticipantDefinition { get; init; }
+
     /** Optional content level override for newly initialized participants. */
     public uint? StartingLevelId { get; init; }
 
