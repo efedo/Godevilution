@@ -10,7 +10,7 @@
 #include "game/levels/dungeon_common_defs.hpp"
 #include "utils/log.hpp"
 #include "utils/paths.h"
-#include "utils/sdl_wrap.h"
+#include "utils/sdl/sdl_wrap.h"
 
 namespace devilution {
 namespace {

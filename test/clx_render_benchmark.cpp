@@ -8,7 +8,7 @@
 #include "engine/math/displacement.hpp"
 #include "engine/render/clx_render.hpp"
 #include "utils/log.hpp"
-#include "utils/sdl_wrap.h"
+#include "utils/sdl/sdl_wrap.h"
 
 namespace devilution {
 namespace {

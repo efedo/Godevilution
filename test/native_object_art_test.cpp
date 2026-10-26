@@ -32,6 +32,7 @@
 #include "network/protocol/msg.h"
 #include "tables/objdat.h"
 #include "utils/paths.h"
+#include "utils/sdl/sdl_compat.h"
 
 namespace devilution {
 namespace {
@@ -164,8 +165,8 @@ void WriteNativeFrame(std::ostream &output, ClxSprite sprite, uint32_t frameNumb
 	const int canvasWidth = nativeWidth + MaximumOpaqueRightSpill;
 	OwnedSurface first(canvasWidth, height);
 	OwnedSurface second(canvasWidth, height);
-	ASSERT_EQ(SDL_FillRect(first.surface, nullptr, FirstBackground), 0);
-	ASSERT_EQ(SDL_FillRect(second.surface, nullptr, SecondBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(first.surface, nullptr, FirstBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(second.surface, nullptr, SecondBackground), 0);
 	ClxDraw(first, { 0, height - 1 }, sprite);
 	ClxDraw(second, { 0, height - 1 }, sprite);
 
@@ -263,8 +264,8 @@ Object MakeNativeObject(const NativeObjectSpec &spec, const NativeObjectArt &ass
 
 void FillBackgrounds(OwnedSurface &first, OwnedSurface &second)
 {
-	ASSERT_EQ(SDL_FillRect(first.surface, nullptr, FirstBackground), 0);
-	ASSERT_EQ(SDL_FillRect(second.surface, nullptr, SecondBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(first.surface, nullptr, FirstBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(second.surface, nullptr, SecondBackground), 0);
 }
 
 void RenderProbe(

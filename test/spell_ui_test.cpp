@@ -22,10 +22,10 @@
 #include "application/diablo.h"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
-#include "panels/spell_icons.hpp"
-#include "panels/spell_list.hpp"
 #include "tables/spelldat.h"
 #include "ui/panel/control.hpp"
+#include "ui/panel/spell_icons.hpp"
+#include "ui/panel/spell_list.hpp"
 
 namespace devilution {
 namespace {

@@ -18,11 +18,11 @@
 #include "game/players/inventory.hpp"
 #include "game/quests/quests.hpp"
 #include "game/stores/stores.hpp"
-#include "panels/spell_list.hpp"
 #include "persistence/options.h"
 #include "qol/stash.h"
 #include "qol/visual_store.h"
 #include "ui/panel/control.hpp"
+#include "ui/panel/spell_list.hpp"
 
 namespace devilution {
 namespace {

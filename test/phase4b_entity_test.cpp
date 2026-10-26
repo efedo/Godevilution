@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "engine/math/point.hpp"
-#include "engine/world_tile.hpp"
+#include "engine/math/world_tile.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/levels/tile.hpp"

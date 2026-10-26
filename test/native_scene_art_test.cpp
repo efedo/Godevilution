@@ -31,6 +31,7 @@
 #include "tables/playerdat.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/paths.h"
+#include "utils/sdl/sdl_compat.h"
 
 namespace devilution {
 namespace {
@@ -161,8 +162,8 @@ void Pixels(std::ostream &out, int width, int height, const std::function<void(c
 {
 	OwnedSurface first(width, height);
 	OwnedSurface second(width, height);
-	SDL_FillRect(first.surface, nullptr, 0xAB);
-	SDL_FillRect(second.surface, nullptr, 0xCD);
+	SDL_FillSurfaceRect(first.surface, nullptr, 0xAB);
+	SDL_FillSurfaceRect(second.surface, nullptr, 0xCD);
 	std::vector<uint8_t> light(static_cast<size_t>(first.pitch()) * height);
 	for (const auto &surface : { first.surface, second.surface }) {
 		Surface output(surface);

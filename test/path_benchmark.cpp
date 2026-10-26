@@ -6,8 +6,8 @@
 
 #include "engine/math/point.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/math/size.hpp"
 #include "engine/path.h"
-#include "engine/size.hpp"
 
 namespace devilution {
 namespace {
