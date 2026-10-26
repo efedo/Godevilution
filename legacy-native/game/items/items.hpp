@@ -4,7 +4,6 @@
  * Interface for items.
  */
 
-
 // Item data, attributes, and floor/inventory management.
 #pragma once
 
@@ -12,14 +11,14 @@
 #include <cstdint>
 #include <optional>
 
-#include "ui/menu/ui_flags.hpp"
-#include "engine/cursor.h"
 #include "engine/animationinfo.h"
-#include "engine/math/point.hpp"
+#include "engine/cursor.h"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 #include "game/levels/dun_tile.hpp"
 #include "game/monsters/monsters.hpp"
 #include "tables/itemdat.h"
+#include "ui/menu/ui_flags.hpp"
 #include "utils/is_of.hpp"
 #include "utils/string/string_or_view.hpp"
 
@@ -189,7 +188,7 @@ constexpr int ItemAnimWidth = 96;
 struct Player;
 
 struct Item {
-	
+
 	uint32_t _iSeed = 0; // Randomly generated identifier
 	uint16_t _iCreateInfo = 0;
 	ItemType _itype = ItemType::None;

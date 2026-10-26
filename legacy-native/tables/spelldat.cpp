@@ -10,8 +10,8 @@
 
 #include <expected.hpp>
 
-#include "data/mpq_file.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
 
 namespace devilution {

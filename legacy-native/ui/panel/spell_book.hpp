@@ -6,7 +6,6 @@
  * Interface for spell book.
  */
 
-
 #include <string>
 
 #include <expected.hpp>

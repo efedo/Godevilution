@@ -313,12 +313,12 @@ inline constexpr int MaximumQuestTownerInteractionKind = 4;
 
 /** Native Elemental impacts may retain their collision center one tile beyond a positive map edge. */
 inline constexpr bool IsElementalImpactPositionAtLevelEdge(
-	int behavior,
-	int phase,
-	int x,
-	int y,
-	int width,
-	int height) noexcept
+    int behavior,
+    int phase,
+    int x,
+    int y,
+    int width,
+    int height) noexcept
 {
 	return behavior == static_cast<int>(ProjectileBehavior::Elemental)
 	    && phase == ElementalProjectileImpactPhase

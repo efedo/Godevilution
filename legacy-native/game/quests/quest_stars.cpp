@@ -7,11 +7,11 @@
 
 #include <optional>
 
-#include "ui/panel/control.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_cel.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
+#include "ui/panel/control.hpp"
 
 namespace devilution {
 namespace {

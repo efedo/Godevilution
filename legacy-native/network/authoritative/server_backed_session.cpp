@@ -252,7 +252,7 @@ tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint
 
 tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
 {
-	return Cast(spellId, targetEntityId, targetX, targetY, { }, requestedTick, nowMs);
+	return Cast(spellId, targetEntityId, targetX, targetY, {}, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick, uint64_t nowMs)
@@ -328,20 +328,19 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		return currentPlayer != nullptr
 		    && levelId != 0
 		    && std::find(
-			       currentPlayer->visitedLevelIds.begin(),
-			       currentPlayer->visitedLevelIds.end(),
-			       levelId)
-			        != currentPlayer->visitedLevelIds.end();
+		           currentPlayer->visitedLevelIds.begin(),
+		           currentPlayer->visitedLevelIds.end(),
+		           levelId)
+		    != currentPlayer->visitedLevelIds.end();
 	};
 	const auto hasItem = [&](uint32_t itemId) {
 		if (currentPlayer == nullptr || itemId == 0)
 			return false;
 		return std::any_of(currentPlayer->inventory.begin(), currentPlayer->inventory.end(), [itemId](const auto &item) {
-			       return item.stableItemId == itemId;
-		       })
-		    || std::any_of(currentPlayer->belt.begin(), currentPlayer->belt.end(), [itemId](const auto &item) {
-			       return item.stableItemId == itemId;
-		       });
+			return item.stableItemId == itemId;
+		}) || std::any_of(currentPlayer->belt.begin(), currentPlayer->belt.end(), [itemId](const auto &item) {
+			return item.stableItemId == itemId;
+		});
 	};
 	for (const auto &interaction : questTownerInteractions_) {
 		if (interaction.towner_id() < 0
@@ -407,14 +406,14 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		const bool activeTurnIn = quest.turn_in_dialogue_only()
 		    ? dialogueTurnIn && !quest.initial() && !quest.completed()
 		    : quest.turn_in_activation_only()
-		        ? quest.initial() && !quest.completed()
-		        : quest.turn_in_progress_only()
-		            ? !quest.initial()
-		                && !quest.completed()
-		                && quest.has_turn_in_required_variable1()
-		                && quest.has_turn_in_variable1()
-		                && quest.variable_1() == quest.turn_in_required_variable1()
-		        : !quest.initial() && !quest.completed();
+		    ? quest.initial() && !quest.completed()
+		    : quest.turn_in_progress_only()
+		    ? !quest.initial()
+		        && !quest.completed()
+		        && quest.has_turn_in_required_variable1()
+		        && quest.has_turn_in_variable1()
+		        && quest.variable_1() == quest.turn_in_required_variable1()
+		    : !quest.initial() && !quest.completed();
 		const bool completionTurnIn = quest.completed()
 		    && quest.turn_in_on_completion()
 		    && ((quest.has_turn_in_completion_variable2()
@@ -502,12 +501,12 @@ tl::expected<void, std::string> ServerBackedSession::Poll(uint64_t nowMs)
 				return tl::make_unexpected(snapshot.error());
 			return ApplySnapshot(*snapshot);
 		}
-		return { };
+		return {};
 	}
 
 	constexpr uint64_t SnapshotPollIntervalMs = 50;
 	if (lastSnapshotRequestMs_.has_value() && nowMs - *lastSnapshotRequestMs_ < SnapshotPollIntervalMs)
-		return { };
+		return {};
 	lastSnapshotRequestMs_ = nowMs;
 	auto snapshot = client_->RequestSnapshot();
 	if (!snapshot.has_value())
@@ -526,14 +525,13 @@ tl::expected<void, std::string> ServerBackedSession::Reconnect(uint64_t nowMs)
 		acceptingReconnectSnapshot_ = false;
 		return tl::make_unexpected(snapshot.error());
 	}
-	if (auto result = ApplySnapshot(*snapshot); !result.has_value())
-	{
+	if (auto result = ApplySnapshot(*snapshot); !result.has_value()) {
 		acceptingReconnectSnapshot_ = false;
 		return tl::make_unexpected(result.error());
 	}
 	acceptingReconnectSnapshot_ = false;
 	if (client_->PendingTrackedCommandCount() == 0)
-		return { };
+		return {};
 	return Flush(nowMs);
 }
 
@@ -595,7 +593,7 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	if (const auto *previous = playerState_.Snapshot(); previous != nullptr
 	    && player->serverTick < previous->serverTick
 	    && !acceptingReconnectSnapshot_)
-		return { };
+		return {};
 	auto monsters = ProjectMonsterSnapshots(snapshot);
 	if (!monsters.has_value())
 		return tl::make_unexpected(monsters.error());
@@ -652,16 +650,16 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	levelGeometryState_ = std::move(*levelGeometry);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
 	questTownerInteractions_.assign(
-		snapshot.quest_towner_interactions().begin(),
-		snapshot.quest_towner_interactions().end());
+	    snapshot.quest_towner_interactions().begin(),
+	    snapshot.quest_towner_interactions().end());
 	vendorState_ = std::move(candidateVendorState);
-	return { };
+	return {};
 }
 
 tl::expected<void, std::string> ServerBackedSession::Flush(uint64_t nowMs, std::optional<uint64_t> focusSequence)
 {
 	if (pendingIntents_.empty())
-		return { };
+		return {};
 	if (auto result = client_->SendQueuedCommands(nowMs); !result.has_value())
 		return result;
 	auto acknowledgement = client_->ReceiveCommandAcknowledgement(nowMs);

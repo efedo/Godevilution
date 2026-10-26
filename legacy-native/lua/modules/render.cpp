@@ -4,15 +4,14 @@
  * Implementation of render.
  */
 
-
 #include "lua/modules/render.hpp"
 
 #include <sol/sol.hpp>
 
-#include "ui/menu/ui_flags.hpp"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/render/text_render.hpp"
 #include "lua/metadoc.hpp"
+#include "ui/menu/ui_flags.hpp"
 #include "utils/display.h"
 
 namespace devilution {

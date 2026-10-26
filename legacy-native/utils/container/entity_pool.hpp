@@ -76,10 +76,10 @@ public:
 		iterator_base() = default;
 
 		iterator_base(pointer data, size_type *activeIndices, size_type activeCount, size_type pos)
-			: data_(data)
-			, activeIndices_(activeIndices)
-			, activeCount_(activeCount)
-			, pos_(pos)
+		    : data_(data)
+		    , activeIndices_(activeIndices)
+		    , activeCount_(activeCount)
+		    , pos_(pos)
 		{
 		}
 

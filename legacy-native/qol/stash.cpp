@@ -4,7 +4,6 @@
  * Implementation of stash functionality.
  */
 
-
 #include "qol/stash.h"
 
 #include <algorithm>
@@ -19,30 +18,30 @@
 
 #include <fmt/format.h>
 
-#include "ui/menu/text_input.hpp"
-#include "ui/panel/control.hpp"
+#include "application/headless_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/hwcursor.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/math/rectangle.hpp"
+#include "engine/math/size.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/math/size.hpp"
-#include "application/headless_mode.hpp"
-#include "engine/hwcursor.hpp"
 #include "game/players/inventory.hpp"
-#include "ui/minitext.h"
 #include "game/stores/stores.hpp"
+#include "network/protocol/legacy_item_policy.hpp"
+#include "ui/menu/text_input.hpp"
+#include "ui/minitext.h"
+#include "ui/panel/control.hpp"
 #include "utils/display.h"
-#include "utils/string/format_int.hpp"
 #include "utils/language.h"
+#include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
 #include "utils/timer.hpp"
-#include "utils/log.hpp"
-#include "network/protocol/legacy_item_policy.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -139,7 +138,7 @@ void CheckStashPaste(Point cursorPosition)
 		return;
 
 	if (player.HoldItem._itype == ItemType::Gold) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (auto result = authoritative::GetServerBackedRuntime().DepositStashGold(static_cast<uint32_t>(player.HoldItem._ivalue), 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed stash gold deposit failed: {}", result.error());
@@ -149,7 +148,7 @@ void CheckStashPaste(Point cursorPosition)
 			}
 			return;
 		}
-	#endif
+#endif
 		if (Stash.gold > std::numeric_limits<int>::max() - player.HoldItem._ivalue)
 			return;
 		Stash.gold += player.HoldItem._ivalue;
@@ -180,7 +179,7 @@ void CheckStashPaste(Point cursorPosition)
 		}
 		return; // Found a second item
 	}
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		const auto source = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(player.HoldItem._iSeed);
 		if (!source.has_value()) {
@@ -197,7 +196,7 @@ void CheckStashPaste(Point cursorPosition)
 			LogError("Server-backed stash item placement failed: {}", result.error());
 		return;
 	}
-	#endif
+#endif
 
 	PlaySFX(ItemInvSnds[ItemCAnimTbl[player.HoldItem._iCurs]]);
 
@@ -261,7 +260,7 @@ void CheckStashCut(Point cursorPosition, bool automaticMove)
 
 	const StashStruct::StashCell iv = Stash.GetItemIdAtPosition(slot);
 	if (iv != StashStruct::EmptyCell) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const Item &stashItem = Stash.stashList[iv];
 			const auto source = authoritative::GetServerBackedRuntime().StashItemReferenceAt(
@@ -292,7 +291,7 @@ void CheckStashCut(Point cursorPosition, bool automaticMove)
 				return;
 			}
 		}
-	#endif
+#endif
 		holdItem = Stash.stashList[iv];
 		if (automaticMove) {
 			if (CanBePlacedOnBelt(player, holdItem)) {
@@ -334,13 +333,13 @@ void CheckStashCut(Point cursorPosition, bool automaticMove)
 
 void WithdrawGold(Player &player, int amount)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		if (auto result = authoritative::GetServerBackedRuntime().WithdrawStashGold(static_cast<uint32_t>(amount), 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed stash gold withdrawal failed: {}", result.error());
 		return;
 	}
-	#endif
+#endif
 	AddGoldToInventory(player, amount);
 	Stash.gold -= amount;
 	Stash.dirty = true;

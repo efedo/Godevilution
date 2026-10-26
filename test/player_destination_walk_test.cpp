@@ -23,7 +23,7 @@ namespace devilution {
 void TestPlayerCheckNewPath(Player &player);
 void TestPlayerProcessDestinationWalkTick(Player &player);
 bool TestPlayerProcessAttackCommand(Player &player, bool ranged);
-}
+} // namespace devilution
 
 using namespace devilution;
 
@@ -117,7 +117,8 @@ protected:
 		const auto assets = std::filesystem::is_regular_file(configuredAssets / "txtdata/classes/classdat.tsv")
 		        && std::filesystem::is_regular_file(configuredAssets / "txtdata/missiles/misdat.tsv")
 		        && std::filesystem::is_regular_file(configuredAssets / "txtdata/missiles/missile_sprites.tsv")
-		    ? configuredAssets : source / "assets";
+		    ? configuredAssets
+		    : source / "assets";
 		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/classes/classdat.tsv"));
 		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/missiles/misdat.tsv"));
 		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/missiles/missile_sprites.tsv"));
@@ -160,7 +161,9 @@ TEST_F(NativeDestinationWalk, ThreeStepsRetainInitialAndCompletionLoopFrameTimin
 	for (int tick = 0; tick <= 25; ++tick) {
 		TestPlayerProcessDestinationWalkTick(player);
 		SCOPED_TRACE(tick);
-		const int completed = tick < 9 ? 0 : tick < 17 ? 1 : tick < 25 ? 2 : 3;
+		const int completed = tick < 9 ? 0 : tick < 17 ? 1
+		    : tick < 25                                ? 2
+		                                               : 3;
 		EXPECT_EQ(player.position.tile, (Point { 75, 68 - completed }));
 		const int reserved = std::min(completed + 1, 3);
 		EXPECT_EQ(player.position.future, (Point { 75, 68 - reserved }));
@@ -286,7 +289,7 @@ struct NativeRangedIasCase {
 };
 
 class NativeDestinationRangedAttack : public NativeDestinationRangedWalk,
-	                                  public testing::WithParamInterface<NativeRangedIasCase> {
+                                      public testing::WithParamInterface<NativeRangedIasCase> {
 };
 
 TEST_P(NativeDestinationRangedAttack, RogueBowUsesNativeCompletionFramesAndEffectBoundary)
@@ -374,10 +377,10 @@ TEST_F(NativeDestinationRangedWalk, BufferedRangedFollowupStartsAtReadyAndUsesNe
 		ItemSpecialEffect flags;
 		int readyRepeatSkip;
 	};
-	constexpr std::array<IasCase, 2> cases {{
+	constexpr std::array<IasCase, 2> cases { {
 		{ ItemSpecialEffect::None, 0 },
 		{ ItemSpecialEffect::FastAttack, 1 },
-	}};
+	} };
 
 	for (const IasCase &test : cases) {
 		SCOPED_TRACE(static_cast<uint32_t>(test.flags));
@@ -456,11 +459,11 @@ TEST_F(NativeDestinationRangedWalk, BufferedRangedFollowupStartsAtReadyAndUsesNe
 }
 
 INSTANTIATE_TEST_SUITE_P(
-	NativeRogueBow,
-	NativeDestinationRangedAttack,
-	testing::Values(
-	    NativeRangedIasCase { ItemSpecialEffect::None, 0 },
-	    NativeRangedIasCase { ItemSpecialEffect::QuickAttack, 1 },
-	    NativeRangedIasCase { ItemSpecialEffect::FastAttack, 2 },
-	    NativeRangedIasCase { ItemSpecialEffect::QuickAttack | ItemSpecialEffect::FastAttack, 2 }));
+    NativeRogueBow,
+    NativeDestinationRangedAttack,
+    testing::Values(
+        NativeRangedIasCase { ItemSpecialEffect::None, 0 },
+        NativeRangedIasCase { ItemSpecialEffect::QuickAttack, 1 },
+        NativeRangedIasCase { ItemSpecialEffect::FastAttack, 2 },
+        NativeRangedIasCase { ItemSpecialEffect::QuickAttack | ItemSpecialEffect::FastAttack, 2 }));
 } // namespace

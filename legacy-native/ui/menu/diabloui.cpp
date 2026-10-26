@@ -4,7 +4,6 @@
  * Implementation of Diablo UI core.
  */
 
-
 #include "ui/menu/diabloui.h"
 
 #include <algorithm>
@@ -30,34 +29,34 @@
 
 #include <function_ref.hpp>
 
-#include "ui/menu/button.h"
-#include "ui/menu/scrollbar.h"
-#include "ui/menu/text_input.hpp"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
+#include "application/diablo.h"
 #include "application/fatal_error.h"
 #include "controls/control_mode.hpp"
 #include "controls/controller.h"
 #include "controls/input.h"
 #include "controls/menu_controls.h"
-#include "application/diablo.h"
+#include "ui/menu/button.h"
+#include "ui/menu/scrollbar.h"
+#include "ui/menu/text_input.hpp"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 
+#include "application/headless_mode.hpp"
+#include "application/init.hpp"
 #include "engine/audio/effects.h"
+#include "engine/audio/sound.h"
+#include "engine/audio/sound_effect_enums.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/gfx/graphics_pipeline.h"
-#include "engine/load/load_pcx.hpp"
 #include "engine/gfx/palette.h"
+#include "engine/gfx/surface.hpp"
+#include "engine/hwcursor.hpp"
+#include "engine/load/load_pcx.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/audio/sound.h"
-#include "engine/gfx/surface.hpp"
 #include "engine/ticks.hpp"
-#include "application/headless_mode.hpp"
-#include "engine/hwcursor.hpp"
-#include "application/init.hpp"
-#include "persistence/options.h"
 #include "game/players/players.hpp"
-#include "engine/audio/sound_effect_enums.h"
+#include "persistence/options.h"
 #include "tables/playerdat.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/display.h"
@@ -67,8 +66,8 @@
 #include "utils/sdl/sdl_compat.h"
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/string/str_cat.hpp"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 #ifdef __SWITCH__
 // for virtual keyboard on Switch
@@ -873,7 +872,6 @@ void UiPollAndRender(std::optional<tl::function_ref<bool(SDL_Event &)>> eventHan
 	// so defer until after render and fade-in
 	ctr_vkbdFlush();
 #endif
-
 }
 
 namespace {

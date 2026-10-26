@@ -4,7 +4,6 @@
  * Implementation of hardware cursor management.
  */
 
-
 #include "engine/hwcursor.hpp"
 
 #include <cstdint>
@@ -31,8 +30,8 @@
 #include "application/fatal_error.h"
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/render/clx_render.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/render/clx_render.hpp"
 #include "utils/display.h"
 #include "utils/sdl/sdl_bilinear_scale.hpp"
 #include "utils/sdl/sdl_compat.h"

@@ -10,8 +10,6 @@
 #include <string_view>
 #include <vector>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/panel/control.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/load/load_cel.hpp"
@@ -20,6 +18,8 @@
 #include "engine/render/text_render.hpp"
 #include "tables/playerdat.hpp"
 #include "tables/textdat.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/language.h"
 #include "utils/timer.hpp"
 

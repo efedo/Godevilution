@@ -4,7 +4,6 @@
  * Interface for SDL bilinear scaling.
  */
 
-
 #pragma once
 
 #include <cstdint>

@@ -4,7 +4,6 @@
  * Implementation of integer parsing.
  */
 
-
 #include "parse_int.hpp"
 
 #include <algorithm>

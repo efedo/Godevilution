@@ -4,7 +4,6 @@
  * Implementation of search.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/search.hpp"
 

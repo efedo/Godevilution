@@ -4,7 +4,6 @@
  * Implementation of network.
  */
 
-
 #include "platform/vita/network.h"
 
 #include <cstdio>

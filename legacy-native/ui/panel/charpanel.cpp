@@ -4,7 +4,6 @@
  * Implementation of character panel.
  */
 
-
 #include "ui/panel/charpanel.hpp"
 
 #include <cstdint>
@@ -16,21 +15,21 @@
 #include <fmt/format.h>
 #include <function_ref.hpp>
 
-#include "ui/panel/control.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "ui/panel/ui_panels.hpp"
 #include "game/players/players.hpp"
 #include "tables/playerdat.hpp"
+#include "ui/panel/control.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/display.h"
 #include "utils/enum_traits.h"
-#include "utils/string/format_int.hpp"
+#include "utils/image/surface_to_clx.hpp"
 #include "utils/language.h"
 #include "utils/status_macros.hpp"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
-#include "utils/image/surface_to_clx.hpp"
 
 namespace devilution {
 

@@ -6,7 +6,6 @@
  * Interface for gamepad-to-keyboard mapping.
  */
 
-
 #include <string_view>
 
 #include "controls/controller_buttons.h"

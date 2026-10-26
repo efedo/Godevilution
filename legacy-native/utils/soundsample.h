@@ -6,7 +6,6 @@
  * Interface for sound sample wrapper.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <functional>

@@ -6,7 +6,6 @@
  * Interface for little-endian reading.
  */
 
-
 #include <cstdint>
 
 namespace devilution {

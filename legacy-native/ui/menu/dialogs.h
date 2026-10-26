@@ -6,7 +6,6 @@
  * Interface for menu dialog screens.
  */
 
-
 #include <cstddef>
 #include <string_view>
 

@@ -4,7 +4,6 @@
  * Interface for surface to CLX conversion.
  */
 
-
 #pragma once
 
 #include <cstdint>

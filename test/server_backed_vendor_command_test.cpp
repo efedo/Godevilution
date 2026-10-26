@@ -302,10 +302,10 @@ TEST(ServerBackedVendorCommand, BuildsStashItemReferenceWithPage)
 	EXPECT_EQ(command->move_item_requested().item().slot(), 37U);
 	EXPECT_EQ(command->move_item_requested().destination().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
 	EXPECT_FALSE(MakeMoveItemCommand(
-		ServerBackedItemReference { .location = ServerBackedItemLocation::Stash, .slot = 100, .page = 12 },
-		inventory,
-		25)
-		.has_value());
+	    ServerBackedItemReference { .location = ServerBackedItemLocation::Stash, .slot = 100, .page = 12 },
+	    inventory,
+	    25)
+	                 .has_value());
 }
 
 TEST(ServerBackedVendorCommand, BuildsStashDestinationReferenceWithPage)

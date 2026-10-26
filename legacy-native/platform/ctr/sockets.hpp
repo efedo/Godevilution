@@ -6,7 +6,6 @@
  * Interface for sockets.
  */
 
-
 namespace devilution {
 
 void n3ds_socInit();

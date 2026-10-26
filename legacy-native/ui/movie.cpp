@@ -14,15 +14,15 @@
 #include <SDL.h>
 #endif
 
+#include "application/diablo.h"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
-#include "application/diablo.h"
 #include "engine/audio/effects.h"
-#include "engine/gfx/backbuffer_state.hpp"
-#include "engine/demomode.h"
-#include "engine/sdl_events.hpp"
 #include "engine/audio/sound.h"
+#include "engine/demomode.h"
+#include "engine/gfx/backbuffer_state.hpp"
 #include "engine/hwcursor.hpp"
+#include "engine/sdl_events.hpp"
 #include "network/storm/storm_svid.h"
 #include "utils/display.h"
 #include "utils/sdl/sdl_compat.h"

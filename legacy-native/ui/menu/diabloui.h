@@ -6,7 +6,6 @@
  * Interface for Diablo UI core.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -21,10 +20,10 @@
 
 #include <function_ref.hpp>
 
-#include "ui/menu/ui_item.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_pcx.hpp" // IWYU pragma: export
 #include "game/players/players.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/display.h"
 
 namespace devilution {

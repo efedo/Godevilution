@@ -6,7 +6,6 @@
  * Interface for 3D sound position calculation.
  */
 
-
 #include "engine/math/point.hpp"
 
 namespace devilution {

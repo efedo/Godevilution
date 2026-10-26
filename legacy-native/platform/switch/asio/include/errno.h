@@ -6,7 +6,6 @@
  * Interface for errno.
  */
 
-
 #include_next <errno.h>
 
 #define ESHUTDOWN (__ELASTERROR + 1)

@@ -4,7 +4,6 @@
  * Implementation of joystick device.
  */
 
-
 #include "controls/devices/joystick.h"
 
 #include <cstddef>

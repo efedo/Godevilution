@@ -20,14 +20,14 @@
 #include <vector>
 
 #include "engine/assets.hpp"
+#include "engine/cursor.h"
+#include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
-#include "engine/cursor.h"
-#include "engine/lighting.h"
 #include "tables/objdat.h"
 #include "utils/paths.h"
 
@@ -118,7 +118,7 @@ TEST(ObjectPredicates, IsDoor)
 	Object obj;
 
 	for (const _object_id otype : { OBJ_L1LDOOR, OBJ_L1RDOOR, OBJ_L2LDOOR, OBJ_L2RDOOR,
-			 OBJ_L3LDOOR, OBJ_L3RDOOR, OBJ_L5LDOOR, OBJ_L5RDOOR }) {
+	         OBJ_L3LDOOR, OBJ_L3RDOOR, OBJ_L5LDOOR, OBJ_L5RDOOR }) {
 		obj._otype = otype;
 		EXPECT_TRUE(obj.isDoor()) << "Expected isDoor true for otype " << static_cast<int>(otype);
 	}
@@ -161,7 +161,7 @@ TEST_F(ObjectDataTableTest, TableSizeCoversAllObjectIds)
 	// Every valid _object_id in [0, OBJ_LAST] must have a row in AllObjects.
 	// If this fails, AllObjects[someValidOtype] is an OOB access throughout the engine.
 	ASSERT_GE(AllObjects.size(), static_cast<size_t>(OBJ_LAST) + 1)
-		<< "AllObjects has fewer entries than OBJ_LAST requires";
+	    << "AllObjects has fewer entries than OBJ_LAST requires";
 }
 
 TEST_F(ObjectDataTableTest, TrapFlagMarksObjectsThatCanTriggerTraps)
@@ -174,8 +174,8 @@ TEST_F(ObjectDataTableTest, TrapFlagMarksObjectsThatCanTriggerTraps)
 	EXPECT_FALSE(AllObjects[OBJ_TRAPR].isTrap()) << "OBJ_TRAPR is the trap itself, not a trigger";
 
 	// Trigger-capable objects must carry the flag so AddObjTraps can find them.
-	EXPECT_TRUE(AllObjects[OBJ_LEVER].isTrap())   << "OBJ_LEVER should be a valid trap trigger";
-	EXPECT_TRUE(AllObjects[OBJ_CHEST1].isTrap())  << "OBJ_CHEST1 should be a valid trap trigger";
+	EXPECT_TRUE(AllObjects[OBJ_LEVER].isTrap()) << "OBJ_LEVER should be a valid trap trigger";
+	EXPECT_TRUE(AllObjects[OBJ_CHEST1].isTrap()) << "OBJ_CHEST1 should be a valid trap trigger";
 	EXPECT_TRUE(AllObjects[OBJ_L1LDOOR].isTrap()) << "OBJ_L1LDOOR should be a valid trap trigger";
 
 	// A barrel is never a trap trigger.
@@ -210,14 +210,14 @@ protected:
 class ScopedTryDisarmState {
 public:
 	ScopedTryDisarmState()
-		: previousLevelId_(currentLevel().id())
-		, previousObjectPool_(gObjectPool)
-		, noOpObjectData_(static_cast<size_t>(OBJ_LAST) + 1, ObjectData {})
-		, fixturePlayers_(2)
-		, previousMyPlayer_(MyPlayer)
-		, previousMyPlayerId_(MyPlayerId)
-		, previousLightManager_(CurrentLightManager)
-		, previousRandomSeed_(GetLCGEngineState())
+	    : previousLevelId_(currentLevel().id())
+	    , previousObjectPool_(gObjectPool)
+	    , noOpObjectData_(static_cast<size_t>(OBJ_LAST) + 1, ObjectData {})
+	    , fixturePlayers_(2)
+	    , previousMyPlayer_(MyPlayer)
+	    , previousMyPlayerId_(MyPlayerId)
+	    , previousLightManager_(CurrentLightManager)
+	    , previousRandomSeed_(GetLCGEngineState())
 	{
 		size_t index = 0;
 		for (const Tile &tile : currentLevel().tiles().columnMajor())
@@ -601,7 +601,7 @@ TEST_F(UpdateTrapStateTest, LeverTrigger_Interactable_WithTrapFlag_ReturnsFalse)
 	trap._oVar4 = 0;
 
 	EXPECT_FALSE(UpdateTrapState(trap))
-		<< "Lever with canInteractWith and _oTrapFlag should suppress trap fire";
+	    << "Lever with canInteractWith and _oTrapFlag should suppress trap fire";
 }
 
 TEST_F(UpdateTrapStateTest, LeverTrigger_NotInteractable_FiresTrap)
@@ -620,7 +620,7 @@ TEST_F(UpdateTrapStateTest, LeverTrigger_NotInteractable_FiresTrap)
 	trap._oVar4 = 0;
 
 	EXPECT_TRUE(UpdateTrapState(trap))
-		<< "Lever that is no longer interactable should fire the trap";
+	    << "Lever that is no longer interactable should fire the trap";
 	EXPECT_EQ(trap._oVar4, 1) << "Trap _oVar4 should be set to 1 after firing";
 	EXPECT_FALSE(trigger._oTrapFlag) << "Trigger _oTrapFlag should be cleared after trap fires";
 }
@@ -661,7 +661,7 @@ TEST_F(UpdateTrapStateTest, ClosedDoor_WithTrapFlag_DoesNotFire)
 	trap._oVar4 = 0;
 
 	EXPECT_FALSE(UpdateTrapState(trap))
-		<< "Closed door with trap flag should not fire the trap";
+	    << "Closed door with trap flag should not fire the trap";
 }
 
 TEST_F(UpdateTrapStateTest, OpenedDoor_FiresTrap)
@@ -680,7 +680,7 @@ TEST_F(UpdateTrapStateTest, OpenedDoor_FiresTrap)
 	trap._oVar4 = 0;
 
 	EXPECT_TRUE(UpdateTrapState(trap))
-		<< "Opened door should trigger the trap";
+	    << "Opened door should trigger the trap";
 	EXPECT_EQ(trap._oVar4, 1);
 	EXPECT_FALSE(trigger._oTrapFlag);
 }
@@ -701,7 +701,7 @@ TEST_F(UpdateTrapStateTest, UnrecognizedTriggerType_ReturnsFalse)
 	trap._oVar4 = 0;
 
 	EXPECT_FALSE(UpdateTrapState(trap))
-		<< "Unrecognized trigger type should hit the default branch and return false";
+	    << "Unrecognized trigger type should hit the default branch and return false";
 }
 
 } // namespace

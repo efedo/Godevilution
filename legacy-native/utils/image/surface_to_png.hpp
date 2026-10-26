@@ -4,7 +4,6 @@
  * Interface for surface to PNG conversion.
  */
 
-
 #include <cstdio>
 #include <string>
 

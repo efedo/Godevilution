@@ -6,7 +6,6 @@
  * Interface for logging file stream.
  */
 
-
 #include <cerrno>
 #include <cstdio>
 #include <cstring>

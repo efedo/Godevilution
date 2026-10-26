@@ -252,16 +252,16 @@ ReplayFixtureExecutionState CreateTelekinesisWorldItemState(const ReplayFixture 
 }
 
 void ExecuteClassPhysicalDamageFixture(
-	const char *fixturePath,
-	uint32_t expectedClassId,
-	int32_t expectedStrength,
-	int32_t expectedDexterity,
-	int32_t expectedVitality,
-	int32_t expectedHitPoints,
-	int32_t expectedMinimumDamage = 4,
-	int32_t expectedMaximumDamage = 4,
-	int32_t expectedTargetPositionX = 1,
-	int32_t expectedTargetPositionY = 0)
+    const char *fixturePath,
+    uint32_t expectedClassId,
+    int32_t expectedStrength,
+    int32_t expectedDexterity,
+    int32_t expectedVitality,
+    int32_t expectedHitPoints,
+    int32_t expectedMinimumDamage = 4,
+    int32_t expectedMaximumDamage = 4,
+    int32_t expectedTargetPositionX = 1,
+    int32_t expectedTargetPositionY = 0)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -482,7 +482,7 @@ TEST(ReplayCommands, PreservesInputOrderForDuplicateReceiptSequences)
 
 TEST(ReplayStateProjection, ChangesWhenAuthoritativePlayerStateChanges)
 {
-	Player player { };
+	Player player {};
 	player._pName[0] = 'A';
 	player._pName[1] = '\0';
 	player._pGold = 100;
@@ -577,7 +577,7 @@ TEST(ReplayFixture, ParsesAndHashesInitialStoreState)
 	EXPECT_EQ(sorted[0].clientSequence, 1U);
 	EXPECT_EQ(sorted[1].clientSequence, 2U);
 
-	Player player { };
+	Player player {};
 	player._pName[0] = fixture.initialState.player[0];
 	player._pName[1] = '\0';
 	player._pClass = static_cast<HeroClass>(fixture.initialState.characterClass);
@@ -2820,18 +2820,19 @@ TEST(ReplayFixture, ExecutesSecondaryFireWallCastAgainstPrimaryPlayer)
 	EXPECT_EQ(state.secondaryPlayerMana, 1464);
 	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
 	EXPECT_NE(
-		state.secondaryPlayerFacingDirection,
-		fixture.initialState.secondaryPlayer.facingDirection);
+	    state.secondaryPlayerFacingDirection,
+	    fixture.initialState.secondaryPlayer.facingDirection);
 	EXPECT_EQ(state.lastAppliedTick, 8U);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 23
-			&& projectile.sourceEntityId == 8
-			&& projectile.damage >= 112
-			&& projectile.remainingTicks > 700;
+		    && projectile.sourceEntityId == 8
+		    && projectile.damage >= 112
+		    && projectile.remainingTicks > 700;
 	}));
 	EXPECT_GT(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.sourceEntityId == 8;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
@@ -2869,18 +2870,19 @@ TEST(ReplayFixture, ExecutesSecondaryFlameWaveCastAgainstPrimaryPlayer)
 	EXPECT_EQ(state.secondaryPlayerMana, 1144);
 	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
 	EXPECT_NE(
-		state.secondaryPlayerFacingDirection,
-		fixture.initialState.secondaryPlayer.facingDirection);
+	    state.secondaryPlayerFacingDirection,
+	    fixture.initialState.secondaryPlayer.facingDirection);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 25
-			&& projectile.sourceEntityId == 8
-			&& projectile.spellId == 15
-			&& projectile.damageType == 1
-			&& projectile.damage >= 13;
+		    && projectile.sourceEntityId == 8
+		    && projectile.spellId == 15
+		    && projectile.damageType == 1
+		    && projectile.damage >= 13;
 	}));
 	EXPECT_GT(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.sourceEntityId == 8;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
@@ -2980,10 +2982,12 @@ TEST(ReplayFixture, AdvancesEveryConcurrentFlameWaveController)
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 24;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 25 && projectile.sourceEntityId == 1;
-	}), 18);
+	}),
+	    18);
 }
 
 TEST(ReplayFixture, UsesClassAndEquipmentRecoveryDurationsForSecondaryFlameWaveHits)
@@ -2994,7 +2998,7 @@ TEST(ReplayFixture, UsesClassAndEquipmentRecoveryDurationsForSecondaryFlameWaveH
 	ReplayFixture fixture;
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
-	fixture.contentManifest = { };
+	fixture.contentManifest = {};
 	fixture.checkpoints.clear();
 	fixture.initialState.characterClass = 2;
 	ReplayFixtureCommand advance;
@@ -3051,7 +3055,7 @@ TEST(ReplayFixture, UsesClassBlockingDurationForSecondaryFlameWaveHits)
 	ReplayFixture fixture;
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
-	fixture.contentManifest = { };
+	fixture.contentManifest = {};
 	fixture.checkpoints.clear();
 	fixture.initialState.characterClass = 2;
 	ReplayFixtureCommand advance;
@@ -3097,7 +3101,7 @@ TEST(ReplayFixture, SecondaryFlameWavePrimaryPvpDeathDropsEarAndRetainsItems)
 	ReplayFixture fixture;
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
-	fixture.contentManifest = { };
+	fixture.contentManifest = {};
 	fixture.checkpoints.clear();
 	fixture.initialState.characterName = "Primary";
 	fixture.initialState.life = 64;
@@ -3188,12 +3192,12 @@ TEST(ReplayFixture, ExecutesSecondaryLightningWallCastAgainstPrimaryPlayer)
 	EXPECT_EQ(state.projectiles.size(), 21U);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 23
-			&& projectile.sourceEntityId == 8
-			&& projectile.spellId == 50
-			&& projectile.damageType == 2
-			&& projectile.damage >= 224
-			&& projectile.remainingTicks >= 1013
-			&& projectile.remainingTicks <= 1018;
+		    && projectile.sourceEntityId == 8
+		    && projectile.spellId == 50
+		    && projectile.damageType == 2
+		    && projectile.damage >= 224
+		    && projectile.remainingTicks >= 1013
+		    && projectile.remainingTicks <= 1018;
 	}));
 	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.positionX == 14 && projectile.positionY == 10;
@@ -3239,8 +3243,8 @@ TEST(ReplayFixture, DisabledFriendlyFireSkipsSecondaryFireWallPlayerCollision)
 	EXPECT_EQ(state.secondaryPlayerLife, fixture.initialState.secondaryPlayer.life);
 	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
 		return projectile.behavior == 23
-			&& projectile.positionX == state.positionX
-			&& projectile.positionY == state.positionY;
+		    && projectile.positionX == state.positionX
+		    && projectile.positionY == state.positionY;
 	}));
 }
 
@@ -3830,10 +3834,10 @@ TEST(ReplayFixture, ExecutesFireWallControllerAndSegmentLifecycle)
 	EXPECT_EQ(state.lastAppliedTick, 8U);
 	EXPECT_FALSE(state.projectiles.empty());
 	EXPECT_EQ(
-		std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
-			return projectile.behavior == 22;
-		}),
-		0);
+	    std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		    return projectile.behavior == 22;
+	    }),
+	    0);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 23;
 	}));
@@ -3912,7 +3916,8 @@ TEST(ReplayFixture, AdvancesEveryConcurrentFireWallController)
 	}));
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 22;
-	}), 2);
+	}),
+	    2);
 	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 23 && projectile.positionX == 14 && projectile.positionY == 10;
 	}));
@@ -3951,10 +3956,10 @@ TEST(ReplayFixture, ExecutesLightningWallControllerAndSegmentLifecycle)
 	EXPECT_EQ(state.lastAppliedTick, 8U);
 	EXPECT_FALSE(state.projectiles.empty());
 	EXPECT_EQ(
-		std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
-			return projectile.behavior == 47;
-		}),
-		0);
+	    std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		    return projectile.behavior == 47;
+	    }),
+	    0);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 23 && projectile.damageType == 2;
 	}));
@@ -4024,9 +4029,9 @@ TEST(ReplayFixture, ExecutesNovaRadialFanControllerAndBalls)
 	EXPECT_EQ(state.projectiles.size(), 36U);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 31
-			&& projectile.damageType == 2
-			&& projectile.remainingTicks == 254
-			&& projectile.speed == 16;
+		    && projectile.damageType == 2
+		    && projectile.remainingTicks == 254
+		    && projectile.speed == 16;
 	}));
 }
 
@@ -4060,9 +4065,9 @@ TEST(ReplayFixture, ExecutesFlameWaveBranchesAndSegmentMovement)
 	EXPECT_EQ(state.projectiles.size(), 9U);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 25
-			&& projectile.damageType == 1
-			&& projectile.remainingTicks == 254
-			&& projectile.speed == 16;
+		    && projectile.damageType == 1
+		    && projectile.remainingTicks == 254
+		    && projectile.speed == 16;
 	}));
 }
 
@@ -4097,13 +4102,15 @@ TEST(ReplayFixture, ExecutesChainLightningFanOutAndImpactResolution)
 	EXPECT_EQ(state.combatTargetHitPoints, 94);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 29;
-	}), 2);
+	}),
+	    2);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 4;
-	}), 2);
+	}),
+	    2);
 	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return (projectile.behavior == 29 && projectile.remainingTicks == 254)
-			|| (projectile.behavior == 4 && projectile.remainingTicks == 5);
+		    || (projectile.behavior == 4 && projectile.remainingTicks == 5);
 	}));
 }
 
@@ -4140,11 +4147,13 @@ TEST(ReplayFixture, ExecutesSecondaryChainLightningCastWithConcurrentControllers
 	EXPECT_LT(state.life, fixture.initialState.life);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 28;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 29
-			&& (projectile.sourceEntityId == 1 || projectile.sourceEntityId == 8);
-	}), 2);
+		    && (projectile.sourceEntityId == 1 || projectile.sourceEntityId == 8);
+	}),
+	    2);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
@@ -4166,15 +4175,9 @@ TEST(ReplayFixture, RemovesInvalidChainLightningControllersWithoutRandomness)
 	move.directionX = 1;
 	fixture.commands.push_back(move);
 	fixture.initialProjectiles = {
-	    { .entityId = 0x80000010U, .sourceEntityId = 99U, .spellId = 16U,
-		.levelId = 1U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10,
-		.remainingTicks = 1U, .behavior = 28 },
-	    { .entityId = 0x80000011U, .sourceEntityId = 1U, .spellId = 15U,
-		.levelId = 1U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10,
-		.remainingTicks = 1U, .behavior = 28 },
-	    { .entityId = 0x80000012U, .sourceEntityId = 1U, .spellId = 16U,
-		.levelId = 2U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10,
-		.remainingTicks = 1U, .behavior = 28 },
+		{ .entityId = 0x80000010U, .sourceEntityId = 99U, .spellId = 16U, .levelId = 1U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10, .remainingTicks = 1U, .behavior = 28 },
+		{ .entityId = 0x80000011U, .sourceEntityId = 1U, .spellId = 15U, .levelId = 1U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10, .remainingTicks = 1U, .behavior = 28 },
+		{ .entityId = 0x80000012U, .sourceEntityId = 1U, .spellId = 16U, .levelId = 2U, .positionX = 11, .positionY = 10, .targetX = 20, .targetY = 10, .remainingTicks = 1U, .behavior = 28 },
 	};
 
 	const auto createState = [&]() {
@@ -4207,7 +4210,8 @@ TEST(ReplayFixture, RemovesInvalidChainLightningControllersWithoutRandomness)
 	EXPECT_EQ(state.randomState, baselineState.randomState);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 28 || projectile.behavior == 29;
-	}), 0);
+	}),
+	    0);
 }
 
 TEST(ReplayFixture, RemovesInvalidChainLightningBoltsBeforeAdvancement)
@@ -4350,10 +4354,12 @@ TEST(ReplayFixture, AdvancesChainLightningBoltsByEntityIdIncludingNewSegments)
 	EXPECT_TRUE(result.transitions[0].accepted);
 	ASSERT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 29;
-	}), 2);
+	}),
+	    2);
 	ASSERT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 4;
-	}), 2);
+	}),
+	    2);
 	const auto lowIdSegment = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.entityId == 0x80000012U;
 	});
@@ -4451,10 +4457,12 @@ TEST(ReplayFixture, AdvancesChainLightningControllersAndBoltsInGlobalEntityOrder
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 28;
-	}), 0);
+	}),
+	    0);
 	ASSERT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 29;
-	}), 3);
+	}),
+	    3);
 	const auto lowerControllerBolt = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.entityId == 0x80000014U;
 	});
@@ -4467,7 +4475,8 @@ TEST(ReplayFixture, AdvancesChainLightningControllersAndBoltsInGlobalEntityOrder
 	EXPECT_EQ(higherControllerBolt->targetY, 7);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 4 && projectile.spellId == 16;
-	}), 3);
+	}),
+	    3);
 	const auto firstSegment = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.entityId == 0x80000013U;
 	});
@@ -4801,7 +4810,8 @@ TEST(ReplayFixture, ExecutesSecondaryImmolationCastAgainstPrimaryPlayer)
 			EXPECT_EQ(controller->behavior, 43);
 			EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 				return projectile.sourceEntityId == 8;
-			}), 1);
+			}),
+			    1);
 		} else if (checkpointIndex == 1) {
 			std::vector<const ReplayFixtureProjectileState *> fireballs;
 			for (const auto &projectile : state.projectiles) {
@@ -4847,9 +4857,9 @@ TEST(ReplayFixture, ExecutesSecondaryImmolationCastAgainstPrimaryPlayer)
 		}));
 		EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 			return projectile.sourceEntityId == 8
-				&& projectile.spellId == 45
-				&& projectile.behavior == 16
-				&& projectile.damageType == 1;
+			    && projectile.spellId == 45
+			    && projectile.behavior == 16
+			    && projectile.damageType == 1;
 		}));
 	}
 }
@@ -5299,9 +5309,9 @@ TEST(ReplayFixture, RejectsInvalidElementalOwnerSpellLevelAndLifeBeforeRng)
 		return projectile;
 	};
 	fixture.initialProjectiles = {
-	    makeProjectile(0x80000010U, 99U, 31U, 1U),
-	    makeProjectile(0x80000011U, 8U, 16U, 1U),
-	    makeProjectile(0x80000012U, 8U, 31U, 2U),
+		makeProjectile(0x80000010U, 99U, 31U, 1U),
+		makeProjectile(0x80000011U, 8U, 16U, 1U),
+		makeProjectile(0x80000012U, 8U, 31U, 2U),
 	};
 
 	const auto execute = [&error](
@@ -5439,7 +5449,7 @@ TEST(ReplayFixture, RejectsInvalidElementalOwnerSpellLevelAndLifeBeforeRng)
 
 	ReplayFixture burstBlockerFixture = directBlockerFixture;
 	burstBlockerFixture.initialProjectiles = {
-	    makeProjectile(0x80000024U, 8U, 31U, 1U),
+		makeProjectile(0x80000024U, 8U, 31U, 1U),
 	};
 	const auto burstBlocker = execute(burstBlockerFixture);
 	ASSERT_TRUE(std::get<0>(burstBlocker)) << error;
@@ -5480,7 +5490,8 @@ TEST(ReplayFixture, ExecutesGuardianTurretAndFireboltAdmission)
 	EXPECT_EQ(state.projectiles.size(), 2U);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 2;
-	}), 1);
+	}),
+	    1);
 	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 36 && projectile.remainingTicks == 16;
 	}));
@@ -5491,8 +5502,8 @@ TEST(ReplayFixture, ExecutesGuardianTurretAndFireboltAdmission)
 	EXPECT_EQ(controller->guardianState, 3);
 	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 2
-			&& projectile.remainingTicks == 255
-			&& projectile.speed == 16;
+		    && projectile.remainingTicks == 255
+		    && projectile.speed == 16;
 	}));
 	const auto bolt = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 2;
@@ -5655,8 +5666,8 @@ TEST(ReplayFixture, AdvancesConcurrentGuardiansInEntityOrderAndFailsClosedOnInva
 		return controller;
 	};
 	const auto execute = [&](const ReplayFixture &runFixture,
-		                     std::vector<ReplayFixtureProjectileState> projectiles,
-		                     ReplayFixtureExecutionState &state) {
+	                         std::vector<ReplayFixtureProjectileState> projectiles,
+	                         ReplayFixtureExecutionState &state) {
 		state = makeState();
 		state.projectiles = std::move(projectiles);
 		ReplayFixtureExecutionResult result;
@@ -5723,7 +5734,8 @@ TEST(ReplayFixture, AdvancesConcurrentGuardiansInEntityOrderAndFailsClosedOnInva
 	ASSERT_TRUE(execute(blockedFixture, { makeController(0x80000014U, 8U, 17U) }, blockedState)) << error;
 	EXPECT_EQ(std::count_if(blockedState.projectiles.begin(), blockedState.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 2;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(blockedState.randomState, static_cast<uint32_t>(fixture.rngSeed));
 
 	ReplayFixtureExecutionState minionState = makeState();
@@ -5733,7 +5745,8 @@ TEST(ReplayFixture, AdvancesConcurrentGuardiansInEntityOrderAndFailsClosedOnInva
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, minionState, minionResult, error)) << error;
 	EXPECT_EQ(std::count_if(minionState.projectiles.begin(), minionState.projectiles.end(), [](const auto &projectile) {
 		return projectile.behavior == 2;
-	}), 0);
+	}),
+	    0);
 	EXPECT_EQ(minionState.randomState, static_cast<uint32_t>(fixture.rngSeed));
 }
 
@@ -5921,10 +5934,10 @@ TEST(ReplayFixture, ApocalypseAdmissionAndMissRngMatchNativeBoundaries)
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
 
 	const auto run = [](
-	    const ReplayFixture &candidate,
-	    bool seedVacatedTileBoom = false,
-	    int32_t seededBoomX = -1,
-	    int32_t seededBoomY = -1) {
+	                     const ReplayFixture &candidate,
+	                     bool seedVacatedTileBoom = false,
+	                     int32_t seededBoomX = -1,
+	                     int32_t seededBoomY = -1) {
 		ReplayFixtureExecutionState state;
 		state.entityId = 1;
 		state.life = candidate.initialState.life;
@@ -5972,9 +5985,9 @@ TEST(ReplayFixture, ApocalypseAdmissionAndMissRngMatchNativeBoundaries)
 	ReplayFixture missileOnlyTarget = fixture;
 	missileOnlyTarget.initialState.missileBlockedCells = { 84 };
 	missileOnlyTarget.checkpoints = {
-	    { 1, "timeline-apocalypse-repeat-impact-cast" },
-	    { 2, "timeline-apocalypse-repeat-impact-first" },
-	    { 3, "timeline-apocalypse-repeat-impact-second" },
+		{ 1, "timeline-apocalypse-repeat-impact-cast" },
+		{ 2, "timeline-apocalypse-repeat-impact-first" },
+		{ 3, "timeline-apocalypse-repeat-impact-second" },
 	};
 	const auto missileOnlyState = run(missileOnlyTarget);
 	const auto repeatedBoom = std::find_if(missileOnlyState.projectiles.begin(), missileOnlyState.projectiles.end(), [](const auto &projectile) {
@@ -5991,8 +6004,8 @@ TEST(ReplayFixture, ApocalypseAdmissionAndMissRngMatchNativeBoundaries)
 	ReplayFixture breakableObject = fixture;
 	breakableObject.commands.clear();
 	breakableObject.checkpoints = {
-	    { 1, "timeline-apocalypse-breakable-object-hit" },
-	    { 2, "timeline-apocalypse-breakable-object-cleared" },
+		{ 1, "timeline-apocalypse-breakable-object-hit" },
+		{ 2, "timeline-apocalypse-breakable-object-cleared" },
 	};
 	breakableObject.initialState.combatTargetPositionX = 5;
 	breakableObject.initialState.combatTargetFuturePositionX = 5;
@@ -8149,7 +8162,7 @@ TEST(ReplayFixture, GoldPickupCreditsBalanceAndRejectsMalformedStacks)
 	ReplayFixture fixture;
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
-	fixture.contentManifest = { };
+	fixture.contentManifest = {};
 
 	auto CreateState = [&fixture]() {
 		ReplayFixtureExecutionState state;
@@ -8567,8 +8580,8 @@ TEST(ReplayFixture, RejectsInvalidFallenFearState)
 	ASSERT_TRUE(file.good());
 	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	const std::vector<std::tuple<std::string, std::string>> mutations {
-	    { "\"combat_target_fallen_fear_ticks\": 1", "\"combat_target_fallen_fear_ticks\": 1025" },
-	    { "\"combat_target_fallen_fear_direction\": 7", "\"combat_target_fallen_fear_direction\": 8" },
+		{ "\"combat_target_fallen_fear_ticks\": 1", "\"combat_target_fallen_fear_ticks\": 1025" },
+		{ "\"combat_target_fallen_fear_direction\": 7", "\"combat_target_fallen_fear_direction\": 8" },
 	};
 
 	for (const auto &[valid, invalid] : mutations) {
@@ -8738,14 +8751,14 @@ TEST(ReplayFixture, RejectsInvalidFallenRallyCompanionState)
 	ASSERT_TRUE(file.good());
 	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	const std::vector<std::tuple<std::string, std::string, std::string>> mutations {
-	    { "\"combat_target_entity_id\": 9", "\"combat_target_entity_id\": 0", "Replay fixture contains invalid combat-target occupancy state." },
-	    { "\"combat_target_companion_entity_id\": 10", "\"combat_target_companion_entity_id\": 9", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"GoatMelee\"", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_level_id\": 1", "\"combat_target_companion_level_id\": 2", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_max_hit_points\": 30", "\"combat_target_companion_max_hit_points\": 29", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_intelligence\": 256", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_stand_animation_frame\": 128", "Replay fixture contains invalid combat-target companion state." },
-	    { "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_rally_ticks\": 4097", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_entity_id\": 9", "\"combat_target_entity_id\": 0", "Replay fixture contains invalid combat-target occupancy state." },
+		{ "\"combat_target_companion_entity_id\": 10", "\"combat_target_companion_entity_id\": 9", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"GoatMelee\"", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_level_id\": 1", "\"combat_target_companion_level_id\": 2", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_max_hit_points\": 30", "\"combat_target_companion_max_hit_points\": 29", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_intelligence\": 256", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_stand_animation_frame\": 128", "Replay fixture contains invalid combat-target companion state." },
+		{ "\"combat_target_companion_native_ai\": \"Fallen\"", "\"combat_target_companion_native_ai\": \"Fallen\",\n            \"combat_target_companion_fallen_rally_ticks\": 4097", "Replay fixture contains invalid combat-target companion state." },
 	};
 
 	for (const auto &[valid, invalid, expected] : mutations) {
@@ -8768,10 +8781,10 @@ TEST(ReplayFixture, RejectsInvalidRangedRetreatTuning)
 	ASSERT_TRUE(file.good());
 	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	const std::vector<std::tuple<std::string, std::string>> mutations {
-	    { "\"combat_target_ranged_retreat_minimum_distance\": 1", "\"combat_target_ranged_retreat_minimum_distance\": 65" },
-	    { "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 101" },
-	    { "\"combat_target_ranged_retreat_chance_intelligence_scale\": 1", "\"combat_target_ranged_retreat_chance_intelligence_scale\": 101" },
-	    { "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 0" },
+		{ "\"combat_target_ranged_retreat_minimum_distance\": 1", "\"combat_target_ranged_retreat_minimum_distance\": 65" },
+		{ "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 101" },
+		{ "\"combat_target_ranged_retreat_chance_intelligence_scale\": 1", "\"combat_target_ranged_retreat_chance_intelligence_scale\": 101" },
+		{ "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 0" },
 	};
 
 	for (const auto &[valid, invalid] : mutations) {
@@ -11786,8 +11799,8 @@ TEST(ReplayFixture, ExecutesSkeletonRangedMonsterArrowSecondaryWarriorBlockChanc
 }
 
 void ExecuteMonsterArrowPrimaryWarriorBlockChanceFixture(
-	const char *fixturePath,
-	uint32_t expectedImpactTick)
+    const char *fixturePath,
+    uint32_t expectedImpactTick)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -13219,11 +13232,11 @@ TEST(ReplayFixture, ExecutesAcidAutonomousMultiplayerAgainstCSharpCheckpoints)
 }
 
 void ExecuteAcidAutonomousPrimaryFixture(
-	const char *fixturePath,
-	uint32_t expectedTick,
-	int32_t expectedBehavior,
-	uint32_t expectedTargetEntityId,
-	int32_t expectedLife)
+    const char *fixturePath,
+    uint32_t expectedTick,
+    int32_t expectedBehavior,
+    uint32_t expectedTargetEntityId,
+    int32_t expectedLife)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -13517,8 +13530,8 @@ TEST(ReplayFixture, ExecutesAcidUniqueLifecycleAgainstCSharpCheckpoints)
 }
 
 void ExecuteAcidMultiplayerSecondaryImpactFixture(
-	const char *path,
-	int32_t expectedSecondaryLife = 6336)
+    const char *path,
+    int32_t expectedSecondaryLife = 6336)
 {
 	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
@@ -14534,10 +14547,10 @@ TEST(ReplayFixture, ExecutesMagmaMagmaBallMultiplayerTargetSelectionAgainstCShar
 }
 
 void ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(
-	const char *fixturePath,
-	int32_t expectedBehavior,
-	uint32_t expectedSpellId,
-	int32_t expectedDamageType)
+    const char *fixturePath,
+    int32_t expectedBehavior,
+    uint32_t expectedSpellId,
+    int32_t expectedDamageType)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -14607,11 +14620,11 @@ void ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(
 }
 
 void ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
-	const char *fixturePath,
-	int32_t expectedBehavior,
-	uint32_t expectedSpellId,
-	uint32_t expectedTick,
-	uint32_t expectedBlockEndTick)
+    const char *fixturePath,
+    int32_t expectedBehavior,
+    uint32_t expectedSpellId,
+    uint32_t expectedTick,
+    uint32_t expectedBlockEndTick)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -17090,8 +17103,8 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMissAgainstCSharpCheckpoints)
 }
 
 void PopulateReplaySecondaryEquipment(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixture &fixture)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixture &fixture)
 {
 	for (const auto &source : fixture.initialState.secondaryPlayer.equipment) {
 		ReplayFixtureItemState itemState;
@@ -17124,10 +17137,10 @@ void PopulateReplaySecondaryEquipment(
 }
 
 void ExecuteMonsterMagicSecondaryImpactFixture(
-	const char *path,
-	int32_t expectedSecondaryLife = 6144,
-	int32_t expectedSecondaryMana = 0,
-	bool expectedSecondaryManaShieldActive = false)
+    const char *path,
+    int32_t expectedSecondaryLife = 6144,
+    int32_t expectedSecondaryMana = 0,
+    bool expectedSecondaryManaShieldActive = false)
 {
 	std::ifstream file(path);
 	ASSERT_TRUE(file.good());

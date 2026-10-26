@@ -4,7 +4,6 @@
  * Implementation of random number generation.
  */
 
-
 #include "platform/switch/random.hpp"
 
 #include <cstdint>

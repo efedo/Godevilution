@@ -4,7 +4,6 @@
  * Implementation of SDL bilinear scaling.
  */
 
-
 #include "utils/sdl/sdl_bilinear_scale.hpp"
 
 #include <cstddef>

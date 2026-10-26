@@ -4,7 +4,6 @@
  * Implementation of Storm video API compatibility.
  */
 
-
 #include "network/storm/storm_svid.h"
 
 #include <cstddef>
@@ -36,9 +35,9 @@
 #include <SmackerDecoder.h>
 
 #include "engine/assets.hpp"
+#include "engine/audio/sound.h"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/gfx/palette.h"
-#include "engine/audio/sound.h"
 #include "persistence/options.h"
 #include "utils/display.h"
 #include "utils/log.hpp"

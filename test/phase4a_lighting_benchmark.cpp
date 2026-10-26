@@ -2,13 +2,13 @@
 #include <cstring>
 #include <random>
 
+#include "engine/lighting.h"
 #include "engine/lighting_defs.hpp"
 #include "engine/math/point.hpp"
 #include "engine/world_tile.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/levels/tile.hpp"
-#include "engine/lighting.h"
 
 namespace devilution {
 namespace {
@@ -125,10 +125,9 @@ static void BM_RandomTileAccess(benchmark::State &state)
 	std::uniform_int_distribution<int> dist(0, 49);
 
 	for (int i = 0; i < 2500; i++) {
-		randomPositions.push_back(Point { 
-			static_cast<WorldTileCoord>(dist(rng)), 
-			static_cast<WorldTileCoord>(dist(rng)) 
-		});
+		randomPositions.push_back(Point {
+		    static_cast<WorldTileCoord>(dist(rng)),
+		    static_cast<WorldTileCoord>(dist(rng)) });
 	}
 
 	for (auto _ : state) {

@@ -9,9 +9,9 @@
 #include <cstdint>
 
 #include "game/items/items.hpp"
-#include "network/protocol/msg.h"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
+#include "network/protocol/msg.h"
 #include "tables/monstdat.h"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/is_of.hpp"

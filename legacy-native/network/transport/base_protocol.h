@@ -6,7 +6,6 @@
  * Interface for base protocol definitions.
  */
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -20,9 +19,9 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include "game/players/players.hpp"
 #include "network/transport/base.h"
 #include "network/transport/packet.h"
-#include "game/players/players.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/is_of.hpp"
 #include "utils/log.hpp"

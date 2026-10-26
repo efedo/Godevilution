@@ -8,11 +8,11 @@
 #include <SDL.h>
 #endif
 
-#include "engine/assets.hpp"
-#include "engine/demomode.h"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
 #include "application/init.hpp"
+#include "engine/assets.hpp"
+#include "engine/demomode.h"
 #include "lua/lua_global.hpp"
 #include "persistence/options.h"
 #include "persistence/save_file.h"

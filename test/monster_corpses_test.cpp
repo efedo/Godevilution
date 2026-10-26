@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "game/monsters/monster_corpses.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/monsters/monster_corpses.hpp"
 
 using namespace devilution;
 

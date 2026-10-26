@@ -4,7 +4,6 @@
  * Implementation of sound stubs.
  */
 
-
 // Stubbed implementations of sound functions for the NOSOUND mode.
 #include "engine/audio/sound.h"
 

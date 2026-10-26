@@ -41,7 +41,7 @@ struct NativeObjectSpec {
 	const char *stem;
 };
 
-constexpr std::array<NativeObjectSpec, 10> NativeObjects {{
+constexpr std::array<NativeObjectSpec, 10> NativeObjects { {
 	{ 1, "l1doors" },
 	{ 2, "l1doors" },
 	{ 5, "chest1" },
@@ -52,7 +52,7 @@ constexpr std::array<NativeObjectSpec, 10> NativeObjects {{
 	{ 54, "traphole" },
 	{ 57, "barrel" },
 	{ 58, "barrelex" },
-}};
+} };
 
 constexpr std::array<const char *, 8> NativeObjectStems {
 	"l1doors", "chest1", "chest2", "chest3", "sarc", "traphole", "barrel", "barrelex"
@@ -268,12 +268,12 @@ void FillBackgrounds(OwnedSurface &first, OwnedSurface &second)
 }
 
 void RenderProbe(
-	std::ostream &output,
-	const NativeObjectSpec &spec,
-	std::string_view state,
-	std::string_view probe,
-	const Object &object,
-	Point tilePosition)
+    std::ostream &output,
+    const NativeObjectSpec &spec,
+    std::string_view state,
+    std::string_view probe,
+    const Object &object,
+    Point tilePosition)
 {
 	ASSERT_TRUE(object._oAnimData);
 	const ClxSprite sprite = object.currentSprite();

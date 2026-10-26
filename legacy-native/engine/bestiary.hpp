@@ -24,8 +24,8 @@
 
 #include <expected.hpp>
 
-#include "engine/gfx/clx_sprite.hpp"
 #include "engine/audio/sound.h"
+#include "engine/gfx/clx_sprite.hpp"
 #include "tables/monstdat.h"
 
 namespace devilution {

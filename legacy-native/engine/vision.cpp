@@ -4,7 +4,6 @@
  * Implementation of field-of-view and vision calculations.
  */
 
-
 #include "engine/vision.hpp"
 
 #include <cstdint>
@@ -138,8 +137,8 @@ bool IsPointVisible(
 	    observer,
 	    radius,
 	    [&visible, target](Point point) {
-		if (point == target)
-			visible = true;
+		    if (point == target)
+			    visible = true;
 	    },
 	    [](Point) {},
 	    passesLightFn,

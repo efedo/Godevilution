@@ -5,7 +5,6 @@
  * Interface for level.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

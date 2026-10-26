@@ -11,11 +11,11 @@
 
 #include <gtest/gtest.h>
 
-#include "engine/cursor.h"
-#include "engine/assets.hpp"
-#include "engine/lighting.h"
-#include "application/init.hpp"
 #include "application/headless_mode.hpp"
+#include "application/init.hpp"
+#include "engine/assets.hpp"
+#include "engine/cursor.h"
+#include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
@@ -42,10 +42,19 @@ std::optional<std::filesystem::path> FindLoosePlayerMetadataAssetsPath()
 			"txtdata/classes/classdat.tsv",
 		};
 		const std::array<std::string_view, 6> classFolders {
-			"warrior", "rogue", "sorcerer", "monk", "bard", "barbarian",
+			"warrior",
+			"rogue",
+			"sorcerer",
+			"monk",
+			"bard",
+			"barbarian",
 		};
 		const std::array<std::string_view, 5> classTables {
-			"attributes.tsv", "starting_loadout.tsv", "sprites.tsv", "animations.tsv", "sounds.tsv",
+			"attributes.tsv",
+			"starting_loadout.tsv",
+			"sprites.tsv",
+			"animations.tsv",
+			"sounds.tsv",
 		};
 		for (const std::string_view table : sharedTables) {
 			if (!std::filesystem::is_regular_file(assets / table))
@@ -60,9 +69,9 @@ std::optional<std::filesystem::path> FindLoosePlayerMetadataAssetsPath()
 		return true;
 	};
 	const std::array<std::filesystem::path, 3> starts {
-	    std::filesystem::path(paths::BasePath()),
-	    std::filesystem::current_path(),
-	    std::filesystem::path(paths::AssetsPath()),
+		std::filesystem::path(paths::BasePath()),
+		std::filesystem::current_path(),
+		std::filesystem::path(paths::AssetsPath()),
 	};
 	for (std::filesystem::path current : starts) {
 		if (current.empty())
@@ -321,7 +330,7 @@ TEST_F(OfflineJoinLevelTest, RejectsInvalidLevelAndOutOfBoundsBeforeMutatingPlay
 namespace devilution {
 extern void TestPlayerCheckNewPath(Player &player);
 extern bool TestPlayerDoGotHit(Player &player);
-}
+} // namespace devilution
 
 class FlashCastFacingTest : public testing::TestWithParam<size_t> {
 protected:

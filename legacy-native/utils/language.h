@@ -6,7 +6,6 @@
  * Interface for language and localization.
  */
 
-
 #include <string>
 #include <string_view>
 

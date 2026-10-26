@@ -5,7 +5,6 @@
  * Interface for autocomplete.
  */
 
-
 #ifdef _DEBUG
 #include <cstddef>
 #include <string>

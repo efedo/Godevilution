@@ -6,7 +6,6 @@
  * Interface for debug console.
  */
 
-
 #include <cstdarg>
 #include <cstddef>
 #include <string_view>

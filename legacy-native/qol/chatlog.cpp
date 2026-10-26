@@ -11,18 +11,18 @@
 
 #include <fmt/format.h>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/automap.h"
 #include "chatlog.h"
-#include "ui/panel/control.hpp"
-#include "ui/diablo_msg.hpp"
-#include "game/quests/quest_stars.hpp"
 #include "engine/render/text_render.hpp"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
+#include "game/stores/stores.hpp"
+#include "ui/automap.h"
+#include "ui/diablo_msg.hpp"
 #include "ui/gamemenu.h"
 #include "ui/help.h"
-#include "game/players/inventory.hpp"
+#include "ui/menu/ui_flags.hpp"
 #include "ui/minitext.h"
-#include "game/stores/stores.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/language.h"
 #include "utils/string/str_cat.hpp"
 

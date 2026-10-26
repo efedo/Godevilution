@@ -4,15 +4,14 @@
  * Implementation of audio.
  */
 
-
 #include "lua/modules/audio.hpp"
 
 #include <magic_enum/magic_enum.hpp>
 #include <sol/sol.hpp>
 
 #include "engine/audio/effects.h"
-#include "lua/metadoc.hpp"
 #include "engine/audio/sound_effect_enums.h"
+#include "lua/metadoc.hpp"
 
 namespace devilution {
 

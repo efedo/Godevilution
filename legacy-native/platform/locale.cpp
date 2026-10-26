@@ -4,7 +4,6 @@
  * Implementation of locale.
  */
 
-
 #include "locale.hpp"
 
 #include <algorithm>

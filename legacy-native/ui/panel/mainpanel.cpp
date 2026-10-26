@@ -4,7 +4,6 @@
  * Implementation of main game panel.
  */
 
-
 #include "ui/panel/mainpanel.hpp"
 
 #include <cstdint>
@@ -13,17 +12,17 @@
 
 #include <expected.hpp>
 
-#include "ui/panel/control.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/display.h"
+#include "utils/image/surface_to_clx.hpp"
 #include "utils/language.h"
 #include "utils/sdl/sdl_compat.h"
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/status_macros.hpp"
-#include "utils/image/surface_to_clx.hpp"
 
 namespace devilution {
 

@@ -4,7 +4,6 @@
  * Implementation of CEL to CLX format conversion.
  */
 
-
 #include "utils/image/cel_to_clx.hpp"
 
 #include <cstdint>
@@ -18,9 +17,9 @@
 #endif
 
 #include "application/fatal_error.h"
-#include "utils/image/clx_encode.hpp"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_write.hpp"
+#include "utils/image/clx_encode.hpp"
 
 namespace devilution {
 

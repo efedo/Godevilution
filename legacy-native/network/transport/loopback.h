@@ -6,7 +6,6 @@
  * Interface for loopback network transport.
  */
 
-
 #include <cstdint>
 #include <queue>
 #include <string>

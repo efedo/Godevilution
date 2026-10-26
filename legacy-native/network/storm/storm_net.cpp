@@ -4,7 +4,6 @@
  * Implementation of Storm network API compatibility.
  */
 
-
 #include "network/storm/storm_net.hpp"
 
 #include <algorithm>
@@ -19,15 +18,15 @@
 #include "utils/sdl/sdl_mutex.h"
 #endif
 
-#include "network/transport/abstract_net.h"
-#include "engine/demomode.h"
 #include "application/headless_mode.hpp"
-#include "ui/menu.h"
+#include "engine/demomode.h"
 #include "network/protocol/multi.h"
+#include "network/transport/abstract_net.h"
 #include "persistence/options.h"
+#include "ui/menu.h"
 #include "utils/log.hpp"
-#include "utils/stubs.h"
 #include "utils/string/utf8.hpp"
+#include "utils/stubs.h"
 
 namespace devilution {
 

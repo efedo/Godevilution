@@ -6,7 +6,6 @@
  * Interface for file name generation.
  */
 
-
 #include <cstring>
 #include <initializer_list>
 #include <string_view>

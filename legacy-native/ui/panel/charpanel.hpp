@@ -6,7 +6,6 @@
  * Interface for character panel.
  */
 
-
 #include <string>
 
 #include <expected.hpp>

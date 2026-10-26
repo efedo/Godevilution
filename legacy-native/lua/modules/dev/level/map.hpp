@@ -5,7 +5,6 @@
  * Interface for map.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

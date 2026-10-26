@@ -43,7 +43,7 @@ enum _talker_id : uint8_t {
 
 // Runtime mappings built from TSV data
 extern DVL_API_FOR_TEST std::unordered_map<_talker_id, std::string> TownerLongNames; // Maps towner type enum to display name
-extern std::unordered_map<_talker_id, std::string> TownerShortNames;                // Maps towner type enum to Lua/mod short name
+extern std::unordered_map<_talker_id, std::string> TownerShortNames;                 // Maps towner type enum to Lua/mod short name
 
 struct Towner : Actor {
 	OptionalOwnedClxSpriteList ownedAnim;
@@ -53,12 +53,12 @@ struct Towner : Actor {
 
 	std::string_view name;
 
-	Point position; // Tile position of NPC
+	Point position;    // Tile position of NPC
 	_speech_id gossip; // Randomly chosen topic for discussion (picked when loading into town)
 	uint16_t _tAnimWidth;
 	int16_t _tAnimDelay; // Tick length of each frame in the current animation
-	int16_t _tAnimCnt; // Increases by one each game tick, counting how close we are to _pAnimDelay
-	uint8_t _tAnimLen; // Number of frames in current animation
+	int16_t _tAnimCnt;   // Increases by one each game tick, counting how close we are to _pAnimDelay
+	uint8_t _tAnimLen;   // Number of frames in current animation
 	uint8_t _tAnimFrame; // Current frame of animation.
 	uint8_t _tAnimFrameCnt;
 	_talker_id _ttype;
@@ -76,7 +76,7 @@ struct Towner : Actor {
 extern DVL_API_FOR_TEST std::vector<Towner> Towners;
 
 size_t GetNumTownerTypes(); // Number of unique towner types in TSV data
-size_t GetNumTowners(); // Number of spawned towner instances
+size_t GetNumTowners();     // Number of spawned towner instances
 bool IsTownerPresent(_talker_id npc);
 Towner *GetTowner(_talker_id type); // null if not initialized
 

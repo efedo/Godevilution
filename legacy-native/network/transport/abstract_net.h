@@ -6,7 +6,6 @@
  * Interface for abstract network interface.
  */
 
-
 #include <cstdint>
 #include <exception>
 #include <memory>

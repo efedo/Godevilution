@@ -8,10 +8,10 @@
 #include <cstdint>
 #include <string>
 
-#include "ui/menu/ui_flags.hpp"
+#include "engine/gfx/surface.hpp"
 #include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
-#include "engine/gfx/surface.hpp"
+#include "ui/menu/ui_flags.hpp"
 
 namespace devilution {
 

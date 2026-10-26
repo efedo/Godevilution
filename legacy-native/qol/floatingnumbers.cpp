@@ -4,7 +4,6 @@
  * Implementation of floating damage numbers.
  */
 
-
 #include "floatingnumbers.h"
 
 #include <cstdint>
@@ -96,7 +95,8 @@ void AddFloatingDamageNumber(Point pos, const int damageQ6, const int id, const 
 
 	const UiFlags size = damageQ6 >= 64 * 300
 	    ? UiFlags::FontSize30
-	    : damageQ6 >= 64 * 100 ? UiFlags::FontSize24 : UiFlags::FontSize12;
+	    : damageQ6 >= 64 * 100 ? UiFlags::FontSize24
+	                           : UiFlags::FontSize12;
 	const std::string text = damageQ6 < 64
 	    ? fmt::format("{:.2f}", static_cast<double>(damageQ6) / 64.0)
 	    : fmt::format("{}", damageQ6 / 64);

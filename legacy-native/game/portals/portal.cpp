@@ -5,12 +5,12 @@
  */
 #include "game/portals/portal.hpp"
 
-#include "engine/world.hpp"
 #include "engine/lighting.h"
+#include "engine/world.hpp"
 #include "game/missiles/missiles.hpp"
-#include "network/protocol/multi.h"
 #include "network/protocol/legacy_sync_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
+#include "network/protocol/multi.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif

@@ -4,7 +4,6 @@
  * Engine-neutral game events.
  */
 
-
 #include "game/events/event_bus.hpp"
 
 #include <algorithm>

@@ -6,7 +6,6 @@
  * Interface for PCX image loading.
  */
 
-
 #include <cstdint>
 #include <optional>
 

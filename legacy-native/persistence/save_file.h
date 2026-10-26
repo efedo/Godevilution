@@ -11,8 +11,8 @@
 
 #include <expected.hpp>
 
-#include "ui/menu/diabloui.h"
 #include "game/players/players.hpp"
+#include "ui/menu/diabloui.h"
 
 #ifdef UNPACKED_SAVES
 #include "utils/file/file_util.h"

@@ -6,7 +6,6 @@
  * Interface for event handling.
  */
 
-
 #include <cstdint>
 
 #ifdef USE_SDL3

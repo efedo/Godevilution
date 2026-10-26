@@ -26,8 +26,8 @@
 #include <optional>
 #include <unordered_map>
 
-#include "game/levels/level.hpp"
 #include "game/levels/dungeon_common_defs.hpp"
+#include "game/levels/level.hpp"
 #include "utils/attributes.h"
 
 namespace devilution {
@@ -43,59 +43,59 @@ constexpr int WorldNumLevels = 25;
  */
 class World {
 public:
-    World();
-    ~World() = default;
+	World();
+	~World() = default;
 
-    /** Non-copyable: owns all Level objects for the session. */
-    World(const World &) = delete;
-    World &operator=(const World &) = delete;
+	/** Non-copyable: owns all Level objects for the session. */
+	World(const World &) = delete;
+	World &operator=(const World &) = delete;
 
-    // -------------------------------------------------------------------------
-    // Level management
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	// Level management
+	// -------------------------------------------------------------------------
 
-    // -------------------------------------------------------------------------
-    // Current level
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	// Current level
+	// -------------------------------------------------------------------------
 
-    /**
-     * @brief Returns the Level the local player currently occupies.
-     *
-     * Always returns a valid Level; defaults to an empty town level.
-     */
-    [[nodiscard]] Level &currentLevel();
-    [[nodiscard]] const Level &currentLevel() const;
+	/**
+	 * @brief Returns the Level the local player currently occupies.
+	 *
+	 * Always returns a valid Level; defaults to an empty town level.
+	 */
+	[[nodiscard]] Level &currentLevel();
+	[[nodiscard]] const Level &currentLevel() const;
 
-    /**
-     * @brief Sets the current level's identity to @p target.
-     *
-     * Reuses the existing Level object (no assets are freed or loaded).
-     * All identity fields are written from the LevelId in one call,
-     * replacing the old pattern of SwitchCurrentLevel(index) followed by
-     * separate gendung macro assignments.
-     */
-    void switchLevel(LevelId target);
+	/**
+	 * @brief Sets the current level's identity to @p target.
+	 *
+	 * Reuses the existing Level object (no assets are freed or loaded).
+	 * All identity fields are written from the LevelId in one call,
+	 * replacing the old pattern of SwitchCurrentLevel(index) followed by
+	 * separate gendung macro assignments.
+	 */
+	void switchLevel(LevelId target);
 
-    // -------------------------------------------------------------------------
-    // Lifecycle
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	// Lifecycle
+	// -------------------------------------------------------------------------
 
-    /**
-     * @brief Resets the world ready for a new game session.
-     *
-     * Clears cached levels and resets current level to empty town.
-     */
-    void reset();
+	/**
+	 * @brief Resets the world ready for a new game session.
+	 *
+	 * Clears cached levels and resets current level to empty town.
+	 */
+	void reset();
 
 private:
-    /** The current level the local player is on. */
-    std::unique_ptr<Level> currentLevel_;
+	/** The current level the local player is on. */
+	std::unique_ptr<Level> currentLevel_;
 
-    /**
-     * Cache for other levels (not yet actively used, but available for future
-     * caching of level state). Currently unused; kept for architecture compatibility.
-     */
-    std::unordered_map<LevelIndex, Level> cachedLevels_;
+	/**
+	 * Cache for other levels (not yet actively used, but available for future
+	 * caching of level state). Currently unused; kept for architecture compatibility.
+	 */
+	std::unordered_map<LevelIndex, Level> cachedLevels_;
 };
 
 // ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@ extern DVL_API_FOR_TEST World CurrentWorld;
  */
 inline Level &currentLevel()
 {
-    return CurrentWorld.currentLevel();
+	return CurrentWorld.currentLevel();
 }
 
 /**
@@ -127,7 +127,7 @@ inline Level &currentLevel()
  */
 inline void SwitchCurrentLevel(LevelId target)
 {
-    CurrentWorld.switchLevel(target);
+	CurrentWorld.switchLevel(target);
 }
 
 } // namespace devilution

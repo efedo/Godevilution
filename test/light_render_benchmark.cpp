@@ -4,9 +4,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/lighting_defs.hpp"
 #include "engine/render/light_render.hpp"
-#include "engine/gfx/surface.hpp"
 #include "game/levels/dungeon_common_defs.hpp"
 #include "utils/log.hpp"
 #include "utils/paths.h"

@@ -6,7 +6,6 @@
  * Interface for game control panel.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -27,16 +26,16 @@
 
 #include <expected.hpp>
 
-#include "ui/menu/text_input.hpp"
-#include "ui/menu/ui_flags.hpp"
 #include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/rectangle.hpp"
-#include "engine/render/text_render.hpp"
 #include "engine/math/size.hpp"
-#include "ui/panel/ui_panels.hpp"
+#include "engine/render/text_render.hpp"
 #include "game/spells/spells.hpp"
 #include "tables/spelldat.h"
+#include "ui/menu/text_input.hpp"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/attributes.h"
 #include "utils/string/string_or_view.hpp"
 #include "utils/ui_fwd.h"

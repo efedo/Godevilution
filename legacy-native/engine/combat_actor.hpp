@@ -34,38 +34,38 @@ namespace devilution {
  *                          for walking animation.
  */
 struct CombatActor : Actor {
-    /** @brief World position and animation-interpolation sub-positions. */
-    ActorPosition position;
+	/** @brief World position and animation-interpolation sub-positions. */
+	ActorPosition position;
 
-    /**
-     * @brief Returns the display name of this actor.
-     */
-    [[nodiscard]] virtual std::string_view name() const = 0;
+	/**
+	 * @brief Returns the display name of this actor.
+	 */
+	[[nodiscard]] virtual std::string_view name() const = 0;
 
-    /**
-     * @brief Returns true when the actor is currently mid-walk animation.
-     */
-    [[nodiscard]] virtual bool isWalking() const = 0;
+	/**
+	 * @brief Returns true when the actor is currently mid-walk animation.
+	 */
+	[[nodiscard]] virtual bool isWalking() const = 0;
 
-    /**
-     * @brief Computes the pixel rendering offset for this actor's sprite,
-     *        including any walking-animation displacement.
-     * @param sprite The current sprite frame being rendered.
-     */
-    [[nodiscard]] Displacement getRenderingOffset(const ClxSprite sprite) const
-    {
-        Displacement offset = { -CalculateSpriteTileCenterX(sprite.width()), 0 };
-        if (isWalking())
-            offset += GetOffsetForWalking(animInfo, direction);
-        return offset;
-    }
+	/**
+	 * @brief Computes the pixel rendering offset for this actor's sprite,
+	 *        including any walking-animation displacement.
+	 * @param sprite The current sprite frame being rendered.
+	 */
+	[[nodiscard]] Displacement getRenderingOffset(const ClxSprite sprite) const
+	{
+		Displacement offset = { -CalculateSpriteTileCenterX(sprite.width()), 0 };
+		if (isWalking())
+			offset += GetOffsetForWalking(animInfo, direction);
+		return offset;
+	}
 
-    CombatActor() = default;
-    CombatActor(const CombatActor &) = default;
-    CombatActor(CombatActor &&) noexcept = default;
-    CombatActor &operator=(const CombatActor &) = default;
-    CombatActor &operator=(CombatActor &&) noexcept = default;
-    virtual ~CombatActor() = default;
+	CombatActor() = default;
+	CombatActor(const CombatActor &) = default;
+	CombatActor(CombatActor &&) noexcept = default;
+	CombatActor &operator=(const CombatActor &) = default;
+	CombatActor &operator=(CombatActor &&) noexcept = default;
+	virtual ~CombatActor() = default;
 };
 
 } // namespace devilution

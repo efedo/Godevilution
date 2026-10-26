@@ -6,7 +6,6 @@
  * Interface for shared_ptr array compatibility.
  */
 
-
 #include <cstddef>
 #include <memory>
 

@@ -4,7 +4,6 @@
  * Implementation of abstract network interface.
  */
 
-
 #include "network/transport/abstract_net.h"
 
 #include "network/transport/loopback.h"

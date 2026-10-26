@@ -8,11 +8,11 @@
 #include "game/levels/town.h"
 #include "game/objects/objects.hpp"
 
-#if defined(DungeonMask) || defined(Protected) || defined(SetPieceRoom) || defined(SetPiece) \
-    || defined(pSpecialCels) || defined(pMegaTiles) || defined(pDungeonCels) || defined(SOLData) \
+#if defined(DungeonMask) || defined(Protected) || defined(SetPieceRoom) || defined(SetPiece)      \
+    || defined(pSpecialCels) || defined(pMegaTiles) || defined(pDungeonCels) || defined(SOLData)  \
     || defined(dminPosition) || defined(dmaxPosition) || defined(leveltype) || defined(currlevel) \
-    || defined(setlevel) || defined(setlvlnum) || defined(setlvltype) || defined(ViewPosition) \
-    || defined(MicroTileLen) || defined(TransVal) || defined(TransList) || defined(DPieceMicros) \
+    || defined(setlevel) || defined(setlvlnum) || defined(setlvltype) || defined(ViewPosition)    \
+    || defined(MicroTileLen) || defined(TransVal) || defined(TransList) || defined(DPieceMicros)  \
     || defined(themeCount) || defined(themeLoc) || defined(tiles) || defined(tileAt)
 #error "Legacy dungeon_common macro shims must not be defined"
 #endif

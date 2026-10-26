@@ -68,14 +68,14 @@ TEST(ServerBackedVendorState, StoreSlotsRemainStableWhenSnapshotOrderChanges)
 	state.SetEnabled(true);
 	state.SetConnected(true);
 	ASSERT_TRUE(state.ApplySnapshot(StoreSnapshot(4, {
-	                                                StoreItem(10, 100, 20),
-	                                                StoreItem(20, 200, 30),
-	                                            })));
+	                                                     StoreItem(10, 100, 20),
+	                                                     StoreItem(20, 200, 30),
+	                                                 })));
 
 	ASSERT_TRUE(state.ApplySnapshot(StoreSnapshot(4, {
-	                                                StoreItem(20, 201, 31),
-	                                                StoreItem(10, 101, 21),
-	                                            })));
+	                                                     StoreItem(20, 201, 31),
+	                                                     StoreItem(10, 101, 21),
+	                                                 })));
 	ASSERT_NE(state.FindItem(4, 10), nullptr);
 	ASSERT_NE(state.FindItem(4, 20), nullptr);
 	EXPECT_EQ(state.FindItem(4, 10)->itemSeed, 101U);

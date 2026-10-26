@@ -81,22 +81,26 @@ public:
 	constexpr void setFlags(DungeonFlag value) { flags_ = value; }
 
 	/** @brief Check if any of the given flags are set. */
-	[[nodiscard]] constexpr bool hasAnyFlag(DungeonFlag mask) const {
+	[[nodiscard]] constexpr bool hasAnyFlag(DungeonFlag mask) const
+	{
 		return HasAnyOf(flags_, mask);
 	}
 
 	/** @brief Check if all of the given flags are set. */
-	[[nodiscard]] constexpr bool hasAllFlags(DungeonFlag mask) const {
+	[[nodiscard]] constexpr bool hasAllFlags(DungeonFlag mask) const
+	{
 		return HasAllOf(flags_, mask);
 	}
 
 	/** @brief Add flags to this tile. */
-	constexpr void addFlags(DungeonFlag mask) {
+	constexpr void addFlags(DungeonFlag mask)
+	{
 		flags_ |= mask;
 	}
 
 	/** @brief Remove flags from this tile. */
-	constexpr void removeFlags(DungeonFlag mask) {
+	constexpr void removeFlags(DungeonFlag mask)
+	{
 		flags_ &= ~mask;
 	}
 
@@ -170,7 +174,8 @@ public:
 	// -------------------------------------------------------------------------
 
 	/** @brief Clear all tile data to default/empty state. */
-	constexpr void clear() {
+	constexpr void clear()
+	{
 		piece_ = 0;
 		transVal_ = 0;
 		light_ = 0;
@@ -185,48 +190,57 @@ public:
 	}
 
 	/** @brief Check if this tile is completely empty (no entities, special tiles, etc.). */
-	[[nodiscard]] constexpr bool isEmpty() const {
-		return player_ == 0 && monster_ == 0 && corpse_ == 0 
-			&& object_ == 0 && item_ == 0 && special_ == 0;
+	[[nodiscard]] constexpr bool isEmpty() const
+	{
+		return player_ == 0 && monster_ == 0 && corpse_ == 0
+		    && object_ == 0 && item_ == 0 && special_ == 0;
 	}
 
 	/** @brief Check if this tile is occupied by any entity (player, monster, object, item). */
-	[[nodiscard]] constexpr bool isOccupied() const {
+	[[nodiscard]] constexpr bool isOccupied() const
+	{
 		return player_ != 0 || monster_ != 0 || object_ != 0 || item_ != 0;
 	}
 
 	/** @brief Check if this tile is passable (no solid entities). */
-	[[nodiscard]] constexpr bool isPassable() const {
+	[[nodiscard]] constexpr bool isPassable() const
+	{
 		return !hasPlayer() && !hasMonster() && (object_ >= 0);
 	}
 
 	/** @brief Check if this tile contains any missile. */
-	[[nodiscard]] constexpr bool hasMissile() const {
+	[[nodiscard]] constexpr bool hasMissile() const
+	{
 		return hasAnyFlag(DungeonFlag::Missile);
 	}
 
 	/** @brief Check if this tile is visible to players. */
-	[[nodiscard]] constexpr bool isVisible() const {
+	[[nodiscard]] constexpr bool isVisible() const
+	{
 		return hasAnyFlag(DungeonFlag::Visible);
 	}
 
 	/** @brief Check if this tile has been explored. */
-	[[nodiscard]] constexpr bool isExplored() const {
+	[[nodiscard]] constexpr bool isExplored() const
+	{
 		return hasAnyFlag(DungeonFlag::Explored);
 	}
 
 	/** @brief Check if this tile is lit. */
-	[[nodiscard]] constexpr bool isLit() const {
+	[[nodiscard]] constexpr bool isLit() const
+	{
 		return hasAnyFlag(DungeonFlag::Lit);
 	}
 
 	/** @brief Check if this tile contains a dead player. */
-	[[nodiscard]] constexpr bool hasDeadPlayer() const {
+	[[nodiscard]] constexpr bool hasDeadPlayer() const
+	{
 		return hasAnyFlag(DungeonFlag::DeadPlayer);
 	}
 
 	/** @brief Check if this tile is populated (contains set piece/decorative object). */
-	[[nodiscard]] constexpr bool isPopulated() const {
+	[[nodiscard]] constexpr bool isPopulated() const
+	{
 		return hasAnyFlag(DungeonFlag::Populated);
 	}
 
@@ -294,16 +308,16 @@ class TileGrid {
 
 		Iterator() = default;
 		Iterator(Grid *grid, size_t index)
-			: grid_(grid)
-			, index_(index)
+		    : grid_(grid)
+		    , index_(index)
 		{
 		}
 
 		template <bool OtherConst>
-			requires(IsConst && !OtherConst)
+		    requires(IsConst && !OtherConst)
 		Iterator(const Iterator<OtherConst, ColumnMajor> &other)
-			: grid_(other.grid_)
-			, index_(other.index_)
+		    : grid_(other.grid_)
+		    , index_(other.index_)
 		{
 		}
 
@@ -354,16 +368,16 @@ class TileGrid {
 
 		PositionIterator() = default;
 		PositionIterator(Grid *grid, size_t index)
-			: grid_(grid)
-			, index_(index)
+		    : grid_(grid)
+		    , index_(index)
 		{
 		}
 
 		template <bool OtherConst>
-			requires(IsConst && !OtherConst)
+		    requires(IsConst && !OtherConst)
 		PositionIterator(const PositionIterator<OtherConst, ColumnMajor> &other)
-			: grid_(other.grid_)
-			, index_(other.index_)
+		    : grid_(other.grid_)
+		    , index_(other.index_)
 		{
 		}
 
@@ -406,7 +420,7 @@ class TileGrid {
 
 	public:
 		explicit Range(Grid &grid)
-			: grid_(&grid)
+		    : grid_(&grid)
 		{
 		}
 

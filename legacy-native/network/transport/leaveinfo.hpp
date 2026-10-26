@@ -6,7 +6,6 @@
  * Interface for leave game information.
  */
 
-
 #include <cstdint>
 
 namespace devilution {

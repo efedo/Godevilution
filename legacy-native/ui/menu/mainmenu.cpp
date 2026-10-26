@@ -4,7 +4,6 @@
  * Implementation of main menu screen.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -18,13 +17,13 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
+#include "application/game_mode.hpp"
 #include "engine/assets.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/math/point.hpp"
-#include "application/game_mode.hpp"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/language.h"
 #include "utils/ui_fwd.h"
 

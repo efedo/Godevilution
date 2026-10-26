@@ -5,7 +5,6 @@
  * Interface for search.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

@@ -4,16 +4,15 @@
  * Implementation of crypt.
  */
 
-
 #include "game/levels/crypt.h"
 
 #include <cstdint>
 
+#include "engine/lighting.h"
 #include "engine/load/load_file.hpp"
 #include "engine/math/point.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/level_l1.h"
-#include "engine/lighting.h"
 
 namespace devilution {
 

@@ -4,7 +4,6 @@
  * Implementation of text input field.
  */
 
-
 #include "ui/menu/text_input.hpp"
 
 #include <memory>

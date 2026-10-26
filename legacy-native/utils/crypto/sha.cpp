@@ -4,7 +4,6 @@
  * Implementation of SHA hashing.
  */
 
-
 #include "utils/crypto/sha.h"
 
 #include <cstdint>

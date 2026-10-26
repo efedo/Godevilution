@@ -6,7 +6,6 @@
  * Interface for lighting rendering.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>

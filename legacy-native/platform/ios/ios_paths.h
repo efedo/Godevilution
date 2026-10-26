@@ -6,7 +6,6 @@
  * Interface for ios paths.
  */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

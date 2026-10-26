@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include "engine/cursor.h"
-#include "engine/assets.hpp"
 #include "application/game_mode.hpp"
+#include "engine/assets.hpp"
+#include "engine/cursor.h"
 #include "persistence/pack.h"
 #include "tables/monstdat.h"
 #include "tables/playerdat.hpp"

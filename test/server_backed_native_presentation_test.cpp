@@ -5,13 +5,13 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
-#include <asio/post.hpp>
 #include <asio/ip/tcp.hpp>
+#include <asio/post.hpp>
 #include <asio/read.hpp>
 #include <asio/write.hpp>
 
@@ -422,10 +422,10 @@ TEST(ServerBackedNativePresentation, AppliesTypedCathedralDoorNativeStateExactly
 	const int initialSpecial = tileAt(object.positionX, object.positionY).special();
 
 	for (const auto &[state, frame, selectionRegion, preDraw, missilePassable] : std::array {
-		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 0, 1, 3, false, false },
-		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 1, 3, 2, true, true },
-		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 2, 5, 2, true, true },
-	         }) {
+	         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 0, 1, 3, false, false },
+	         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 1, 3, 2, true, true },
+	         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 2, 5, 2, true, true },
+	     }) {
 		object.animationFrame = frame;
 		object.missilePassable = missilePassable;
 		object.cathedralDoor = ProjectedCathedralDoorSnapshot {

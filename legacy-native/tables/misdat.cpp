@@ -22,14 +22,14 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include "data/mpq_file.hpp"
-#include "data/iterators.hpp"
-#include "data/record_reader.hpp"
-#include "engine/gfx/clx_sprite.hpp"
 #include "application/headless_mode.hpp"
-#include "game/missiles/missiles.hpp"
+#include "data/iterators.hpp"
 #include "data/mpq/mpq_common.hpp"
+#include "data/mpq_file.hpp"
+#include "data/record_reader.hpp"
 #include "engine/audio/sound_effect_enums.h"
+#include "engine/gfx/clx_sprite.hpp"
+#include "game/missiles/missiles.hpp"
 #include "tables/spelldat.h"
 #include "utils/file/file_name_generator.hpp"
 #include "utils/status_macros.hpp"
@@ -423,7 +423,7 @@ struct ScopedMissileDataForTest::State {
 };
 
 ScopedMissileDataForTest::ScopedMissileDataForTest()
-	: state_(std::make_unique<State>())
+    : state_(std::make_unique<State>())
 {
 	MissileSpriteData.swap(state_->missileSpriteData);
 	MissileAnimDelays.swap(state_->missileAnimDelays);

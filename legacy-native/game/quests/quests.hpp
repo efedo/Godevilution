@@ -11,13 +11,13 @@
 #include <vector>
 
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/monsters/monsters.hpp"
-#include "ui/panel/info_box.hpp"
 #include "tables/objdat.h"
 #include "tables/textdat.h"
+#include "ui/panel/info_box.hpp"
 #include "utils/attributes.h"
 
 namespace devilution {

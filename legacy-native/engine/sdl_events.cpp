@@ -4,7 +4,6 @@
  * Implementation of event handling.
  */
 
-
 #include "engine/sdl_events.hpp"
 
 #include <cstdint>
@@ -24,9 +23,9 @@
 #include "controls/padmapper.hpp"
 #include "engine/demomode.h"
 #include "engine/render/primitive_render.hpp"
+#include "persistence/options.h"
 #include "ui/load_screens.h"
 #include "ui/movie.h"
-#include "persistence/options.h"
 #include "ui/panel/console.hpp"
 #include "utils/display.h"
 #include "utils/is_of.hpp"

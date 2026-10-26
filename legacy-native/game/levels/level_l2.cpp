@@ -13,8 +13,8 @@
 
 #include "application/diablo.h"
 #include "engine/load/load_file.hpp"
-#include "engine/random.hpp"
 #include "engine/math/size.hpp"
+#include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
 #include "game/players/players.hpp"

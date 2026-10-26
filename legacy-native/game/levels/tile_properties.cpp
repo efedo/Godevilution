@@ -4,13 +4,12 @@
  * Implementation of tile properties.
  */
 
-
 #include "game/levels/tile_properties.hpp"
 
-#include "engine/math/direction.hpp"
-#include "engine/path.h"
-#include "engine/math/point.hpp"
 #include "dungeon_common.h"
+#include "engine/math/direction.hpp"
+#include "engine/math/point.hpp"
+#include "engine/path.h"
 #include "game/objects/objects.hpp"
 
 namespace devilution {

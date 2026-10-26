@@ -19,47 +19,37 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/automap.h"
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
+#include "application/init.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
-#include "game/monsters/monster_corpses.hpp"
-#include "ui/debug_overlay/imgui_overlay.hpp"
-#include "ui/diablo_msg.hpp"
-#include "game/quests/quest_stars.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
-#include "engine/math/displacement.hpp"
 #include "engine/gfx/graphics_pipeline.h"
+#include "engine/gfx/translation_table.hpp"
+#include "engine/hwcursor.hpp"
+#include "engine/lighting.h"
+#include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
+#include "engine/math/world_tile.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/dun_render.hpp"
 #include "engine/render/light_render.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/gfx/translation_table.hpp"
-#include "engine/math/world_tile.hpp"
-#include "application/game_mode.hpp"
-#include "ui/menu_framework.h"
-#include "application/headless_mode.hpp"
-#include "ui/help.h"
-#include "engine/hwcursor.hpp"
-#include "application/init.hpp"
-#include "game/players/inventory.hpp"
+#include "game/events/event_bus.hpp"
 #include "game/levels/dun_tile.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/tile_properties.hpp"
-#include "engine/lighting.h"
-#include "game/events/event_bus.hpp"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
+#include "game/monsters/monster_corpses.hpp"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
+#include "game/stores/stores.hpp"
+#include "game/towners/towners.hpp"
 #include "network/protocol/network_ticks.h"
 #include "persistence/options.h"
-#include "ui/panel/charpanel.hpp"
-#include "ui/panel/console.hpp"
-#include "ui/panel/partypanel.hpp"
-#include "ui/panel/spell_list.hpp"
-#include "ui/player_messages.h"
 #include "qol/chatlog.h"
 #include "qol/floatingnumbers.h"
 #include "qol/itemlabels.h"
@@ -67,8 +57,18 @@
 #include "qol/stash.h"
 #include "qol/visual_store.h"
 #include "qol/xpbar.h"
-#include "game/stores/stores.hpp"
-#include "game/towners/towners.hpp"
+#include "ui/automap.h"
+#include "ui/debug_overlay/imgui_overlay.hpp"
+#include "ui/diablo_msg.hpp"
+#include "ui/help.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu_framework.h"
+#include "ui/minitext.h"
+#include "ui/panel/charpanel.hpp"
+#include "ui/panel/console.hpp"
+#include "ui/panel/partypanel.hpp"
+#include "ui/panel/spell_list.hpp"
+#include "ui/player_messages.h"
 #include "utils/attributes.h"
 #include "utils/display.h"
 #include "utils/is_of.hpp"
@@ -628,8 +628,8 @@ void DrawCell(const Surface &out, const Lightmap lightmap, Point tilePosition, P
 			case TileType::LeftTrapezoid:
 			case TileType::TransparentSquare:
 				return HasAnyOf(pieceProperties, TileProperties::TransparentLeft)
-					? MaskType::Left
-					: MaskType::Solid;
+				    ? MaskType::Left
+				    : MaskType::Solid;
 			case TileType::LeftTriangle:
 				return MaskType::Solid;
 			default:
@@ -645,8 +645,8 @@ void DrawCell(const Surface &out, const Lightmap lightmap, Point tilePosition, P
 			case TileType::RightTrapezoid:
 			case TileType::TransparentSquare:
 				return HasAnyOf(pieceProperties, TileProperties::TransparentRight)
-					? MaskType::Right
-					: MaskType::Solid;
+				    ? MaskType::Right
+				    : MaskType::Solid;
 			case TileType::RightTriangle:
 				return MaskType::Solid;
 			default:
@@ -793,7 +793,7 @@ void DrawItem(const Surface &out, int8_t itemIndex, Point targetBufferPosition, 
  */
 void DrawMonsterHelper(const Surface &out, Point tilePosition, Point targetBufferPosition, int lightTableIndex)
 {
-	const Tile &tile = tileAt(tilePosition);  // Migrated from dMonster[tilePosition.x][tilePosition.y]
+	const Tile &tile = tileAt(tilePosition); // Migrated from dMonster[tilePosition.x][tilePosition.y]
 	int mi = tile.monster();
 
 	mi = std::abs(mi) - 1;
@@ -877,10 +877,10 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 		}
 	}
 
-	const int8_t bItem = tile.item();  // Migrated from dItem[tilePosition.x][tilePosition.y]
+	const int8_t bItem = tile.item(); // Migrated from dItem[tilePosition.x][tilePosition.y]
 	const Object *object = lightTableIndex < LightsMax
-		? FindObjectAtPosition(tilePosition)
-		: nullptr;
+	    ? FindObjectAtPosition(tilePosition)
+	    : nullptr;
 	if (object != nullptr && object->_oPreFlag) {
 		DrawObject(out, *object, tilePosition, targetBufferPosition, lightTableIndex);
 	}
@@ -900,7 +900,7 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 		// This respests the order that tiles are drawn. By using the negative id, we ensure that the sprite is drawn with priority
 		if (player->_pmode == PM_WALK_SOUTHWARDS || (player->_pmode == PM_WALK_SIDEWAYS && player->direction == Direction::East))
 			playerId = -playerId;
-		if (tile.player() == playerId) {  // Migrated from dPlayer[tilePosition.x][tilePosition.y]
+		if (tile.player() == playerId) { // Migrated from dPlayer[tilePosition.x][tilePosition.y]
 			auto tempTilePosition = tilePosition;
 			auto tempTargetBufferPosition = targetBufferPosition;
 
@@ -931,10 +931,10 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
 		authoritative::GetServerBackedRuntime().DrawRemotePlayers(
-			out,
-			tilePosition,
-			targetBufferPosition,
-			lightTableIndex);
+		    out,
+		    tilePosition,
+		    targetBufferPosition,
+		    lightTableIndex);
 	}
 #endif
 
@@ -947,7 +947,7 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 		// This respests the order that tiles are drawn. By using the negative id, we ensure that the sprite is drawn with priority
 		if (monster->mode == MonsterMode::MoveSouthwards || (monster->mode == MonsterMode::MoveSideways && monster->direction == Direction::East))
 			monsterId = -monsterId;
-		if (tile.monster() == monsterId) {  // Migrated from dMonster[tilePosition.x][tilePosition.y]
+		if (tile.monster() == monsterId) { // Migrated from dMonster[tilePosition.x][tilePosition.y]
 			auto tempTilePosition = tilePosition;
 			auto tempTargetBufferPosition = targetBufferPosition;
 
@@ -986,7 +986,7 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 
 	if (levelType() != DTYPE_TOWN) {
 		const bool perPixelLighting = *GetOptions().Graphics.perPixelLighting;
-		const int8_t bArch = tile.special() - 1;  // Migrated from dSpecial[tilePosition.x][tilePosition.y]
+		const int8_t bArch = tile.special() - 1; // Migrated from dSpecial[tilePosition.x][tilePosition.y]
 		if (bArch >= 0) {
 			bool transparency = visibleTransparencyRegions()[bMap];
 #ifdef _DEBUG
@@ -1013,7 +1013,7 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 		// So delay the rendering until after the next row is being drawn.
 		// This could probably have been better solved by sprites in screen space.
 		if (tilePosition.x > 0 && tilePosition.y > 0 && targetBufferPosition.y > TILE_HEIGHT) {
-			const Tile &tilePrev = tileAt(tilePosition - Displacement { 1, 1 });  // Migrated from dSpecial[tilePosition.x - 1][tilePosition.y - 1]
+			const Tile &tilePrev = tileAt(tilePosition - Displacement { 1, 1 }); // Migrated from dSpecial[tilePosition.x - 1][tilePosition.y - 1]
 			const int8_t bArch = tilePrev.special() - 1;
 			if (bArch >= 0)
 				ClxDraw(out, targetBufferPosition + Displacement { 0, -TILE_HEIGHT }, (*specialCels())[bArch]);

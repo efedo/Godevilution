@@ -6,7 +6,6 @@
  * Interface for data file iterators.
  */
 
-
 #include <charconv>
 #include <optional>
 #include <ostream>

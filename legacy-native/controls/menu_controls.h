@@ -6,7 +6,6 @@
  * Interface for menu control handling.
  */
 
-
 #include <cstdint>
 #include <vector>
 

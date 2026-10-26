@@ -16,8 +16,8 @@
 
 #include "ui_test.hpp"
 
-#include "game/players/inventory.hpp"
 #include "game/items/items.hpp"
+#include "game/players/inventory.hpp"
 #include "game/players/players.hpp"
 #include "qol/stash.h"
 

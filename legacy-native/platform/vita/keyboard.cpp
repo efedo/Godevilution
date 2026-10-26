@@ -4,7 +4,6 @@
  * Implementation of keyboard.
  */
 
-
 #include "platform/vita/keyboard.h"
 
 #include <cstdint>

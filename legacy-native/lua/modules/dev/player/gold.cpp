@@ -4,7 +4,6 @@
  * Implementation of gold.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/player/gold.hpp"
 
@@ -14,10 +13,10 @@
 
 #include <sol/sol.hpp>
 
-#include "lua/metadoc.hpp"
 #include "application/debug.h"
 #include "game/items/items.hpp"
 #include "game/players/players.hpp"
+#include "lua/metadoc.hpp"
 
 namespace devilution {
 namespace {

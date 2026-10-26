@@ -6,7 +6,6 @@
  * Interface for ioctl.
  */
 
-
 #include_next <sys/ioctl.h>
 
 #define FIONREAD -999

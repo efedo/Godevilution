@@ -6,7 +6,6 @@
  * Interface for MPQ archive reading.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>

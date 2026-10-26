@@ -4,7 +4,6 @@
  * Implementation of map.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/level/map.hpp"
 

@@ -6,8 +6,8 @@
  * Opt-in C++ client for the C# authoritative server.
  */
 
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -20,8 +20,8 @@
 #include <expected.hpp>
 
 #include "devilution.pb.h"
-#include "network/protocol/command_delivery.hpp"
 #include "network/authoritative/server_backed_clock.hpp"
+#include "network/protocol/command_delivery.hpp"
 
 namespace devilution::authoritative {
 

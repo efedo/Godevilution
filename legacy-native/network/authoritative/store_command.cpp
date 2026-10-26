@@ -407,7 +407,7 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(u
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick)
 {
-	return MakeCastCommand(spellId, targetEntityId, targetX, targetY, { }, requestedTick);
+	return MakeCastCommand(spellId, targetEntityId, targetX, targetY, {}, requestedTick);
 }
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick)

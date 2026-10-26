@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "engine/cursor.h"
 #include "engine/assets.hpp"
+#include "engine/cursor.h"
 #include "game/players/inventory.hpp"
 #include "game/players/players.hpp"
 #include "network/storm/storm_net.hpp"

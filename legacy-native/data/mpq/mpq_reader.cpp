@@ -4,7 +4,6 @@
  * Implementation of MPQ archive reading.
  */
 
-
 #include "data/mpq/mpq_reader.hpp"
 
 #include <cstring>

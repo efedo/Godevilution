@@ -5,7 +5,6 @@
  * Interface for player controls.
  */
 
-
 // Controller actions implementation
 
 #include <cstddef>
@@ -43,9 +42,9 @@ enum class ServerBackedObjectInteractionRoute : uint8_t {
  * object command when the authoritative projection has no matching entity.
  */
 constexpr ServerBackedObjectInteractionRoute ResolveServerBackedObjectInteractionRoute(
-	bool serverConnected,
-	bool objectHighlighted,
-	bool projectedEntityAvailable) noexcept
+    bool serverConnected,
+    bool objectHighlighted,
+    bool projectedEntityAvailable) noexcept
 {
 	if (!serverConnected)
 		return ServerBackedObjectInteractionRoute::None;

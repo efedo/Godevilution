@@ -4,7 +4,6 @@
  * Implementation of game control bindings.
  */
 
-
 #include "controls/game_controls.h"
 
 #include <cstdint>
@@ -25,12 +24,12 @@
 #include "controls/player_controls.h"
 #include "controls/touch/gamepad.h"
 #include "game/quests/quest_stars.hpp"
+#include "game/stores/stores.hpp"
+#include "persistence/options.h"
+#include "qol/stash.h"
 #include "ui/gamemenu.h"
 #include "ui/menu_framework.h"
-#include "persistence/options.h"
 #include "ui/panel/spell_list.hpp"
-#include "qol/stash.h"
-#include "game/stores/stores.hpp"
 #include "utils/is_of.hpp"
 
 namespace devilution {

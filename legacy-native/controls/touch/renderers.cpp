@@ -4,7 +4,6 @@
  * Implementation of renderers.
  */
 
-
 #include "controls/touch/renderers.h"
 
 #ifdef USE_SDL3
@@ -13,22 +12,22 @@
 #include <SDL.h>
 #endif
 
-#include "ui/panel/control.hpp"
-#include "engine/cursor.h"
 #include "application/diablo.h"
-#include "game/quests/quest_stars.hpp"
-#include "engine/sdl_events.hpp"
-#include "engine/render/clx_render.hpp"
-#include "engine/render/primitive_render.hpp"
 #include "application/game_mode.hpp"
 #include "application/init.hpp"
-#include "game/players/inventory.hpp"
+#include "engine/cursor.h"
+#include "engine/render/clx_render.hpp"
+#include "engine/render/primitive_render.hpp"
+#include "engine/sdl_events.hpp"
 #include "game/levels/dungeon_common.h"
-#include "ui/minitext.h"
-#include "ui/panel/ui_panels.hpp"
-#include "qol/stash.h"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
+#include "qol/stash.h"
+#include "ui/minitext.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/sdl/sdl_compat.h"
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/sdl/sdl_wrap.h"

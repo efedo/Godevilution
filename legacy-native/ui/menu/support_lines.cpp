@@ -4,7 +4,6 @@
  * Implementation of support information lines.
  */
 
-
 #include <cstddef>
 
 #include "ui/menu/support_lines.h"

@@ -4,7 +4,6 @@
  * Implementation of game selection screen.
  */
 
-
 #include "ui/menu/multi/game_selection.h"
 
 #include <cstddef>
@@ -26,25 +25,25 @@
 
 #include <fmt/core.h>
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/hero/hero_selection.h"
-#include "ui/menu/scrollbar.h"
-#include "ui/menu/ok_dialog.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
-#include "config.h"
 #include "application/diablo.h"
+#include "config.h"
 #include "engine/math/point.hpp"
 #include "engine/render/text_render.hpp"
 #include "game/levels/dungeon_common.h"
-#include "ui/menu.h"
 #include "network/protocol/multi.h"
-#include "persistence/options.h"
 #include "network/storm/storm_net.hpp"
+#include "persistence/options.h"
+#include "ui/menu.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/hero/hero_selection.h"
+#include "ui/menu/ok_dialog.h"
+#include "ui/menu/scrollbar.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/language.h"
 #include "utils/string/str_cat.hpp"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 

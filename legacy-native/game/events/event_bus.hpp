@@ -6,7 +6,6 @@
  * Engine-neutral game events.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <string_view>

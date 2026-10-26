@@ -20,38 +20,38 @@
 
 #include <fmt/format.h>
 
-#include "ui/menu/ui_flags.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/load/load_cel.hpp"
 #include "engine/gfx/palette.h"
+#include "engine/hwcursor.hpp"
+#include "engine/load/load_cel.hpp"
+#include "engine/math/size.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/math/size.hpp"
-#include "engine/hwcursor.hpp"
-#include "game/players/inv_iterators.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/town.h"
-#include "ui/minitext.h"
-#include "persistence/options.h"
-#include "game/items/item_pool.hpp"
+#include "game/players/inv_iterators.hpp"
 #include "game/players/players.hpp"
-#include "ui/player_messages.h"
-#include "qol/stash.h"
-#include "qol/visual_store.h"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
 #include "network/protocol/legacy_input_policy.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "persistence/options.h"
+#include "qol/stash.h"
+#include "qol/visual_store.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/minitext.h"
+#include "ui/player_messages.h"
 #include "utils/display.h"
-#include "utils/string/format_int.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_geometry.h"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
 #include "utils/timer.hpp"
@@ -283,10 +283,10 @@ bool CanEquip(Player &player, const Item &item, inv_body_loc bodyLocation)
 
 void ChangeEquipment(Player &player, inv_body_loc bodyLocation, const Item &item, bool sendNetworkMessage)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	player.InvBody[bodyLocation] = item;
 
@@ -478,10 +478,10 @@ int8_t GetPrevItemId(int slot, const Player &player, const Size &itemSize)
 
 bool ChangeInvItem(Player &player, int slot, Size itemSize)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	int8_t prevItemId = GetPrevItemId(slot, player, itemSize);
 	if (prevItemId < 0) return false;
@@ -543,10 +543,10 @@ bool ChangeInvItem(Player &player, int slot, Size itemSize)
 
 void ChangeBeltItem(Player &player, int slot)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	const int ii = slot - SLOTXY_BELT_FIRST;
 	if (player.SpdList[ii].isEmpty()) {
@@ -991,111 +991,111 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 						failedSpeech = HeroSpeech::IHaveNoRoom;
 					}
 				} else if (CanEquip(player.InvList[iv])) {
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-				const auto serverMove = TryServerBackedAutomaticAutoEquip(player, player.InvList[iv]);
-				if (serverMove.has_value()) {
-					automaticallyMoved = *serverMove;
-					if (automaticallyMoved)
-						successSound = ItemInvSnds[ItemCAnimTbl[player.InvList[iv]._iCurs]];
-				} else {
-				#endif
-					failedSpeech = HeroSpeech::IHaveNoRoom; // Default to saying "I have no room" if auto-equip fails
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					const auto serverMove = TryServerBackedAutomaticAutoEquip(player, player.InvList[iv]);
+					if (serverMove.has_value()) {
+						automaticallyMoved = *serverMove;
+						if (automaticallyMoved)
+							successSound = ItemInvSnds[ItemCAnimTbl[player.InvList[iv]._iCurs]];
+					} else {
+#endif
+						failedSpeech = HeroSpeech::IHaveNoRoom; // Default to saying "I have no room" if auto-equip fails
 
-					/*
-					 * If the player shift-clicks an item in the inventory we want to swap it with whatever item may be
-					 * equipped in the target slot. Lifting the item to the hand unconditionally would be ideal, except
-					 * we don't want to leave the item on the hand if the equip attempt failed. We would end up
-					 * generating wasteful network messages if we did the lift first. Instead we work out whatever slot
-					 * needs to be unequipped (if any):
-					 */
-					int invloc = NUM_INVLOC;
-					switch (player.GetItemLocation(player.InvList[iv])) {
-					case ILOC_ARMOR:
-						invloc = INVLOC_CHEST;
-						break;
-					case ILOC_HELM:
-						invloc = INVLOC_HEAD;
-						break;
-					case ILOC_AMULET:
-						invloc = INVLOC_AMULET;
-						break;
-					case ILOC_ONEHAND:
-						if (!player.InvBody[INVLOC_HAND_LEFT].isEmpty()
-						    && (player.InvList[iv]._iClass == player.InvBody[INVLOC_HAND_LEFT]._iClass
-						        || player.GetItemLocation(player.InvBody[INVLOC_HAND_LEFT]) == ILOC_TWOHAND)) {
-							// The left hand is not empty and we're either trying to equip the same type of item or
-							// it's holding a two handed weapon, so it must be unequipped
-							invloc = INVLOC_HAND_LEFT;
-						} else if (!player.InvBody[INVLOC_HAND_RIGHT].isEmpty() && player.InvList[iv]._iClass == player.InvBody[INVLOC_HAND_RIGHT]._iClass) {
-							// The right hand is not empty and we're trying to equip the same type of item, so we need
-							// to unequip that item
-							invloc = INVLOC_HAND_RIGHT;
-						}
-						// otherwise one hand is empty (and we can let the auto-equip code put the target item into
-						// that hand) or we're playing a bard with two swords equipped and we're trying to auto-equip
-						// a shield (in which case the attempt will fail).
-						break;
-					case ILOC_TWOHAND:
-						// Moving a two-hand item from inventory to InvBody requires emptying both hands.
-						if (player.InvBody[INVLOC_HAND_RIGHT].isEmpty()) {
-							// If the right hand is empty then we can simply try equipping this item in the left hand,
-							// we'll let the common code take care of unequipping anything held there.
-							invloc = INVLOC_HAND_LEFT;
-						} else if (player.InvBody[INVLOC_HAND_LEFT].isEmpty()) {
-							// We have an item in the right hand but nothing in the left, so let the common code
-							// take care of unequipping whatever is held in the right hand. The auto-equip code
-							// picks the most appropriate location for the item type (which in this case will be
-							// the left hand), invloc isn't used there.
-							invloc = INVLOC_HAND_RIGHT;
-						} else {
-							// Both hands are holding items, we must unequip one of the items and check that there's
-							// space for the other before trying to auto-equip
-							inv_body_loc mainHand = INVLOC_HAND_LEFT;
-							inv_body_loc offHand = INVLOC_HAND_RIGHT;
-							if (!AutoPlaceItemInInventory(player, player.InvBody[offHand])) {
-								// No space to move right hand item to inventory, can we move the left instead?
-								std::swap(mainHand, offHand);
+						/*
+						 * If the player shift-clicks an item in the inventory we want to swap it with whatever item may be
+						 * equipped in the target slot. Lifting the item to the hand unconditionally would be ideal, except
+						 * we don't want to leave the item on the hand if the equip attempt failed. We would end up
+						 * generating wasteful network messages if we did the lift first. Instead we work out whatever slot
+						 * needs to be unequipped (if any):
+						 */
+						int invloc = NUM_INVLOC;
+						switch (player.GetItemLocation(player.InvList[iv])) {
+						case ILOC_ARMOR:
+							invloc = INVLOC_CHEST;
+							break;
+						case ILOC_HELM:
+							invloc = INVLOC_HEAD;
+							break;
+						case ILOC_AMULET:
+							invloc = INVLOC_AMULET;
+							break;
+						case ILOC_ONEHAND:
+							if (!player.InvBody[INVLOC_HAND_LEFT].isEmpty()
+							    && (player.InvList[iv]._iClass == player.InvBody[INVLOC_HAND_LEFT]._iClass
+							        || player.GetItemLocation(player.InvBody[INVLOC_HAND_LEFT]) == ILOC_TWOHAND)) {
+								// The left hand is not empty and we're either trying to equip the same type of item or
+								// it's holding a two handed weapon, so it must be unequipped
+								invloc = INVLOC_HAND_LEFT;
+							} else if (!player.InvBody[INVLOC_HAND_RIGHT].isEmpty() && player.InvList[iv]._iClass == player.InvBody[INVLOC_HAND_RIGHT]._iClass) {
+								// The right hand is not empty and we're trying to equip the same type of item, so we need
+								// to unequip that item
+								invloc = INVLOC_HAND_RIGHT;
+							}
+							// otherwise one hand is empty (and we can let the auto-equip code put the target item into
+							// that hand) or we're playing a bard with two swords equipped and we're trying to auto-equip
+							// a shield (in which case the attempt will fail).
+							break;
+						case ILOC_TWOHAND:
+							// Moving a two-hand item from inventory to InvBody requires emptying both hands.
+							if (player.InvBody[INVLOC_HAND_RIGHT].isEmpty()) {
+								// If the right hand is empty then we can simply try equipping this item in the left hand,
+								// we'll let the common code take care of unequipping anything held there.
+								invloc = INVLOC_HAND_LEFT;
+							} else if (player.InvBody[INVLOC_HAND_LEFT].isEmpty()) {
+								// We have an item in the right hand but nothing in the left, so let the common code
+								// take care of unequipping whatever is held in the right hand. The auto-equip code
+								// picks the most appropriate location for the item type (which in this case will be
+								// the left hand), invloc isn't used there.
+								invloc = INVLOC_HAND_RIGHT;
+							} else {
+								// Both hands are holding items, we must unequip one of the items and check that there's
+								// space for the other before trying to auto-equip
+								inv_body_loc mainHand = INVLOC_HAND_LEFT;
+								inv_body_loc offHand = INVLOC_HAND_RIGHT;
 								if (!AutoPlaceItemInInventory(player, player.InvBody[offHand])) {
+									// No space to move right hand item to inventory, can we move the left instead?
+									std::swap(mainHand, offHand);
+									if (!AutoPlaceItemInInventory(player, player.InvBody[offHand])) {
+										break;
+									}
+								}
+								if (!CouldFitItemInInventory(player, player.InvBody[mainHand], iv)) {
+									// No space for the main hand item. Move the other item back to the off hand and abort.
+									player.InvBody[offHand] = player.InvList[player._pNumInv - 1];
+									player.RemoveInvItem(player._pNumInv - 1, false);
 									break;
 								}
+								RemoveEquipment(player, offHand, false);
+								invloc = mainHand;
 							}
-							if (!CouldFitItemInInventory(player, player.InvBody[mainHand], iv)) {
-								// No space for the main hand item. Move the other item back to the off hand and abort.
-								player.InvBody[offHand] = player.InvList[player._pNumInv - 1];
-								player.RemoveInvItem(player._pNumInv - 1, false);
-								break;
-							}
-							RemoveEquipment(player, offHand, false);
-							invloc = mainHand;
+							break;
+						default:
+							// If the player is trying to equip a ring we want to say "I can't do that" if they don't already have a ring slot free.
+							failedSpeech = HeroSpeech::ICantDoThat;
+							break;
 						}
-						break;
-					default:
-						// If the player is trying to equip a ring we want to say "I can't do that" if they don't already have a ring slot free.
-						failedSpeech = HeroSpeech::ICantDoThat;
-						break;
-					}
-					// Then empty the identified InvBody slot (invloc) and hand over to AutoEquip
-					if (invloc != NUM_INVLOC
-					    && !player.InvBody[invloc].isEmpty()
-					    && CouldFitItemInInventory(player, player.InvBody[invloc], iv)) {
-						holdItem = player.InvBody[invloc].pop();
-					}
-					automaticallyMoved = AutoEquip(player, player.InvList[iv], true, &player == MyPlayer);
-					if (automaticallyMoved) {
-						successSound = ItemInvSnds[ItemCAnimTbl[player.InvList[iv]._iCurs]];
-						player.RemoveInvItem(iv, false);
+						// Then empty the identified InvBody slot (invloc) and hand over to AutoEquip
+						if (invloc != NUM_INVLOC
+						    && !player.InvBody[invloc].isEmpty()
+						    && CouldFitItemInInventory(player, player.InvBody[invloc], iv)) {
+							holdItem = player.InvBody[invloc].pop();
+						}
+						automaticallyMoved = AutoEquip(player, player.InvList[iv], true, &player == MyPlayer);
+						if (automaticallyMoved) {
+							successSound = ItemInvSnds[ItemCAnimTbl[player.InvList[iv]._iCurs]];
+							player.RemoveInvItem(iv, false);
 
-						// If we're holding an item at this point we just lifted it from a body slot to make room for the original item, so we need to put it into the inv
-						if (!holdItem.isEmpty() && AutoPlaceItemInInventory(player, holdItem)) {
-							holdItem.clear();
-						} // there should never be a situation where holdItem is not empty but we fail to place it into the inventory given the checks earlier... leave it on the hand in this case.
-					} else if (!holdItem.isEmpty()) {
-						// We somehow failed to equip the item in the slot we already checked should hold it? Better put this item back...
-						player.InvBody[invloc] = holdItem.pop();
+							// If we're holding an item at this point we just lifted it from a body slot to make room for the original item, so we need to put it into the inv
+							if (!holdItem.isEmpty() && AutoPlaceItemInInventory(player, holdItem)) {
+								holdItem.clear();
+							} // there should never be a situation where holdItem is not empty but we fail to place it into the inventory given the checks earlier... leave it on the hand in this case.
+						} else if (!holdItem.isEmpty()) {
+							// We somehow failed to equip the item in the slot we already checked should hold it? Better put this item back...
+							player.InvBody[invloc] = holdItem.pop();
+						}
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					}
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-				}
-				#endif
+#endif
 				}
 			} else if (IsVisualStoreOpen && CanSellToCurrentVendor(player.InvList[iv]) && dropItem) {
 				// If visual store is open, ctrl-click sells the item
@@ -1258,10 +1258,10 @@ void CheckQuestItem(Player &player, Item &questItem)
 
 void CleanupItems(int ii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	const Item &item = Items[ii];
 	tileAt(item.position).setItem(0);
@@ -1534,10 +1534,10 @@ void DrawInvBelt(const Surface &out)
 
 void RemoveEquipment(Player &player, inv_body_loc bodyLocation, bool hiPri)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	if (&player == MyPlayer) {
 		NetSendCmdDelItem(hiPri, bodyLocation);
@@ -1548,10 +1548,10 @@ void RemoveEquipment(Player &player, inv_body_loc bodyLocation, bool hiPri)
 
 bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem, bool sendNetworkMessage)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (persistItem && !ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	if (!CanBePlacedOnBelt(player, item)) {
 		return false;
@@ -1578,10 +1578,10 @@ bool AutoPlaceItemInBelt(Player &player, const Item &item, bool persistItem, boo
 
 bool AutoEquip(Player &player, const Item &item, bool persistItem, bool sendNetworkMessage)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (persistItem && !ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	if (!CanEquip(item)) {
 		return false;
@@ -1630,10 +1630,10 @@ bool CanFitItemInInventory(const Player &player, const Item &item)
 
 bool AutoPlaceItemInInventory(Player &player, const Item &item, bool sendNetworkMessage)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	const Size itemSize = GetInventorySize(item);
 	std::optional<int> targetSlot = FindSlotForItem(player, itemSize);
@@ -1742,10 +1742,10 @@ int RoomForGold()
 
 int AddGoldToInventory(Player &player, int value)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return value;
-	#endif
+#endif
 
 	// Top off existing piles
 	for (int i = 0; i < player._pNumInv && value > 0; i++) {
@@ -1783,10 +1783,10 @@ int AddGoldToInventory(Player &player, int value)
 
 bool GoldAutoPlace(Player &player, Item &goldStack)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	goldStack._ivalue = AddGoldToInventory(player, goldStack._ivalue);
 	SetPlrHandGoldCurs(goldStack);
@@ -1798,10 +1798,10 @@ bool GoldAutoPlace(Player &player, Item &goldStack)
 
 void CheckInvSwap(Player &player, inv_body_loc bLoc)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	const Item &item = player.InvBody[bLoc];
 
@@ -1816,10 +1816,10 @@ void CheckInvSwap(Player &player, inv_body_loc bLoc)
 
 void inv_update_rem_item(Player &player, inv_body_loc iv)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	player.InvBody[iv].clear();
 
@@ -1828,10 +1828,10 @@ void inv_update_rem_item(Player &player, inv_body_loc iv)
 
 void CheckInvSwap(Player &player, const Item &item, int invGridIndex)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Size itemSize = GetInventorySize(item);
 
@@ -1889,7 +1889,7 @@ void TransferItemToStash(Player &player, int location)
 	}
 
 	const Item &item = GetInventoryItem(player, location);
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
 		const auto source = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
 		if (!source.has_value()) {
@@ -1909,7 +1909,7 @@ void TransferItemToStash(Player &player, int location)
 			LogError("Server-backed Ctrl-click stash transfer failed: {}", result.error());
 		return;
 	}
-	#endif
+#endif
 	if (!AutoPlaceItemInStash(item, true)) {
 		player.SaySpecific(HeroSpeech::WhereWouldIPutThis);
 		return;
@@ -1950,10 +1950,10 @@ void CheckInvScrn(bool isShiftHeld, bool isCtrlHeld)
 
 void InvGetItem(Player &player, int ii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item &item = Items[ii];
 	CloseGoldDrop();
@@ -2025,10 +2025,10 @@ std::optional<Point> FindAdjacentPositionForItem(Point origin, Direction facing)
 
 void AutoGetItem(Player &player, Item *itemPointer, int ii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyAutoPickup(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item &item = *itemPointer;
 
@@ -2093,10 +2093,10 @@ int FindGetItem(uint32_t iseed, _item_indexes idx, uint16_t createInfo)
 
 void SyncGetItem(Point position, uint32_t iseed, _item_indexes idx, uint16_t ci)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	// Check what the local client has at the target position
 	int ii = tileAt(position).item() - 1;
@@ -2183,10 +2183,10 @@ uint8_t ClampMaxDam(const Item &item, uint8_t maxDam)
 
 int SyncDropItem(Point position, _item_indexes idx, uint16_t icreateinfo, int iseed, int id, int dur, int mdur, int ch, int mch, int ivalue, uint32_t ibuff, int toHit, int maxDam)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
 		return -1;
-	#endif
+#endif
 
 	if (!ItemPoolAdapter::HasFreeItemSlot())
 		return -1;
@@ -2210,10 +2210,10 @@ int SyncDropItem(Point position, _item_indexes idx, uint16_t icreateinfo, int is
 
 int SyncDropEar(Point position, uint16_t icreateinfo, uint32_t iseed, uint8_t cursval, std::string_view heroname)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemProtocol(authoritative::GetServerBackedRuntime().IsConnected()))
 		return -1;
-	#endif
+#endif
 
 	if (!ItemPoolAdapter::HasFreeItemSlot())
 		return -1;
@@ -2364,8 +2364,8 @@ bool CanUseScroll(Player &player, SpellID spell)
 		return false;
 
 	if (HasInventoryOrBeltItem(player, [spell](const Item &item) {
-		return item.isScrollOf(spell) || item.isRuneOf(spell);
-	}))
+		    return item.isScrollOf(spell) || item.isRuneOf(spell);
+	    }))
 		return true;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (IsStashOpen && authoritative::GetServerBackedRuntime().IsConnected()) {
@@ -2379,10 +2379,10 @@ bool CanUseScroll(Player &player, SpellID spell)
 
 void ConsumeStaffCharge(Player &player)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item &staff = player.InvBody[INVLOC_HAND_LEFT];
 
@@ -2659,13 +2659,13 @@ bool UseInvItem(int cii)
 	}
 #endif
 
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()
 	    && !ShouldProcessLegacyItemUse(true, item->isScroll() || item->isRune())) {
 		LogError("Refusing to apply an unsupported legacy inventory item use in a server-backed session.");
 		return true;
 	}
-	#endif
+#endif
 
 	if (item->_iMiscId == IMISC_BOOK)
 		PlaySFX(SfxID::ReadBook);
@@ -2714,22 +2714,22 @@ void CloseStash()
 	if (!myPlayer.HoldItem.isEmpty()) {
 		std::optional<Point> itemTile = FindAdjacentPositionForItem(myPlayer.position.future, myPlayer.direction);
 		if (itemTile) {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
 					LogError("Server-backed stash-close held-item drop failed: {}", result.error());
 					return;
 				}
 			} else
-		#endif
-			NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, myPlayer.HoldItem);
+#endif
+				NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, myPlayer.HoldItem);
 		} else {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				LogError("Server-backed stash-close cannot place a held item without an authoritative destination.");
 				return;
 			}
-		#endif
+#endif
 			if (!AutoPlaceItemInBelt(myPlayer, myPlayer.HoldItem, true, true)
 			    && !AutoPlaceItemInInventory(myPlayer, myPlayer.HoldItem, true)
 			    && !AutoPlaceItemInStash(myPlayer.HoldItem, true)) {
@@ -2742,7 +2742,7 @@ void CloseStash()
 		myPlayer.HoldItem.clear();
 		NewCursor(CURSOR_HAND);
 	}
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		if (auto result = authoritative::GetServerBackedRuntime().CloseStash(0, GetMillisecondsSinceStartup()); !result.has_value()) {
 			LogError("Server-backed stash close failed: {}", result.error());
@@ -2750,17 +2750,17 @@ void CloseStash()
 		}
 		return;
 	}
-	#endif
+#endif
 
 	IsStashOpen = false;
 }
 
 void DoTelekinesis()
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyTelekinesis(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled())
 		NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJT, cursPosition);

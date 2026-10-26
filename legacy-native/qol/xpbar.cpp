@@ -10,17 +10,17 @@
 
 #include <fmt/core.h>
 
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "application/game_mode.hpp"
 #include "persistence/options.h"
 #include "tables/playerdat.hpp"
-#include "utils/string/format_int.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/language.h"
+#include "utils/string/format_int.hpp"
 
 namespace devilution {
 

@@ -4,7 +4,6 @@
  * Interface for dun tile.
  */
 
-
 #pragma once
 
 #include <cstdint>

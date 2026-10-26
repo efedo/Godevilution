@@ -6,7 +6,6 @@
  * Interface for game data parsing.
  */
 
-
 #include <algorithm>
 #include <string_view>
 

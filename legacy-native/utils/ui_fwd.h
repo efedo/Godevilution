@@ -6,7 +6,6 @@
  * Interface for UI forward declarations.
  */
 
-
 #include <cstdint>
 
 #include "engine/math/rectangle.hpp"

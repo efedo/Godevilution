@@ -8,13 +8,13 @@
 #include <string_view>
 #include <vector>
 
-#include "ui/menu/ui_flags.hpp"
+#include "application/game_mode.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "application/game_mode.hpp"
-#include "ui/minitext.h"
-#include "qol/chatlog.h"
 #include "game/stores/stores.hpp"
+#include "qol/chatlog.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/minitext.h"
 #include "utils/language.h"
 
 namespace devilution {

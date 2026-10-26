@@ -5,8 +5,8 @@
 
 #include <array>
 #include <filesystem>
-#include <list>
 #include <limits>
+#include <list>
 #include <optional>
 #include <string>
 #include <system_error>
@@ -22,8 +22,8 @@
 #include "engine/random.hpp"
 #include "engine/world.hpp"
 #include "game/levels/dungeon_common.h"
-#include "game/levels/triggers.h"
 #include "game/levels/tile.hpp"
+#include "game/levels/triggers.h"
 #include "game/missiles/missiles.hpp"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
@@ -70,8 +70,8 @@ private:
 std::optional<std::filesystem::path> FindHellfireAssetsPath()
 {
 	const std::array<std::filesystem::path, 2> starts {
-	    std::filesystem::current_path(),
-	    std::filesystem::path(paths::BasePath()),
+		std::filesystem::current_path(),
+		std::filesystem::path(paths::BasePath()),
 	};
 	for (std::filesystem::path start : starts) {
 		std::error_code error;
@@ -539,7 +539,7 @@ TEST(Missiles, ProcessTownPortalRetainsOpeningAtDurationOneAndDeletesAtZero)
 	ScopedTownPortalState stateGuard(portalPosition);
 
 	// Keep the fixture in the already-open state; this characterizes lifetime semantics without loading portal sprites.
-	Missile opening{};
+	Missile opening {};
 	opening._mitype = MissileID::TownPortal;
 	opening.position.tile = portalPosition;
 	opening.position.start = portalPosition;
@@ -560,7 +560,7 @@ TEST(Missiles, ProcessTownPortalRetainsOpeningAtDurationOneAndDeletesAtZero)
 	EXPECT_EQ(opening.duration, 1);
 	EXPECT_FALSE(opening._miDelFlag);
 
-	Missile expired{};
+	Missile expired {};
 	expired._mitype = MissileID::TownPortal;
 	expired.position.tile = portalPosition;
 	expired.position.start = portalPosition;
@@ -602,7 +602,7 @@ TEST(Missiles, ProcessTownPortalPrecedesSameTileLevelTrigger)
 	InitTownTriggers();
 	ASSERT_GT(numTriggers(), 0);
 
-	Missile portal{};
+	Missile portal {};
 	portal._mitype = MissileID::TownPortal;
 	portal.position.tile = portalPosition;
 	portal.position.start = portalPosition;
@@ -869,7 +869,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsSpellAndCapturesItsNativeComple
 	ASSERT_EQ(player._pSFNum, 5);
 	ASSERT_TRUE(Missiles.empty());
 
-	const std::array<NativeAnimationTimingRow, 8> expectedRows {{
+	const std::array<NativeAnimationTimingRow, 8> expectedRows { {
 		{ 8, 1, 0, 1, 0, 4, 0, 170, 0 },
 		{ 8, 1, 0, 2, 0, 4, 0, 170, 128 },
 		{ 8, 1, 0, 3, 0, 4, 0, 170, 256 },
@@ -878,7 +878,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsSpellAndCapturesItsNativeComple
 		{ 8, 1, 0, 6, 0, 4, 0, 170, 640 },
 		{ 8, 1, 0, 7, 0, 4, 0, 170, 768 },
 		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
-	}};
+	} };
 	const int initialLife = player.life.current;
 	const int initialMana = player.mana.current;
 	const uint32_t initialRngState = GetLCGEngineState();
@@ -974,7 +974,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersReadmitsQueuedSearchAndCapturesNative
 	ASSERT_EQ(player._pSFNum, 5);
 	ASSERT_TRUE(Missiles.empty());
 
-	const std::array<NativeAnimationTimingRow, 13> expectedRows {{
+	const std::array<NativeAnimationTimingRow, 13> expectedRows { {
 		{ 8, 1, 0, 1, 0, 4, 0, 170, 0 },
 		{ 8, 1, 0, 2, 0, 4, 0, 170, 128 },
 		{ 8, 1, 0, 3, 0, 4, 0, 170, 256 },
@@ -988,7 +988,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersReadmitsQueuedSearchAndCapturesNative
 		{ 8, 1, 0, 6, 0, 4, 2, 256, 640 },
 		{ 8, 1, 0, 7, 0, 4, 2, 256, 768 },
 		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
-	}};
+	} };
 	const int initialLife = player.life.current;
 	const int initialMana = player.mana.current;
 	const uint32_t initialRngState = GetLCGEngineState();
@@ -1103,10 +1103,10 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsNorthWalkAndCapturesItsFirstTwo
 	ASSERT_TRUE(player.positionIsAvailable(destination));
 	ASSERT_EQ(player.walkpath[0], WALK_N);
 
-	const std::array<NativeAnimationTimingRow, 2> expectedRows {{
+	const std::array<NativeAnimationTimingRow, 2> expectedRows { {
 		{ 8, 1, 0, -1, 0, 8, 0, 113, 0 },
 		{ 8, 1, 0, 0, 0, 8, 0, 113, 128 },
-	}};
+	} };
 	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
 		ProcessPlayers();
 		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
@@ -1170,7 +1170,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesNorthWalkAndCapturesArrivalB
 	for (const Displacement pathDir : PathDirs)
 		ASSERT_EQ(tileAt(destination + pathDir).item(), 0);
 
-	const std::array<NativeAnimationTimingRow, 10> expectedRows {{
+	const std::array<NativeAnimationTimingRow, 10> expectedRows { {
 		{ 8, 1, 0, -1, 0, 8, 0, 113, 0 },
 		{ 8, 1, 0, 0, 0, 8, 0, 113, 128 },
 		{ 8, 1, 0, 1, 0, 8, 0, 113, 256 },
@@ -1181,7 +1181,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesNorthWalkAndCapturesArrivalB
 		{ 8, 1, 0, 6, 0, 8, 0, 113, 896 },
 		{ 8, 1, 0, 7, 0, 8, 0, 113, 1024 },
 		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
-	}};
+	} };
 
 	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
 		const int logicalTick = 100 + static_cast<int>(index);
@@ -1257,11 +1257,11 @@ TEST_F(NativeMonkSearchTest, RecastUsesTheStrictSignedIntDurationBoundary)
 		int existingDuration;
 		bool shouldAccumulate;
 	};
-	const std::array<BoundaryCase, 3> cases {{
-	    { belowBoundary, true },
-	    { atBoundary, false },
-	    { aboveBoundary, false },
-	}};
+	const std::array<BoundaryCase, 3> cases { {
+		{ belowBoundary, true },
+		{ atBoundary, false },
+		{ aboveBoundary, false },
+	} };
 	const uint32_t initialRngState = GetLCGEngineState();
 	const int initialLife = MyPlayer->life.current;
 	const int initialMana = MyPlayer->mana.current;
@@ -1364,7 +1364,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesUnarmedAttackAndImmediatelyS
 	for (const Displacement pathDir : PathDirs)
 		ASSERT_EQ(tileAt(destination + pathDir).item(), 0);
 
-	const std::array<NativeAnimationTimingRow, 9> expectedRows {{
+	const std::array<NativeAnimationTimingRow, 9> expectedRows { {
 		{ 8, 1, 0, 0, 0, 8, 0, 128, 0 },
 		{ 8, 1, 0, 1, 0, 8, 0, 128, 128 },
 		{ 8, 1, 0, 2, 0, 8, 0, 128, 256 },
@@ -1374,7 +1374,7 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesUnarmedAttackAndImmediatelyS
 		{ 8, 1, 0, 6, 0, 8, 0, 128, 768 },
 		{ 8, 1, 0, 7, 0, 8, 0, 128, 896 },
 		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
-	}};
+	} };
 	const int initialLife = player.life.current;
 	const int initialMana = player.mana.current;
 	const uint32_t initialRngState = GetLCGEngineState();

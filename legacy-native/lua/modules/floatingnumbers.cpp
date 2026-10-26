@@ -4,7 +4,6 @@
  * Implementation of floating damage numbers.
  */
 
-
 #include "lua/modules/floatingnumbers.hpp"
 
 #include <sol/sol.hpp>

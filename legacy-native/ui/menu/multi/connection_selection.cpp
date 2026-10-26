@@ -4,7 +4,6 @@
  * Implementation of connection type selection.
  */
 
-
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -19,16 +18,16 @@
 
 #include <fmt/core.h>
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
 #include "engine/math/point.hpp"
 #include "engine/render/text_render.hpp"
 #include "network/protocol/multi.h"
 #include "network/storm/storm_net.hpp"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/language.h"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 

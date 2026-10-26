@@ -5,7 +5,6 @@
  * Interface for repl.
  */
 
-
 #ifdef _DEBUG
 
 #include <string>

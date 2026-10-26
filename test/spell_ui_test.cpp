@@ -19,13 +19,13 @@
 
 #include "ui_test.hpp"
 
-#include "ui/panel/control.hpp"
 #include "application/diablo.h"
-#include "panels/spell_icons.hpp"
-#include "panels/spell_list.hpp"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
+#include "panels/spell_icons.hpp"
+#include "panels/spell_list.hpp"
 #include "tables/spelldat.h"
+#include "ui/panel/control.hpp"
 
 namespace devilution {
 namespace {

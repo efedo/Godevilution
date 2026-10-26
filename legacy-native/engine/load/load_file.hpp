@@ -6,7 +6,6 @@
  * Interface for generic file loading templates.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -17,9 +16,9 @@
 #include <expected.hpp>
 
 #include "application/fatal_error.h"
-#include "engine/assets.hpp"
 #include "application/headless_mode.hpp"
 #include "data/mpq/mpq_common.hpp"
+#include "engine/assets.hpp"
 #include "utils/container/static_vector.hpp"
 #include "utils/string/str_cat.hpp"
 

@@ -8,9 +8,9 @@
 #include <cstdint>
 
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/size.hpp"
-#include "engine/gfx/surface.hpp"
 #include "utils/attributes.h"
 #include "utils/enum_traits.h"
 

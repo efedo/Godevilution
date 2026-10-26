@@ -6,17 +6,16 @@
  * Interface for UI item type definitions.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "ui/menu/text_input.hpp"
-#include "ui/menu/ui_flags.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/render/text_render.hpp"
+#include "ui/menu/text_input.hpp"
+#include "ui/menu/ui_flags.hpp"
 #include "utils/enum_traits.h"
 #include "utils/string/string_or_view.hpp"
 #include "utils/stubs.h"

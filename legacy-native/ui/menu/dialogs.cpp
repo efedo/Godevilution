@@ -4,7 +4,6 @@
  * Implementation of menu dialog screens.
  */
 
-
 #include "ui/menu/dialogs.h"
 
 #include <cstdint>
@@ -25,20 +24,20 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/button.h"
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
+#include "application/headless_mode.hpp"
+#include "application/init.hpp"
 #include "controls/input.h"
 #include "controls/menu_controls.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/hwcursor.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/load/load_pcx.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/text_render.hpp"
-#include "application/headless_mode.hpp"
-#include "engine/hwcursor.hpp"
-#include "application/init.hpp"
+#include "ui/menu/button.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"

@@ -6,7 +6,6 @@
  * Interface for ZeroTier native integration.
  */
 
-
 #include <cstdint>
 
 namespace devilution {

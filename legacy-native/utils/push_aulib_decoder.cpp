@@ -4,7 +4,6 @@
  * Implementation of audio decoder push source.
  */
 
-
 #include "push_aulib_decoder.h"
 
 #include <algorithm>

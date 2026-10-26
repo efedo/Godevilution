@@ -6,7 +6,6 @@
  * Interface for socket.
  */
 
-
 #include_next <sys/socket.h>
 
 #define SO_DEBUG 0

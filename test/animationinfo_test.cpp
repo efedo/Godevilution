@@ -370,8 +370,7 @@ TEST(AnimationInfo, CaptureTimingOracle)
 			else if (kind == "hold") {
 				ASSERT_EQ(animation.currentFrame, 19);
 				ASSERT_EQ(animation.tickCounterOfCurrentFrame, 40);
-			}
-			else
+			} else
 				FAIL() << "Unknown timing operation.";
 			output << "{\"Kind\":\"" << kind << "\",\"Actor\":" << operation.actor
 			       << ",\"Frames\":" << operation.frames << ",\"Ticks\":" << operation.ticks

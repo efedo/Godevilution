@@ -19,7 +19,7 @@ using namespace devilution;
 namespace devilution {
 extern bool TestPlayerProcessAttackCommand(Player &player, bool ranged);
 extern void TestPlayerCheckNewPath(Player &player);
-}
+} // namespace devilution
 
 namespace {
 
@@ -30,21 +30,21 @@ struct AttackSkipCase {
 };
 
 // Literal native caller expectations, not copied managed calculations.
-constexpr std::array<AttackSkipCase, 6> MeleeCases {{
+constexpr std::array<AttackSkipCase, 6> MeleeCases { {
 	{ ItemSpecialEffect::None, 0, 0 },
 	{ ItemSpecialEffect::QuickAttack, 0, 1 },
 	{ ItemSpecialEffect::FastAttack, 1, 2 },
 	{ ItemSpecialEffect::FasterAttack, 2, 3 },
 	{ ItemSpecialEffect::FastestAttack, 2, 4 },
 	{ ItemSpecialEffect::QuickAttack | ItemSpecialEffect::FastAttack | ItemSpecialEffect::FasterAttack | ItemSpecialEffect::FastestAttack, 2, 4 },
-}};
-constexpr std::array<AttackSkipCase, 5> RangedCases {{
+} };
+constexpr std::array<AttackSkipCase, 5> RangedCases { {
 	{ ItemSpecialEffect::None, 0, 0 },
 	{ ItemSpecialEffect::QuickAttack, 0, 1 },
 	{ ItemSpecialEffect::FastAttack, 1, 2 },
 	{ ItemSpecialEffect::FasterAttack, 0, 0 },
 	{ ItemSpecialEffect::FastestAttack, 0, 0 },
-}};
+} };
 
 class NativePlayerCommandPhase : public testing::Test {
 protected:
@@ -117,7 +117,8 @@ protected:
 		EXPECT_EQ(TestPlayerProcessAttackCommand(player, ranged), completion);
 
 		const auto cursor = player.animInfo.captureTimingState();
-		const int skipped = ranged && hellfire ? 0 : completion ? test.completionSkip : test.readySkip;
+		const int skipped = ranged && hellfire ? 0 : completion ? test.completionSkip
+		                                                        : test.readySkip;
 		EXPECT_EQ(player._pmode, ranged ? PM_RATTACK : PM_ATTACK);
 		EXPECT_EQ(player.destAction, ACTION_NONE);
 		EXPECT_EQ(cursor.currentFrame, skipped);

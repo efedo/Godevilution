@@ -5,23 +5,23 @@
 #include <cstdlib>
 #include <limits>
 #include <set>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <algorithm>
 
 #include "devilution.pb.h"
+#include "game/items/items.hpp"
 #include "game/levels/dungeon_common_defs.hpp"
 #include "game/levels/triggers.h"
-#include "game/items/items.hpp"
 #include "game/monsters/monsters.hpp"
-#include "game/players/players.hpp"
 #include "game/objects/objects.hpp"
+#include "game/players/players.hpp"
 #include "game/portals/portal.hpp"
-#include "game/quests/quests.hpp"
 #include "game/quests/quest_stars.hpp"
+#include "game/quests/quests.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
 #include "qol/floatingnumbers.h"
@@ -189,8 +189,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    || behavior < 0
 		    || behavior > MaximumStatusEffectBehavior
 		    || (behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_INFRAVISION)
-		        || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_SEARCH)
-		        || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_ETHEREALIZE))
+		           || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_SEARCH)
+		           || behavior == static_cast<int>(protocol::STATUS_EFFECT_BEHAVIOR_ETHEREALIZE))
 		        && effect.magnitude() != 0
 		    || !statusEffectIds.insert(effect.effect_id()).second)
 			return tl::make_unexpected("Server-backed snapshot contains invalid status-effect state.");
@@ -467,8 +467,8 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 }
 
 std::optional<ProjectedSpellTargetingKind> ProjectedSpellTargetingKindForSpell(
-	const ProjectedPlayerSnapshot &snapshot,
-	uint32_t spellId) noexcept
+    const ProjectedPlayerSnapshot &snapshot,
+    uint32_t spellId) noexcept
 {
 	if (spellId == 0)
 		return std::nullopt;
@@ -568,15 +568,15 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 			return tl::make_unexpected("Server-backed snapshot contains inconsistent stationary monster occupancy.");
 		}
 		if ((!source.moving()
-		     && (source.movement_started_tick() != 0 || source.movement_effect_tick() != 0))
+		        && (source.movement_started_tick() != 0 || source.movement_effect_tick() != 0))
 		    || (source.movement_started_tick() != 0 || source.movement_effect_tick() != 0)
 		        && source.movement_effect_tick() <= source.movement_started_tick()) {
 			return tl::make_unexpected("Server-backed snapshot contains invalid monster movement timing.");
 		}
 		if (source.leader_relation() < 0 || source.leader_relation() > MaximumMonsterLeaderRelation
 		    || (source.leader_relation() == 0
-		        ? source.leader_entity_id() != 0
-		        : source.leader_entity_id() == 0)
+		            ? source.leader_entity_id() != 0
+		            : source.leader_entity_id() == 0)
 		    || source.leader_relation() != 0 && source.is_unique()
 		    || source.pack_size() < 0 || source.pack_size() > MaximumNativeMonsterPackSize
 		    || source.active_for_ticks() < 0 || source.active_for_ticks() > MaximumNativeMonsterActiveTicks) {
@@ -702,8 +702,8 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		const bool rewardOriginValid = source.reward_origin_kind() >= 0
 		    && source.reward_origin_kind() <= MaximumObjectRewardOriginKind
 		    && (source.reward_origin_kind() == 0
-		        ? source.reward_set_level_id() == 0
-		        : source.reward_set_level_id() >= 0 && source.reward_set_level_id() <= MaximumNativeSetLevelId);
+		            ? source.reward_set_level_id() == 0
+		            : source.reward_set_level_id() >= 0 && source.reward_set_level_id() <= MaximumNativeSetLevelId);
 		const bool producesProjectile = source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::SpawnSpellProjectile)
 		    || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
 		    || source.quest_sequence_follow_up_kind() == 2;
@@ -714,17 +714,17 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		        && source.quest_sequence_follow_up_offset_x() == 0
 		        && source.quest_sequence_follow_up_offset_y() == 0
 		    : source.quest_sequence_follow_up_kind() == 1
-		        ? allowsQuestSequenceFollowUp
-		            && source.quest_sequence_follow_up_amount() != 0
-		            && source.quest_sequence_follow_up_offset_x() == 0
-		            && source.quest_sequence_follow_up_offset_y() == 0
-		        : source.quest_sequence_follow_up_kind() == 2
-		            ? (allowsQuestSequenceFollowUp
-		                || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation))
-		                && source.quest_sequence_follow_up_amount() != 0
-		            : source.quest_sequence_follow_up_kind() == 3
-		                && allowsQuestSequenceFollowUp
-		                && source.quest_sequence_follow_up_amount() != 0;
+		    ? allowsQuestSequenceFollowUp
+		        && source.quest_sequence_follow_up_amount() != 0
+		        && source.quest_sequence_follow_up_offset_x() == 0
+		        && source.quest_sequence_follow_up_offset_y() == 0
+		    : source.quest_sequence_follow_up_kind() == 2
+		    ? (allowsQuestSequenceFollowUp
+		          || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation))
+		        && source.quest_sequence_follow_up_amount() != 0
+		    : source.quest_sequence_follow_up_kind() == 3
+		        && allowsQuestSequenceFollowUp
+		        && source.quest_sequence_follow_up_amount() != 0;
 		if ((source.breakable() && source.missile_passable()) || (source.destroyed() && !source.breakable()))
 			return tl::make_unexpected("Server-backed snapshot contains an object with invalid missile-collision state.");
 		if (source.effect_amount() < 0
@@ -1028,8 +1028,9 @@ void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &
 		quest._qactive = snapshot.unavailable
 		    ? QUEST_NOTAVAIL
 		    : snapshot.completed
-		        ? QUEST_DONE
-		        : snapshot.initial ? QUEST_INIT : QUEST_ACTIVE;
+		    ? QUEST_DONE
+		    : snapshot.initial ? QUEST_INIT
+		                       : QUEST_ACTIVE;
 		quest._qlog = snapshot.logged;
 		quest._qvar1 = snapshot.variable1;
 		quest._qvar2 = snapshot.variable2;
@@ -1075,16 +1076,16 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 		level.warpTriggers.reserve(source.warp_triggers_size());
 		for (const auto &warp : source.warp_triggers()) {
 			level.warpTriggers.push_back({
-				.warpId = warp.warp_id(),
-				.triggerX = warp.trigger_x(),
-				.triggerY = warp.trigger_y(),
-				.targetLevelId = warp.target_level_id(),
-				.targetX = warp.target_x(),
-				.targetY = warp.target_y(),
-				.requiredQuestId = warp.required_quest_id(),
-				.requiredQuestCompleted = warp.required_quest_completed(),
-				.stableSymbol = warp.stable_symbol(),
-				.available = warp.available(),
+			    .warpId = warp.warp_id(),
+			    .triggerX = warp.trigger_x(),
+			    .triggerY = warp.trigger_y(),
+			    .targetLevelId = warp.target_level_id(),
+			    .targetX = warp.target_x(),
+			    .targetY = warp.target_y(),
+			    .requiredQuestId = warp.required_quest_id(),
+			    .requiredQuestCompleted = warp.required_quest_completed(),
+			    .stableSymbol = warp.stable_symbol(),
+			    .available = warp.available(),
 			});
 		}
 		std::sort(level.warpTriggers.begin(), level.warpTriggers.end(), [](const auto &left, const auto &right) {
@@ -1149,8 +1150,8 @@ tl::expected<void, std::string> ValidateQuestTownerInteractions(const protocol::
 		    || questIds.find(interaction.quest_id()) == questIds.end()
 		    || (hasLevelGeometry
 		        && (level == snapshot.level_geometry().end()
-	            || (level->width() > 0 && interaction.position_x() >= level->width())
-	            || (level->height() > 0 && interaction.position_y() >= level->height())))
+		            || (level->width() > 0 && interaction.position_x() >= level->width())
+		            || (level->height() > 0 && interaction.position_y() >= level->height())))
 		    || interaction.towner_id() < 0 || interaction.towner_id() > MaximumNativeQuestByte
 		    || interaction.level_id() > std::numeric_limits<uint16_t>::max()
 		    || interaction.required_visited_level1() > std::numeric_limits<uint16_t>::max()
@@ -1213,24 +1214,24 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 		    || (!level.native_mega_tile_layer().empty()
 		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > NativeMaximumMegaWidth
 		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > NativeMaximumMegaHeight))
-			|| !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint8_t>::max();
-			})
+		    || !std::all_of(level.native_transparency().begin(), level.native_transparency().end(), [](uint32_t value) {
+			       return value <= std::numeric_limits<uint8_t>::max();
+		       })
 		    || !std::all_of(level.native_object_layer().begin(), level.native_object_layer().end(), [](uint32_t value) {
-				return value <= NativeMaximumDunObjectLayerId;
-			})
+			       return value <= NativeMaximumDunObjectLayerId;
+		       })
 		    || !std::all_of(level.native_mega_tile_layer().begin(), level.native_mega_tile_layer().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint8_t>::max();
-			})
+			       return value <= std::numeric_limits<uint8_t>::max();
+		       })
 		    || !std::all_of(level.native_piece_layer().begin(), level.native_piece_layer().end(), [](uint32_t value) {
-				return value <= NativeMaximumDunPieceId;
-			})
-			|| !std::all_of(level.native_monster_layer().begin(), level.native_monster_layer().end(), [](uint32_t value) {
-				return value <= NativeMaximumDunMonsterLayerId;
-			})
-			|| !std::all_of(level.native_special_layer().begin(), level.native_special_layer().end(), [](uint32_t value) {
-				return value <= std::numeric_limits<uint8_t>::max();
-			}))
+			       return value <= NativeMaximumDunPieceId;
+		       })
+		    || !std::all_of(level.native_monster_layer().begin(), level.native_monster_layer().end(), [](uint32_t value) {
+			       return value <= NativeMaximumDunMonsterLayerId;
+		       })
+		    || !std::all_of(level.native_special_layer().begin(), level.native_special_layer().end(), [](uint32_t value) {
+			       return value <= std::numeric_limits<uint8_t>::max();
+		       }))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
 		if (!levels.emplace(level.level_id(), &level).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
@@ -1285,9 +1286,9 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			    || (warp.required_quest_id() == 0 && warp.required_quest_completed())
 			    || (warp.required_quest_id() == 0 && !warp.available())
 			    || !std::all_of(warp.stable_symbol().begin(), warp.stable_symbol().end(), [](char value) {
-					const auto character = static_cast<unsigned char>(value);
-					return character >= 0x21 && character <= 0x7E;
-				}))
+				       const auto character = static_cast<unsigned char>(value);
+				       return character >= 0x21 && character <= 0x7E;
+			       }))
 				return tl::make_unexpected("Server-backed snapshot contains an invalid warp trigger.");
 		}
 	}
@@ -1487,23 +1488,23 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_BELT):
 			return item.slot() < NativeMaximumBeltCount
 			    && std::any_of(player.belt().begin(), player.belt().end(), [&](const auto &candidate) {
-				return candidate.slot() == item.slot()
-				    && matchesStableItem(candidate.state(), item.stable_item_id());
-			    });
+				       return candidate.slot() == item.slot()
+				           && matchesStableItem(candidate.state(), item.stable_item_id());
+			       });
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT):
 			return item.slot() < NativeMaximumEquipmentCount
 			    && std::any_of(player.equipment().begin(), player.equipment().end(), [&](const auto &candidate) {
-				return candidate.slot() == item.slot()
-				    && matchesStableItem(candidate.state(), item.stable_item_id());
-			    });
+				       return candidate.slot() == item.slot()
+				           && matchesStableItem(candidate.state(), item.stable_item_id());
+			       });
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_STASH):
 			return player.stash_open()
 			    && item.slot() < StashCellCount && item.page() < StashPageCount
 			    && std::any_of(player.stash().begin(), player.stash().end(), [&](const auto &candidate) {
-				return candidate.page() == item.page()
-				    && candidate.cell() == item.slot()
-				    && matchesStableItem(candidate.item().state(), item.stable_item_id());
-			    });
+				       return candidate.page() == item.page()
+				           && candidate.cell() == item.slot()
+				           && matchesStableItem(candidate.item().state(), item.stable_item_id());
+			       });
 		default:
 			return false;
 		}
@@ -1515,7 +1516,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    || (combatMode == protocol::PLAYER_COMBAT_MODE_STAND
 		        && player.combat_mode_end_tick() != 0)
 		    || (combatMode == protocol::PLAYER_COMBAT_MODE_BLOCK
-		        || combatMode == protocol::PLAYER_COMBAT_MODE_GOT_HIT)
+		           || combatMode == protocol::PLAYER_COMBAT_MODE_GOT_HIT)
 		        && player.combat_mode_end_tick() == 0)
 			return tl::make_unexpected("Server-backed snapshot contains an invalid player combat mode.");
 		if (!player.has_current_action())
@@ -1536,28 +1537,28 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_WALK_SIDEWAYS)
 		    && action.direction_x() >= MinimumNativeDirection && action.direction_x() <= MaximumNativeDirection
 		    && action.direction_y() >= MinimumNativeDirection && action.direction_y() <= MaximumNativeDirection
-	    && (action.direction_x() != 0 || action.direction_y() != 0)
-	    && action.target_entity_id() == 0
-	    && action.target_x() == 0 && action.target_y() == 0
-	    && !action.target_cell()
+		    && (action.direction_x() != 0 || action.direction_y() != 0)
+		    && action.target_entity_id() == 0
+		    && action.target_x() == 0 && action.target_y() == 0
+		    && !action.target_cell()
 		    && !action.has_cast()
-	    && isProjectedMoveDestinationInBounds(player, action);
+		    && isProjectedMoveDestinationInBounds(player, action);
 		const bool attackIsValid = kind == 2
 		    && (combatMode == protocol::PLAYER_COMBAT_MODE_ATTACK
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK)
 		    && action.direction_x() == 0 && action.direction_y() == 0
 		    && (action.target_cell()
-	        ? action.target_entity_id() == 0 && isProjectedActionTarget(player, action)
-	        : action.target_entity_id() != 0
-	            && ((action.target_x() == 0 && action.target_y() == 0)
-	                || (combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK
-	                    && isProjectedActionTarget(player, action))))
+		            ? action.target_entity_id() == 0 && isProjectedActionTarget(player, action)
+		            : action.target_entity_id() != 0
+		                && ((action.target_x() == 0 && action.target_y() == 0)
+		                    || (combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK
+		                        && isProjectedActionTarget(player, action))))
 		    && !action.has_cast();
 		const bool castIsValid = kind == 3
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_SPELL
-	    && action.direction_x() == 0 && action.direction_y() == 0
-	    && action.target_x() == 0 && action.target_y() == 0
-	    && !action.target_cell()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_x() == 0 && action.target_y() == 0
+		    && !action.target_cell()
 		    && action.has_cast() && action.cast().spell_id() != 0
 		    && action.target_entity_id() == action.cast().target_entity_id()
 		    && isProjectedCastTarget(player, action.cast())
@@ -1572,28 +1573,28 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && player.life() == 0 && action.effect_applied()
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
-	    && action.direction_x() == 0 && action.direction_y() == 0
-	    && action.target_entity_id() != 0
-	    && action.target_x() == 0 && action.target_y() == 0
-	    && !action.target_cell()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_entity_id() != 0
+		    && action.target_x() == 0 && action.target_y() == 0
+		    && !action.target_cell()
 		    && !action.has_cast();
 		const bool transitionIsValid = kind == 5
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
 		    && player.life() > 0 && action.effect_applied()
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
-	    && action.direction_x() == 0 && action.direction_y() == 0
-	    && action.target_x() == 0 && action.target_y() == 0
-	    && !action.target_cell()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_x() == 0 && action.target_y() == 0
+		    && !action.target_cell()
 		    && action.target_entity_id() != 0 && !action.has_cast();
 		const bool restartTownIsValid = kind == 6
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_NEW_LEVEL
 		    && player.life() > 0 && action.effect_applied()
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
-	    && action.direction_x() == 0 && action.direction_y() == 0
-	    && action.target_x() == 0 && action.target_y() == 0
-	    && !action.target_cell()
+		    && action.direction_x() == 0 && action.direction_y() == 0
+		    && action.target_x() == 0 && action.target_y() == 0
+		    && !action.target_cell()
 		    && action.target_entity_id() == 0 && !action.has_cast();
 		if (!timingIsValid || (!moveIsValid && !attackIsValid && !castIsValid && !deathIsValid && !transitionIsValid && !restartTownIsValid))
 			return tl::make_unexpected("Server-backed snapshot contains an invalid player action.");
@@ -1668,29 +1669,29 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || (monster.dialogue_state() != 0 && !monster.is_unique())
 		    || monster.leader_relation() < 0 || monster.leader_relation() > MaximumMonsterLeaderRelation
 		    || (monster.leader_relation() == 0
-		        ? monster.leader_entity_id() != 0
-		        : monster.leader_entity_id() == 0)
+		            ? monster.leader_entity_id() != 0
+		            : monster.leader_entity_id() == 0)
 		    || monster.leader_relation() != 0 && monster.is_unique()
 		    || monster.pack_size() < 0 || monster.pack_size() > MaximumNativeMonsterPackSize
 		    || monster.active_for_ticks() < 0 || monster.active_for_ticks() > MaximumNativeMonsterActiveTicks
 		    || monster.bat_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.bat_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.bat_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.ranged_avoidance_turn() < MinimumNativeMonsterMovementTurn
-		        || monster.ranged_avoidance_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.ranged_avoidance_turn() > MaximumNativeMonsterMovementTurn
 		    || monster.ranged_avoidance_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.ranged_avoidance_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.ranged_avoidance_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.rhino_movement_turn() < MinimumNativeMonsterMovementTurn
-		        || monster.rhino_movement_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.rhino_movement_turn() > MaximumNativeMonsterMovementTurn
 		    || monster.avoidance_movement_turn() < MinimumNativeMonsterMovementTurn
-		        || monster.avoidance_movement_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.avoidance_movement_turn() > MaximumNativeMonsterMovementTurn
 		    || monster.avoidance_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.avoidance_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.avoidance_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.skeleton_ranged_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.skeleton_ranged_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.skeleton_ranged_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.fat_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.fat_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.fat_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.rhino_movement_mode() < MinimumNativeMonsterMovementMode
-		        || monster.rhino_movement_mode() > MaximumNativeMonsterMovementMode
+		    || monster.rhino_movement_mode() > MaximumNativeMonsterMovementMode
 		    || monster.fallen_fear_ticks() < 0 || monster.fallen_fear_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.sneak_retreat_ticks() < 0 || monster.sneak_retreat_ticks() > MaximumNativeMonsterShortTimerTicks
 		    || monster.scavenger_healing_ticks() < 0 || monster.scavenger_healing_ticks() > MaximumNativeMonsterShortTimerTicks
@@ -1711,7 +1712,7 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || (monster.has_hork_demon_move_ticks()
 		        && (monster.hork_demon_move_ticks() < -1 || monster.hork_demon_move_ticks() > MaximumNativeMonsterMovementTicks))
 		    || monster.hork_demon_move_turn() < MinimumNativeMonsterMovementTurn
-		        || monster.hork_demon_move_turn() > MaximumNativeMonsterMovementTurn
+		    || monster.hork_demon_move_turn() > MaximumNativeMonsterMovementTurn
 		    || monster.ranged_avoidance_delay_ticks() < 0 || monster.ranged_avoidance_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.snake_delay_ticks() < 0 || monster.snake_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.counselor_delay_ticks() < 0 || monster.counselor_delay_ticks() > MaximumNativeMonsterAiTimerTicks
@@ -1908,7 +1909,7 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 			if (!event.dialogue().text().empty()) {
 				InitQTextMsgText(event.dialogue().text());
 			} else if (event.dialogue().message_id() >= 0
-			           && static_cast<std::size_t>(event.dialogue().message_id()) < Speeches.size()) {
+			    && static_cast<std::size_t>(event.dialogue().message_id()) < Speeches.size()) {
 				InitQTextMsg(static_cast<_speech_id>(event.dialogue().message_id()));
 			}
 		}

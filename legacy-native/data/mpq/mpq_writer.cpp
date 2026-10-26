@@ -4,7 +4,6 @@
  * Implementation of MPQ archive writing.
  */
 
-
 #include "data/mpq/mpq_writer.hpp"
 
 #include <cstring>

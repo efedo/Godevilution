@@ -4,7 +4,6 @@
  * Implementation of crawl table iteration.
  */
 
-
 #include "engine/crawl.hpp"
 
 #include <type_traits>

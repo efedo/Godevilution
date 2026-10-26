@@ -23,26 +23,26 @@
 #include "application/diablo.h"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
-#include "engine/audio/sound.h"
 #include "engine/assets.hpp"
+#include "engine/audio/sound.h"
 #include "engine/lighting.h"
 #include "engine/random.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/levels/themes.h"
 #include "game/levels/triggers.h"
 #include "game/missiles/missiles.hpp"
-#include "game/items/item_pool.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
+#include "level_test.hpp"
+#include "persistence/loadsave.h"
+#include "tables/itemdat.h"
+#include "tables/leveldat.h"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
-#include "tables/leveldat.h"
-#include "tables/itemdat.h"
-#include "persistence/loadsave.h"
-#include "level_test.hpp"
 
 using namespace devilution;
 
@@ -292,18 +292,18 @@ struct NativeInitialItemCapture {
 
 struct NativeStateGuard {
 	explicit NativeStateGuard(bool resetInitialItems = false)
-		: oldMultiplayer(gbIsMultiplayer)
-		, oldSpawn(gbIsSpawn)
-		, oldHellfire(gbIsHellfire)
-		, oldHellfireSave(gbIsHellfireSaveGame)
-		, oldPlayer(MyPlayer)
-		, oldPlayers(std::move(Players))
-		, oldPlayerId(MyPlayerId)
-		, oldDifficulty(sgGameInitInfo.nDifficulty)
-		, oldLoadingMapObjects(LoadingMapObjects)
-		, oldSound(gbSndInited)
-		, oldLevelGenerationData(LevelGenerationData)
-		, resetInitialItems(resetInitialItems)
+	    : oldMultiplayer(gbIsMultiplayer)
+	    , oldSpawn(gbIsSpawn)
+	    , oldHellfire(gbIsHellfire)
+	    , oldHellfireSave(gbIsHellfireSaveGame)
+	    , oldPlayer(MyPlayer)
+	    , oldPlayers(std::move(Players))
+	    , oldPlayerId(MyPlayerId)
+	    , oldDifficulty(sgGameInitInfo.nDifficulty)
+	    , oldLoadingMapObjects(LoadingMapObjects)
+	    , oldSound(gbSndInited)
+	    , oldLevelGenerationData(LevelGenerationData)
+	    , resetInitialItems(resetInitialItems)
 	{
 	}
 
@@ -1083,10 +1083,7 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 	capture.prePhasePlayerTileRefs = CapturePlayerTileRefs();
 	capture.prePhaseBestiary = CaptureBestiary();
 	// The shared serialized grids are actual pre-theme inputs, not a post-phase replay.
-	if (captureInitialInputs && (capture.preThemePieces != capture.prePhasePieces
-	    || capture.preThemeSpecial != capture.prePhaseSpecial
-	    || capture.preThemeTransparency != capture.prePhaseTransparency
-	    || capture.preThemeSolProperties != capture.prePhaseSolProperties))
+	if (captureInitialInputs && (capture.preThemePieces != capture.prePhasePieces || capture.preThemeSpecial != capture.prePhaseSpecial || capture.preThemeTransparency != capture.prePhaseTransparency || capture.preThemeSolProperties != capture.prePhaseSolProperties))
 		throw std::runtime_error("Cathedral prerequisites mutated their shared input geometry");
 	AssertFreshObjectSlots();
 	AssertFreshMonsterSlots();
@@ -1144,7 +1141,8 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 		if (reservation == -1)
 			continue;
 		if (std::find(capture.activeMonsterIds.begin(), capture.activeMonsterIds.end(), reservation)
-		    == capture.activeMonsterIds.end() || !IsSkel(Monsters[reservation].type().type)
+		        == capture.activeMonsterIds.end()
+		    || !IsSkel(Monsters[reservation].type().type)
 		    || Monsters[reservation].position.tile != Point { 0, 0 })
 			throw std::runtime_error("object skeleton reservation is not an active skeleton");
 	}

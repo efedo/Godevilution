@@ -4,15 +4,14 @@
  * Interface for primitive rendering.
  */
 
-
 #pragma once
 
 #include <cstdint>
 #include <cstdlib>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/size.hpp"
-#include "engine/gfx/surface.hpp"
 
 namespace devilution {
 

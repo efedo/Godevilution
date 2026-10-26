@@ -59,9 +59,8 @@ bool ReadEnvelopeWithin(tcp::socket &socket, protocol::Envelope &envelope, Stead
 bool WriteEnvelopeWithin(tcp::socket &socket, const protocol::Envelope &envelope, SteadyClock::time_point deadline)
 {
 	const std::string payload = envelope.SerializeAsString();
-	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(
-	                                reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
-		.has_value();
+	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
+	    .has_value();
 }
 
 bool WaitForPeerClose(tcp::socket &socket, SteadyClock::time_point deadline)
@@ -88,13 +87,13 @@ bool WaitForPeerClose(tcp::socket &socket, SteadyClock::time_point deadline)
 class PeerThread {
 public:
 	explicit PeerThread(std::function<void()> function)
-		: thread_([this, function = std::move(function)]() mutable {
-			try {
-				function();
-			} catch (...) {
-				error_ = std::current_exception();
-			}
-		})
+	    : thread_([this, function = std::move(function)]() mutable {
+		    try {
+			    function();
+		    } catch (...) {
+			    error_ = std::current_exception();
+		    }
+	    })
 	{
 	}
 
@@ -325,11 +324,11 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -434,11 +433,11 @@ TEST(ServerBackedSession, TreatsDuplicateTooLateGameplayAsRejected)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -507,12 +506,12 @@ TEST(ServerBackedSession, TerminalAckWithoutSnapshotRetiresTrackedCommand)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
-			.supportsClockGatedCommands = true,
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
+		    .supportsClockGatedCommands = true,
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -589,13 +588,13 @@ TEST(ServerBackedSession, ClockGatedTerminalAckWithoutSnapshotUsesOriginalDeadli
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
-			.supportsClockGatedCommands = true,
-			.gatedReceiveTimeoutMs = 400,
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
+		    .supportsClockGatedCommands = true,
+		    .gatedReceiveTimeoutMs = 400,
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -676,12 +675,12 @@ TEST(ServerBackedSession, TerminalAckMalformedSnapshotRetainsPriorProjectionWith
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
-			.supportsClockGatedCommands = true,
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
+		    .supportsClockGatedCommands = true,
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -763,13 +762,13 @@ TEST(ServerBackedSession, ClockGatedTerminalAckMalformedSnapshotRetainsPriorProj
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
-			.supportsClockGatedCommands = true,
-			.gatedReceiveTimeoutMs = 1'000,
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
+		    .supportsClockGatedCommands = true,
+		    .gatedReceiveTimeoutMs = 1'000,
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -848,11 +847,11 @@ TEST(ServerBackedSession, PreservesAcceptedCloseSeparateFromDuplicateClose)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -906,11 +905,11 @@ TEST(ServerBackedSession, SequenceExhaustedPurchaseDoesNotLeavePendingVendorInte
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -986,11 +985,11 @@ TEST(ServerBackedSession, IgnoresStaleSnapshotsAndEventsDuringPolling)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -1060,11 +1059,11 @@ TEST(ServerBackedSession, RejectsMalformedSnapshotWithoutPartialStateMutation)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -1135,11 +1134,11 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -1206,11 +1205,11 @@ TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
@@ -1284,25 +1283,25 @@ TEST(ServerBackedSession, SubmitsStableWorldDropIntent)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);
 	ASSERT_TRUE(session.has_value()) << session.error();
 	const auto drop = (*session)->DropItem(
-		ServerBackedItemReference {
-			.location = ServerBackedItemLocation::Inventory,
-			.slot = 0,
-			.stableItemId = 700,
-		},
-		1,
-		2,
-		10,
-		0);
+	    ServerBackedItemReference {
+	        .location = ServerBackedItemLocation::Inventory,
+	        .slot = 0,
+	        .stableItemId = 700,
+	    },
+	    1,
+	    2,
+	    10,
+	    0);
 	ASSERT_TRUE(drop.has_value()) << drop.error();
 	EXPECT_EQ((*session)->LastCommandResolution(), ServerBackedSession::CommandResolution::Accepted);
 	(*session)->Close();
@@ -1371,12 +1370,12 @@ TEST(ServerBackedSession, AcceptsLowerTickFromFreshReconnectEpoch)
 
 	ServerBackedSession::Configuration configuration {
 		.client = {
-			.host = "127.0.0.1",
-			.port = acceptor.local_endpoint().port(),
-			.clientBuildId = "client",
-			.protocolSchemaVersion = "1",
-			.contentManifestHash = "content",
-			.supportsClockGatedCommands = true,
+		    .host = "127.0.0.1",
+		    .port = acceptor.local_endpoint().port(),
+		    .clientBuildId = "client",
+		    .protocolSchemaVersion = "1",
+		    .contentManifestHash = "content",
+		    .supportsClockGatedCommands = true,
 		},
 	};
 	auto session = ServerBackedSession::Connect(configuration);

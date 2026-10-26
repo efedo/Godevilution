@@ -4,7 +4,6 @@
  * socket.
  */
 
-
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>

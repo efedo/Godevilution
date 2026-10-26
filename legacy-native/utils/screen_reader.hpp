@@ -6,7 +6,6 @@
  * Interface for screen reader accessibility.
  */
 
-
 #include <string_view>
 
 namespace devilution {

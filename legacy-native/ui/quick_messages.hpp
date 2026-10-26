@@ -4,7 +4,6 @@
  * Interface for quick message handling.
  */
 
-
 #pragma once
 
 #include <array>

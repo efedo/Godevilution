@@ -14,16 +14,16 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/settingsmenu.h"
-#include "engine/assets.hpp"
-#include "engine/demomode.h"
 #include "application/game_mode.hpp"
 #include "application/init.hpp"
-#include "ui/movie.h"
+#include "engine/assets.hpp"
+#include "engine/demomode.h"
+#include "network/storm/storm_net.hpp"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
-#include "network/storm/storm_net.hpp"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/settingsmenu.h"
+#include "ui/movie.h"
 #include "utils/language.h"
 
 namespace devilution {

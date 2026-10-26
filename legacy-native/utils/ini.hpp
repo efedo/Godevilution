@@ -6,7 +6,6 @@
  * Interface for INI file parsing.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <optional>

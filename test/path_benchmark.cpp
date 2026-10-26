@@ -4,9 +4,9 @@
 #include <benchmark/benchmark.h>
 #include <utility>
 
-#include "engine/path.h"
 #include "engine/math/point.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/path.h"
 #include "engine/size.hpp"
 
 namespace devilution {

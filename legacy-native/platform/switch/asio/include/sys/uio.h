@@ -4,7 +4,6 @@
  * Interface for uio.
  */
 
-
 #ifndef _SYS_UIO_H
 #define _SYS_UIO_H 1
 

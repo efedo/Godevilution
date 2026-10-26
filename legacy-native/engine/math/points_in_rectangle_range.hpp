@@ -6,7 +6,6 @@
  * Interface for rectangle point iteration.
  */
 
-
 #include <iterator>
 
 #include "engine/math/point.hpp"

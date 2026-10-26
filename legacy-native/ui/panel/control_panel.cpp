@@ -417,8 +417,8 @@ tl::expected<void, std::string> InitMainPanel()
 	for (bool &buttonEnabled : CharPanelButton)
 		buttonEnabled = false;
 	CharPanelButtonActive = false;
-	InfoString = StringOrView { };
-	FloatingInfoString = StringOrView { };
+	InfoString = StringOrView {};
+	FloatingInfoString = StringOrView {};
 	RedrawComponent(PanelDrawComponent::Health);
 	RedrawComponent(PanelDrawComponent::Mana);
 	CloseCharPanel();
@@ -437,7 +437,7 @@ tl::expected<void, std::string> InitMainPanel()
 	if (!HeadlessMode)
 		InitModifierHints();
 
-	return { };
+	return {};
 }
 
 void DrawMainPanel(const Surface &out)
@@ -602,7 +602,7 @@ void CheckMainPanelButtonUp()
 							LogError("Server-backed restart-in-town failed: {}", result.error());
 					} else
 #endif
-					NetSendCmd(true, CMD_RETOWN);
+						NetSendCmd(true, CMD_RETOWN);
 				}
 				break;
 			} else if (MyPlayer->hasNoLife()) {
@@ -749,7 +749,7 @@ void ReleaseChrBtns(bool addAllStatPoints)
 			int statPointsToAdd = 1;
 			if (addAllStatPoints)
 				statPointsToAdd = CapStatPointsToAdd(myPlayer._pStatPts, myPlayer, attribute);
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto serverAttribute = [&]() {
 					switch (attribute) {
@@ -770,7 +770,7 @@ void ReleaseChrBtns(bool addAllStatPoints)
 				}
 				continue;
 			}
-		#endif
+#endif
 			switch (attribute) {
 			case CharacterAttribute::Strength:
 				NetSendCmdParam1(true, CMD_ADDSTR, statPointsToAdd);

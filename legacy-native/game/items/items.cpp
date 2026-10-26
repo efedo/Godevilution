@@ -28,70 +28,70 @@
 
 #include <fmt/core.h>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/panel/control.hpp"
+#include "application/diablo.h"
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/controller_buttons.h"
-#include "engine/cursor.h"
-#include "application/diablo.h"
-#include "game/quests/quest_stars.hpp"
-#include "engine/audio/effects.h"
 #include "engine/animationinfo.h"
+#include "engine/audio/effects.h"
+#include "engine/audio/sound_effect_enums.h"
+#include "engine/cursor.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/surface.hpp"
+#include "engine/lighting.h"
 #include "engine/load/load_cel.hpp"
-#include "engine/path.h"
 #include "engine/math/point.hpp"
+#include "engine/math/world_tile.hpp"
+#include "engine/path.h"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/gfx/surface.hpp"
-#include "engine/math/world_tile.hpp"
 #include "function_ref.hpp"
-#include "application/game_mode.hpp"
-#include "application/headless_mode.hpp"
-#include "game/players/inventory.hpp"
-#include "game/players/inv_iterators.hpp"
 #include "game/items/validation.h"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/dungeon_common_defs.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/town.h"
-#include "engine/lighting.h"
-#include "ui/minitext.h"
 #include "game/monsters/monsters.hpp"
-#include "network/protocol/msg.h"
-#include "network/protocol/multi.h"
+#include "game/objects/object_pool.hpp"
+#include "game/objects/objects.hpp"
+#include "game/players/inv_iterators.hpp"
+#include "game/players/inventory.hpp"
+#include "game/players/players.hpp"
+#include "game/quests/quest_stars.hpp"
+#include "game/quests/quests.hpp"
+#include "game/spells/spells.hpp"
+#include "game/stores/stores.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
-#include "game/objects/objects.hpp"
-#include "game/objects/object_pool.hpp"
+#include "network/protocol/msg.h"
+#include "network/protocol/multi.h"
 #include "persistence/options.h"
 #include "persistence/pack.h"
-#include "ui/panel/info_box.hpp"
-#include "ui/panel/ui_panels.hpp"
-#include "game/players/players.hpp"
 #include "qol/stash.h"
-#include "game/quests/quests.hpp"
-#include "engine/audio/sound_effect_enums.h"
-#include "game/spells/spells.hpp"
-#include "game/stores/stores.hpp"
 #include "tables/itemdat.h"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
 #include "tables/playerdat.hpp"
 #include "tables/spelldat.h"
 #include "tables/textdat.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/minitext.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/info_box.hpp"
+#include "ui/panel/ui_panels.hpp"
+#include "utils/container/static_vector.hpp"
 #include "utils/enum_traits.h"
-#include "utils/string/format_int.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/math.h"
 #include "utils/sdl/sdl_geometry.h"
-#include "utils/container/static_vector.hpp"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/str_split.hpp"
 #include "utils/string/string_or_view.hpp"
@@ -4088,10 +4088,10 @@ void GetItemStr(Item &item)
 
 void CheckIdentify(Player &player, int cii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item *pi;
 
@@ -4106,10 +4106,10 @@ void CheckIdentify(Player &player, int cii)
 
 void DoRepair(Player &player, int cii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item *pi;
 
@@ -4127,10 +4127,10 @@ void DoRepair(Player &player, int cii)
 
 void DoRecharge(Player &player, int cii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Item *pi;
 
@@ -4146,10 +4146,10 @@ void DoRecharge(Player &player, int cii)
 
 bool DoOil(Player &player, int cii)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyItemServiceMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	Item *pi;
 	if (cii >= NUM_INVLOC) {
@@ -4545,7 +4545,8 @@ bool TryServerBackedConsumableCast(Player &player, int spellFrom)
 	if (auto result = authoritative::GetServerBackedRuntime().Cast(
 	        static_cast<uint32_t>(sourceItem._iSpell), targetEntityId, target.x, target.y,
 	        { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceReference },
-	        0, GetMillisecondsSinceStartup()); !result.has_value())
+	        0, GetMillisecondsSinceStartup());
+	    !result.has_value())
 		LogError("Server-backed consumable cast failed: {}", result.error());
 	NewCursor(CURSOR_HAND);
 	return true;
@@ -4554,7 +4555,7 @@ bool TryServerBackedConsumableCast(Player &player, int spellFrom)
 
 void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	const bool serverRoutedCast = mid == IMISC_SCROLL
 	    || mid == IMISC_SCROLLT
 	    || (mid > IMISC_RUNEFIRST && mid < IMISC_RUNELAST);
@@ -4562,7 +4563,7 @@ void UseItem(Player &player, item_misc_id mid, SpellID spellID, int spellFrom)
 		LogError("Refusing to apply an unsupported legacy item use in a server-backed session.");
 		return;
 	}
-	#endif
+#endif
 
 	std::optional<SpellID> prepareSpellID;
 

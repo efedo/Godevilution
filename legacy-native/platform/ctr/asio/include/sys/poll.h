@@ -4,5 +4,4 @@
  * Interface for poll.
  */
 
-
 #include <poll.h>

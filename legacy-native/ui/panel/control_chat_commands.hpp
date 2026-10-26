@@ -6,7 +6,6 @@
  * Interface for chat commands.
  */
 
-
 #include <string_view>
 
 namespace devilution {

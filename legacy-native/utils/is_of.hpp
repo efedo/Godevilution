@@ -6,7 +6,6 @@
  * Interface for type checking utilities.
  */
 
-
 #include "utils/attributes.h"
 
 namespace devilution {

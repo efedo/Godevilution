@@ -38,7 +38,7 @@ void DungeonMegaTile::applyReplacement()
 }
 
 Level::Level(LevelId id)
-	: id_(id)
+    : id_(id)
 {
 }
 

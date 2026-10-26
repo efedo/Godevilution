@@ -6,7 +6,6 @@
  * Interface for case-insensitive string comparison.
  */
 
-
 #include <string>
 #include <string_view>
 

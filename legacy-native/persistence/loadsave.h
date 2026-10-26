@@ -9,9 +9,9 @@
 
 #include <expected.hpp>
 
+#include "game/players/players.hpp"
 #include "persistence/save_file.h"
 #include "persistence/save_policy.hpp"
-#include "game/players/players.hpp"
 #include "utils/attributes.h"
 
 namespace devilution {

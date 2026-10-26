@@ -30,8 +30,8 @@
 #include <memory>
 
 #include "application/fatal_error.h"
-#include "utils/endian/endian_read.hpp"
 #include "utils/container/intrusive_optional.hpp"
+#include "utils/endian/endian_read.hpp"
 
 namespace devilution {
 

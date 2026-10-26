@@ -4,7 +4,6 @@
  * Implementation of menu control handling.
  */
 
-
 #include "controls/menu_controls.h"
 
 #ifdef USE_SDL3
@@ -15,13 +14,13 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/diabloui.h"
 #include "controls/axis_direction.h"
 #include "controls/control_mode.hpp"
 #include "controls/controller.h"
 #include "controls/controller_motion.h"
 #include "controls/player_controls.h"
 #include "controls/remap_keyboard.h"
+#include "ui/menu/diabloui.h"
 #include "utils/sdl/sdl_compat.h"
 
 namespace devilution {

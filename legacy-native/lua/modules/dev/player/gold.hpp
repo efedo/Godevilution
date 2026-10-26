@@ -5,7 +5,6 @@
  * Interface for gold.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

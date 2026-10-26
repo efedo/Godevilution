@@ -6,7 +6,6 @@
  * Interface for intrusive optional type.
  */
 
-
 #include <optional>
 #include <type_traits>
 #include <utility>

@@ -4,7 +4,6 @@
  * Deterministic replay primitives.
  */
 
-
 #include "game/replay/replay.hpp"
 
 #include <algorithm>

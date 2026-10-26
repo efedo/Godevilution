@@ -6,7 +6,6 @@
  * Interface for blitting implementation details.
  */
 
-
 #include <cassert>
 #include <cstdint>
 #include <cstring>

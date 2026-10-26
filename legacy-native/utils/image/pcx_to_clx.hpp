@@ -6,7 +6,6 @@
  * Interface for PCX to CLX format conversion.
  */
 
-
 #include <cstdint>
 #include <optional>
 

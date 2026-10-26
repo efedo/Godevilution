@@ -10,8 +10,8 @@
 
 #include "engine/gfx/palette.h"
 #include "engine/math/point.hpp"
-#include "game/players/inv_iterators.hpp"
 #include "game/items/items.hpp"
+#include "game/players/inv_iterators.hpp"
 #include "game/players/players.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/attributes.h"

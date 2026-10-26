@@ -7,10 +7,10 @@
 #include <gtest/gtest.h>
 #include <picosha2.h>
 
-#include "engine/cursor.h"
-#include "engine/assets.hpp"
 #include "application/game_mode.hpp"
 #include "application/init.hpp"
+#include "engine/assets.hpp"
+#include "engine/cursor.h"
 #include "persistence/loadsave.h"
 #include "persistence/pack.h"
 #include "persistence/save_file.h"

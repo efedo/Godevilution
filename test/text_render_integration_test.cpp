@@ -18,14 +18,14 @@
 #include <expected.hpp>
 #include <function_ref.hpp>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/load/load_file.hpp"
-#include "engine/palette.h"
 #include "engine/math/point.hpp"
+#include "engine/palette.h"
 #include "engine/rectangle.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
 #include "engine/size.hpp"
-#include "engine/gfx/surface.hpp"
 #include "utils/paths.h"
 #include "utils/png.h"
 #include "utils/sdl_compat.h"

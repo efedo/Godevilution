@@ -20,43 +20,43 @@
 #include "application/diablo.h"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
-#include "engine/audio/sound.h"
 #include "engine/assets.hpp"
+#include "engine/audio/sound.h"
 #include "engine/cursor.h"
+#include "engine/lighting.h"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/load/load_file.hpp"
-#include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "engine/render/text_render.hpp"
-#include "game/items/items.hpp"
 #include "game/items/item_pool.hpp"
-#include "game/missiles/missiles.hpp"
+#include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
-#include "game/levels/tile_properties.hpp"
 #include "game/levels/themes.h"
+#include "game/levels/tile_properties.hpp"
 #include "game/levels/triggers.h"
+#include "game/missiles/missiles.hpp"
+#include "game/monsters/monster_corpses.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
-#include "game/monsters/monster_corpses.hpp"
-#include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
-#include "game/players/players.hpp"
+#include "game/objects/objects.hpp"
 #include "game/players/inventory.hpp"
+#include "game/players/players.hpp"
 #include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
 #include "network/protocol/msg.h"
 #include "network/storm/storm_net.hpp"
-#include "persistence/options.h"
 #include "persistence/loadsave.h"
+#include "persistence/options.h"
 #include "tables/leveldat.h"
 #include "tables/misdat.h"
 #include "tables/playerdat.hpp"
 #include "tables/textdat.h"
-#include "utils/paths.h"
-#include "utils/parse_int.hpp"
 #include "utils/language.h"
+#include "utils/parse_int.hpp"
+#include "utils/paths.h"
 
 namespace devilution {
 namespace {
@@ -68,16 +68,23 @@ void JsonString(std::ostream &out, std::string_view value)
 	constexpr char Hex[] = "0123456789abcdef";
 	out << '"';
 	for (unsigned char ch : value) {
-		if (ch == '"' || ch == '\\') out << '\\' << ch;
-		else if (ch < 0x20) out << "\\u00" << Hex[ch >> 4] << Hex[ch & 15];
-		else out << ch;
+		if (ch == '"' || ch == '\\')
+			out << '\\' << ch;
+		else if (ch < 0x20)
+			out << "\\u00" << Hex[ch >> 4] << Hex[ch & 15];
+		else
+			out << ch;
 	}
 	out << '"';
 }
 
 class JsonObject {
 public:
-	explicit JsonObject(std::ostream &out) : out(out) { out << '{'; }
+	explicit JsonObject(std::ostream &out)
+	    : out(out)
+	{
+		out << '{';
+	}
 	~JsonObject() { out << '}'; }
 	void Key(std::string_view name)
 	{
@@ -86,15 +93,27 @@ public:
 		JsonString(out, name);
 		out << ':';
 	}
-	template <typename T> void Number(std::string_view name, T value)
+	template <typename T>
+	void Number(std::string_view name, T value)
 	{
 		Key(name);
-		if constexpr (std::is_enum_v<T>) out << static_cast<int64_t>(value);
-		else if constexpr (std::is_unsigned_v<T>) out << static_cast<uint64_t>(value);
-		else out << static_cast<int64_t>(value);
+		if constexpr (std::is_enum_v<T>)
+			out << static_cast<int64_t>(value);
+		else if constexpr (std::is_unsigned_v<T>)
+			out << static_cast<uint64_t>(value);
+		else
+			out << static_cast<int64_t>(value);
 	}
-	void Boolean(std::string_view name, bool value) { Key(name); out << (value ? "true" : "false"); }
-	void String(std::string_view name, std::string_view value) { Key(name); JsonString(out, value); }
+	void Boolean(std::string_view name, bool value)
+	{
+		Key(name);
+		out << (value ? "true" : "false");
+	}
+	void String(std::string_view name, std::string_view value)
+	{
+		Key(name);
+		JsonString(out, value);
+	}
 
 private:
 	std::ostream &out;
@@ -189,7 +208,8 @@ void WritePower(std::ostream &out, const ItemPower &power)
 	json.Number("param2", power.param2);
 }
 
-template <typename T, typename F> void WriteArray(std::ostream &out, const T &values, F write)
+template <typename T, typename F>
+void WriteArray(std::ostream &out, const T &values, F write)
 {
 	out << '[';
 	bool first = true;
@@ -338,7 +358,8 @@ protected:
 			WriteArray(out, rows, [&](const PLStruct &row) {
 				JsonObject affix(out);
 				affix.String("name", row.PLName);
-				affix.Key("power"); WritePower(out, row.power);
+				affix.Key("power");
+				WritePower(out, row.power);
 				affix.Number("minimumLevel", row.PLMinLvl);
 				affix.Number("itemTypes", row.PLIType);
 				affix.Number("alignment", row.PLGOE);
@@ -382,7 +403,10 @@ protected:
 		});
 		catalog.Key("glyphWidths");
 		out << '[';
-		for (unsigned i = 0; i < 256; ++i) { if (i != 0) out << ','; out << (*font)[i].width(); }
+		for (unsigned i = 0; i < 256; ++i) {
+			if (i != 0) out << ',';
+			out << (*font)[i].width();
+		}
 		out << ']';
 		catalog.Key("glyphRows");
 		out << '[';
@@ -399,7 +423,10 @@ protected:
 			glyphRow.Number("row", row);
 			glyphRow.Key("widths");
 			out << '[';
-			for (unsigned i = 0; i < 256; ++i) { if (i != 0) out << ','; out << (*rowFont)[i].width(); }
+			for (unsigned i = 0; i < 256; ++i) {
+				if (i != 0) out << ',';
+				out << (*rowFont)[i].width();
+			}
 			out << ']';
 		}
 		out << ']';
@@ -430,9 +457,16 @@ protected:
 		catalog.Key("generationRules");
 		JsonObject rules(out);
 #define RULE(field) rules.Number(#field, CurrentItemGenerationConfig.field)
-		RULE(magicChanceBase); RULE(magicChancePerLevel); RULE(uniqueChanceNormal); RULE(uniqueChanceUnique);
-		RULE(bonusLevelsUnique); RULE(prefixPercent); RULE(suffixPercent); RULE(onlygoodChance);
-		RULE(noDropPercent); RULE(goldPercent);
+		RULE(magicChanceBase);
+		RULE(magicChancePerLevel);
+		RULE(uniqueChanceNormal);
+		RULE(uniqueChanceUnique);
+		RULE(bonusLevelsUnique);
+		RULE(prefixPercent);
+		RULE(suffixPercent);
+		RULE(onlygoodChance);
+		RULE(noDropPercent);
+		RULE(goldPercent);
 #undef RULE
 		rules.Key("alwaysMagicMisc");
 		WriteArray(out, CurrentItemGenerationConfig.alwaysMagicMisc, [&](auto value) { out << static_cast<int>(value); });
@@ -476,9 +510,13 @@ TEST_F(ThemeItemGenerationTest, ScalarFontMetricsMatchNativePanelWidth)
 	EXPECT_GT(*GetItemAnimationLengthForTesting(ICURS_GOLD_SMALL), 0);
 	constexpr std::string_view name = "An unusually long test name of accuracy";
 	int width = -2;
-	for (unsigned char ch : name) width += (*font)[ch].width() + 2;
+	for (unsigned char ch : name)
+		width += (*font)[ch].width() + 2;
 	EXPECT_EQ(GetLineWidth(name, GameFont12, 2), width);
-	EXPECT_EQ(GetLineWidth("A\xe2\x80\x8b" "B\nignored", GameFont12, 2), (*font)['A'].width() + (*font)['B'].width() + 2);
+	EXPECT_EQ(GetLineWidth("A\xe2\x80\x8b"
+	                       "B\nignored",
+	              GameFont12, 2),
+	    (*font)['A'].width() + (*font)['B'].width() + 2);
 }
 
 TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
@@ -510,7 +548,8 @@ TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
 		document.String("policy", "original-diablo-single-player-normal-raw-setup-and-unique-continuation");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("catalog");
+		WriteCatalog(stream);
 		document.Key("cases");
 		stream << '[';
 		auto capture = [&](std::string_view name, int depth, int index, uint32_t seed, bool onlygood,
@@ -528,15 +567,19 @@ TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
 			    CurrentItemGenerationConfig.uniqueChanceNormal, onlygood, true);
 			if (setupItem._iMagical == ITEM_QUALITY_UNIQUE && item._iMagical == ITEM_QUALITY_UNIQUE && item._iUid != setupItem._iUid) {
 				++changedUniques;
-				if ((item.dwBuff & CF_UIDOFFSET) != 0) ++offsetUniques;
-				else if (item._iSeed != seed) ++reverseCompatibleUniques;
+				if ((item.dwBuff & CF_UIDOFFSET) != 0)
+					++offsetUniques;
+				else if (item._iSeed != seed)
+					++reverseCompatibleUniques;
 			}
 			if (setupItem._iMagical == ITEM_QUALITY_UNIQUE && item._iMagical != ITEM_QUALITY_UNIQUE) ++exhaustedUniques;
 			if (item._iMiscId == IMISC_BOOK) ++books;
 			if (item._itype == ItemType::Gold) ++gold;
 			if (item._itype == ItemType::Staff && item._iMagical != ITEM_QUALITY_UNIQUE) {
-				if (item._iSpell != SpellID::Null) ++staffSpells;
-				else if (onlygood) ++staffPowers;
+				if (item._iSpell != SpellID::Null)
+					++staffSpells;
+				else if (onlygood)
+					++staffPowers;
 			}
 			if (item._iMagical == ITEM_QUALITY_MAGIC && (item._iPrePower != IPL_INVALID || item._iSufPower != IPL_INVALID)) ++magicalAffixes;
 			if (item._iMagical == ITEM_QUALITY_NORMAL && item._iDurability > 0 && item._iDurability != DUR_INDESTRUCTIBLE && item._iDurability != item._iMaxDur) ++ordinaryDurability;
@@ -546,18 +589,24 @@ TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
 			result.Number("nativeItemId", index);
 			result.Number("seed", seed);
 			result.Boolean("onlygood", onlygood);
-			result.Key("inputItem"); WriteItem(stream, pre);
-			result.Key("inputUniqueFlags"); WriteFlags(stream, flags);
-			result.Key("setupItem"); WriteItem(stream, setupItem);
+			result.Key("inputItem");
+			WriteItem(stream, pre);
+			result.Key("inputUniqueFlags");
+			WriteFlags(stream, flags);
+			result.Key("setupItem");
+			WriteItem(stream, setupItem);
 			result.Number("setupRandomState", setupRandom);
-			result.Key("expectedItem"); WriteItem(stream, item);
+			result.Key("expectedItem");
+			WriteItem(stream, item);
 			result.Number("expectedRandomState", GetLCGEngineState());
-			result.Key("expectedUniqueFlags"); WriteFlags(stream, CaptureFlags());
+			result.Key("expectedUniqueFlags");
+			WriteFlags(stream, CaptureFlags());
 			// SetupItem uses only the external cursor animation scalars here;
 			// sprites and private renderer distribution state remain excluded.
 			ASSERT_TRUE(GetItemAnimationLengthForTesting(item._iCurs).has_value());
 			SetupItem(item);
-			result.Key("groundItem"); WriteItem(stream, item);
+			result.Key("groundItem");
+			WriteItem(stream, item);
 		};
 		const std::array<bool, 128> fresh {};
 		std::array<bool, 128> exhausted;
@@ -610,9 +659,12 @@ TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
 		}
 		Item retained;
 		retained.position = { 9, 8 };
-		retained._iCharges = 7; retained._iMaxCharges = 9;
-		retained._iPLStr = 17; retained._iVAdd1 = 73;
-		retained._iIdentified = true; retained._iStatFlag = true;
+		retained._iCharges = 7;
+		retained._iMaxCharges = 9;
+		retained._iPLStr = 17;
+		retained._iVAdd1 = 73;
+		retained._iIdentified = true;
+		retained._iStatFlag = true;
 		retained.dwBuff = 128;
 		capture("retained-fields", 1, IDI_HEAL, 2588, false, fresh, retained);
 		// Staff's cyclic counter can safely be negative: unlike books its
@@ -698,7 +750,8 @@ NativeItemWorldState CaptureItemWorld()
 	state.uniqueFlags = CaptureFlags();
 	state.randomState = GetLCGEngineState();
 	state.activeCount = ActiveItemCount;
-	for (const Tile &tile : tiles()) state.worldTiles.push_back(tile);
+	for (const Tile &tile : tiles())
+		state.worldTiles.push_back(tile);
 	for (int i = 0; i < MAXOBJECTS; ++i) {
 		state.objectSolid[i] = Objects[i]._oSolidFlag;
 		state.objectSelection[i] = static_cast<int>(Objects[i].selectionRegion);
@@ -711,15 +764,20 @@ void WriteItemWorld(std::ostream &out, const NativeItemWorldState &state, bool i
 	JsonObject json(out);
 	json.Number("randomState", state.randomState);
 	json.Number("activeCount", state.activeCount);
-	json.Key("activeIds"); WriteArray(out, state.active, [&](uint8_t value) { out << static_cast<int>(value); });
-	json.Key("items"); WriteArray(out, state.items, [&](const Item &value) { WriteItem(out, value); });
-	json.Key("uniqueFlags"); WriteFlags(out, state.uniqueFlags);
-	json.Key("itemRefs"); WriteArray(out, state.worldTiles, [&](const Tile &tile) { out << static_cast<int>(tile.item()); });
+	json.Key("activeIds");
+	WriteArray(out, state.active, [&](uint8_t value) { out << static_cast<int>(value); });
+	json.Key("items");
+	WriteArray(out, state.items, [&](const Item &value) { WriteItem(out, value); });
+	json.Key("uniqueFlags");
+	WriteFlags(out, state.uniqueFlags);
+	json.Key("itemRefs");
+	WriteArray(out, state.worldTiles, [&](const Tile &tile) { out << static_cast<int>(tile.item()); });
 	if (!inputs) return;
 	json.Key("tiles");
 	int index = 0;
 	WriteArray(out, state.worldTiles, [&](const Tile &tile) {
-		const Point position { index % MAXDUNX, index / MAXDUNX }; ++index;
+		const Point position { index % MAXDUNX, index / MAXDUNX };
+		++index;
 		out << '[' << static_cast<int>(tile.player()) << ',' << tile.monster() << ','
 		    << static_cast<int>(tile.object()) << ',' << static_cast<int>(tile.item()) << ','
 		    << (TileContainsSetPiece(position) ? "true" : "false") << ','
@@ -744,10 +802,12 @@ protected:
 
 	void PrepareWorld(int count = 2, bool reverse = true)
 	{
-		for (Tile &tile : tiles()) tile = {};
+		for (Tile &tile : tiles())
+			tile = {};
 		std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
 		tileProperties()[1] = TileProperties::Solid;
-		for (int i = 0; i < MAXOBJECTS; ++i) Objects[i] = {};
+		for (int i = 0; i < MAXOBJECTS; ++i)
+			Objects[i] = {};
 		for (int i = 0; i <= MAXITEMS; ++i) {
 			Items[i] = {};
 			Items[i]._iSeed = 1000 + i;
@@ -759,7 +819,8 @@ protected:
 			Items[i].animInfo.currentFrame = 3;
 			Items[i].animInfo.numberOfFrames = 4;
 		}
-		for (int i = 0; i < MAXITEMS; ++i) ActiveItems[i] = reverse ? MAXITEMS - 1 - i : i;
+		for (int i = 0; i < MAXITEMS; ++i)
+			ActiveItems[i] = reverse ? MAXITEMS - 1 - i : i;
 		ActiveItemCount = count;
 		for (int i = 0; i < count; ++i) {
 			const int slot = ActiveItems[i];
@@ -777,11 +838,16 @@ protected:
 		int index = 0;
 		for (const Tile &tile : tiles()) {
 			const Tile &pre = before.worldTiles[index++];
-			EXPECT_EQ(tile.piece(), pre.piece()); EXPECT_EQ(tile.flags(), pre.flags());
-			EXPECT_EQ(tile.player(), pre.player()); EXPECT_EQ(tile.monster(), pre.monster());
-			EXPECT_EQ(tile.object(), pre.object()); EXPECT_EQ(tile.corpse(), pre.corpse());
-			EXPECT_EQ(tile.light(), pre.light()); EXPECT_EQ(tile.preLight(), pre.preLight());
-			EXPECT_EQ(tile.transVal(), pre.transVal()); EXPECT_EQ(tile.special(), pre.special());
+			EXPECT_EQ(tile.piece(), pre.piece());
+			EXPECT_EQ(tile.flags(), pre.flags());
+			EXPECT_EQ(tile.player(), pre.player());
+			EXPECT_EQ(tile.monster(), pre.monster());
+			EXPECT_EQ(tile.object(), pre.object());
+			EXPECT_EQ(tile.corpse(), pre.corpse());
+			EXPECT_EQ(tile.light(), pre.light());
+			EXPECT_EQ(tile.preLight(), pre.preLight());
+			EXPECT_EQ(tile.transVal(), pre.transVal());
+			EXPECT_EQ(tile.special(), pre.special());
 		}
 		for (int i = 0; i < MAXOBJECTS; ++i) {
 			EXPECT_EQ(Objects[i]._oSolidFlag, before.objectSolid[i]);
@@ -799,24 +865,39 @@ TEST_F(ThemeItemPlacementTest, ItemSpaceUsesSignedOccupancyAndObjectOverlapRules
 	constexpr Point p { 50, 50 };
 	tileAt(p).addFlags(DungeonFlag::Populated);
 	EXPECT_TRUE(ItemSpaceOk(p)); // Set-piece protection belongs to ItemPlace, not this path.
-	tileAt(p).setPlayer(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setPlayer(0);
-	tileAt(p).setMonster(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setMonster(0);
-	tileAt(p).setItem(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setItem(0);
-	tileAt(p).setObject(-1); EXPECT_TRUE(ItemSpaceOk(p));
-	Objects[0]._oSolidFlag = true; EXPECT_FALSE(ItemSpaceOk(p));
-	Objects[0]._oSolidFlag = false; tileAt(p).setObject(0);
+	tileAt(p).setPlayer(-1);
+	EXPECT_FALSE(ItemSpaceOk(p));
+	tileAt(p).setPlayer(0);
+	tileAt(p).setMonster(-1);
+	EXPECT_FALSE(ItemSpaceOk(p));
+	tileAt(p).setMonster(0);
+	tileAt(p).setItem(-1);
+	EXPECT_FALSE(ItemSpaceOk(p));
+	tileAt(p).setItem(0);
+	tileAt(p).setObject(-1);
+	EXPECT_TRUE(ItemSpaceOk(p));
+	Objects[0]._oSolidFlag = true;
+	EXPECT_FALSE(ItemSpaceOk(p));
+	Objects[0]._oSolidFlag = false;
+	tileAt(p).setObject(0);
 	tileAt(p + Direction::South).setObject(-1);
-	Objects[0].selectionRegion = SelectionRegion::Bottom; EXPECT_FALSE(ItemSpaceOk(p));
-	Objects[0].selectionRegion = SelectionRegion::None; EXPECT_TRUE(ItemSpaceOk(p));
+	Objects[0].selectionRegion = SelectionRegion::Bottom;
+	EXPECT_FALSE(ItemSpaceOk(p));
+	Objects[0].selectionRegion = SelectionRegion::None;
+	EXPECT_TRUE(ItemSpaceOk(p));
 	tileAt(p + Direction::South).setObject(0);
 	Objects[0].selectionRegion = SelectionRegion::Bottom;
 	Objects[1].selectionRegion = SelectionRegion::Bottom;
 	tileAt(p + Direction::SouthEast).setObject(1);
-	tileAt(p + Direction::SouthWest).setObject(2); EXPECT_FALSE(ItemSpaceOk(p));
-	tileAt(p + Direction::SouthWest).setObject(-2); EXPECT_TRUE(ItemSpaceOk(p));
 	tileAt(p + Direction::SouthWest).setObject(2);
-	tileAt(p + Direction::SouthEast).setObject(-1); EXPECT_TRUE(ItemSpaceOk(p));
-	EXPECT_FALSE(ItemSpaceOk({ -1, 0 })); EXPECT_FALSE(ItemSpaceOk({ MAXDUNX, 0 }));
+	EXPECT_FALSE(ItemSpaceOk(p));
+	tileAt(p + Direction::SouthWest).setObject(-2);
+	EXPECT_TRUE(ItemSpaceOk(p));
+	tileAt(p + Direction::SouthWest).setObject(2);
+	tileAt(p + Direction::SouthEast).setObject(-1);
+	EXPECT_TRUE(ItemSpaceOk(p));
+	EXPECT_FALSE(ItemSpaceOk({ -1, 0 }));
+	EXPECT_FALSE(ItemSpaceOk({ MAXDUNX, 0 }));
 }
 
 TEST_F(ThemeItemPlacementTest, FullPoolTypedGoldPreservesSeedAndEveryItemSlot)
@@ -830,8 +911,10 @@ TEST_F(ThemeItemPlacementTest, FullPoolTypedGoldPreservesSeedAndEveryItemSlot)
 	EXPECT_EQ(after.activeCount, before.activeCount);
 	EXPECT_EQ(after.active, before.active);
 	EXPECT_EQ(after.uniqueFlags, before.uniqueFlags);
-	std::ostringstream first; std::ostringstream second;
-	WriteItemWorld(first, before, false); WriteItemWorld(second, after, false);
+	std::ostringstream first;
+	std::ostringstream second;
+	WriteItemWorld(first, before, false);
+	WriteItemWorld(second, after, false);
 	EXPECT_EQ(first.str(), second.str());
 	CheckUntouchedWorld(before);
 }
@@ -842,7 +925,8 @@ TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
 	const char *directory = std::getenv(variable);
 	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Select the separate private placement corpus explicitly.";
 	const std::filesystem::path root = std::filesystem::absolute(directory);
-	ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	std::ofstream stream(root / "native-theme-item-placement.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	int selectorCount = 0;
@@ -859,8 +943,10 @@ TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
 		document.String("policy", "original-diablo-single-player-normal-world-item-creation");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
-		document.Key("selectors"); stream << '[';
+		document.Key("catalog");
+		WriteCatalog(stream);
+		document.Key("selectors");
+		stream << '[';
 		constexpr uint32_t seeds[] = { 0, 1, 2588, 743271966, UINT32_C(0x80000000), UINT32_MAX, 1457187811, 988045466 };
 		for (int depth = 1; depth <= 4; ++depth) {
 			currentLevelNumber() = depth;
@@ -868,57 +954,87 @@ TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
 				for (int lane = 0; lane < 7; ++lane) {
 					const bool good = lane == 1;
 					const int type = lane <= 1 ? -1 : lane == 2 ? static_cast<int>(ItemType::Gold)
-					    : lane == 3 || lane == 5 ? static_cast<int>(ItemType::Misc)
-					    : lane == 4 ? static_cast<int>(ItemType::Staff) : static_cast<int>(ItemType::Sword);
-					const int misc = lane == 3 ? IMISC_BOOK : lane == 5 ? IMISC_HEAL : -1;
+					    : lane == 3 || lane == 5                ? static_cast<int>(ItemType::Misc)
+					    : lane == 4                             ? static_cast<int>(ItemType::Staff)
+					                                            : static_cast<int>(ItemType::Sword);
+					const int misc = lane == 3 ? IMISC_BOOK : lane == 5 ? IMISC_HEAL
+					                                                    : -1;
 					SetRndSeed(seed);
 					const int selected = SelectThemeItemForTesting(good, type, misc);
 					if (selectorCount++ != 0) stream << ',';
 					JsonObject value(stream);
-					value.Number("depth", depth); value.Number("seed", seed);
-					value.Boolean("onlygood", good); value.Number("itemType", type); value.Number("miscId", misc);
-					value.Number("selectedIndex", selected); value.Number("randomState", GetLCGEngineState());
+					value.Number("depth", depth);
+					value.Number("seed", seed);
+					value.Boolean("onlygood", good);
+					value.Number("itemType", type);
+					value.Number("miscId", misc);
+					value.Number("selectedIndex", selected);
+					value.Number("randomState", GetLCGEngineState());
 				}
 			}
 		}
 		stream << ']';
-		document.Key("worldCases"); stream << '[';
+		document.Key("worldCases");
+		stream << '[';
 		for (int depth = 1; depth <= 4; ++depth) {
 			currentLevelNumber() = depth;
 			uint32_t uniqueSeed = 0;
 			for (uint32_t seed = 1; seed <= 4096; ++seed) {
-				PrepareWorld(); SetRndSeed(seed);
+				PrepareWorld();
+				SetRndSeed(seed);
 				CreateTypeItem({ 50, 50 }, true, ItemType::Sword, -1, false, true);
 				if (Items[ActiveItems[2]]._iMagical != ITEM_QUALITY_UNIQUE) continue;
-				uniqueSeed = seed; break;
+				uniqueSeed = seed;
+				break;
 			}
 			ASSERT_NE(uniqueSeed, 0U) << "Bounded unique-world seed discovery must cover this depth.";
 			for (int lane = 0; lane < 10; ++lane) {
 				constexpr std::string_view names[] = { "random-open", "random-good-objects", "typed-gold-fallback",
-				    "typed-book-signed", "typed-staff-last-slot", "random-full-pool", "typed-gold-no-space",
-				    "typed-heal-edge", "typed-sword-unique", "typed-sword-exhausted" };
-				PrepareWorld(lane == 4 ? MAXITEMS - 1 : lane == 5 ? MAXITEMS : 2, lane != 4);
+					"typed-book-signed", "typed-staff-last-slot", "random-full-pool", "typed-gold-no-space",
+					"typed-heal-edge", "typed-sword-unique", "typed-sword-exhausted" };
+				PrepareWorld(lane == 4 ? MAXITEMS - 1 : lane == 5 ? MAXITEMS
+				                                                  : 2,
+				    lane != 4);
 				const bool random = lane == 0 || lane == 1 || lane == 5;
 				const bool good = lane == 1 || lane >= 8;
 				const bool delta = lane != 0 && lane != 4;
 				const int type = random ? -1 : lane == 2 || lane == 6 ? static_cast<int>(ItemType::Gold)
-				    : lane == 3 || lane == 7 ? static_cast<int>(ItemType::Misc)
-				    : lane == 4 ? static_cast<int>(ItemType::Staff) : static_cast<int>(ItemType::Sword);
-				const int misc = lane == 3 ? IMISC_BOOK : lane == 7 ? IMISC_HEAL : -1;
-				const uint32_t seed = lane >= 8 ? uniqueSeed : lane == 3 ? 988045466 : lane == 1 ? 743271966 : lane == 2 || lane == 7 ? 1 : 2588;
+				    : lane == 3 || lane == 7                          ? static_cast<int>(ItemType::Misc)
+				    : lane == 4                                       ? static_cast<int>(ItemType::Staff)
+				                                                      : static_cast<int>(ItemType::Sword);
+				const int misc = lane == 3 ? IMISC_BOOK : lane == 7 ? IMISC_HEAL
+				                                                    : -1;
+				const uint32_t seed = lane >= 8 ? uniqueSeed : lane == 3 ? 988045466
+				    : lane == 1                                          ? 743271966
+				    : lane == 2 || lane == 7                             ? 1
+				                                                         : 2588;
 				const Point p = lane == 7 ? Point { 0, 0 } : Point { 50, 50 };
 				if (lane == 0) MyPlayer->pLvlLoad = 0;
 				if (lane == 1) {
-					for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt({ x, y }).setPiece(1);
-					tileAt({ 49, 49 }).setPiece(0); tileAt({ 49, 49 }).setObject(-1);
+					for (int y = 49; y <= 51; ++y)
+						for (int x = 49; x <= 51; ++x)
+							tileAt({ x, y }).setPiece(1);
+					tileAt({ 49, 49 }).setPiece(0);
+					tileAt({ 49, 49 }).setObject(-1);
 					tileAt({ 49, 49 }).addFlags(DungeonFlag::Populated);
-					Objects[1]._oSolidFlag = true; tileAt({ 50, 49 }).setObject(-2);
-					Objects[2].selectionRegion = SelectionRegion::Bottom; tileAt({ 51, 51 }).setObject(-3);
-					tileAt({ 49, 50 }).setPlayer(-1); tileAt({ 49, 51 }).setMonster(-2);
+					Objects[1]._oSolidFlag = true;
+					tileAt({ 50, 49 }).setObject(-2);
+					Objects[2].selectionRegion = SelectionRegion::Bottom;
+					tileAt({ 51, 51 }).setObject(-3);
+					tileAt({ 49, 50 }).setPlayer(-1);
+					tileAt({ 49, 51 }).setMonster(-2);
 				}
-				if (lane == 2) for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt({ x, y }).setPiece(1);
-				if (lane == 3) { tileAt({ 49, 49 }).setPiece(1); tileAt({ 49, 49 }).setItem(-3); }
-				if (lane == 6) for (Tile &tile : tiles()) tile.setPiece(1);
+				if (lane == 2)
+					for (int y = 49; y <= 51; ++y)
+						for (int x = 49; x <= 51; ++x)
+							tileAt({ x, y }).setPiece(1);
+				if (lane == 3) {
+					tileAt({ 49, 49 }).setPiece(1);
+					tileAt({ 49, 49 }).setItem(-3);
+				}
+				if (lane == 6)
+					for (Tile &tile : tiles())
+						tile.setPiece(1);
 				if (lane == 9) std::fill(std::begin(UniqueItemFlags), std::end(UniqueItemFlags), true);
 				SetRndSeed(seed);
 				const auto before = CaptureItemWorld();
@@ -927,41 +1043,87 @@ TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
 				SetRndSeed(seed);
 				if (worldCount++ != 0) stream << ',';
 				JsonObject value(stream);
-				value.String("name", names[lane]); value.Number("depth", depth); value.Number("seed", seed);
-				value.Boolean("onlygood", good); value.Boolean("delta", delta); value.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
-				value.Number("itemType", type); value.Number("miscId", misc); value.Number("x", p.x); value.Number("y", p.y);
-				value.Number("selectedIndex", selected); value.Number("selectionRandomState", selectionRandom);
-				value.Key("input"); WriteItemWorld(stream, before, true);
-				if (random) CreateRndItem(p, good, false, delta);
-				else CreateTypeItem(p, good, static_cast<ItemType>(type), misc, false, delta);
+				value.String("name", names[lane]);
+				value.Number("depth", depth);
+				value.Number("seed", seed);
+				value.Boolean("onlygood", good);
+				value.Boolean("delta", delta);
+				value.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
+				value.Number("itemType", type);
+				value.Number("miscId", misc);
+				value.Number("x", p.x);
+				value.Number("y", p.y);
+				value.Number("selectedIndex", selected);
+				value.Number("selectionRandomState", selectionRandom);
+				value.Key("input");
+				WriteItemWorld(stream, before, true);
+				if (random)
+					CreateRndItem(p, good, false, delta);
+				else
+					CreateTypeItem(p, good, static_cast<ItemType>(type), misc, false, delta);
 				const auto after = CaptureItemWorld();
-				value.Key("expected"); WriteItemWorld(stream, after, false);
+				value.Key("expected");
+				WriteItemWorld(stream, after, false);
 				CheckUntouchedWorld(before);
-				if (lane == 5) { ++fullPools; EXPECT_EQ(after.randomState, selectionRandom); EXPECT_EQ(after.activeCount, MAXITEMS); }
-				else {
+				if (lane == 5) {
+					++fullPools;
+					EXPECT_EQ(after.randomState, selectionRandom);
+					EXPECT_EQ(after.activeCount, MAXITEMS);
+				} else {
 					EXPECT_EQ(after.activeCount, before.activeCount + 1);
 					const int slot = before.active[before.activeCount];
 					const Item &item = after.items[slot];
-					if (lane == 1) { EXPECT_EQ(item.position.x, 49); EXPECT_EQ(item.position.y, 49); }
-					if (lane == 2) { EXPECT_EQ(item.position.x, 48); EXPECT_EQ(item.position.y, 48); }
-					if (lane == 3) { ++signedOverwrites; EXPECT_EQ(item.position.x, 49); EXPECT_EQ(item.position.y, 49); EXPECT_EQ(tileAt({ 49, 49 }).item(), slot + 1); }
+					if (lane == 1) {
+						EXPECT_EQ(item.position.x, 49);
+						EXPECT_EQ(item.position.y, 49);
+					}
+					if (lane == 2) {
+						EXPECT_EQ(item.position.x, 48);
+						EXPECT_EQ(item.position.y, 48);
+					}
+					if (lane == 3) {
+						++signedOverwrites;
+						EXPECT_EQ(item.position.x, 49);
+						EXPECT_EQ(item.position.y, 49);
+						EXPECT_EQ(tileAt({ 49, 49 }).item(), slot + 1);
+					}
 					if (lane == 4) EXPECT_EQ(tileAt(item.position).item(), 127);
-					if (lane == 6) { ++exhaustedPlacements; EXPECT_EQ(item.position.x, 0); EXPECT_EQ(item.position.y, 0); EXPECT_EQ(tileAt(item.position).item(), 0); }
-					if (lane == 8) { ++generatedUniques; EXPECT_EQ(item._iMagical, ITEM_QUALITY_UNIQUE); }
-					if (lane == 9) { ++exhaustedHistories; EXPECT_NE(item._iMagical, ITEM_QUALITY_UNIQUE); }
+					if (lane == 6) {
+						++exhaustedPlacements;
+						EXPECT_EQ(item.position.x, 0);
+						EXPECT_EQ(item.position.y, 0);
+						EXPECT_EQ(tileAt(item.position).item(), 0);
+					}
+					if (lane == 8) {
+						++generatedUniques;
+						EXPECT_EQ(item._iMagical, ITEM_QUALITY_UNIQUE);
+					}
+					if (lane == 9) {
+						++exhaustedHistories;
+						EXPECT_NE(item._iMagical, ITEM_QUALITY_UNIQUE);
+					}
 				}
 			}
 		}
 		stream << ']';
-		document.Number("selectorCount", selectorCount); document.Number("worldCount", worldCount);
-		document.Number("fullPools", fullPools); document.Number("exhaustedPlacements", exhaustedPlacements);
-		document.Number("signedOverwrites", signedOverwrites); document.Number("generatedUniques", generatedUniques);
+		document.Number("selectorCount", selectorCount);
+		document.Number("worldCount", worldCount);
+		document.Number("fullPools", fullPools);
+		document.Number("exhaustedPlacements", exhaustedPlacements);
+		document.Number("signedOverwrites", signedOverwrites);
+		document.Number("generatedUniques", generatedUniques);
 		document.Number("exhaustedHistories", exhaustedHistories);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
-	EXPECT_EQ(selectorCount, 224); EXPECT_EQ(worldCount, 40);
-	EXPECT_EQ(fullPools, 4); EXPECT_EQ(exhaustedPlacements, 4); EXPECT_EQ(signedOverwrites, 4);
-	EXPECT_EQ(generatedUniques, 4); EXPECT_EQ(exhaustedHistories, 4);
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	EXPECT_EQ(selectorCount, 224);
+	EXPECT_EQ(worldCount, 40);
+	EXPECT_EQ(fullPools, 4);
+	EXPECT_EQ(exhaustedPlacements, 4);
+	EXPECT_EQ(signedOverwrites, 4);
+	EXPECT_EQ(generatedUniques, 4);
+	EXPECT_EQ(exhaustedHistories, 4);
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-item-placement.json"), 32U * 1024U * 1024U);
 }
 
@@ -1058,14 +1220,18 @@ TEST_F(ThemeStaticLightingTest, CaptureZeroOffsetNativeStaticLighting)
 		document.String("format", "godevilution-cathedral-theme-static-light");
 		document.Number("version", 1);
 		document.String("policy", "original-diablo-cathedral-zero-offset-static-light");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		auto capture = [&](Point position, int radius, bool loading) {
 			PrepareLighting(loading);
 			if (caseCount++ != 0) stream << ',';
 			JsonObject row(stream);
-			row.Number("x", position.x); row.Number("y", position.y);
-			row.Number("radius", radius); row.Boolean("loadingMapObjects", loading);
-			row.Key("input"); WriteLightChannels(stream);
+			row.Number("x", position.x);
+			row.Number("y", position.y);
+			row.Number("radius", radius);
+			row.Boolean("loadingMapObjects", loading);
+			row.Key("input");
+			WriteLightChannels(stream);
 			const uint32_t seed = GetLCGEngineState();
 			const int activeCount = CurrentLightManager.activeLightCount_;
 			const auto activeIds = CurrentLightManager.activeLights_;
@@ -1074,41 +1240,66 @@ TEST_F(ThemeStaticLightingTest, CaptureZeroOffsetNativeStaticLighting)
 			EXPECT_EQ(GetLCGEngineState(), seed);
 			EXPECT_EQ(CurrentLightManager.activeLightCount_, activeCount);
 			EXPECT_EQ(CurrentLightManager.activeLights_, activeIds);
-			row.Key("expected"); WriteLightChannels(stream);
+			row.Key("expected");
+			WriteLightChannels(stream);
 		};
 		for (int radius = 0; radius < 16; ++radius)
-			for (bool loading : { false, true }) capture({ 50, 50 }, radius, loading);
+			for (bool loading : { false, true })
+				capture({ 50, 50 }, radius, loading);
 		for (Point position : { Point { 0, 0 }, Point { 111, 0 }, Point { 0, 111 }, Point { 111, 111 } })
-			for (bool loading : { false, true }) capture(position, 5, loading);
-		stream << ']'; document.Number("caseCount", caseCount);
+			for (bool loading : { false, true })
+				capture(position, 5, loading);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(caseCount, 40);
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-static-light.json"), 8U * 1024U * 1024U);
 }
 
 void WriteRoomPoint(std::ostream &out, Point value)
 {
-	JsonObject point(out); point.Number("x", value.x); point.Number("y", value.y);
+	JsonObject point(out);
+	point.Number("x", value.x);
+	point.Number("y", value.y);
 }
 
 void WriteRoomObject(std::ostream &out, int slot, const Object &value)
 {
-	JsonObject json(out); json.Number("slot", slot);
+	JsonObject json(out);
+	json.Number("slot", slot);
 #define ROOM_OBJECT_N(key, field) json.Number(key, value.field)
 #define ROOM_OBJECT_B(key, field) json.Boolean(key, value.field)
-	ROOM_OBJECT_N("type", _otype); json.Key("position"); WriteRoomPoint(out, value.position);
-	ROOM_OBJECT_B("applyLighting", applyLighting); ROOM_OBJECT_N("animFlag", _oAnimFlag);
-	ROOM_OBJECT_N("animDelay", _oAnimDelay); ROOM_OBJECT_N("animCount", _oAnimCnt);
-	ROOM_OBJECT_N("animLength", _oAnimLen); ROOM_OBJECT_N("animFrame", _oAnimFrame);
-	ROOM_OBJECT_N("animWidth", _oAnimWidth); ROOM_OBJECT_B("deleteFlag", _oDelFlag);
-	ROOM_OBJECT_N("breakFlag", _oBreak); ROOM_OBJECT_B("solidFlag", _oSolidFlag);
-	ROOM_OBJECT_B("missilePassable", _oMissFlag); ROOM_OBJECT_N("selectionRegion", selectionRegion);
-	ROOM_OBJECT_B("preFlag", _oPreFlag); ROOM_OBJECT_B("trapFlag", _oTrapFlag); ROOM_OBJECT_B("doorFlag", _oDoorFlag);
-	ROOM_OBJECT_N("lightId", _olid); ROOM_OBJECT_N("rndSeed", _oRndSeed);
-	ROOM_OBJECT_N("var1", _oVar1); ROOM_OBJECT_N("var2", _oVar2); ROOM_OBJECT_N("var3", _oVar3);
-	ROOM_OBJECT_N("var4", _oVar4); ROOM_OBJECT_N("var5", _oVar5); ROOM_OBJECT_N("var6", _oVar6);
-	ROOM_OBJECT_N("bookMessage", bookMessage); ROOM_OBJECT_N("var8", _oVar8);
+	ROOM_OBJECT_N("type", _otype);
+	json.Key("position");
+	WriteRoomPoint(out, value.position);
+	ROOM_OBJECT_B("applyLighting", applyLighting);
+	ROOM_OBJECT_N("animFlag", _oAnimFlag);
+	ROOM_OBJECT_N("animDelay", _oAnimDelay);
+	ROOM_OBJECT_N("animCount", _oAnimCnt);
+	ROOM_OBJECT_N("animLength", _oAnimLen);
+	ROOM_OBJECT_N("animFrame", _oAnimFrame);
+	ROOM_OBJECT_N("animWidth", _oAnimWidth);
+	ROOM_OBJECT_B("deleteFlag", _oDelFlag);
+	ROOM_OBJECT_N("breakFlag", _oBreak);
+	ROOM_OBJECT_B("solidFlag", _oSolidFlag);
+	ROOM_OBJECT_B("missilePassable", _oMissFlag);
+	ROOM_OBJECT_N("selectionRegion", selectionRegion);
+	ROOM_OBJECT_B("preFlag", _oPreFlag);
+	ROOM_OBJECT_B("trapFlag", _oTrapFlag);
+	ROOM_OBJECT_B("doorFlag", _oDoorFlag);
+	ROOM_OBJECT_N("lightId", _olid);
+	ROOM_OBJECT_N("rndSeed", _oRndSeed);
+	ROOM_OBJECT_N("var1", _oVar1);
+	ROOM_OBJECT_N("var2", _oVar2);
+	ROOM_OBJECT_N("var3", _oVar3);
+	ROOM_OBJECT_N("var4", _oVar4);
+	ROOM_OBJECT_N("var5", _oVar5);
+	ROOM_OBJECT_N("var6", _oVar6);
+	ROOM_OBJECT_N("bookMessage", bookMessage);
+	ROOM_OBJECT_N("var8", _oVar8);
 #undef ROOM_OBJECT_N
 #undef ROOM_OBJECT_B
 }
@@ -1125,9 +1316,14 @@ TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
 	ASSERT_TRUE(std::filesystem::is_empty(root));
 	struct ExecutionGuard {
 		bool sound = gbSndInited, headless = HeadlessMode;
-		~ExecutionGuard() { gbSndInited = sound; HeadlessMode = headless; }
+		~ExecutionGuard()
+		{
+			gbSndInited = sound;
+			HeadlessMode = headless;
+		}
 	} executionGuard;
-	gbSndInited = false; HeadlessMode = true;
+	gbSndInited = false;
+	HeadlessMode = true;
 	Player remotePlayer; // Avoid the local-player network notification.
 	std::ofstream stream(root / "native-chest-operations.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
@@ -1138,52 +1334,83 @@ TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
 		document.Number("version", 1);
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Key("catalog");
+		WriteCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		constexpr std::string_view names[] = { "zero-content", "ordinary-open", "full-pool", "partial-pool", "local-fallback", "signed-occupancy" };
 		constexpr uint32_t seeds[] = { 0, 1, 2588, UINT32_C(0x80000000), UINT32_MAX, 743271966 };
 		for (int type = OBJ_CHEST1; type <= OBJ_CHEST3; ++type) {
 			for (int branch = 0; branch < 2; ++branch) {
 				for (int lane = 0; lane < 6; ++lane) {
-					PrepareWorld(lane == 2 ? MAXITEMS : lane == 3 ? MAXITEMS - 1 : 2, lane != 3);
+					PrepareWorld(lane == 2 ? MAXITEMS : lane == 3 ? MAXITEMS - 1
+					                                              : 2,
+					    lane != 3);
 					MyPlayer->pLvlLoad = lane == 1 ? 0 : 1; // Live drop animation and loader placement are distinct inputs.
 					Object &chest = Objects[0];
-					chest._otype = static_cast<_object_id>(type); chest.position = { 50, 50 };
-					chest._oSolidFlag = true; chest._oMissFlag = true;
+					chest._otype = static_cast<_object_id>(type);
+					chest.position = { 50, 50 };
+					chest._oSolidFlag = true;
+					chest._oMissFlag = true;
 					chest.selectionRegion = SelectionRegion::Bottom;
-					chest._oAnimFrame = 1; chest._oAnimLen = 3; chest._oAnimDelay = 1; chest._oAnimWidth = 96;
-					chest._oRndSeed = seeds[lane]; chest._oVar1 = lane == 0 ? 0 : type - OBJ_CHEST1 + 1;
+					chest._oAnimFrame = 1;
+					chest._oAnimLen = 3;
+					chest._oAnimDelay = 1;
+					chest._oAnimWidth = 96;
+					chest._oRndSeed = seeds[lane];
+					chest._oVar1 = lane == 0 ? 0 : type - OBJ_CHEST1 + 1;
 					chest._oVar2 = branch;
 					tileAt(chest.position).setObject(1);
-					if (lane == 4) for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPiece(1);
+					if (lane == 4)
+						for (int y = 49; y <= 51; ++y)
+							for (int x = 49; x <= 51; ++x)
+								tileAt(x, y).setPiece(1);
 					if (lane == 5) {
-						tileAt(49, 49).setItem(-3); tileAt(49, 50).setPlayer(-1); tileAt(50, 49).setMonster(-1);
-						tileAt(51, 51).setObject(-2); Objects[1].selectionRegion = SelectionRegion::Bottom;
+						tileAt(49, 49).setItem(-3);
+						tileAt(49, 50).setPlayer(-1);
+						tileAt(50, 49).setMonster(-1);
+						tileAt(51, 51).setObject(-2);
+						Objects[1].selectionRegion = SelectionRegion::Bottom;
 					}
 					SetRndSeed(UINT32_C(0x12345678));
 					const auto before = CaptureItemWorld();
 					if (caseCount++ != 0) stream << ',';
-					JsonObject row(stream); row.String("name", names[lane]); row.Number("depth", 1); row.Number("slot", 0);
+					JsonObject row(stream);
+					row.String("name", names[lane]);
+					row.Number("depth", 1);
+					row.Number("slot", 0);
 					row.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
-					row.Key("inputChest"); WriteRoomObject(stream, 0, chest);
-					row.Key("input"); WriteItemWorld(stream, before, true);
+					row.Key("inputChest");
+					WriteRoomObject(stream, 0, chest);
+					row.Key("input");
+					WriteItemWorld(stream, before, true);
 					SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
 					const auto after = CaptureItemWorld();
-					row.Key("expectedChest"); WriteRoomObject(stream, 0, chest);
-					row.Key("expected"); WriteItemWorld(stream, after, false);
-					EXPECT_EQ(chest.selectionRegion, SelectionRegion::None); EXPECT_EQ(chest._oAnimFrame, 3U);
-					EXPECT_TRUE(chest._oSolidFlag); EXPECT_TRUE(chest._oMissFlag); EXPECT_FALSE(chest._oTrapFlag);
-					EXPECT_EQ(chest._oRndSeed, seeds[lane]); EXPECT_EQ(chest._oVar2, branch);
+					row.Key("expectedChest");
+					WriteRoomObject(stream, 0, chest);
+					row.Key("expected");
+					WriteItemWorld(stream, after, false);
+					EXPECT_EQ(chest.selectionRegion, SelectionRegion::None);
+					EXPECT_EQ(chest._oAnimFrame, 3U);
+					EXPECT_TRUE(chest._oSolidFlag);
+					EXPECT_TRUE(chest._oMissFlag);
+					EXPECT_FALSE(chest._oTrapFlag);
+					EXPECT_EQ(chest._oRndSeed, seeds[lane]);
+					EXPECT_EQ(chest._oVar2, branch);
 					EXPECT_EQ(after.activeCount, before.activeCount + std::min(chest._oVar1, MAXITEMS - before.activeCount));
 					EXPECT_EQ(after.active, before.active);
 					if (lane == 0 || (lane == 2 && branch == 0)) EXPECT_EQ(after.randomState, seeds[lane]);
 					SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
 					const auto repeated = CaptureItemWorld();
-					row.Key("repeatedChest"); WriteRoomObject(stream, 0, chest);
-					row.Key("repeated"); WriteItemWorld(stream, repeated, false);
+					row.Key("repeatedChest");
+					WriteRoomObject(stream, 0, chest);
+					row.Key("repeated");
+					WriteItemWorld(stream, repeated, false);
 					std::ostringstream first, second;
-					WriteItemWorld(first, after, false); WriteItemWorld(second, repeated, false);
-					EXPECT_EQ(first.str(), second.str()); EXPECT_EQ(chest._oAnimFrame, 3U);
+					WriteItemWorld(first, after, false);
+					WriteItemWorld(second, repeated, false);
+					EXPECT_EQ(first.str(), second.str());
+					EXPECT_EQ(chest._oAnimFrame, 3U);
 					for (int slot = 1; slot < MAXOBJECTS; ++slot) {
 						EXPECT_EQ(Objects[slot]._oSolidFlag, before.objectSolid[slot]);
 						EXPECT_EQ(static_cast<int>(Objects[slot].selectionRegion), before.objectSelection[slot]);
@@ -1191,50 +1418,92 @@ TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
 					int index = 0;
 					for (const Tile &tile : tiles()) {
 						const Tile &pre = before.worldTiles[index++];
-						EXPECT_EQ(tile.piece(), pre.piece()); EXPECT_EQ(tile.flags(), pre.flags());
-						EXPECT_EQ(tile.player(), pre.player()); EXPECT_EQ(tile.monster(), pre.monster());
-						EXPECT_EQ(tile.object(), pre.object()); EXPECT_EQ(tile.corpse(), pre.corpse());
-						EXPECT_EQ(tile.light(), pre.light()); EXPECT_EQ(tile.preLight(), pre.preLight());
-						EXPECT_EQ(tile.transVal(), pre.transVal()); EXPECT_EQ(tile.special(), pre.special());
+						EXPECT_EQ(tile.piece(), pre.piece());
+						EXPECT_EQ(tile.flags(), pre.flags());
+						EXPECT_EQ(tile.player(), pre.player());
+						EXPECT_EQ(tile.monster(), pre.monster());
+						EXPECT_EQ(tile.object(), pre.object());
+						EXPECT_EQ(tile.corpse(), pre.corpse());
+						EXPECT_EQ(tile.light(), pre.light());
+						EXPECT_EQ(tile.preLight(), pre.preLight());
+						EXPECT_EQ(tile.transVal(), pre.transVal());
+						EXPECT_EQ(tile.special(), pre.special());
 					}
 				}
 			}
 		}
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(caseCount, 36);
 	EXPECT_LE(std::filesystem::file_size(root / "native-chest-operations.json"), 32U * 1024U * 1024U);
 }
 
 void WriteRoomMonster(std::ostream &out, int slot, const Monster &value)
 {
-	JsonObject json(out); json.Number("slot", slot); json.Number("type", value.type().type);
+	JsonObject json(out);
+	json.Number("slot", slot);
+	json.Number("type", value.type().type);
 #define ROOM_MONSTER_N(key, field) json.Number(key, value.field)
-#define ROOM_MONSTER_P(key, field) json.Key(key); WriteRoomPoint(out, { value.field.x, value.field.y })
-	ROOM_MONSTER_N("levelType", levelType); ROOM_MONSTER_N("mode", mode); ROOM_MONSTER_N("goal", goal);
-	ROOM_MONSTER_N("goalVar1", goalVar1); ROOM_MONSTER_N("goalVar2", goalVar2); ROOM_MONSTER_N("goalVar3", goalVar3);
-	ROOM_MONSTER_N("var1", var1); ROOM_MONSTER_N("var2", var2); ROOM_MONSTER_N("var3", var3);
-	ROOM_MONSTER_N("pathCount", pathCount); ROOM_MONSTER_P("tile", position.tile);
-	ROOM_MONSTER_P("future", position.future); ROOM_MONSTER_P("old", position.old);
-	ROOM_MONSTER_P("last", position.last); ROOM_MONSTER_P("temp", position.temp);
-	ROOM_MONSTER_N("direction", direction); ROOM_MONSTER_N("enemy", enemy); ROOM_MONSTER_P("enemyPosition", enemyPosition);
-	json.Boolean("invalid", value.isInvalid); ROOM_MONSTER_N("ai", ai); ROOM_MONSTER_N("intelligence", intelligence);
-	ROOM_MONSTER_N("activeForTicks", activeForTicks); ROOM_MONSTER_N("uniqueType", uniqueType);
-	ROOM_MONSTER_N("uniqueTranslation", uniqTrans); ROOM_MONSTER_N("corpseId", corpseId); ROOM_MONSTER_N("whoHit", whoHit);
-	ROOM_MONSTER_N("minDamage", minDamage); ROOM_MONSTER_N("maxDamage", maxDamage);
-	ROOM_MONSTER_N("minDamageSpecial", minDamageSpecial); ROOM_MONSTER_N("maxDamageSpecial", maxDamageSpecial);
-	ROOM_MONSTER_N("armorClass", armorClass); ROOM_MONSTER_N("resistance", resistance);
-	ROOM_MONSTER_N("talkMessage", talkMsg); ROOM_MONSTER_N("leader", leader); ROOM_MONSTER_N("leaderRelation", leaderRelation);
-	ROOM_MONSTER_N("packSize", packSize); ROOM_MONSTER_N("flags", flags);
-	ROOM_MONSTER_N("rndItemSeed", rndItemSeed); ROOM_MONSTER_N("aiSeed", aiSeed); ROOM_MONSTER_N("lightId", lightId);
-	ROOM_MONSTER_N("hitPoints", hitPoints); ROOM_MONSTER_N("maxHitPoints", maxHitPoints);
-	ROOM_MONSTER_N("animTicksPerFrame", animInfo.ticksPerFrame); ROOM_MONSTER_N("animTickCounter", animInfo.tickCounterOfCurrentFrame);
-	ROOM_MONSTER_N("animNumberOfFrames", animInfo.numberOfFrames); ROOM_MONSTER_N("animCurrentFrame", animInfo.currentFrame);
+#define ROOM_MONSTER_P(key, field) \
+	json.Key(key);                 \
+	WriteRoomPoint(out, { value.field.x, value.field.y })
+	ROOM_MONSTER_N("levelType", levelType);
+	ROOM_MONSTER_N("mode", mode);
+	ROOM_MONSTER_N("goal", goal);
+	ROOM_MONSTER_N("goalVar1", goalVar1);
+	ROOM_MONSTER_N("goalVar2", goalVar2);
+	ROOM_MONSTER_N("goalVar3", goalVar3);
+	ROOM_MONSTER_N("var1", var1);
+	ROOM_MONSTER_N("var2", var2);
+	ROOM_MONSTER_N("var3", var3);
+	ROOM_MONSTER_N("pathCount", pathCount);
+	ROOM_MONSTER_P("tile", position.tile);
+	ROOM_MONSTER_P("future", position.future);
+	ROOM_MONSTER_P("old", position.old);
+	ROOM_MONSTER_P("last", position.last);
+	ROOM_MONSTER_P("temp", position.temp);
+	ROOM_MONSTER_N("direction", direction);
+	ROOM_MONSTER_N("enemy", enemy);
+	ROOM_MONSTER_P("enemyPosition", enemyPosition);
+	json.Boolean("invalid", value.isInvalid);
+	ROOM_MONSTER_N("ai", ai);
+	ROOM_MONSTER_N("intelligence", intelligence);
+	ROOM_MONSTER_N("activeForTicks", activeForTicks);
+	ROOM_MONSTER_N("uniqueType", uniqueType);
+	ROOM_MONSTER_N("uniqueTranslation", uniqTrans);
+	ROOM_MONSTER_N("corpseId", corpseId);
+	ROOM_MONSTER_N("whoHit", whoHit);
+	ROOM_MONSTER_N("minDamage", minDamage);
+	ROOM_MONSTER_N("maxDamage", maxDamage);
+	ROOM_MONSTER_N("minDamageSpecial", minDamageSpecial);
+	ROOM_MONSTER_N("maxDamageSpecial", maxDamageSpecial);
+	ROOM_MONSTER_N("armorClass", armorClass);
+	ROOM_MONSTER_N("resistance", resistance);
+	ROOM_MONSTER_N("talkMessage", talkMsg);
+	ROOM_MONSTER_N("leader", leader);
+	ROOM_MONSTER_N("leaderRelation", leaderRelation);
+	ROOM_MONSTER_N("packSize", packSize);
+	ROOM_MONSTER_N("flags", flags);
+	ROOM_MONSTER_N("rndItemSeed", rndItemSeed);
+	ROOM_MONSTER_N("aiSeed", aiSeed);
+	ROOM_MONSTER_N("lightId", lightId);
+	ROOM_MONSTER_N("hitPoints", hitPoints);
+	ROOM_MONSTER_N("maxHitPoints", maxHitPoints);
+	ROOM_MONSTER_N("animTicksPerFrame", animInfo.ticksPerFrame);
+	ROOM_MONSTER_N("animTickCounter", animInfo.tickCounterOfCurrentFrame);
+	ROOM_MONSTER_N("animNumberOfFrames", animInfo.numberOfFrames);
+	ROOM_MONSTER_N("animCurrentFrame", animInfo.currentFrame);
 	ROOM_MONSTER_N("golemToHit", golemToHit);
-	ROOM_MONSTER_N("reducePlayerStrength", reducePlayerStrength); ROOM_MONSTER_N("reducePlayerMagic", reducePlayerMagic);
-	ROOM_MONSTER_N("reducePlayerDexterity", reducePlayerDexterity); ROOM_MONSTER_N("reducePlayerVitality", reducePlayerVitality);
-	ROOM_MONSTER_N("reducePlayerMaxHP", reducePlayerMaxHP); ROOM_MONSTER_N("reducePlayerMaxMana", reducePlayerMaxMana);
+	ROOM_MONSTER_N("reducePlayerStrength", reducePlayerStrength);
+	ROOM_MONSTER_N("reducePlayerMagic", reducePlayerMagic);
+	ROOM_MONSTER_N("reducePlayerDexterity", reducePlayerDexterity);
+	ROOM_MONSTER_N("reducePlayerVitality", reducePlayerVitality);
+	ROOM_MONSTER_N("reducePlayerMaxHP", reducePlayerMaxHP);
+	ROOM_MONSTER_N("reducePlayerMaxMana", reducePlayerMaxMana);
 #undef ROOM_MONSTER_N
 #undef ROOM_MONSTER_P
 }
@@ -1244,54 +1513,94 @@ void WriteRoomWorld(std::ostream &out)
 	JsonObject json(out);
 	json.Number("randomState", GetLCGEngineState());
 	json.Number("activeObjectCount", ActiveObjectCount);
-	json.Key("activeObjectIds"); WriteArray(out, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { out << id; });
-	json.Key("availableObjectIds"); WriteArray(out, ObjectPoolAdapter::AvailableObjectIds(), [&](int id) { out << id; });
-	json.Key("objects"); out << '[';
-	for (int slot = 0; slot < MAXOBJECTS; ++slot) { if (slot) out << ','; WriteRoomObject(out, slot, Objects[slot]); }
+	json.Key("activeObjectIds");
+	WriteArray(out, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { out << id; });
+	json.Key("availableObjectIds");
+	WriteArray(out, ObjectPoolAdapter::AvailableObjectIds(), [&](int id) { out << id; });
+	json.Key("objects");
+	out << '[';
+	for (int slot = 0; slot < MAXOBJECTS; ++slot) {
+		if (slot) out << ',';
+		WriteRoomObject(out, slot, Objects[slot]);
+	}
 	out << ']';
-	json.Number("activeMonsterCount", ActiveMonsterCount); json.Number("monsterTargetCount", MonsterPopulationTargetForTesting());
-	json.Key("activeMonsterIds"); WriteArray(out, MonsterPoolAdapter::ActiveMonsterIds(), [&](unsigned id) { out << id; });
-	json.Key("monsters"); out << '[';
-	for (int slot = 0; slot < MaxMonsters; ++slot) { if (slot) out << ','; WriteRoomMonster(out, slot, Monsters[slot]); }
+	json.Number("activeMonsterCount", ActiveMonsterCount);
+	json.Number("monsterTargetCount", MonsterPopulationTargetForTesting());
+	json.Key("activeMonsterIds");
+	WriteArray(out, MonsterPoolAdapter::ActiveMonsterIds(), [&](unsigned id) { out << id; });
+	json.Key("monsters");
+	out << '[';
+	for (int slot = 0; slot < MaxMonsters; ++slot) {
+		if (slot) out << ',';
+		WriteRoomMonster(out, slot, Monsters[slot]);
+	}
 	out << ']';
-	json.Key("monsterPetrified"); WriteArray(out, MonsterPoolAdapter::AllMonsters(), [&](const Monster &m) { out << (m.animInfo.isPetrified ? "true" : "false"); });
+	json.Key("monsterPetrified");
+	WriteArray(out, MonsterPoolAdapter::AllMonsters(), [&](const Monster &m) { out << (m.animInfo.isPetrified ? "true" : "false"); });
 	json.Number("activeItemCount", ActiveItemCount);
-	json.Key("activeItemIds"); WriteArray(out, ItemPoolAdapter::ActiveItemIds(), [&](uint8_t id) { out << static_cast<int>(id); });
-	json.Key("items"); out << '[';
-	for (int slot = 0; slot <= MAXITEMS; ++slot) { if (slot) out << ','; WriteItem(out, Items[slot]); }
-	out << ']'; json.Key("uniqueFlags"); WriteFlags(out, CaptureFlags());
-	json.Key("tiles"); WriteArray(out, tiles(), [&](const Tile &tile) {
+	json.Key("activeItemIds");
+	WriteArray(out, ItemPoolAdapter::ActiveItemIds(), [&](uint8_t id) { out << static_cast<int>(id); });
+	json.Key("items");
+	out << '[';
+	for (int slot = 0; slot <= MAXITEMS; ++slot) {
+		if (slot) out << ',';
+		WriteItem(out, Items[slot]);
+	}
+	out << ']';
+	json.Key("uniqueFlags");
+	WriteFlags(out, CaptureFlags());
+	json.Key("tiles");
+	WriteArray(out, tiles(), [&](const Tile &tile) {
 		out << '[' << tile.piece() << ',' << static_cast<int>(tile.special()) << ',' << static_cast<int>(tile.transVal()) << ','
 		    << static_cast<int>(tile.flags()) << ',' << static_cast<int>(tile.corpse()) << ',' << static_cast<int>(tile.player()) << ','
 		    << tile.monster() << ',' << static_cast<int>(tile.object()) << ',' << static_cast<int>(tile.item()) << ','
 		    << static_cast<int>(tile.light()) << ',' << static_cast<int>(tile.preLight()) << ']';
 	});
-	json.Key("sol"); WriteArray(out, tileProperties(), [&](TileProperties property) { out << static_cast<int>(property); });
+	json.Key("sol");
+	WriteArray(out, tileProperties(), [&](TileProperties property) { out << static_cast<int>(property); });
 	const auto scratch = CaptureThemeRoomGlobalsForTesting();
-	json.Number("themeX", scratch.x); json.Number("themeY", scratch.y); json.Number("themeVar1", scratch.variant);
-	json.Key("flags"); {
-		JsonObject flags(out); flags.Boolean("armorAvailable", armorFlag()); flags.Boolean("weaponAvailable", weaponFlag());
-		flags.Boolean("treasureAvailable", scratch.treasure); flags.Boolean("bloodFountainAvailable", scratch.bloodFountain);
-		flags.Boolean("purifyingFountainAvailable", scratch.purifyingFountain); flags.Boolean("murkyFountainAvailable", scratch.murkyFountain);
-		flags.Boolean("tearFountainAvailable", scratch.tearFountain); flags.Boolean("cauldronAvailable", scratch.cauldron);
+	json.Number("themeX", scratch.x);
+	json.Number("themeY", scratch.y);
+	json.Number("themeVar1", scratch.variant);
+	json.Key("flags");
+	{
+		JsonObject flags(out);
+		flags.Boolean("armorAvailable", armorFlag());
+		flags.Boolean("weaponAvailable", weaponFlag());
+		flags.Boolean("treasureAvailable", scratch.treasure);
+		flags.Boolean("bloodFountainAvailable", scratch.bloodFountain);
+		flags.Boolean("purifyingFountainAvailable", scratch.purifyingFountain);
+		flags.Boolean("murkyFountainAvailable", scratch.murkyFountain);
+		flags.Boolean("tearFountainAvailable", scratch.tearFountain);
+		flags.Boolean("cauldronAvailable", scratch.cauldron);
 	}
-	json.Key("lightAllocator"); {
-		JsonObject lights(out); lights.Number("activeCount", CurrentLightManager.activeLightCount_);
+	json.Key("lightAllocator");
+	{
+		JsonObject lights(out);
+		lights.Number("activeCount", CurrentLightManager.activeLightCount_);
 		lights.Boolean("updateLighting", CurrentLightManager.updateLighting_);
 #ifdef _DEBUG
 		lights.Boolean("disableLighting", CurrentLightManager.disableLighting_);
 #else
 		lights.Boolean("disableLighting", false);
 #endif
-		lights.Key("activeIds"); WriteArray(out, CurrentLightManager.activeLights_, [&](uint8_t id) { out << static_cast<int>(id); });
-		lights.Key("records"); int id = 0;
+		lights.Key("activeIds");
+		WriteArray(out, CurrentLightManager.activeLights_, [&](uint8_t id) { out << static_cast<int>(id); });
+		lights.Key("records");
+		int id = 0;
 		WriteArray(out, CurrentLightManager.lights_, [&](const Light &light) {
-			JsonObject row(out); row.Number("lightId", id++);
-			row.Key("tile"); WriteRoomPoint(out, { light.position.tile.x, light.position.tile.y });
-			row.Number("offsetX", light.position.offset.deltaX); row.Number("offsetY", light.position.offset.deltaY);
-			row.Key("oldTile"); WriteRoomPoint(out, { light.position.old.x, light.position.old.y });
-			row.Number("radius", light.radius); row.Number("oldRadius", light.oldRadius);
-			row.Boolean("isInvalid", light.isInvalid); row.Boolean("hasChanged", light.hasChanged);
+			JsonObject row(out);
+			row.Number("lightId", id++);
+			row.Key("tile");
+			WriteRoomPoint(out, { light.position.tile.x, light.position.tile.y });
+			row.Number("offsetX", light.position.offset.deltaX);
+			row.Number("offsetY", light.position.offset.deltaY);
+			row.Key("oldTile");
+			WriteRoomPoint(out, { light.position.old.x, light.position.old.y });
+			row.Number("radius", light.radius);
+			row.Number("oldRadius", light.oldRadius);
+			row.Boolean("isInvalid", light.isInvalid);
+			row.Boolean("hasChanged", light.hasChanged);
 		});
 	}
 }
@@ -1340,18 +1649,30 @@ struct NativeThemeRoomGuard {
 	~NativeThemeRoomGuard()
 	{
 		LevelBestiary.init();
-		for (int i = 0; i < MaxLvlMTypes; ++i) LevelBestiary.types[i] = std::move(oldBestiary[i]);
+		for (int i = 0; i < MaxLvlMTypes; ++i)
+			LevelBestiary.types[i] = std::move(oldBestiary[i]);
 		LevelBestiary.restoreSizeForTesting(oldBestiarySize);
-		for (int i = 0; i < MaxMonsters; ++i) Monsters[i] = std::move(monsters[i]);
-		std::copy(activeMonsters.begin(), activeMonsters.end(), ActiveMonsters); ActiveMonsterCount = monsterCount;
+		for (int i = 0; i < MaxMonsters; ++i)
+			Monsters[i] = std::move(monsters[i]);
+		std::copy(activeMonsters.begin(), activeMonsters.end(), ActiveMonsters);
+		ActiveMonsterCount = monsterCount;
 		std::copy(activeObjects.begin(), activeObjects.end(), ActiveObjects);
-		std::copy(availableObjects.begin(), availableObjects.end(), AvailableObjects); ActiveObjectCount = objectCount;
-		std::copy(oldThemes.begin(), oldThemes.end(), themes); numThemes() = oldThemeCount;
-		armorFlag() = oldArmor; weaponFlag() = oldWeapon; RestoreThemeRoomGlobalsForTesting(oldScratch);
-		AllObjects = std::move(oldObjectData); ObjMasterLoadList = std::move(oldObjectFiles);
-		MonstersData = std::move(oldMonsterData); UniqueMonstersData = std::move(oldUniques); AiRegistry = std::move(oldAi);
+		std::copy(availableObjects.begin(), availableObjects.end(), AvailableObjects);
+		ActiveObjectCount = objectCount;
+		std::copy(oldThemes.begin(), oldThemes.end(), themes);
+		numThemes() = oldThemeCount;
+		armorFlag() = oldArmor;
+		weaponFlag() = oldWeapon;
+		RestoreThemeRoomGlobalsForTesting(oldScratch);
+		AllObjects = std::move(oldObjectData);
+		ObjMasterLoadList = std::move(oldObjectFiles);
+		MonstersData = std::move(oldMonsterData);
+		UniqueMonstersData = std::move(oldUniques);
+		AiRegistry = std::move(oldAi);
 		std::copy(oldQuests.begin(), oldQuests.end(), Quests);
-		gbSndInited = oldSound; HeadlessMode = oldHeadless; MyPlayerId = oldPlayerId;
+		gbSndInited = oldSound;
+		HeadlessMode = oldHeadless;
+		MyPlayerId = oldPlayerId;
 	}
 };
 
@@ -1365,14 +1686,19 @@ protected:
 		ThemeItemPlacementTest::SetUp();
 		if (HasFatalFailure()) return;
 		ASSERT_TRUE(LevelBestiary.empty()) << "A dedicated empty bestiary is required.";
-		ASSERT_TRUE(AllObjects.empty()); ASSERT_TRUE(MonstersData.empty());
+		ASSERT_TRUE(AllObjects.empty());
+		ASSERT_TRUE(MonstersData.empty());
 		roomGuard = std::make_unique<NativeThemeRoomGuard>();
-		HeadlessMode = true; gbSndInited = false; MyPlayerId = 0;
+		HeadlessMode = true;
+		gbSndInited = false;
+		MyPlayerId = 0;
 		for (const char *asset : { "txtdata\\objects\\objdat.tsv", "txtdata\\monsters\\monstdat.tsv",
 		         "txtdata\\monsters\\unique_monstdat.tsv", "txtdata\\monsters\\monster_missiles.tsv" })
 			ASSERT_TRUE(FindAsset(asset).ok()) << "A bundled theme metadata resource is missing.";
-		LoadObjectData(); LoadMonsterData();
-		for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
+		LoadObjectData();
+		LoadMonsterData();
+		for (Quest &quest : Quests)
+			quest._qactive = QUEST_NOTAVAIL;
 		ASSERT_EQ(AllObjects.size(), 109U);
 		for (const int type : { 109, 0, 8, 20, 34, 42 }) {
 			const auto index = LevelBestiary.addType(static_cast<_monster_id>(type), type == 109 ? PLACE_SPECIAL : PLACE_SCATTER);
@@ -1386,10 +1712,17 @@ protected:
 		PrepareWorld(itemCount);
 		currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
 		CurrentLightManager.MakeLightTable();
-		for (Tile &tile : tiles()) { tile.setPiece(1); tile.setLight(15); tile.setPreLight(15); tile.setCorpse(7); tile.setSpecial(11); }
+		for (Tile &tile : tiles()) {
+			tile.setPiece(1);
+			tile.setLight(15);
+			tile.setPreLight(15);
+			tile.setCorpse(7);
+			tile.setSpecial(11);
+		}
 		for (int y = 48; y <= 54; ++y)
 			for (int x = 48; x <= 54; ++x) {
-				tileAt(x, y).setPiece(0); tileAt(x, y).setTransVal(1);
+				tileAt(x, y).setPiece(0);
+				tileAt(x, y).setTransVal(1);
 				tileAt(x, y).addFlags(DungeonFlag::Populated);
 			}
 		tileProperties()[2] = TileProperties::Solid | TileProperties::Trap;
@@ -1398,30 +1731,50 @@ protected:
 		for (int i = 0; i < MAXOBJECTS; ++i) {
 			ActiveObjects[i] = objectCount == MAXOBJECTS ? MAXOBJECTS - 1 - i : 0;
 			AvailableObjects[i] = MAXOBJECTS - 1 - i;
-			Objects[i] = {}; Objects[i]._otype = OBJ_CANDLE1;
-			Objects[i]._oVar1 = 91; Objects[i]._oVar2 = -17; Objects[i]._oVar3 = 23;
-			Objects[i]._oVar4 = 31; Objects[i]._oVar5 = 41; Objects[i]._oVar6 = 53;
-			Objects[i]._oVar8 = 67; Objects[i]._oRndSeed = 1000 + i; Objects[i]._olid = 13;
+			Objects[i] = {};
+			Objects[i]._otype = OBJ_CANDLE1;
+			Objects[i]._oVar1 = 91;
+			Objects[i]._oVar2 = -17;
+			Objects[i]._oVar3 = 23;
+			Objects[i]._oVar4 = 31;
+			Objects[i]._oVar5 = 41;
+			Objects[i]._oVar6 = 53;
+			Objects[i]._oVar8 = 67;
+			Objects[i]._oRndSeed = 1000 + i;
+			Objects[i]._olid = 13;
 		}
 		ActiveMonsterCount = monsterCount;
 		for (int i = 0; i < MaxMonsters; ++i) {
 			ActiveMonsters[i] = MaxMonsters - 1 - i;
-			Monsters[i] = {}; Monsters[i].position.tile = { 1, 0 };
-			Monsters[i].position.future = { 1, 0 }; Monsters[i].position.old = { 1, 0 };
-			Monsters[i].position.last = { 13, 17 }; Monsters[i].position.temp = { 19, 23 };
-			Monsters[i].var1 = 29; Monsters[i].var2 = 31; Monsters[i].var3 = 37;
-			Monsters[i].uniqTrans = 7; Monsters[i].packSize = 5; Monsters[i].corpseId = 3;
+			Monsters[i] = {};
+			Monsters[i].position.tile = { 1, 0 };
+			Monsters[i].position.future = { 1, 0 };
+			Monsters[i].position.old = { 1, 0 };
+			Monsters[i].position.last = { 13, 17 };
+			Monsters[i].position.temp = { 19, 23 };
+			Monsters[i].var1 = 29;
+			Monsters[i].var2 = 31;
+			Monsters[i].var3 = 37;
+			Monsters[i].uniqTrans = 7;
+			Monsters[i].packSize = 5;
+			Monsters[i].corpseId = 3;
 			Monsters[i].animInfo.isPetrified = true;
 		}
 		for (int i = 0; i < itemCount; ++i) {
-			Items[ActiveItems[i]]._iAnimFlag = true; Items[ActiveItems[i]].selectionRegion = SelectionRegion::None;
+			Items[ActiveItems[i]]._iAnimFlag = true;
+			Items[ActiveItems[i]].selectionRegion = SelectionRegion::None;
 			Items[ActiveItems[i]].animInfo.currentFrame = 0;
 		}
-		tileAt(50, 50).setPlayer(-1); tileAt(51, 50).setMonster(-1);
-		MyPlayer->plractive = true; MyPlayer->plrlevel = static_cast<uint8_t>(depth);
-		MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pLvlChanging = false;
-		MyPlayer->position.tile = { 60, 60 }; MyPlayer->position.future = { 61, 60 };
-		LoadingMapObjects = false; CurrentLightManager.Init();
+		tileAt(50, 50).setPlayer(-1);
+		tileAt(51, 50).setMonster(-1);
+		MyPlayer->plractive = true;
+		MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+		MyPlayer->plrIsOnSetLevel = false;
+		MyPlayer->_pLvlChanging = false;
+		MyPlayer->position.tile = { 60, 60 };
+		MyPlayer->position.future = { 61, 60 };
+		LoadingMapObjects = false;
+		CurrentLightManager.Init();
 		for (int id = 0; id < MAXLIGHTS; ++id) {
 			CurrentLightManager.activeLights_[id] = MAXLIGHTS - 1 - id;
 			CurrentLightManager.lights_[id] = {};
@@ -1429,37 +1782,59 @@ protected:
 			CurrentLightManager.lights_[id].oldRadius = 3;
 		}
 		CurrentLightManager.activeLightCount_ = 2;
-		armorFlag() = true; weaponFlag() = true;
+		armorFlag() = true;
+		weaponFlag() = true;
 		RestoreThemeRoomGlobalsForTesting({ 29, 31, 2, true, false, true, false, true, false });
 	}
 
 	void WriteRoomCatalog(std::ostream &out)
 	{
-		JsonObject json(out); json.Key("objects"); int id = 0;
+		JsonObject json(out);
+		json.Key("objects");
+		int id = 0;
 		WriteArray(out, AllObjects, [&](const ObjectData &object) {
-			JsonObject row(out); row.Number("nativeType", id++); row.Number("flags", object.flags);
-			row.Number("animDelay", object.animDelay); row.Number("animLength", object.animLen);
-			row.Number("animWidth", object.animWidth); row.Number("selectionRegion", object.selectionRegion);
+			JsonObject row(out);
+			row.Number("nativeType", id++);
+			row.Number("flags", object.flags);
+			row.Number("animDelay", object.animDelay);
+			row.Number("animLength", object.animLen);
+			row.Number("animWidth", object.animWidth);
+			row.Number("selectionRegion", object.selectionRegion);
 		});
 		json.Key("bestiary");
 		WriteArray(out, LevelBestiary, [&](const CMonster &type) {
-			const auto &data = type.data(); JsonObject row(out);
-			row.Number("nativeType", type.type); row.Boolean("isSkeleton", IsSkel(type.type)); row.Boolean("isGoat", IsGoat(type.type));
-			row.Number("placeFlags", type.placeFlags); row.Number("minimumHitPoints", data.hitPointsMinimum);
-			row.Number("maximumHitPoints", data.hitPointsMaximum); row.Number("ai", data.ai);
-			row.Number("intelligence", data.intelligence); row.Number("abilityFlags", data.abilityFlags);
+			const auto &data = type.data();
+			JsonObject row(out);
+			row.Number("nativeType", type.type);
+			row.Boolean("isSkeleton", IsSkel(type.type));
+			row.Boolean("isGoat", IsGoat(type.type));
+			row.Number("placeFlags", type.placeFlags);
+			row.Number("minimumHitPoints", data.hitPointsMinimum);
+			row.Number("maximumHitPoints", data.hitPointsMaximum);
+			row.Number("ai", data.ai);
+			row.Number("intelligence", data.intelligence);
+			row.Number("abilityFlags", data.abilityFlags);
 #define ROOM_DATA(key, field) row.Number(key, data.field)
-			ROOM_DATA("minDamage", minDamage); ROOM_DATA("maxDamage", maxDamage);
-			ROOM_DATA("minDamageSpecial", minDamageSpecial); ROOM_DATA("maxDamageSpecial", maxDamageSpecial);
-			ROOM_DATA("armorClass", armorClass); ROOM_DATA("resistance", resistance);
-			ROOM_DATA("reducePlayerStrength", reducePlayerStrength); ROOM_DATA("reducePlayerMagic", reducePlayerMagic);
-			ROOM_DATA("reducePlayerDexterity", reducePlayerDexterity); ROOM_DATA("reducePlayerVitality", reducePlayerVitality);
-			ROOM_DATA("reducePlayerMaxHP", reducePlayerMaxHP); ROOM_DATA("reducePlayerMaxMana", reducePlayerMaxMana);
+			ROOM_DATA("minDamage", minDamage);
+			ROOM_DATA("maxDamage", maxDamage);
+			ROOM_DATA("minDamageSpecial", minDamageSpecial);
+			ROOM_DATA("maxDamageSpecial", maxDamageSpecial);
+			ROOM_DATA("armorClass", armorClass);
+			ROOM_DATA("resistance", resistance);
+			ROOM_DATA("reducePlayerStrength", reducePlayerStrength);
+			ROOM_DATA("reducePlayerMagic", reducePlayerMagic);
+			ROOM_DATA("reducePlayerDexterity", reducePlayerDexterity);
+			ROOM_DATA("reducePlayerVitality", reducePlayerVitality);
+			ROOM_DATA("reducePlayerMaxHP", reducePlayerMaxHP);
+			ROOM_DATA("reducePlayerMaxMana", reducePlayerMaxMana);
 #undef ROOM_DATA
-			row.Key("frames"); WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.frames); });
-			row.Key("rates"); WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.rate); });
+			row.Key("frames");
+			WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.frames); });
+			row.Key("rates");
+			WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.rate); });
 		});
-		json.Key("shrineAvailable"); WriteArray(out, SinglePlayerShrineAvailabilityForTesting(), [&](bool available) { out << (available ? "true" : "false"); });
+		json.Key("shrineAvailable");
+		WriteArray(out, SinglePlayerShrineAvailabilityForTesting(), [&](bool available) { out << (available ? "true" : "false"); });
 	}
 
 private:
@@ -1506,9 +1881,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 		document.Number("version", 1);
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
-		document.Key("roomCatalog"); WriteRoomCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Key("catalog");
+		WriteCatalog(stream);
+		document.Key("roomCatalog");
+		WriteRoomCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		struct Lane {
 			std::string name;
 			int depth;
@@ -1533,10 +1911,10 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 				std::ostringstream name;
 				name << "depth-" << depth << "-type-" << rawType;
 				lanes.push_back({ name.str(), depth, rawType, 1, static_cast<int>(index % 2),
-					intrinsic || linkedWallTrap,
-					static_cast<int>((depth + static_cast<int>(index)) % 2),
-					seeds[(static_cast<size_t>(depth) + index) % seeds.size()],
-					2, false, linkedWallTrap });
+				    intrinsic || linkedWallTrap,
+				    static_cast<int>((depth + static_cast<int>(index)) % 2),
+				    seeds[(static_cast<size_t>(depth) + index) % seeds.size()],
+				    2, false, linkedWallTrap });
 			}
 		}
 		for (int rawType = 68; rawType <= 70; ++rawType) {
@@ -1606,21 +1984,32 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 			row.Boolean("blockPlacement", lane.blockPlacement);
 			row.Boolean("linkedWallTrap", lane.linkedWallTrap);
 			auto writeLinkedWallTrap = [&]() {
-				if (lane.linkedWallTrap) WriteRoomObject(stream, 1, Objects[1]);
-				else stream << "null";
+				if (lane.linkedWallTrap)
+					WriteRoomObject(stream, 1, Objects[1]);
+				else
+					stream << "null";
 			};
-			row.Key("inputChest"); WriteRoomObject(stream, 0, chest);
-			row.Key("inputLinkedWallTrap"); writeLinkedWallTrap();
-			row.Key("inputActiveObjectIds"); WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
-			row.Key("input"); WriteItemWorld(stream, before, true);
-			row.Key("inputMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Key("inputChest");
+			WriteRoomObject(stream, 0, chest);
+			row.Key("inputLinkedWallTrap");
+			writeLinkedWallTrap();
+			row.Key("inputActiveObjectIds");
+			WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
+			row.Key("input");
+			WriteItemWorld(stream, before, true);
+			row.Key("inputMissiles");
+			WriteChestMissiles(stream, remotePlayer.position.tile);
 			row.Boolean("inputMissilePreFlag", MissilePreFlag);
 			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
 			const NativeItemWorldState after = CaptureItemWorld();
-			row.Key("expectedChest"); WriteRoomObject(stream, 0, chest);
-			row.Key("expectedLinkedWallTrap"); writeLinkedWallTrap();
-			row.Key("expected"); WriteItemWorld(stream, after, false);
-			row.Key("expectedMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Key("expectedChest");
+			WriteRoomObject(stream, 0, chest);
+			row.Key("expectedLinkedWallTrap");
+			writeLinkedWallTrap();
+			row.Key("expected");
+			WriteItemWorld(stream, after, false);
+			row.Key("expectedMissiles");
+			WriteChestMissiles(stream, remotePlayer.position.tile);
 			row.Boolean("expectedMissilePreFlag", MissilePreFlag);
 			EXPECT_EQ(chest.selectionRegion, SelectionRegion::None);
 			EXPECT_EQ(chest._oAnimFrame, 3U);
@@ -1656,11 +2045,16 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 			WriteChestMissiles(firstMissiles, remotePlayer.position.tile);
 			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
 			const NativeItemWorldState repeated = CaptureItemWorld();
-			row.Key("repeatedChest"); WriteRoomObject(stream, 0, chest);
-			row.Key("repeatedLinkedWallTrap"); writeLinkedWallTrap();
-			row.Key("repeatedActiveObjectIds"); WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
-			row.Key("repeated"); WriteItemWorld(stream, repeated, false);
-			row.Key("repeatedMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Key("repeatedChest");
+			WriteRoomObject(stream, 0, chest);
+			row.Key("repeatedLinkedWallTrap");
+			writeLinkedWallTrap();
+			row.Key("repeatedActiveObjectIds");
+			WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
+			row.Key("repeated");
+			WriteItemWorld(stream, repeated, false);
+			row.Key("repeatedMissiles");
+			WriteChestMissiles(stream, remotePlayer.position.tile);
 			row.Boolean("repeatedMissilePreFlag", MissilePreFlag);
 			std::ostringstream repeatedState, repeatedChest, repeatedMissiles;
 			WriteItemWorld(repeatedState, repeated, false);
@@ -1673,7 +2067,9 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 		stream << ']';
 		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(caseCount, 30);
 	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-chest-operations.json"), 64U * 1024U * 1024U);
 }
@@ -1731,9 +2127,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 	ASSERT_TRUE(std::filesystem::is_empty(root));
 	struct ExecutionGuard {
 		bool sound = gbSndInited, headless = HeadlessMode;
-		~ExecutionGuard() { gbSndInited = sound; HeadlessMode = headless; }
+		~ExecutionGuard()
+		{
+			gbSndInited = sound;
+			HeadlessMode = headless;
+		}
 	} executionGuard;
-	gbSndInited = false; HeadlessMode = true;
+	gbSndInited = false;
+	HeadlessMode = true;
 	Player remotePlayer;
 	std::ofstream stream(root / "native-sarcophagus-operations.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
@@ -1745,9 +2146,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 		document.String("policy", "original-diablo-single-player-normal-untrapped-cathedral-level1");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
-		document.Key("roomCatalog"); WriteRoomCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Key("catalog");
+		WriteCatalog(stream);
+		document.Key("roomCatalog");
+		WriteRoomCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		struct Lane {
 			const char *name;
 			int var1;
@@ -1769,8 +2173,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			{ "spawn-var1-8-no-space", 8, UINT32_C(0x80000000), 2, false, 3 },
 		};
 		constexpr std::array<Direction, 8> spawnDirections {
-			Direction::North, Direction::NorthEast, Direction::East, Direction::NorthWest,
-			Direction::SouthEast, Direction::West, Direction::SouthWest, Direction::South,
+			Direction::North,
+			Direction::NorthEast,
+			Direction::East,
+			Direction::NorthWest,
+			Direction::SouthEast,
+			Direction::West,
+			Direction::SouthWest,
+			Direction::South,
 		};
 		auto isSpawnTileAvailable = [](Point position) {
 			return InDungeonBounds(position) && tileAt(position).player() == 0
@@ -1792,13 +2202,19 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 				const Point position = positions[i];
 				const Tile &tile = tileAt(position);
 				JsonObject row(stream);
-				row.Key("position"); WriteRoomPoint(stream, position);
-				row.Number("piece", tile.piece()); row.Number("special", static_cast<int>(tile.special()));
+				row.Key("position");
+				WriteRoomPoint(stream, position);
+				row.Number("piece", tile.piece());
+				row.Number("special", static_cast<int>(tile.special()));
 				row.Number("transparency", static_cast<int>(tile.transVal()));
-				row.Number("flags", static_cast<int>(tile.flags())); row.Number("corpse", static_cast<int>(tile.corpse()));
-				row.Number("player", static_cast<int>(tile.player())); row.Number("monster", tile.monster());
-				row.Number("object", static_cast<int>(tile.object())); row.Number("item", static_cast<int>(tile.item()));
-				row.Number("light", static_cast<int>(tile.light())); row.Number("preLight", static_cast<int>(tile.preLight()));
+				row.Number("flags", static_cast<int>(tile.flags()));
+				row.Number("corpse", static_cast<int>(tile.corpse()));
+				row.Number("player", static_cast<int>(tile.player()));
+				row.Number("monster", tile.monster());
+				row.Number("object", static_cast<int>(tile.object()));
+				row.Number("item", static_cast<int>(tile.item()));
+				row.Number("light", static_cast<int>(tile.light()));
+				row.Number("preLight", static_cast<int>(tile.preLight()));
 				row.Number("tileProperties", static_cast<int>(tileProperties()[position.y * MAXDUNX + position.x]));
 			}
 			stream << ']';
@@ -1812,13 +2228,16 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 		for (const Lane &lane : lanes) {
 			PrepareRoom(1, lane.itemCount, 0, 0, false);
 			MyPlayer->pLvlLoad = lane.levelLoading ? 1 : 0;
-			MyPlayer->position.tile = { 40, 40 }; MyPlayer->position.future = { 40, 40 };
-			tileAt(50, 50).setPlayer(0); tileAt(51, 50).setMonster(0);
+			MyPlayer->position.tile = { 40, 40 };
+			MyPlayer->position.future = { 40, 40 };
+			tileAt(50, 50).setPlayer(0);
+			tileAt(51, 50).setMonster(0);
 			tileAt(40, 40).setPlayer(-1);
 			Object *sarcophagus = AddObjectPresentation(OBJ_SARC, { 50, 50 });
 			ASSERT_NE(sarcophagus, nullptr);
 			const int objectSlot = static_cast<int>(sarcophagus->GetId());
-			ASSERT_GE(objectSlot, 0); ASSERT_LT(objectSlot, MAXOBJECTS);
+			ASSERT_GE(objectSlot, 0);
+			ASSERT_LT(objectSlot, MAXOBJECTS);
 			ASSERT_NE(sarcophagus->selectionRegion, SelectionRegion::None);
 			tileAt({ 50, 49 }).setObject(-(objectSlot + 1));
 			sarcophagus->_oRndSeed = lane.sarcophagusSeed;
@@ -1866,57 +2285,90 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			const int specialTicksPerFrame = linked == nullptr ? 0 : linked->type().anims[specialGraphic].rate;
 			if (caseCount++ != 0) stream << ',';
 			JsonObject row(stream);
-			row.String("name", lane.name); row.Number("depth", 1); row.Number("slot", objectSlot);
-			row.Number("var1", lane.var1); row.Number("var2", sarcophagus->_oVar2);
-			row.Number("sarcophagusSeed", sarcophagus->_oRndSeed); row.Boolean("levelLoading", lane.levelLoading);
-			row.Number("linkedMonsterSlot", linkedSlot); row.Number("specialFrameCount", specialFrameCount);
+			row.String("name", lane.name);
+			row.Number("depth", 1);
+			row.Number("slot", objectSlot);
+			row.Number("var1", lane.var1);
+			row.Number("var2", sarcophagus->_oVar2);
+			row.Number("sarcophagusSeed", sarcophagus->_oRndSeed);
+			row.Boolean("levelLoading", lane.levelLoading);
+			row.Number("linkedMonsterSlot", linkedSlot);
+			row.Number("specialFrameCount", specialFrameCount);
 			row.Number("specialTicksPerFrame", specialTicksPerFrame);
-			row.Key("spawnTilesAvailable"); writeAvailability(sarcophagus->position);
-			row.Key("inputSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
-			row.Key("input"); WriteItemWorld(stream, beforeItems, true);
+			row.Key("spawnTilesAvailable");
+			writeAvailability(sarcophagus->position);
+			row.Key("inputSarcophagus");
+			WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("input");
+			WriteItemWorld(stream, beforeItems, true);
 			row.Number("inputActiveObjectCount", ActiveObjectCount);
-			row.Key("inputActiveObjectIds"); writeActiveObjects();
-			row.Key("inputActiveMonsterIds"); writeActiveMonsters();
+			row.Key("inputActiveObjectIds");
+			writeActiveObjects();
+			row.Key("inputActiveMonsterIds");
+			writeActiveMonsters();
 			row.Key("inputLinkedMonster");
-			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			if (linked != nullptr)
+				WriteRoomMonster(stream, linkedSlot, *linked);
+			else
+				stream << "null";
 			row.Boolean("inputLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
 			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, *sarcophagus);
 			const NativeItemWorldState afterItems = CaptureItemWorld();
 			EXPECT_EQ(sarcophagus->selectionRegion, SelectionRegion::None);
-			EXPECT_TRUE(sarcophagus->_oAnimFlag); EXPECT_EQ(sarcophagus->_oAnimDelay, 3);
+			EXPECT_TRUE(sarcophagus->_oAnimFlag);
+			EXPECT_EQ(sarcophagus->_oAnimDelay, 3);
 			EXPECT_EQ(sarcophagus->_oRndSeed, lane.sarcophagusSeed);
 			EXPECT_EQ(ActiveMonsterCount, activeMonsterCountBefore);
 			row.Number("expectedRandomState", GetLCGEngineState());
-			row.Key("expectedSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
-			row.Key("expected"); WriteItemWorld(stream, afterItems, false);
+			row.Key("expectedSarcophagus");
+			WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("expected");
+			WriteItemWorld(stream, afterItems, false);
 			row.Number("expectedActiveObjectCount", ActiveObjectCount);
-			row.Key("expectedActiveObjectIds"); writeActiveObjects();
-			row.Key("expectedActiveMonsterIds"); writeActiveMonsters();
-			row.Key("expectedSpawnTiles"); writeNearbyTiles(sarcophagus->position);
+			row.Key("expectedActiveObjectIds");
+			writeActiveObjects();
+			row.Key("expectedActiveMonsterIds");
+			writeActiveMonsters();
+			row.Key("expectedSpawnTiles");
+			writeNearbyTiles(sarcophagus->position);
 			row.Key("expectedLinkedMonster");
-			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			if (linked != nullptr)
+				WriteRoomMonster(stream, linkedSlot, *linked);
+			else
+				stream << "null";
 			row.Boolean("expectedLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
-			std::ostringstream expectedState; WriteItemWorld(expectedState, afterItems, false);
-			std::ostringstream expectedObject; WriteRoomObject(expectedObject, objectSlot, *sarcophagus);
+			std::ostringstream expectedState;
+			WriteItemWorld(expectedState, afterItems, false);
+			std::ostringstream expectedObject;
+			WriteRoomObject(expectedObject, objectSlot, *sarcophagus);
 			std::ostringstream expectedActor;
 			if (linked != nullptr) WriteRoomMonster(expectedActor, linkedSlot, *linked);
 			const auto expectedActiveMonsterIds = std::vector<unsigned>(MonsterPoolAdapter::ActiveMonsterIds().begin(),
 			    MonsterPoolAdapter::ActiveMonsterIds().end());
 			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, *sarcophagus);
 			const NativeItemWorldState repeatedItems = CaptureItemWorld();
-			std::ostringstream repeatedState; WriteItemWorld(repeatedState, repeatedItems, false);
-			std::ostringstream repeatedObject; WriteRoomObject(repeatedObject, objectSlot, *sarcophagus);
+			std::ostringstream repeatedState;
+			WriteItemWorld(repeatedState, repeatedItems, false);
+			std::ostringstream repeatedObject;
+			WriteRoomObject(repeatedObject, objectSlot, *sarcophagus);
 			std::ostringstream repeatedActor;
 			if (linked != nullptr) WriteRoomMonster(repeatedActor, linkedSlot, *linked);
 			const auto repeatedActiveMonsterIds = std::vector<unsigned>(MonsterPoolAdapter::ActiveMonsterIds().begin(),
 			    MonsterPoolAdapter::ActiveMonsterIds().end());
-			row.Key("repeatedSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
-			row.Key("repeated"); WriteItemWorld(stream, repeatedItems, false);
+			row.Key("repeatedSarcophagus");
+			WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("repeated");
+			WriteItemWorld(stream, repeatedItems, false);
 			row.Number("repeatedActiveObjectCount", ActiveObjectCount);
-			row.Key("repeatedActiveObjectIds"); writeActiveObjects();
-			row.Key("repeatedActiveMonsterIds"); writeActiveMonsters();
+			row.Key("repeatedActiveObjectIds");
+			writeActiveObjects();
+			row.Key("repeatedActiveMonsterIds");
+			writeActiveMonsters();
 			row.Key("repeatedLinkedMonster");
-			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			if (linked != nullptr)
+				WriteRoomMonster(stream, linkedSlot, *linked);
+			else
+				stream << "null";
 			row.Boolean("repeatedLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
 			EXPECT_EQ(expectedState.str(), repeatedState.str());
 			EXPECT_EQ(expectedObject.str(), repeatedObject.str());
@@ -1924,9 +2376,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			EXPECT_EQ(expectedActiveMonsterIds, repeatedActiveMonsterIds);
 			EXPECT_EQ(ActiveMonsterCount, activeMonsterCountBefore);
 		}
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(caseCount, 10);
 	EXPECT_LE(std::filesystem::file_size(root / "native-sarcophagus-operations.json"), 64U * 1024U * 1024U);
 }
@@ -1944,27 +2399,36 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeTrapArrowBoundaries)
 		std::list<Missile> savedMissiles;
 		bool preFlag = MissilePreFlag;
 		ExecutionGuard() { Missiles.swap(savedMissiles); }
-		~ExecutionGuard() {
-			Missiles.swap(savedMissiles); MissilePreFlag = preFlag;
+		~ExecutionGuard()
+		{
+			Missiles.swap(savedMissiles);
+			MissilePreFlag = preFlag;
 			if (networkInitialized) SNetDestroy();
-			gbSndInited = sound; HeadlessMode = headless;
+			gbSndInited = sound;
+			HeadlessMode = headless;
 		}
 	} guard;
 	ASSERT_TRUE(guard.networkInitialized);
-	HeadlessMode = true; gbSndInited = false;
-	LoadPlayerDataFiles(); LoadMissileData();
+	HeadlessMode = true;
+	gbSndInited = false;
+	LoadPlayerDataFiles();
+	LoadMissileData();
 	std::ofstream stream(root / "native-trap-arrow.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	{
 		JsonObject document(stream);
-		document.String("format", "godevilution-cathedral-trap-arrow"); document.Number("version", 1);
-		document.Key("players"); stream << '[';
+		document.String("format", "godevilution-cathedral-trap-arrow");
+		document.Number("version", 1);
+		document.Key("players");
+		stream << '[';
 		for (int lane = 0; lane < 5; ++lane) {
 			PrepareRoom(1, 2, 0, 0, false);
-			MyPlayer->_pmode = PM_STAND; MyPlayer->_pInvincible = false;
+			MyPlayer->_pmode = PM_STAND;
+			MyPlayer->_pInvincible = false;
 			MyPlayer->_pSpellFlags = SpellFlag::None;
 			MyPlayer->_pIFlags = lane == 4 ? ItemSpecialEffect::HalfTrapDamage : ItemSpecialEffect::None;
-			MyPlayer->_pIGetHit = 0; MyPlayer->_pBlockFlag = lane == 2;
+			MyPlayer->_pIGetHit = 0;
+			MyPlayer->_pBlockFlag = lane == 2;
 			MyPlayer->attributes.dexterity.base = lane == 2 ? 100 : 0;
 			MyPlayer->attributes.dexterity.current = lane == 2 ? 100 : 0;
 			MyPlayer->life.current = MyPlayer->life.maximumBase;
@@ -1977,47 +2441,72 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeTrapArrowBoundaries)
 			SetRndSeed(seed);
 			if (lane != 0) stream << ',';
 			JsonObject row(stream);
-			row.Number("lane", lane); row.Number("seed", seed); row.Number("distance", distance);
-			row.Number("inputLife", MyPlayer->life.current); row.Number("inputMana", MyPlayer->mana.current);
-			row.Number("maximumLife", MyPlayer->life.maximumBase); row.Number("maximumMana", MyPlayer->mana.maximumBase);
-			row.Number("armor", MyPlayer->GetArmor()); row.Number("dexterity", MyPlayer->attributes.dexterity.current);
+			row.Number("lane", lane);
+			row.Number("seed", seed);
+			row.Number("distance", distance);
+			row.Number("inputLife", MyPlayer->life.current);
+			row.Number("inputMana", MyPlayer->mana.current);
+			row.Number("maximumLife", MyPlayer->life.maximumBase);
+			row.Number("maximumMana", MyPlayer->mana.maximumBase);
+			row.Number("armor", MyPlayer->GetArmor());
+			row.Number("dexterity", MyPlayer->attributes.dexterity.current);
 			bool blocked = false;
 			const bool hit = PlayerMHit(*MyPlayer, nullptr, distance, 1, 2, MissileID::Arrow,
 			    DamageType::Physical, false, DeathReason::MonsterOrTrap, &blocked);
-			row.Boolean("hit", hit); row.Boolean("blocked", blocked);
-			row.Number("life", MyPlayer->life.current); row.Number("mana", MyPlayer->mana.current);
-			row.Number("mode", static_cast<int>(MyPlayer->_pmode)); row.Number("rng", GetLCGEngineState());
+			row.Boolean("hit", hit);
+			row.Boolean("blocked", blocked);
+			row.Number("life", MyPlayer->life.current);
+			row.Number("mana", MyPlayer->mana.current);
+			row.Number("mode", static_cast<int>(MyPlayer->_pmode));
+			row.Number("rng", GetLCGEngineState());
 		}
 		stream << ']';
 		PrepareRoom(1, 2, 0, 0, false);
-		MyPlayer->_pmode = PM_STAND; MyPlayer->_pInvincible = false;
+		MyPlayer->_pmode = PM_STAND;
+		MyPlayer->_pInvincible = false;
 		MyPlayer->_pSpellFlags = SpellFlag::None;
-		tileAt(50, 50).setPlayer(0); tileAt(51, 50).setMonster(0);
+		tileAt(50, 50).setPlayer(0);
+		tileAt(51, 50).setMonster(0);
 		Missiles.clear();
 		Object *trigger = AddObjectPresentation(OBJ_CHEST1, { 52, 50 });
 		Object *trap = AddObjectPresentation(OBJ_TRAPL, { 48, 50 });
-		ASSERT_NE(trigger, nullptr); ASSERT_NE(trap, nullptr);
-		trigger->_oTrapFlag = true; trigger->selectionRegion = SelectionRegion::None;
-		trap->_oVar1 = 52; trap->_oVar2 = 50; trap->_oVar3 = static_cast<int>(MissileID::Arrow); trap->_oVar4 = 0;
+		ASSERT_NE(trigger, nullptr);
+		ASSERT_NE(trap, nullptr);
+		trigger->_oTrapFlag = true;
+		trigger->selectionRegion = SelectionRegion::None;
+		trap->_oVar1 = 52;
+		trap->_oVar2 = 50;
+		trap->_oVar3 = static_cast<int>(MissileID::Arrow);
+		trap->_oVar4 = 0;
 		SetRndSeed(UINT32_C(0x12345678));
 		ProcessObjects();
-		ASSERT_EQ(Missiles.size(), 1U); EXPECT_EQ(trap->_oVar4, 1); EXPECT_FALSE(trigger->_oTrapFlag);
-		document.Key("flight"); stream << '[';
+		ASSERT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(trap->_oVar4, 1);
+		EXPECT_FALSE(trigger->_oTrapFlag);
+		document.Key("flight");
+		stream << '[';
 		for (int step = 0; step < 3; ++step) {
-			ProcessObjects(); ProcessMissiles();
+			ProcessObjects();
+			ProcessMissiles();
 			ASSERT_EQ(Missiles.size(), 1U);
 			const Missile &arrow = Missiles.front();
 			if (step != 0) stream << ',';
 			JsonObject row(stream);
-			row.Number("distance", arrow._midist); row.Number("remaining", arrow.duration);
-			row.Number("x", arrow.position.tile.x); row.Number("y", arrow.position.tile.y);
-			row.Number("vx", arrow.position.velocity.deltaX); row.Number("vy", arrow.position.velocity.deltaY);
-			row.Number("tx", arrow.position.traveled.deltaX); row.Number("ty", arrow.position.traveled.deltaY);
-			row.Number("hash", arrow.lastCollisionTargetHash); row.Number("rng", GetLCGEngineState());
+			row.Number("distance", arrow._midist);
+			row.Number("remaining", arrow.duration);
+			row.Number("x", arrow.position.tile.x);
+			row.Number("y", arrow.position.tile.y);
+			row.Number("vx", arrow.position.velocity.deltaX);
+			row.Number("vy", arrow.position.velocity.deltaY);
+			row.Number("tx", arrow.position.traveled.deltaX);
+			row.Number("ty", arrow.position.traveled.deltaY);
+			row.Number("hash", arrow.lastCollisionTargetHash);
+			row.Number("rng", GetLCGEngineState());
 		}
 		stream << ']';
 	}
-	stream.flush(); ASSERT_TRUE(stream.good());
+	stream.flush();
+	ASSERT_TRUE(stream.good());
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
@@ -2054,25 +2543,39 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 		document.String("policy", "original-diablo-single-player-normal-untrapped-cathedral-level1");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
-		document.Key("catalog"); WriteCatalog(stream);
-		document.Key("roomCatalog"); WriteRoomCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Key("catalog");
+		WriteCatalog(stream);
+		document.Key("roomCatalog");
+		WriteRoomCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		auto writePlayer = [&](const Player &player) {
 			JsonObject json(stream);
-			json.Number("id", player.getId()); json.Number("level", player.plrlevel);
-			json.Boolean("active", player.plractive); json.Number("mode", static_cast<int>(player._pmode));
-			json.Number("characterLevel", player.getCharacterLevel()); json.Number("experience", player._pExperience);
+			json.Number("id", player.getId());
+			json.Number("level", player.plrlevel);
+			json.Boolean("active", player.plractive);
+			json.Number("mode", static_cast<int>(player._pmode));
+			json.Number("characterLevel", player.getCharacterLevel());
+			json.Number("experience", player._pExperience);
 			json.Number("strength", player.attributes.strength.current);
 			json.Number("dexterity", player.attributes.dexterity.current);
 			json.Number("magic", player.attributes.magic.current);
-			json.Key("tile"); WriteRoomPoint(stream, player.position.tile);
-			json.Key("future"); WriteRoomPoint(stream, player.position.future);
-			json.Number("life", player.life.current); json.Number("lifeMaximumBase", player.life.maximumBase);
-			json.Number("mana", player.mana.current); json.Number("manaMaximumBase", player.mana.maximumBase);
-			json.Number("armor", player.GetArmor()); json.Number("blockChance", player.GetBlockChance(false));
-			json.Boolean("blockFlag", player._pBlockFlag); json.Boolean("invincible", player._pInvincible);
-			json.Number("fireResistance", player._pFireResist); json.Number("lightningResistance", player._pLghtResist);
-			json.Number("magicResistance", player._pMagResist); json.Number("getHit", player._pIGetHit);
+			json.Key("tile");
+			WriteRoomPoint(stream, player.position.tile);
+			json.Key("future");
+			WriteRoomPoint(stream, player.position.future);
+			json.Number("life", player.life.current);
+			json.Number("lifeMaximumBase", player.life.maximumBase);
+			json.Number("mana", player.mana.current);
+			json.Number("manaMaximumBase", player.mana.maximumBase);
+			json.Number("armor", player.GetArmor());
+			json.Number("blockChance", player.GetBlockChance(false));
+			json.Boolean("blockFlag", player._pBlockFlag);
+			json.Boolean("invincible", player._pInvincible);
+			json.Number("fireResistance", player._pFireResist);
+			json.Number("lightningResistance", player._pLghtResist);
+			json.Number("magicResistance", player._pMagResist);
+			json.Number("getHit", player._pIGetHit);
 			json.Number("itemFlags", static_cast<uint32_t>(player._pIFlags));
 		};
 		auto addBarrel = [&](int type, Point position, uint32_t seed, int var2, int var3, int var4) -> Object * {
@@ -2122,8 +2625,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 			const bool originalSolid = barrel._oSolidFlag;
 			barrel._oSolidFlag = false; // BreakBarrel removes solidity before ActivateSkeleton.
 			constexpr std::array<Direction, 8> spawnDirections {
-				Direction::North, Direction::NorthEast, Direction::East, Direction::NorthWest,
-				Direction::SouthEast, Direction::West, Direction::SouthWest, Direction::South,
+				Direction::North,
+				Direction::NorthEast,
+				Direction::East,
+				Direction::NorthWest,
+				Direction::SouthEast,
+				Direction::West,
+				Direction::SouthWest,
+				Direction::South,
 			};
 			std::array<bool, 9> spawnTilesAvailable {};
 			auto isSpawnTileAvailable = [](Point position) {
@@ -2136,11 +2645,16 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 			barrel._oSolidFlag = originalSolid;
 			if (caseCount++ != 0) stream << ',';
 			JsonObject row(stream);
-			row.String("name", name); row.Number("depth", 1); row.Number("slot", barrel.GetId());
+			row.String("name", name);
+			row.Number("depth", 1);
+			row.Number("slot", barrel.GetId());
 			row.Number("initialRandomState", initialRandomState);
-			row.Number("barrelSeed", barrel._oRndSeed); row.Number("nativeType", barrel._otype);
-			row.Number("var1", barrel._oVar1); row.Number("var2", barrel._oVar2);
-			row.Number("var3", barrel._oVar3); row.Number("var4", barrel._oVar4);
+			row.Number("barrelSeed", barrel._oRndSeed);
+			row.Number("nativeType", barrel._otype);
+			row.Number("var1", barrel._oVar1);
+			row.Number("var2", barrel._oVar2);
+			row.Number("var3", barrel._oVar3);
+			row.Number("var4", barrel._oVar4);
 			row.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
 			row.Key("spawnTilesAvailable");
 			stream << '[';
@@ -2154,34 +2668,46 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 			    : nullptr;
 			row.Number("linkedMonsterSlot", linked == nullptr ? -1 : barrel._oVar4);
 			row.Key("inputLinkedMonster");
-			if (linked == nullptr) stream << "null";
-			else WriteRoomMonster(stream, barrel._oVar4, *linked);
+			if (linked == nullptr)
+				stream << "null";
+			else
+				WriteRoomMonster(stream, barrel._oVar4, *linked);
 			row.Key("lootActorContext");
 			if (lootActor == nullptr) {
 				stream << "null";
 			} else {
 				JsonObject context(stream);
-				context.Number("slot", lootActor->getId()); context.Number("type", lootActor->type().type);
+				context.Number("slot", lootActor->getId());
+				context.Number("type", lootActor->type().type);
 				context.Number("level", lootActor->level(DIFF_NORMAL));
 				context.Number("experience", lootActor->exp(DIFF_NORMAL));
 				context.Number("treasure", lootActor->data().treasure);
-				context.Number("whoHit", lootActor->whoHit); context.Number("rndItemSeed", lootActor->rndItemSeed);
+				context.Number("whoHit", lootActor->whoHit);
+				context.Number("rndItemSeed", lootActor->rndItemSeed);
 			}
 			row.Boolean("inputLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
 			const int specialGraphic = static_cast<int>(MonsterGraphic::Special);
 			row.Number("specialFrameCount", linked == nullptr ? 0 : linked->type().anims[specialGraphic].frames);
 			row.Number("specialTicksPerFrame", linked == nullptr ? 0 : linked->type().anims[specialGraphic].rate);
-			row.Key("inputBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
-			row.Key("inputItems"); WriteItemWorld(stream, beforeItems, true);
-			row.Key("inputPlayer"); writePlayer(*MyPlayer);
-			row.Key("inputWorld"); WriteRoomWorld(stream);
+			row.Key("inputBarrel");
+			WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("inputItems");
+			WriteItemWorld(stream, beforeItems, true);
+			row.Key("inputPlayer");
+			writePlayer(*MyPlayer);
+			row.Key("inputWorld");
+			WriteRoomWorld(stream);
 			BreakObject(*MyPlayer, barrel);
 			const NativeItemWorldState afterItems = CaptureItemWorld();
 			row.Number("expectedRandomState", GetLCGEngineState());
-			row.Key("expectedBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
-			row.Key("expectedItems"); WriteItemWorld(stream, afterItems, false);
-			row.Key("expectedPlayer"); writePlayer(*MyPlayer);
-			row.Key("expectedWorld"); WriteRoomWorld(stream);
+			row.Key("expectedBarrel");
+			WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("expectedItems");
+			WriteItemWorld(stream, afterItems, false);
+			row.Key("expectedPlayer");
+			writePlayer(*MyPlayer);
+			row.Key("expectedWorld");
+			WriteRoomWorld(stream);
 			EXPECT_FALSE(barrel.canInteractWith());
 			EXPECT_FALSE(barrel._oSolidFlag);
 			EXPECT_TRUE(barrel._oMissFlag);
@@ -2191,15 +2717,21 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 			const Point positionAfterFirstBreak = MyPlayer->position.tile;
 			const auto modeAfterFirstBreak = MyPlayer->_pmode;
 			std::ostringstream firstWorld, firstItems;
-			WriteRoomWorld(firstWorld); WriteItemWorld(firstItems, afterItems, false);
+			WriteRoomWorld(firstWorld);
+			WriteItemWorld(firstItems, afterItems, false);
 			BreakObject(*MyPlayer, barrel); // Broken barrels are a native no-op; no second drop or blast.
 			const NativeItemWorldState repeatedItems = CaptureItemWorld();
-			row.Key("repeatedBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
-			row.Key("repeatedItems"); WriteItemWorld(stream, repeatedItems, false);
-			row.Key("repeatedPlayer"); writePlayer(*MyPlayer);
-			row.Key("repeatedWorld"); WriteRoomWorld(stream);
+			row.Key("repeatedBarrel");
+			WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("repeatedItems");
+			WriteItemWorld(stream, repeatedItems, false);
+			row.Key("repeatedPlayer");
+			writePlayer(*MyPlayer);
+			row.Key("repeatedWorld");
+			WriteRoomWorld(stream);
 			std::ostringstream repeatedWorld, repeatedItemsJson;
-			WriteRoomWorld(repeatedWorld); WriteItemWorld(repeatedItemsJson, repeatedItems, false);
+			WriteRoomWorld(repeatedWorld);
+			WriteItemWorld(repeatedItemsJson, repeatedItems, false);
 			EXPECT_EQ(firstWorld.str(), repeatedWorld.str());
 			EXPECT_EQ(firstItems.str(), repeatedItemsJson.str());
 			EXPECT_EQ(lifeAfterFirstBreak, MyPlayer->life.current);
@@ -2380,7 +2912,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 		ASSERT_EQ(occupant->position.tile, (WorldTilePosition { 51, 50 }));
 		Object *chainRoot = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
 		Object *chainChild = addBarrel(OBJ_BARRELEX, { 51, 50 }, 2, 0, 0, -1);
-		ASSERT_NE(chainRoot, nullptr); ASSERT_NE(chainChild, nullptr);
+		ASSERT_NE(chainRoot, nullptr);
+		ASSERT_NE(chainChild, nullptr);
 		setPlayerPosition({ 51, 50 });
 		capture("explosive-chain-monster-player-order", *chainRoot, UINT32_C(0x5EED1234));
 		EXPECT_FALSE(chainChild->canInteractWith());
@@ -2396,7 +2929,9 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 		Object *threeRoot = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
 		Object *threeNorthwest = addBarrel(OBJ_BARRELEX, { 49, 49 }, 2, 0, 0, -1);
 		Object *threeSouth = addBarrel(OBJ_BARRELEX, { 50, 51 }, 3, 0, 0, -1);
-		ASSERT_NE(threeRoot, nullptr); ASSERT_NE(threeNorthwest, nullptr); ASSERT_NE(threeSouth, nullptr);
+		ASSERT_NE(threeRoot, nullptr);
+		ASSERT_NE(threeNorthwest, nullptr);
+		ASSERT_NE(threeSouth, nullptr);
 		setPlayerPosition({ 51, 50 });
 		capture("explosive-three-barrel-nw-monster-player-order", *threeRoot, 2588, northwestActor);
 		EXPECT_FALSE(threeNorthwest->canInteractWith());
@@ -2404,9 +2939,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 		EXPECT_EQ(northwestActor->hitPoints, 128);
 		EXPECT_EQ(MyPlayer->life.current, 5422);
 		EXPECT_EQ(GetLCGEngineState(), UINT32_C(1630774887));
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(caseCount, 16);
 	EXPECT_LE(std::filesystem::file_size(root / "native-barrel-operations.json"), 64U * 1024U * 1024U);
 }
@@ -2414,14 +2952,19 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
 TEST_F(ThemeRoomGenerationTest, FullObjectPoolRetainsSlotsAndFailedShrineCarry)
 {
 	PrepareRoom(1, 2, MAXOBJECTS, MaxMonsters, false);
-	numThemes() = 1; themes[0] = { THEME_LIBRARY, 1 };
-	SetRndSeed(2588); const auto before = CaptureThemeRoomGlobalsForTesting();
+	numThemes() = 1;
+	themes[0] = { THEME_LIBRARY, 1 };
+	SetRndSeed(2588);
+	const auto before = CaptureThemeRoomGlobalsForTesting();
 	CreateThemeRooms();
-	EXPECT_EQ(ActiveObjectCount, MAXOBJECTS); EXPECT_EQ(ActiveMonsterCount, MaxMonsters);
+	EXPECT_EQ(ActiveObjectCount, MAXOBJECTS);
+	EXPECT_EQ(ActiveMonsterCount, MaxMonsters);
 	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().variant, before.variant);
-	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().x, 0); EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().y, 0);
+	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().x, 0);
+	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().y, 0);
 	for (int slot = 0; slot < MAXOBJECTS; ++slot) {
-		EXPECT_EQ(Objects[slot]._oVar1, 91); EXPECT_EQ(Objects[slot]._oVar2, -17);
+		EXPECT_EQ(Objects[slot]._oVar1, 91);
+		EXPECT_EQ(Objects[slot]._oVar2, -17);
 		EXPECT_EQ(Objects[slot]._oRndSeed, 1000U + slot);
 	}
 }
@@ -2438,48 +2981,74 @@ TEST_F(ThemeRoomGenerationTest, NoSkeletonBarrelRetainsMinusOneWithoutSelectionD
 	// AddSkeleton's empty candidate list consumes no random value.
 	ASSERT_EQ(static_cast<uint8_t>(AllObjects[OBJ_BARREL].flags) & 1U, 0U);
 	for (uint32_t seed = 0; seed < 4096 && !found; ++seed) {
-		SetRndSeed(seed); AdvanceRndSeed();
-		expectedVar2 = GenerateRnd(10); expectedVar3 = GenerateRnd(3);
-		if (expectedVar2 >= 8) { selectedSeed = seed; expectedState = GetLCGEngineState(); found = true; }
+		SetRndSeed(seed);
+		AdvanceRndSeed();
+		expectedVar2 = GenerateRnd(10);
+		expectedVar3 = GenerateRnd(3);
+		if (expectedVar2 >= 8) {
+			selectedSeed = seed;
+			expectedState = GetLCGEngineState();
+			found = true;
+		}
 	}
 	ASSERT_TRUE(found);
-	PrepareRoom(1); SetRndSeed(selectedSeed);
+	PrepareRoom(1);
+	SetRndSeed(selectedSeed);
 	Object *barrel = AddObject(OBJ_BARREL, { 50, 50 });
-	ASSERT_NE(barrel, nullptr); EXPECT_EQ(barrel->_oVar2, expectedVar2); EXPECT_EQ(barrel->_oVar3, expectedVar3);
-	EXPECT_EQ(barrel->_oVar4, -1); EXPECT_EQ(ActiveMonsterCount, 4U); EXPECT_EQ(GetLCGEngineState(), expectedState);
+	ASSERT_NE(barrel, nullptr);
+	EXPECT_EQ(barrel->_oVar2, expectedVar2);
+	EXPECT_EQ(barrel->_oVar3, expectedVar3);
+	EXPECT_EQ(barrel->_oVar4, -1);
+	EXPECT_EQ(ActiveMonsterCount, 4U);
+	EXPECT_EQ(GetLCGEngineState(), expectedState);
 	RecordProperty("barrelSeed", std::to_string(selectedSeed));
 }
 
 TEST_F(ThemeRoomGenerationTest, BlockedSkeletonWithNoNeighborRetainsReservationWithoutDraw)
 {
-	PrepareRoom(1); SetRndSeed(2588);
-	Monster *skeleton = PreSpawnSkeleton(); ASSERT_NE(skeleton, nullptr);
-	const auto slot = skeleton->getId(); const auto count = ActiveMonsterCount;
+	PrepareRoom(1);
+	SetRndSeed(2588);
+	Monster *skeleton = PreSpawnSkeleton();
+	ASSERT_NE(skeleton, nullptr);
+	const auto slot = skeleton->getId();
+	const auto count = ActiveMonsterCount;
 	const uint32_t randomState = GetLCGEngineState();
-	for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPlayer(1);
+	for (int y = 49; y <= 51; ++y)
+		for (int x = 49; x <= 51; ++x)
+			tileAt(x, y).setPlayer(1);
 	ActivateSkeleton(*skeleton, { 50, 50 });
 	EXPECT_EQ(skeleton->position.tile, (WorldTilePosition { 0, 0 }));
 	EXPECT_EQ(skeleton->position.future, (WorldTilePosition { 0, 0 }));
-	EXPECT_EQ(skeleton->mode, MonsterMode::Stand); EXPECT_EQ(ActiveMonsterCount, count);
-	EXPECT_EQ(ActiveMonsters[count - 1], slot); EXPECT_EQ(GetLCGEngineState(), randomState);
+	EXPECT_EQ(skeleton->mode, MonsterMode::Stand);
+	EXPECT_EQ(ActiveMonsterCount, count);
+	EXPECT_EQ(ActiveMonsters[count - 1], slot);
+	EXPECT_EQ(GetLCGEngineState(), randomState);
 	EXPECT_FALSE(skeleton->animInfo.isPetrified);
 }
 
 TEST_F(ThemeRoomGenerationTest, SignedSkeletonFallbackUsesNativeUnsignedSizeRemainder)
 {
 	static_assert(sizeof(size_t) == 8, "This signed corner is the frozen x64 oracle contract.");
-	PrepareRoom(1); SetRndSeed(2588);
-	Monster *skeleton = PreSpawnSkeleton(); ASSERT_NE(skeleton, nullptr);
-	for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPlayer(1);
+	PrepareRoom(1);
+	SetRndSeed(2588);
+	Monster *skeleton = PreSpawnSkeleton();
+	ASSERT_NE(skeleton, nullptr);
+	for (int y = 49; y <= 51; ++y)
+		for (int x = 49; x <= 51; ++x)
+			tileAt(x, y).setPlayer(1);
 	// Native direction iteration N,NE,E: three choices, not a power of two.
-	for (int x = 49; x <= 51; ++x) tileAt(x, 49).setPlayer(0);
-	SetRndSeed(UINT32_C(1457187811)); ASSERT_EQ(GenerateRnd(15), -8);
+	for (int x = 49; x <= 51; ++x)
+		tileAt(x, 49).setPlayer(0);
+	SetRndSeed(UINT32_C(1457187811));
+	ASSERT_EQ(GenerateRnd(15), -8);
 	const uint32_t expectedState = GetLCGEngineState();
 	ASSERT_EQ(static_cast<size_t>(-8) % 3U, 2U);
-	SetRndSeed(UINT32_C(1457187811)); ActivateSkeleton(*skeleton, { 50, 50 });
+	SetRndSeed(UINT32_C(1457187811));
+	ActivateSkeleton(*skeleton, { 50, 50 });
 	EXPECT_EQ(GetLCGEngineState(), expectedState);
 	EXPECT_EQ(skeleton->position.tile, (WorldTilePosition { 51, 49 }));
-	EXPECT_EQ(skeleton->direction, Direction::West); EXPECT_EQ(skeleton->mode, MonsterMode::SpecialStand);
+	EXPECT_EQ(skeleton->direction, Direction::West);
+	EXPECT_EQ(skeleton->mode, MonsterMode::SpecialStand);
 	EXPECT_EQ(tileAt(51, 49).monster(), static_cast<int>(skeleton->getId()) + 1);
 	EXPECT_FALSE(skeleton->animInfo.isPetrified);
 }
@@ -2491,17 +3060,30 @@ TEST_F(ThemeRoomGenerationTest, BothMultiplayerOnlyShrineSelectionsRetryBeforeAn
 	for (const int rejected : { 18, 25 }) {
 		ASSERT_FALSE(availability[rejected]);
 		uint32_t selectedSeed = 0, expectedState = 0, expectedObjectSeed = 0;
-		int expectedIndex = 0; bool expectedAlternateAnimation = false, found = false;
+		int expectedIndex = 0;
+		bool expectedAlternateAnimation = false, found = false;
 		for (uint32_t seed = 0; seed < 65536 && !found; ++seed) {
-			SetRndSeed(seed); expectedObjectSeed = AdvanceRndSeed();
+			SetRndSeed(seed);
+			expectedObjectSeed = AdvanceRndSeed();
 			if (GenerateRnd(26) != rejected) continue;
-			do { expectedIndex = GenerateRnd(26); ASSERT_GE(expectedIndex, 0); } while (!availability[expectedIndex]);
-			expectedAlternateAnimation = !FlipCoin(); expectedState = GetLCGEngineState(); selectedSeed = seed; found = true;
+			do {
+				expectedIndex = GenerateRnd(26);
+				ASSERT_GE(expectedIndex, 0);
+			} while (!availability[expectedIndex]);
+			expectedAlternateAnimation = !FlipCoin();
+			expectedState = GetLCGEngineState();
+			selectedSeed = seed;
+			found = true;
 		}
-		ASSERT_TRUE(found); PrepareRoom(1); SetRndSeed(selectedSeed);
-		Object *shrine = AddObject(OBJ_SHRINER, { 50, 50 }); ASSERT_NE(shrine, nullptr);
-		EXPECT_EQ(shrine->_oRndSeed, expectedObjectSeed); EXPECT_EQ(shrine->_oVar1, expectedIndex);
-		EXPECT_EQ(GetLCGEngineState(), expectedState); EXPECT_TRUE(shrine->_oPreFlag);
+		ASSERT_TRUE(found);
+		PrepareRoom(1);
+		SetRndSeed(selectedSeed);
+		Object *shrine = AddObject(OBJ_SHRINER, { 50, 50 });
+		ASSERT_NE(shrine, nullptr);
+		EXPECT_EQ(shrine->_oRndSeed, expectedObjectSeed);
+		EXPECT_EQ(shrine->_oVar1, expectedIndex);
+		EXPECT_EQ(GetLCGEngineState(), expectedState);
+		EXPECT_TRUE(shrine->_oPreFlag);
 		EXPECT_EQ(shrine->_oAnimFrame, expectedAlternateAnimation ? 12U : AllObjects[OBJ_SHRINER].animDelay);
 		EXPECT_EQ(shrine->_oAnimLen, expectedAlternateAnimation ? 22U : AllObjects[OBJ_SHRINER].animLen);
 		RecordProperty("rejected" + std::to_string(rejected) + "Seed", std::to_string(selectedSeed));
@@ -2514,17 +3096,27 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select the separate private theme-room corpus explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
 	const auto repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	ASSERT_FALSE(std::mismatch(repository.begin(), repository.end(), root.begin(), root.end()).first == repository.end());
-	std::ofstream stream(root / "native-theme-rooms.json", std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	std::ofstream stream(root / "native-theme-rooms.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
 	constexpr std::array<int, 14> types { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 14, 15 };
 	int cases = 0;
 	{
-		JsonObject document(stream); document.String("format", "godevilution-cathedral-theme-rooms"); document.Number("version", 1);
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-theme-rooms");
+		document.Number("version", 1);
 		document.String("policy", "original-diablo-single-player-normal-complete-selected-cathedral-themes");
-		document.Number("playerMaximumLife", 6400); document.Number("playerMaximumMana", 3200);
-		document.Key("itemCatalog"); WriteCatalog(stream); document.Key("roomCatalog"); WriteRoomCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Number("playerMaximumLife", 6400);
+		document.Number("playerMaximumMana", 3200);
+		document.Key("itemCatalog");
+		WriteCatalog(stream);
+		document.Key("roomCatalog");
+		WriteRoomCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		for (int depth = 1; depth <= 4; ++depth) {
 			for (int lane = 0; lane < 22; ++lane) {
 				const int itemCount = lane == 17 ? MAXITEMS : 2;
@@ -2532,38 +3124,67 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
 				const int monsterCount = lane == 18 || lane == 19 ? MaxMonsters : 4;
 				PrepareRoom(depth, itemCount, objectCount, monsterCount, lane != 16);
 				const uint32_t seed = lane == 17 ? UINT32_C(1457187811) : UINT32_C(2588) + depth * 17;
-				const std::string name = lane < 14 ? "type-" + std::to_string(types[lane]) : std::array<std::string, 8> {
-					"ordered", "object-full-library", "object-full-failed-fit", "item-full-signed-pit",
-					"monster-full-skeleton", "monster-full-goat", "loading-shrine", "empty" }[lane - 14];
-				numThemes() = lane == 21 ? 0 : lane == 14 ? 14 : 1;
-				if (lane == 14) for (int i = 0; i < 14; ++i) themes[i] = { static_cast<theme_id>(types[i]), 1 };
-				else if (lane != 21) themes[0] = { static_cast<theme_id>(lane < 14 ? types[lane] : lane == 15 || lane == 16 ? 5
-					: lane == 17 ? 2 : lane == 18 ? 3 : lane == 19 ? 11 : 1), 1 };
+				const std::string name = lane < 14 ? "type-" + std::to_string(types[lane]) : std::array<std::string, 8> { "ordered", "object-full-library", "object-full-failed-fit", "item-full-signed-pit", "monster-full-skeleton", "monster-full-goat", "loading-shrine", "empty" }[lane - 14];
+				numThemes() = lane == 21 ? 0 : lane == 14 ? 14
+				                                          : 1;
+				if (lane == 14)
+					for (int i = 0; i < 14; ++i)
+						themes[i] = { static_cast<theme_id>(types[i]), 1 };
+				else if (lane != 21)
+					themes[0] = { static_cast<theme_id>(lane < 14 ? types[lane] : lane == 15 || lane == 16 ? 5
+						                  : lane == 17                                                     ? 2
+						                  : lane == 18                                                     ? 3
+						                  : lane == 19                                                     ? 11
+						                                                                                   : 1),
+						1 };
 				LoadingMapObjects = lane == 20;
 				SetRndSeed(seed);
 				if (cases++ != 0) stream << ',';
-				JsonObject row(stream); row.String("name", name); row.Number("depth", depth); row.Number("seed", seed);
-				row.Boolean("loadingMapObjects", LoadingMapObjects); row.Key("themes");
+				JsonObject row(stream);
+				row.String("name", name);
+				row.Number("depth", depth);
+				row.Number("seed", seed);
+				row.Boolean("loadingMapObjects", LoadingMapObjects);
+				row.Key("themes");
 				stream << '[';
-				for (int i = 0; i < numThemes(); ++i) { if (i) stream << ','; stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']'; }
-				stream << ']'; row.Key("player"); {
-					JsonObject player(stream); player.Number("id", 0); player.Number("level", depth); player.Boolean("active", true); player.Boolean("levelChanging", false);
-					player.Key("tile"); WriteRoomPoint(stream, MyPlayer->position.tile); player.Key("future"); WriteRoomPoint(stream, MyPlayer->position.future);
+				for (int i = 0; i < numThemes(); ++i) {
+					if (i) stream << ',';
+					stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']';
 				}
-				row.Key("input"); WriteRoomWorld(stream);
+				stream << ']';
+				row.Key("player");
+				{
+					JsonObject player(stream);
+					player.Number("id", 0);
+					player.Number("level", depth);
+					player.Boolean("active", true);
+					player.Boolean("levelChanging", false);
+					player.Key("tile");
+					WriteRoomPoint(stream, MyPlayer->position.tile);
+					player.Key("future");
+					WriteRoomPoint(stream, MyPlayer->position.future);
+				}
+				row.Key("input");
+				WriteRoomWorld(stream);
 				CreateThemeRooms();
-				row.Key("expected"); WriteRoomWorld(stream);
+				row.Key("expected");
+				WriteRoomWorld(stream);
 				if (lane == 17) {
 					EXPECT_EQ(ActiveItemCount, MAXITEMS);
 					const Item &last = Items[ActiveItems[MAXITEMS - 1]];
-					EXPECT_FALSE(last._iAnimFlag); EXPECT_EQ(last.selectionRegion, SelectionRegion::Bottom);
+					EXPECT_FALSE(last._iAnimFlag);
+					EXPECT_EQ(last.selectionRegion, SelectionRegion::Bottom);
 					EXPECT_EQ(last.animInfo.currentFrame, last.animInfo.numberOfFrames - 1);
 				}
 			}
 		}
-		stream << ']'; document.Number("caseCount", cases);
+		stream << ']';
+		document.Number("caseCount", cases);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 88);
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	EXPECT_EQ(cases, 88);
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-rooms.json"), 128U * 1024U * 1024U);
 }
 
@@ -2574,7 +3195,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 	if (directory == nullptr || !*directory)
 		GTEST_SKIP() << "Select the separate private Catacombs theme-room corpus explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
 	ASSERT_TRUE(std::filesystem::is_empty(root));
 	std::ofstream stream(root / "native-catacombs-theme-rooms.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
@@ -2585,12 +3207,17 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 	int cases = 0;
 	{
 		JsonObject document(stream);
-		document.String("format", "godevilution-catacombs-theme-rooms"); document.Number("version", 1);
+		document.String("format", "godevilution-catacombs-theme-rooms");
+		document.Number("version", 1);
 		document.String("policy", "controlled-original-diablo-single-player-normal-catacombs-theme-branches");
-		document.Number("playerMaximumLife", 6400); document.Number("playerMaximumMana", 3200);
-		document.Key("itemCatalog"); WriteCatalog(stream);
-		document.Key("roomCatalog"); WriteRoomCatalog(stream);
-		document.Key("cases"); stream << '[';
+		document.Number("playerMaximumLife", 6400);
+		document.Number("playerMaximumMana", 3200);
+		document.Key("itemCatalog");
+		WriteCatalog(stream);
+		document.Key("roomCatalog");
+		WriteRoomCatalog(stream);
+		document.Key("cases");
+		stream << '[';
 		for (const int depth : { 5, 8 }) {
 			for (int lane = 0; lane < 22; ++lane) {
 				const bool fullItems = lane >= 19;
@@ -2601,9 +3228,13 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 				const std::string name = lane < 16 ? "type-" + std::to_string(types[lane]) : edges[lane - 16];
 				numThemes() = lane == 16 ? 4 : 1;
 				if (lane == 16) {
-					for (int i = 0; i < 4; ++i) themes[i] = { static_cast<theme_id>(i % 2 == 0 ? 10 : 16), 1 };
+					for (int i = 0; i < 4; ++i)
+						themes[i] = { static_cast<theme_id>(i % 2 == 0 ? 10 : 16), 1 };
 				} else {
-					themes[0] = { static_cast<theme_id>(lane < 16 ? types[lane] : lane == 17 ? 10 : lane == 18 ? 16 : 4), 1 };
+					themes[0] = { static_cast<theme_id>(lane < 16 ? types[lane] : lane == 17 ? 10
+						                  : lane == 18                                       ? 16
+						                                                                     : 4),
+						1 };
 				}
 				if (fullItems) {
 					Item &last = Items[ActiveItems[MAXITEMS - 1]];
@@ -2614,22 +3245,33 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 				SetRndSeed(seed);
 				if (cases++ != 0) stream << ',';
 				JsonObject row(stream);
-				row.String("name", name); row.Number("depth", depth); row.Number("seed", seed);
-				row.Key("themes"); stream << '[';
+				row.String("name", name);
+				row.Number("depth", depth);
+				row.Number("seed", seed);
+				row.Key("themes");
+				stream << '[';
 				for (int i = 0; i < numThemes(); ++i) {
 					if (i != 0) stream << ',';
 					stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']';
 				}
 				stream << ']';
-				row.Key("player"); {
-					JsonObject player(stream); player.Number("id", 0); player.Number("level", depth);
-					player.Boolean("active", true); player.Boolean("levelChanging", false);
-					player.Key("tile"); WriteRoomPoint(stream, MyPlayer->position.tile);
-					player.Key("future"); WriteRoomPoint(stream, MyPlayer->position.future);
+				row.Key("player");
+				{
+					JsonObject player(stream);
+					player.Number("id", 0);
+					player.Number("level", depth);
+					player.Boolean("active", true);
+					player.Boolean("levelChanging", false);
+					player.Key("tile");
+					WriteRoomPoint(stream, MyPlayer->position.tile);
+					player.Key("future");
+					WriteRoomPoint(stream, MyPlayer->position.future);
 				}
-				row.Key("input"); WriteRoomWorld(stream);
+				row.Key("input");
+				WriteRoomWorld(stream);
 				CreateThemeRooms();
-				row.Key("expected"); WriteRoomWorld(stream);
+				row.Key("expected");
+				WriteRoomWorld(stream);
 				if (fullItems) {
 					const Item &last = Items[ActiveItems[MAXITEMS - 1]];
 					EXPECT_EQ(last._ivalue, lane == 21 ? 99 : 1);
@@ -2641,9 +3283,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 				}
 			}
 		}
-		stream << ']'; document.Number("caseCount", cases);
+		stream << ']';
+		document.Number("caseCount", cases);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(cases, 44);
 	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-theme-rooms.json"), 128U * 1024U * 1024U);
 }
@@ -2677,7 +3322,9 @@ struct NativeComposedPopulationGuard {
 		currentLevel().pMegaTiles_ = std::move(oldLevel->pMegaTiles_);
 		currentLevel().pDungeonCels_ = std::move(oldLevel->pDungeonCels_);
 		currentLevel().pSpecialCels_ = std::move(oldLevel->pSpecialCels_);
-		sgGameInitInfo = oldGameInfo; gbIsHellfireSaveGame = oldHellfireSave; MyPlayerIsDead = oldPlayerIsDead;
+		sgGameInitInfo = oldGameInfo;
+		gbIsHellfireSaveGame = oldHellfireSave;
+		MyPlayerIsDead = oldPlayerIsDead;
 		LevelGenerationData = std::move(oldLevelData);
 		std::copy(oldSeeds.begin(), oldSeeds.end(), LevelSeeds);
 		std::copy(oldDungeonSeeds.begin(), oldDungeonSeeds.end(), DungeonSeeds);
@@ -2688,18 +3335,32 @@ struct NativeComposedPopulationGuard {
 	static void CopyCoarseState(Level &target, const Level &source)
 	{
 		target.setId(source.id());
-		target.DungeonMask_ = source.DungeonMask_; target.Protected_ = source.Protected_;
-		target.SetPieceRoom_ = source.SetPieceRoom_; target.SetPiece_ = source.SetPiece_;
-		for (int x = 0; x < DMAXX; ++x) std::copy_n(source.megaTiles_[x], DMAXY, target.megaTiles_[x]);
+		target.DungeonMask_ = source.DungeonMask_;
+		target.Protected_ = source.Protected_;
+		target.SetPieceRoom_ = source.SetPieceRoom_;
+		target.SetPiece_ = source.SetPiece_;
+		for (int x = 0; x < DMAXX; ++x)
+			std::copy_n(source.megaTiles_[x], DMAXY, target.megaTiles_[x]);
 		std::copy_n(source.DPieceMicros_, MAXTILES, target.DPieceMicros_);
-		target.dminPosition_ = source.dminPosition_; target.dmaxPosition_ = source.dmaxPosition_;
-		target.ViewPosition_ = source.ViewPosition_; target.MicroTileLen_ = source.MicroTileLen_;
-		target.TransVal_ = source.TransVal_; target.TransList_ = source.TransList_;
-		target.themeCount_ = source.themeCount_; std::copy_n(source.themeLoc_, MAXTHEMES, target.themeLoc_);
-		target.numThemes_ = source.numThemes_; target.armorFlag_ = source.armorFlag_; target.weaponFlag_ = source.weaponFlag_;
-		target.zharlib_ = source.zharlib_; target.trigFlag_ = source.trigFlag_; target.numTriggers_ = source.numTriggers_;
-		target.tWarpFrom_ = source.tWarpFrom_; target.uberRow_ = source.uberRow_; target.uberCol_ = source.uberCol_;
-		target.isUberRoomOpened_ = source.isUberRoomOpened_; target.isUberLeverActivated_ = source.isUberLeverActivated_;
+		target.dminPosition_ = source.dminPosition_;
+		target.dmaxPosition_ = source.dmaxPosition_;
+		target.ViewPosition_ = source.ViewPosition_;
+		target.MicroTileLen_ = source.MicroTileLen_;
+		target.TransVal_ = source.TransVal_;
+		target.TransList_ = source.TransList_;
+		target.themeCount_ = source.themeCount_;
+		std::copy_n(source.themeLoc_, MAXTHEMES, target.themeLoc_);
+		target.numThemes_ = source.numThemes_;
+		target.armorFlag_ = source.armorFlag_;
+		target.weaponFlag_ = source.weaponFlag_;
+		target.zharlib_ = source.zharlib_;
+		target.trigFlag_ = source.trigFlag_;
+		target.numTriggers_ = source.numTriggers_;
+		target.tWarpFrom_ = source.tWarpFrom_;
+		target.uberRow_ = source.uberRow_;
+		target.uberCol_ = source.uberCol_;
+		target.isUberRoomOpened_ = source.isUberRoomOpened_;
+		target.isUberLeverActivated_ = source.isUberLeverActivated_;
 		target.uberDiabloMonsterIndex_ = source.uberDiabloMonsterIndex_;
 	}
 };
@@ -2746,15 +3407,18 @@ struct NativeLevelReadyGuard {
 	std::array<Portal, MAXPORTAL> oldPortals;
 	NativeLevelReadyGuard()
 	{
-		for (size_t index = 0; index < MaxCorpses; ++index) oldCorpses[index] = std::move(Corpses[index]);
+		for (size_t index = 0; index < MaxCorpses; ++index)
+			oldCorpses[index] = std::move(Corpses[index]);
 		std::copy_n(Portals, MAXPORTAL, oldPortals.begin());
 	}
 	~NativeLevelReadyGuard()
 	{
 		CurrentAutomapManager = oldAutomap;
 		RestoreAutomapDefinitionsForTesting(oldDefinitions);
-		Missiles = std::move(oldMissiles); MissilePreFlag = oldMissilePreFlag;
-		for (size_t index = 0; index < MaxCorpses; ++index) Corpses[index] = std::move(oldCorpses[index]);
+		Missiles = std::move(oldMissiles);
+		MissilePreFlag = oldMissilePreFlag;
+		for (size_t index = 0; index < MaxCorpses; ++index)
+			Corpses[index] = std::move(oldCorpses[index]);
 		stonendx = oldStone;
 		std::copy(oldPortals.begin(), oldPortals.end(), Portals);
 	}
@@ -2762,48 +3426,78 @@ struct NativeLevelReadyGuard {
 
 void WriteLevelReadyState(std::ostream &out)
 {
-	JsonObject ready(out); ready.Key("world"); WriteRoomWorld(out);
-	ready.Key("corpses"); WriteArray(out, Corpses, [&](const Corpse &corpse) {
+	JsonObject ready(out);
+	ready.Key("world");
+	WriteRoomWorld(out);
+	ready.Key("corpses");
+	WriteArray(out, Corpses, [&](const Corpse &corpse) {
 		out << '[' << corpse.frame << ',' << corpse.width << ',' << static_cast<int>(corpse.translationPaletteIndex) << ']';
 	});
 	ready.Number("stoneCorpseId", stonendx);
-	ready.Key("bestiaryCorpseIds"); WriteArray(out, LevelBestiary, [&](const CMonster &type) { out << static_cast<int>(type.corpseId); });
-	ready.Key("deathAnimations"); WriteArray(out, LevelBestiary, [&](const CMonster &type) {
+	ready.Key("bestiaryCorpseIds");
+	WriteArray(out, LevelBestiary, [&](const CMonster &type) { out << static_cast<int>(type.corpseId); });
+	ready.Key("deathAnimations");
+	WriteArray(out, LevelBestiary, [&](const CMonster &type) {
 		const AnimStruct &death = type.getAnimData(MonsterGraphic::Death);
 		out << '[' << static_cast<int>(death.frames) << ',' << death.width << ']';
 	});
-	ready.Key("player"); {
-		const Player &player = *MyPlayer; JsonObject value(out);
-		value.Key("tile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
-		value.Key("future"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
-		value.Key("old"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
-		value.Key("last"); WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
-		value.Key("temp"); WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
-		value.Key("view"); WriteRoomPoint(out, { viewPosition().x, viewPosition().y });
-		value.Number("id", MyPlayerId); value.Number("level", player.plrlevel);
-		value.Number("currentLife", player.life.current); value.Number("lightId", player.lightId); value.Number("lightRadius", player._pLightRad);
-		value.Boolean("active", player.plractive); value.Boolean("levelChanging", player._pLvlChanging);
+	ready.Key("player");
+	{
+		const Player &player = *MyPlayer;
+		JsonObject value(out);
+		value.Key("tile");
+		WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+		value.Key("future");
+		WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+		value.Key("old");
+		WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+		value.Key("last");
+		WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
+		value.Key("temp");
+		WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
+		value.Key("view");
+		WriteRoomPoint(out, { viewPosition().x, viewPosition().y });
+		value.Number("id", MyPlayerId);
+		value.Number("level", player.plrlevel);
+		value.Number("currentLife", player.life.current);
+		value.Number("lightId", player.lightId);
+		value.Number("lightRadius", player._pLightRad);
+		value.Boolean("active", player.plractive);
+		value.Boolean("levelChanging", player._pLvlChanging);
 	}
-	ready.Number("spellFlags", MyPlayer->_pSpellFlags); ready.Boolean("infravision", MyPlayer->_pInfraFlag);
+	ready.Number("spellFlags", MyPlayer->_pSpellFlags);
+	ready.Boolean("infravision", MyPlayer->_pInfraFlag);
 	ready.Boolean("autoMapShowItems", CurrentAutomapManager.GetAutoMapShowItems());
-	ready.Number("missileCount", Missiles.size()); ready.Boolean("missilePreFlag", MissilePreFlag);
-	ready.Key("automapExploration"); out << '[';
-	for (int y = 0; y < DMAXY; ++y) for (int x = 0; x < DMAXX; ++x) {
-		if (x != 0 || y != 0) out << ',';
-		out << static_cast<int>(CurrentAutomapManager.GetAutomapView()[x][y]);
-	}
+	ready.Number("missileCount", Missiles.size());
+	ready.Boolean("missilePreFlag", MissilePreFlag);
+	ready.Key("automapExploration");
+	out << '[';
+	for (int y = 0; y < DMAXY; ++y)
+		for (int x = 0; x < DMAXX; ++x) {
+			if (x != 0 || y != 0) out << ',';
+			out << static_cast<int>(CurrentAutomapManager.GetAutomapView()[x][y]);
+		}
 	out << ']';
-	ready.Key("visibleTransparencyRegions"); WriteArray(out, visibleTransparencyRegions(), [&](bool value) { out << (value ? "true" : "false"); });
+	ready.Key("visibleTransparencyRegions");
+	WriteArray(out, visibleTransparencyRegions(), [&](bool value) { out << (value ? "true" : "false"); });
 	ready.Boolean("updateVision", CurrentLightManager.VisionUpdatePendingForTesting());
-	ready.Key("visionActive"); WriteArray(out, CurrentLightManager.visionActive_, [&](bool value) { out << (value ? "true" : "false"); });
-	ready.Key("visionRecords"); int id = 0;
+	ready.Key("visionActive");
+	WriteArray(out, CurrentLightManager.visionActive_, [&](bool value) { out << (value ? "true" : "false"); });
+	ready.Key("visionRecords");
+	int id = 0;
 	WriteArray(out, CurrentLightManager.visionList_, [&](const Light &vision) {
-		JsonObject value(out); value.Number("lightId", id++);
-		value.Key("tile"); WriteRoomPoint(out, { vision.position.tile.x, vision.position.tile.y });
-		value.Key("oldTile"); WriteRoomPoint(out, { vision.position.old.x, vision.position.old.y });
-		value.Number("offsetX", vision.position.offset.deltaX); value.Number("offsetY", vision.position.offset.deltaY);
-		value.Number("radius", vision.radius); value.Number("oldRadius", vision.oldRadius);
-		value.Boolean("isInvalid", vision.isInvalid); value.Boolean("hasChanged", vision.hasChanged);
+		JsonObject value(out);
+		value.Number("lightId", id++);
+		value.Key("tile");
+		WriteRoomPoint(out, { vision.position.tile.x, vision.position.tile.y });
+		value.Key("oldTile");
+		WriteRoomPoint(out, { vision.position.old.x, vision.position.old.y });
+		value.Number("offsetX", vision.position.offset.deltaX);
+		value.Number("offsetY", vision.position.offset.deltaY);
+		value.Number("radius", vision.radius);
+		value.Number("oldRadius", vision.oldRadius);
+		value.Boolean("isInvalid", vision.isInvalid);
+		value.Boolean("hasChanged", vision.hasChanged);
 	});
 }
 
@@ -2952,7 +3646,9 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
 	const auto repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	ASSERT_FALSE(std::mismatch(repository.begin(), repository.end(), root.begin(), root.end()).first == repository.end());
 	// Use the same original-asset discovery and controlled hero context as the
 	// earlier population fixture. No server or client runtime loads archives.
@@ -2962,9 +3658,14 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	// The inherited fixture already owns and initializes the player and tables.
 	// Avoid TestInitGame/InitQuests: quests are explicitly disabled below, and
 	// their extra quest-dialog/UI state is not part of this population seam.
-	MyPlayerId = 0; sgGameInitInfo.fullQuests = 1;
-	gbIsHellfire = false; gbIsHellfireSaveGame = false; gbSndInited = false;
-	UnloadModArchives(); MpqArchives.erase(MainMpqPriority); gbIsSpawn = false;
+	MyPlayerId = 0;
+	sgGameInitInfo.fullQuests = 1;
+	gbIsHellfire = false;
+	gbIsHellfireSaveGame = false;
+	gbSndInited = false;
+	UnloadModArchives();
+	MpqArchives.erase(MainMpqPriority);
+	gbIsSpawn = false;
 	LoadGameArchives();
 	if (!HaveMainData() || gbIsSpawn) GTEST_SKIP() << "Original DIABDAT.MPQ was not discovered.";
 	currentLevel().setId(LevelId { .levelNum = 1, .type = DTYPE_CATHEDRAL });
@@ -2972,20 +3673,27 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	const auto &mainArchive = MpqArchives.at(MainMpqPriority);
 	for (const std::string_view path : { "levels\\l1data\\l1.til", "levels\\l1data\\l1.sol" }) {
 		const AssetRef asset = FindAsset(path);
-		ASSERT_TRUE(asset.ok()); ASSERT_EQ(asset.archive, &mainArchive);
+		ASSERT_TRUE(asset.ok());
+		ASSERT_EQ(asset.archive, &mainArchive);
 	}
 	if (levelReady) {
 		const AssetRef automapAsset = FindAsset("levels\\l1data\\l1.amp");
-		ASSERT_TRUE(automapAsset.ok()); ASSERT_EQ(automapAsset.archive, &mainArchive);
+		ASSERT_TRUE(automapAsset.ok());
+		ASSERT_EQ(automapAsset.archive, &mainArchive);
 	}
 #endif
 	size_t tileCount = 0;
 	auto definitions = LoadFileInMemWithStatus<MegaTile>("levels\\l1data\\l1.til", &tileCount);
-	ASSERT_TRUE(definitions.has_value()); ASSERT_NE(definitions->get(), nullptr); ASSERT_EQ(tileCount, 206U);
+	ASSERT_TRUE(definitions.has_value());
+	ASSERT_NE(definitions->get(), nullptr);
+	ASSERT_EQ(tileCount, 206U);
 	megaTiles() = std::move(*definitions);
-	for (int piece = 0; piece < MAXTILES; ++piece) tileProperties()[piece] = TileProperties::None;
-	ASSERT_TRUE(LoadLevelSOLData().has_value()); ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
-	CurrentLightManager.MakeLightTable(); LoadLevelGenerationData();
+	for (int piece = 0; piece < MAXTILES; ++piece)
+		tileProperties()[piece] = TileProperties::None;
+	ASSERT_TRUE(LoadLevelSOLData().has_value());
+	ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
+	CurrentLightManager.MakeLightTable();
+	LoadLevelGenerationData();
 	if (freshLoadOrder) LoadPlayerDataFiles();
 	// New class tuples use actual native character creation, independently of the
 	// managed profile. The historical prepared Rogue tuple remains unchanged.
@@ -2995,163 +3703,278 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 		canonicalHero.create(*nativeClassRoute);
 	}
 	const bool playableRoute = nativeRogueRoute || nativeClassRoute.has_value();
-	const int maximumLife = nativeClassRoute.has_value() ? canonicalHero.life.maximumBase : nativeRogueRoute ? 2880 : freshLoadOrder ? 6400 : 64;
-	const int maximumMana = nativeClassRoute.has_value() ? canonicalHero.mana.maximumBase : nativeRogueRoute ? 1440 : freshLoadOrder ? 3200 : 0;
+	const int maximumLife = nativeClassRoute.has_value() ? canonicalHero.life.maximumBase : nativeRogueRoute ? 2880
+	    : freshLoadOrder                                                                                     ? 6400
+	                                                                                                         : 64;
+	const int maximumMana = nativeClassRoute.has_value() ? canonicalHero.mana.maximumBase : nativeRogueRoute ? 1440
+	    : freshLoadOrder                                                                                     ? 3200
+	                                                                                                         : 0;
 	const int lightRadius = nativeClassRoute.has_value() ? canonicalHero._pLightRad : 8;
-	const char *fileName = nativeClassRoute.has_value() ? "native-class-l1-population.json" : nativeRogueRoute ? "native-rogue-l1-population.json" : levelReady ? "native-level-ready.json" : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
-	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	const char *fileName = nativeClassRoute.has_value() ? "native-class-l1-population.json" : nativeRogueRoute ? "native-rogue-l1-population.json"
+	    : levelReady                                                                                           ? "native-level-ready.json"
+	                                                                                                           : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
+	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
 	int cases = 0, multiRoomCases = 0;
 	{
-		JsonObject document(stream); document.String("format", nativeClassRoute.has_value() ? "godevilution-cathedral-native-class-l1" : nativeRogueRoute ? "godevilution-cathedral-native-rogue-l1" : levelReady ? "godevilution-cathedral-level-ready" : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population")); document.Number("version", 1);
-		document.String("policy", nativeClassRoute.has_value() ? "fresh-cold-original-diablo-class-l1-main-seed2588" : nativeRogueRoute ? "fresh-cold-original-diablo-rogue-l1-main-seed2588" : levelReady ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join" : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
-		document.Number("playerMaximumLife", maximumLife); document.Number("playerMaximumMana", maximumMana);
+		JsonObject document(stream);
+		document.String("format", nativeClassRoute.has_value() ? "godevilution-cathedral-native-class-l1" : nativeRogueRoute ? "godevilution-cathedral-native-rogue-l1"
+		        : levelReady                                                                                                 ? "godevilution-cathedral-level-ready"
+		                                                                                                                     : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population"));
+		document.Number("version", 1);
+		document.String("policy", nativeClassRoute.has_value() ? "fresh-cold-original-diablo-class-l1-main-seed2588" : nativeRogueRoute ? "fresh-cold-original-diablo-rogue-l1-main-seed2588"
+		        : levelReady                                                                                                            ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join"
+		                                                                                                                                : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
+		document.Number("playerMaximumLife", maximumLife);
+		document.Number("playerMaximumMana", maximumMana);
 		if (nativeClassRoute.has_value()) document.Number("playerClassId", static_cast<int>(*nativeClassRoute));
 		if (freshLoadOrder) {
-			document.Number("playerLightRadius", lightRadius); document.Number("storySeed", UINT32_C(0x13579BDF));
-			document.Key("playerFuture"); WriteRoomPoint(stream, playableRoute ? Point { 57, 40 } : Point { 75, 68 });
+			document.Number("playerLightRadius", lightRadius);
+			document.Number("storySeed", UINT32_C(0x13579BDF));
+			document.Key("playerFuture");
+			WriteRoomPoint(stream, playableRoute ? Point { 57, 40 } : Point { 75, 68 });
 			document.Boolean("playerLevelChanging", true);
 		}
 		if (levelReady) {
-			document.Key("coldPlayer"); JsonObject context(stream);
-			context.Number("spellFlags", 255); context.Boolean("infravision", true);
-			context.Boolean("autoMapShowItems", true); context.Boolean("missilePreFlag", true);
-			context.Number("currentLife", 6400); context.Boolean("priorMissilesEmpty", true); context.Boolean("portalsAbsent", true);
-			context.Key("last"); WriteRoomPoint(stream, { 13, 17 });
+			document.Key("coldPlayer");
+			JsonObject context(stream);
+			context.Number("spellFlags", 255);
+			context.Boolean("infravision", true);
+			context.Boolean("autoMapShowItems", true);
+			context.Boolean("missilePreFlag", true);
+			context.Number("currentLife", 6400);
+			context.Boolean("priorMissilesEmpty", true);
+			context.Boolean("portalsAbsent", true);
+			context.Key("last");
+			WriteRoomPoint(stream, { 13, 17 });
 			// InitPlayer's ClearStateVariables clears the pre-load Temp (19,23).
-			context.Key("temp"); WriteRoomPoint(stream, { 0, 0 });
+			context.Key("temp");
+			WriteRoomPoint(stream, { 0, 0 });
 		}
-		document.Key("itemCatalog"); WriteCatalog(stream);
-		document.Key("cases"); stream << '[';
-		for (int depth = 1; depth <= 4; ++depth) for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
-			for (const lvl_entry entry : { ENTRY_MAIN, ENTRY_PREV }) {
-				if (playableRoute && (depth != 1 || seed != UINT32_C(2588) || entry != ENTRY_MAIN)) continue;
-				FreeMonsters(); InitializeObjectPool(); ObjectPoolAdapter::ResetLegacyObjectPools();
-				for (int slot = 0; slot < MAXOBJECTS; ++slot) Objects[slot] = {};
-				for (auto &type : LevelBestiary.types) type = {};
-				InitializeMonsterPool(); for (Monster &monster : MonsterPoolAdapter::AllMonsters()) monster = {};
-				// InitializeMonsterPool leaves inactive IDs untouched. This controlled
-				// baseline explicitly prepares identity IDs with count zero and no
-				// RNG draws; InitLevelMonsters independently resets them again below.
-				for (unsigned slot = 0; slot < MaxMonsters; ++slot) ActiveMonsters[slot] = slot;
-				InitializeItemPool(); ItemPoolAdapter::ResetLegacyItemPools();
-				for (int slot = 0; slot <= MAXITEMS; ++slot) Items[slot] = {};
-				ClearUniqueItemFlags(); CurrentLightManager.Init();
-				// This new oracle explicitly models cold storage, not retained level
-				// pools. Init() alone intentionally does not clear inactive light records.
-				if (freshLoadOrder) {
-					std::fill(std::begin(CurrentLightManager.lights_), std::end(CurrentLightManager.lights_), Light {});
-					std::fill(std::begin(CurrentLightManager.visionList_), std::end(CurrentLightManager.visionList_), Light {});
-				}
-				for (Tile &tile : tiles()) { tile.setObject(0); tile.setMonster(0); tile.setPlayer(0); tile.setItem(0); }
-				currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
-				LevelSeeds[depth] = std::nullopt; DungeonSeeds[depth] = seed; DungeonSeeds[16] = UINT32_C(0x13579BDF);
-				if (nativeClassRoute.has_value()) *MyPlayer = std::move(canonicalHero);
-				MyPlayer->pOriginalCathedral = true; MyPlayer->plractive = true; MyPlayer->_pClass = nativeClassRoute.value_or(nativeRogueRoute ? HeroClass::Rogue : HeroClass::Warrior);
-				MyPlayer->plrlevel = static_cast<uint8_t>(depth); MyPlayer->_pLvlChanging = freshLoadOrder; MyPlayer->plrIsOnSetLevel = false;
-				MyPlayer->life = { 64, 64, 64, 64, 100 };
-				if (freshLoadOrder) MyPlayer->life = { maximumLife, maximumLife, maximumLife, maximumLife, 100 };
-				MyPlayer->mana = {}; if (freshLoadOrder) MyPlayer->mana.maximumBase = maximumMana;
-				MyPlayer->pLvlLoad = 1; MyPlayer->_pLightRad = lightRadius;
-				if (freshLoadOrder) MyPlayer->position.future = { static_cast<uint8_t>(playableRoute ? 57 : 75), static_cast<uint8_t>(playableRoute ? 40 : 68) };
-				gbIsMultiplayer = false; gbIsSpawn = false; gbIsHellfire = false; gbIsHellfireSaveGame = false;
-				LoadingMapObjects = false; sgGameInitInfo.nDifficulty = DIFF_NORMAL;
-				for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
-				RestoreThemeRoomGlobalsForTesting({}); armorFlag() = true; weaponFlag() = true;
-				uint32_t preClearState = 0, postClearState = 0;
-				if (freshLoadOrder) {
-					SetRndSeed(seed); preClearState = GetLCGEngineState();
-					InitLevelMonsters(); postClearState = GetLCGEngineState();
-				}
-				if (levelReady) {
-					Missiles.clear(); MissilePreFlag = true;
-					std::fill(std::begin(Corpses), std::end(Corpses), Corpse {}); stonendx = 0;
-					std::fill(std::begin(Portals), std::end(Portals), Portal {});
-					RestoreAutomapDefinitionsForTesting({}); CurrentAutomapManager.InitAutomap();
-					CurrentAutomapManager.SetAutoMapShowItems(true);
-					MyPlayer->_pSpellFlags = static_cast<SpellFlag>(255); MyPlayer->_pInfraFlag = true;
-					if (cases == 0) {
-						std::ofstream metadata(root / "cathedral_automap.tsv", std::ios::binary | std::ios::trunc);
-						ASSERT_TRUE(metadata.good()); metadata << "id\ttype\tflags\r\n";
-						const auto mapping = CaptureAutomapDefinitionsForTesting();
-						for (size_t index = 0; index < mapping.size(); ++index)
-							metadata << index << '\t' << (mapping[index] & 0xFF) << '\t' << (mapping[index] >> 8) << "\r\n";
-						metadata.flush(); ASSERT_TRUE(metadata.good());
+		document.Key("itemCatalog");
+		WriteCatalog(stream);
+		document.Key("cases");
+		stream << '[';
+		for (int depth = 1; depth <= 4; ++depth)
+			for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
+				for (const lvl_entry entry : { ENTRY_MAIN, ENTRY_PREV }) {
+					if (playableRoute && (depth != 1 || seed != UINT32_C(2588) || entry != ENTRY_MAIN)) continue;
+					FreeMonsters();
+					InitializeObjectPool();
+					ObjectPoolAdapter::ResetLegacyObjectPools();
+					for (int slot = 0; slot < MAXOBJECTS; ++slot)
+						Objects[slot] = {};
+					for (auto &type : LevelBestiary.types)
+						type = {};
+					InitializeMonsterPool();
+					for (Monster &monster : MonsterPoolAdapter::AllMonsters())
+						monster = {};
+					// InitializeMonsterPool leaves inactive IDs untouched. This controlled
+					// baseline explicitly prepares identity IDs with count zero and no
+					// RNG draws; InitLevelMonsters independently resets them again below.
+					for (unsigned slot = 0; slot < MaxMonsters; ++slot)
+						ActiveMonsters[slot] = slot;
+					InitializeItemPool();
+					ItemPoolAdapter::ResetLegacyItemPools();
+					for (int slot = 0; slot <= MAXITEMS; ++slot)
+						Items[slot] = {};
+					ClearUniqueItemFlags();
+					CurrentLightManager.Init();
+					// This new oracle explicitly models cold storage, not retained level
+					// pools. Init() alone intentionally does not clear inactive light records.
+					if (freshLoadOrder) {
+						std::fill(std::begin(CurrentLightManager.lights_), std::end(CurrentLightManager.lights_), Light {});
+						std::fill(std::begin(CurrentLightManager.visionList_), std::end(CurrentLightManager.visionList_), Light {});
+					}
+					for (Tile &tile : tiles()) {
+						tile.setObject(0);
+						tile.setMonster(0);
+						tile.setPlayer(0);
+						tile.setItem(0);
+					}
+					currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
+					LevelSeeds[depth] = std::nullopt;
+					DungeonSeeds[depth] = seed;
+					DungeonSeeds[16] = UINT32_C(0x13579BDF);
+					if (nativeClassRoute.has_value()) *MyPlayer = std::move(canonicalHero);
+					MyPlayer->pOriginalCathedral = true;
+					MyPlayer->plractive = true;
+					MyPlayer->_pClass = nativeClassRoute.value_or(nativeRogueRoute ? HeroClass::Rogue : HeroClass::Warrior);
+					MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+					MyPlayer->_pLvlChanging = freshLoadOrder;
+					MyPlayer->plrIsOnSetLevel = false;
+					MyPlayer->life = { 64, 64, 64, 64, 100 };
+					if (freshLoadOrder) MyPlayer->life = { maximumLife, maximumLife, maximumLife, maximumLife, 100 };
+					MyPlayer->mana = {};
+					if (freshLoadOrder) MyPlayer->mana.maximumBase = maximumMana;
+					MyPlayer->pLvlLoad = 1;
+					MyPlayer->_pLightRad = lightRadius;
+					if (freshLoadOrder) MyPlayer->position.future = { static_cast<uint8_t>(playableRoute ? 57 : 75), static_cast<uint8_t>(playableRoute ? 40 : 68) };
+					gbIsMultiplayer = false;
+					gbIsSpawn = false;
+					gbIsHellfire = false;
+					gbIsHellfireSaveGame = false;
+					LoadingMapObjects = false;
+					sgGameInitInfo.nDifficulty = DIFF_NORMAL;
+					for (Quest &quest : Quests)
+						quest._qactive = QUEST_NOTAVAIL;
+					RestoreThemeRoomGlobalsForTesting({});
+					armorFlag() = true;
+					weaponFlag() = true;
+					uint32_t preClearState = 0, postClearState = 0;
+					if (freshLoadOrder) {
+						SetRndSeed(seed);
+						preClearState = GetLCGEngineState();
+						InitLevelMonsters();
+						postClearState = GetLCGEngineState();
+					}
+					if (levelReady) {
+						Missiles.clear();
+						MissilePreFlag = true;
+						std::fill(std::begin(Corpses), std::end(Corpses), Corpse {});
+						stonendx = 0;
+						std::fill(std::begin(Portals), std::end(Portals), Portal {});
+						RestoreAutomapDefinitionsForTesting({});
+						CurrentAutomapManager.InitAutomap();
+						CurrentAutomapManager.SetAutoMapShowItems(true);
+						MyPlayer->_pSpellFlags = static_cast<SpellFlag>(255);
+						MyPlayer->_pInfraFlag = true;
+						if (cases == 0) {
+							std::ofstream metadata(root / "cathedral_automap.tsv", std::ios::binary | std::ios::trunc);
+							ASSERT_TRUE(metadata.good());
+							metadata << "id\ttype\tflags\r\n";
+							const auto mapping = CaptureAutomapDefinitionsForTesting();
+							for (size_t index = 0; index < mapping.size(); ++index)
+								metadata << index << '\t' << (mapping[index] & 0xFF) << '\t' << (mapping[index] >> 8) << "\r\n";
+							metadata.flush();
+							ASSERT_TRUE(metadata.good());
+						}
+					}
+					CreateLevelForTesting(entry);
+					MyPlayer->position.tile = viewPosition();
+					if (!freshLoadOrder) MyPlayer->position.future = viewPosition();
+					MyPlayer->position.old = viewPosition();
+					MyPlayer->position.last = viewPosition();
+					if (levelReady) {
+						MyPlayer->position.last = { 13, 17 };
+						MyPlayer->position.temp = { 19, 23 };
+					}
+					if (cases++ != 0) stream << ',';
+					JsonObject row(stream);
+					row.Number("depth", depth);
+					row.Number("seed", seed);
+					row.String("entry", entry == ENTRY_MAIN ? "main" : "previous");
+					row.String("snapshot", "cathedral-population-depth-" + std::to_string(depth) + "-" + std::to_string(seed) + (entry == ENTRY_MAIN ? "-main.json" : "-previous.json"));
+					if (!freshLoadOrder) {
+						preClearState = GetLCGEngineState();
+						row.Number("preClearRandomState", preClearState);
+						row.Key("baseline");
+						WriteRoomWorld(stream);
+						InitLevelMonsters();
+						postClearState = GetLCGEngineState();
+					} else {
+						row.Number("preClearRandomState", preClearState);
+						row.Number("nextTransparencyValue", nextTransparencyValue());
+						row.Key("triggerPositions");
+						stream << '[';
+						for (int trigger = 0; trigger < numTriggers(); ++trigger) {
+							if (trigger) stream << ',';
+							WriteRoomPoint(stream, trigs[trigger].position);
+						}
+						stream << ']';
+					}
+					row.Number("postClearRandomState", postClearState);
+					SetRndSeed(seed);
+					ASSERT_TRUE(GetLevelMTypes().has_value());
+					InitThemes();
+					if (freshLoadOrder) {
+						row.Number("prePlayerRandomState", GetLCGEngineState());
+						// Actual player initialization allocates slot 0 before unique lights.
+						// false avoids first-load hotkey/UI storage, without changing dungeon
+						// placement, animation draws, light allocation or vision activation.
+						InitPlayer(*MyPlayer, false);
+						ASSERT_EQ(MyPlayer->lightId, 0);
+						row.Number("playerIdleFrames", MyPlayer->_pNFrames);
+						row.Number("postPlayerRandomState", GetLCGEngineState());
+						row.Key("playerAnimation");
+						stream << '[' << static_cast<int>(MyPlayer->animInfo.currentFrame)
+						       << ',' << static_cast<int>(MyPlayer->animInfo.tickCounterOfCurrentFrame)
+						       << ',' << static_cast<int>(MyPlayer->animInfo.numberOfFrames)
+						       << ',' << static_cast<int>(MyPlayer->animInfo.ticksPerFrame)
+						       << ',' << (MyPlayer->animInfo.isPetrified ? "true" : "false") << ']';
+						row.Key("visionActive");
+						WriteArray(stream, CurrentLightManager.visionActive_, [&](bool active) { stream << (active ? "true" : "false"); });
+						row.Boolean("updateVision", CurrentLightManager.VisionUpdatePendingForTesting());
+						row.Key("visionRecords");
+						int visionId = 0;
+						WriteArray(stream, CurrentLightManager.visionList_, [&](const Light &vision) {
+							JsonObject record(stream);
+							record.Number("lightId", visionId++);
+							record.Key("tile");
+							WriteRoomPoint(stream, { vision.position.tile.x, vision.position.tile.y });
+							record.Key("oldTile");
+							WriteRoomPoint(stream, { vision.position.old.x, vision.position.old.y });
+							record.Number("offsetX", vision.position.offset.deltaX);
+							record.Number("offsetY", vision.position.offset.deltaY);
+							record.Number("radius", vision.radius);
+							record.Number("oldRadius", vision.oldRadius);
+							record.Boolean("isInvalid", vision.isInvalid);
+							record.Boolean("hasChanged", vision.hasChanged);
+						});
+						row.Key("baseline");
+						WriteRoomWorld(stream);
+					}
+					row.Key("selectedRoomCatalog");
+					WriteRoomCatalog(stream);
+					row.Key("selectedThemes");
+					stream << '[';
+					for (int i = 0; i < numThemes(); ++i) {
+						if (i) stream << ',';
+						stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']';
+					}
+					stream << ']';
+					if (numThemes() > 1) ++multiRoomCases;
+					SetRndSeed(seed);
+					HoldThemeRooms();
+					InitGolems();
+					InitObjects();
+					ASSERT_TRUE(InitMonsters().has_value());
+					InitItems();
+					row.Key("afterItems");
+					WriteRoomWorld(stream);
+					row.Key("itemInitialization");
+					{
+						const auto state = CaptureItemInitializationGlobalsForTesting();
+						JsonObject init(stream);
+						init.Boolean("showUniqueInfo", state.showUniqueInfo);
+						init.Number("recordCount", state.count);
+						init.Key("records");
+						WriteArray(stream, state.records, [&](const ItemGetRecordStruct &record) {
+							stream << '[' << record.nSeed << ',' << record.wCI << ',' << record.nIndex << ',' << record.dwTimestamp << ']';
+						});
+					}
+					row.Key("visibleTransparencyRegions");
+					WriteArray(stream, visibleTransparencyRegions(), [&](bool visible) { stream << (visible ? "true" : "false"); });
+					CreateThemeRooms();
+					row.Key("expected");
+					WriteRoomWorld(stream);
+					if (levelReady) {
+						const uint32_t before = GetLCGEngineState();
+						CompleteFreshLevelForTesting(entry);
+						ASSERT_EQ(GetLCGEngineState(), before);
+						row.Key("ready");
+						WriteLevelReadyState(stream);
 					}
 				}
-				CreateLevelForTesting(entry);
-				MyPlayer->position.tile = viewPosition();
-				if (!freshLoadOrder) MyPlayer->position.future = viewPosition();
-				MyPlayer->position.old = viewPosition(); MyPlayer->position.last = viewPosition();
-				if (levelReady) { MyPlayer->position.last = { 13, 17 }; MyPlayer->position.temp = { 19, 23 }; }
-				if (cases++ != 0) stream << ',';
-				JsonObject row(stream); row.Number("depth", depth); row.Number("seed", seed);
-				row.String("entry", entry == ENTRY_MAIN ? "main" : "previous");
-				row.String("snapshot", "cathedral-population-depth-" + std::to_string(depth) + "-" + std::to_string(seed)
-				    + (entry == ENTRY_MAIN ? "-main.json" : "-previous.json"));
-				if (!freshLoadOrder) {
-					preClearState = GetLCGEngineState(); row.Number("preClearRandomState", preClearState);
-					row.Key("baseline"); WriteRoomWorld(stream);
-					InitLevelMonsters(); postClearState = GetLCGEngineState();
-				} else {
-					row.Number("preClearRandomState", preClearState);
-					row.Number("nextTransparencyValue", nextTransparencyValue());
-					row.Key("triggerPositions"); stream << '[';
-					for (int trigger = 0; trigger < numTriggers(); ++trigger) { if (trigger) stream << ','; WriteRoomPoint(stream, trigs[trigger].position); }
-					stream << ']';
-				}
-				row.Number("postClearRandomState", postClearState);
-				SetRndSeed(seed); ASSERT_TRUE(GetLevelMTypes().has_value()); InitThemes();
-				if (freshLoadOrder) {
-					row.Number("prePlayerRandomState", GetLCGEngineState());
-					// Actual player initialization allocates slot 0 before unique lights.
-					// false avoids first-load hotkey/UI storage, without changing dungeon
-					// placement, animation draws, light allocation or vision activation.
-					InitPlayer(*MyPlayer, false);
-					ASSERT_EQ(MyPlayer->lightId, 0);
-					row.Number("playerIdleFrames", MyPlayer->_pNFrames);
-					row.Number("postPlayerRandomState", GetLCGEngineState());
-					row.Key("playerAnimation"); stream << '[' << static_cast<int>(MyPlayer->animInfo.currentFrame)
-					    << ',' << static_cast<int>(MyPlayer->animInfo.tickCounterOfCurrentFrame)
-					    << ',' << static_cast<int>(MyPlayer->animInfo.numberOfFrames)
-					    << ',' << static_cast<int>(MyPlayer->animInfo.ticksPerFrame)
-					    << ',' << (MyPlayer->animInfo.isPetrified ? "true" : "false") << ']';
-					row.Key("visionActive"); WriteArray(stream, CurrentLightManager.visionActive_, [&](bool active) { stream << (active ? "true" : "false"); });
-					row.Boolean("updateVision", CurrentLightManager.VisionUpdatePendingForTesting());
-					row.Key("visionRecords"); int visionId = 0;
-					WriteArray(stream, CurrentLightManager.visionList_, [&](const Light &vision) {
-						JsonObject record(stream); record.Number("lightId", visionId++);
-						record.Key("tile"); WriteRoomPoint(stream, { vision.position.tile.x, vision.position.tile.y });
-						record.Key("oldTile"); WriteRoomPoint(stream, { vision.position.old.x, vision.position.old.y });
-						record.Number("offsetX", vision.position.offset.deltaX); record.Number("offsetY", vision.position.offset.deltaY);
-						record.Number("radius", vision.radius); record.Number("oldRadius", vision.oldRadius);
-						record.Boolean("isInvalid", vision.isInvalid); record.Boolean("hasChanged", vision.hasChanged);
-					});
-					row.Key("baseline"); WriteRoomWorld(stream);
-				}
-				row.Key("selectedRoomCatalog"); WriteRoomCatalog(stream); row.Key("selectedThemes"); stream << '[';
-				for (int i = 0; i < numThemes(); ++i) { if (i) stream << ','; stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']'; }
-				stream << ']'; if (numThemes() > 1) ++multiRoomCases;
-				SetRndSeed(seed); HoldThemeRooms(); InitGolems(); InitObjects();
-				ASSERT_TRUE(InitMonsters().has_value()); InitItems();
-				row.Key("afterItems"); WriteRoomWorld(stream);
-				row.Key("itemInitialization"); {
-					const auto state = CaptureItemInitializationGlobalsForTesting();
-					JsonObject init(stream); init.Boolean("showUniqueInfo", state.showUniqueInfo);
-					init.Number("recordCount", state.count); init.Key("records");
-					WriteArray(stream, state.records, [&](const ItemGetRecordStruct &record) {
-						stream << '[' << record.nSeed << ',' << record.wCI << ',' << record.nIndex << ',' << record.dwTimestamp << ']';
-					});
-				}
-				row.Key("visibleTransparencyRegions"); WriteArray(stream, visibleTransparencyRegions(), [&](bool visible) { stream << (visible ? "true" : "false"); });
-				CreateThemeRooms(); row.Key("expected"); WriteRoomWorld(stream);
-				if (levelReady) {
-					const uint32_t before = GetLCGEngineState(); CompleteFreshLevelForTesting(entry);
-					ASSERT_EQ(GetLCGEngineState(), before); row.Key("ready"); WriteLevelReadyState(stream);
-				}
-			}
-		stream << ']'; document.Number("caseCount", cases); document.Number("multiRoomCases", multiRoomCases);
+		stream << ']';
+		document.Number("caseCount", cases);
+		document.Number("multiRoomCases", multiRoomCases);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, playableRoute ? 1 : 16); if (!playableRoute) EXPECT_GT(multiRoomCases, 0);
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	EXPECT_EQ(cases, playableRoute ? 1 : 16);
+	if (!playableRoute) EXPECT_GT(multiRoomCases, 0);
 	EXPECT_LE(std::filesystem::file_size(root / fileName), 128U * 1024U * 1024U);
 	if (nativeRogueRoute) {
 		const auto footprintError = WriteNativeRogueInventoryFootprints(root);
@@ -3251,7 +4074,8 @@ const char *CatacombsClassSymbol(HeroClass heroClass)
 
 const char *CatacombsEntrySymbol(lvl_entry entry)
 {
-	return entry == ENTRY_MAIN ? "main" : entry == ENTRY_PREV ? "previous" : "town-warp-down";
+	return entry == ENTRY_MAIN ? "main" : entry == ENTRY_PREV ? "previous"
+	                                                          : "town-warp-down";
 }
 
 void WriteCatacombsPlayer(std::ostream &out, const Player &player)
@@ -3285,19 +4109,31 @@ void WriteCatacombsPlayer(std::ostream &out, const Player &player)
 	json.Boolean("active", player.plractive);
 	json.Boolean("levelChanging", player._pLvlChanging);
 	json.Boolean("originalCathedral", player.pOriginalCathedral);
-	json.Key("positionTile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
-	json.Key("positionFuture"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
-	json.Key("positionOld"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
-	json.Key("positionLast"); WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
-	json.Key("positionTemp"); WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
+	json.Key("positionTile");
+	WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+	json.Key("positionFuture");
+	WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+	json.Key("positionOld");
+	WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+	json.Key("positionLast");
+	WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
+	json.Key("positionTemp");
+	WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
 	json.Number("inventoryCount", player._pNumInv);
-	json.Key("bodyItems"); WriteArray(out, player.InvBody, [&](const Item &item) { WriteItem(out, item); });
-	json.Key("inventoryItems"); WriteArray(out, player.InvList, [&](const Item &item) { WriteItem(out, item); });
-	json.Key("beltItems"); WriteArray(out, player.SpdList, [&](const Item &item) { WriteItem(out, item); });
-	json.Key("cursorItem"); WriteItem(out, player.HoldItem);
-	json.Key("inventoryGrid"); WriteArray(out, player.InvGrid, [&](int8_t value) { out << static_cast<int>(value); });
-	json.Key("spellLevels"); WriteArray(out, player._pSplLvl, [&](uint8_t value) { out << static_cast<int>(value); });
-	json.Key("animation"); {
+	json.Key("bodyItems");
+	WriteArray(out, player.InvBody, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("inventoryItems");
+	WriteArray(out, player.InvList, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("beltItems");
+	WriteArray(out, player.SpdList, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("cursorItem");
+	WriteItem(out, player.HoldItem);
+	json.Key("inventoryGrid");
+	WriteArray(out, player.InvGrid, [&](int8_t value) { out << static_cast<int>(value); });
+	json.Key("spellLevels");
+	WriteArray(out, player._pSplLvl, [&](uint8_t value) { out << static_cast<int>(value); });
+	json.Key("animation");
+	{
 		JsonObject animation(out);
 		animation.Number("currentFrame", player.animInfo.currentFrame);
 		animation.Number("tickCounterOfCurrentFrame", player.animInfo.tickCounterOfCurrentFrame);
@@ -3335,8 +4171,10 @@ void WriteCatacombsBestiary(std::ostream &out)
 			json.Key("aiMissileId");
 			out << "null";
 		}
-		json.Key("sourceFrames"); WriteArray(out, source.frames, [&](int8_t value) { out << static_cast<int>(value); });
-		json.Key("sourceRates"); WriteArray(out, source.rate, [&](int8_t value) { out << static_cast<int>(value); });
+		json.Key("sourceFrames");
+		WriteArray(out, source.frames, [&](int8_t value) { out << static_cast<int>(value); });
+		json.Key("sourceRates");
+		WriteArray(out, source.rate, [&](int8_t value) { out << static_cast<int>(value); });
 		json.Key("animations");
 		out << '[';
 		for (size_t animation = 0; animation < std::size(entry.anims); ++animation) {
@@ -3369,8 +4207,10 @@ void WriteCatacombsThemeState(std::ostream &out)
 			out << ',';
 		const THEME_LOC &location = themeLocations()[index];
 		JsonObject room(out);
-		room.Key("position"); WriteRoomPoint(out, { location.room.position.x, location.room.position.y });
-		room.Key("size"); out << '[' << static_cast<int>(location.room.size.width) << ',' << static_cast<int>(location.room.size.height) << ']';
+		room.Key("position");
+		WriteRoomPoint(out, { location.room.position.x, location.room.position.y });
+		room.Key("size");
+		out << '[' << static_cast<int>(location.room.size.width) << ',' << static_cast<int>(location.room.size.height) << ']';
 		room.Number("transparency", location.ttval);
 	}
 	out << ']';
@@ -3381,13 +4221,15 @@ void WriteCatacombsResetRecords(std::ostream &out)
 	const MonsterPopulationGlobalsForTesting monsters = CaptureMonsterPopulationGlobalsForTesting();
 	const ItemInitializationGlobalsForTesting items = CaptureItemInitializationGlobalsForTesting();
 	JsonObject json(out);
-	json.Key("monsterPopulation"); {
+	json.Key("monsterPopulation");
+	{
 		JsonObject state(out);
 		state.Number("totalMonsters", monsters.totalMonsters);
 		state.Number("imageTotal", monsters.imageTotal);
 		state.Number("uniqueTransparency", monsters.uniqueTransparency);
 	}
-	json.Key("itemInitialization"); {
+	json.Key("itemInitialization");
+	{
 		JsonObject state(out);
 		state.Boolean("showUniqueInfo", items.showUniqueInfo);
 		state.Number("recordCount", items.count);
@@ -3440,7 +4282,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 	std::int32_t archiveOpenError = 0;
 	auto archive = MpqArchive::Open(explicitArchive.string().c_str(), archiveOpenError);
 	ASSERT_TRUE(archive.has_value()) << "Could not open the explicitly selected original archive: " << MpqArchive::ErrorMessage()
-	                                << " (" << archiveOpenError << ')';
+	                                 << " (" << archiveOpenError << ')';
 	const auto [archiveIt, archiveInserted] = MpqArchives.emplace(MainMpqPriority, std::move(archive.value()));
 	ASSERT_TRUE(archiveInserted);
 	MpqArchive &mainArchive = archiveIt->second;
@@ -3540,17 +4382,21 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			document.String("format", "godevilution-native-catacombs-population-sources");
 			document.Number("version", 1);
 			document.Number("tileDefinitionCount", megaTileCount);
-			document.Key("tileDefinitions"); WriteArray(source, sourceMegaTiles, [&](const MegaTile &tile) {
+			document.Key("tileDefinitions");
+			WriteArray(source, sourceMegaTiles, [&](const MegaTile &tile) {
 				source << '[' << tile.micro1 << ',' << tile.micro2 << ',' << tile.micro3 << ',' << tile.micro4 << ']';
 			});
 			document.Number("automapSourceByteCount", sourceAutomap.size());
 			document.Number("automapWordCount", sourceAutomapWords.size());
-			document.Key("automapRawWordsLittleEndian"); WriteArray(source, sourceAutomapWords, [&](uint16_t value) { source << value; });
+			document.Key("automapRawWordsLittleEndian");
+			WriteArray(source, sourceAutomapWords, [&](uint16_t value) { source << value; });
 			document.Number("solSourceByteCount", sourceSol.size());
 			document.Number("solEffectiveSlotCount", MAXTILES);
 			document.Number("solReserved0x40Count", reservedSolFlagCount);
-			document.Key("solRawBytes"); WriteArray(source, sourceSol, [&](uint8_t value) { source << static_cast<unsigned int>(value); });
-			document.Key("solEffectiveProperties"); WriteArray(source, tileProperties(), [&](TileProperties property) { source << static_cast<unsigned int>(property); });
+			document.Key("solRawBytes");
+			WriteArray(source, sourceSol, [&](uint8_t value) { source << static_cast<unsigned int>(value); });
+			document.Key("solEffectiveProperties");
+			WriteArray(source, tileProperties(), [&](TileProperties property) { source << static_cast<unsigned int>(property); });
 		}
 		source << "\r\n";
 		source.flush();
@@ -3700,7 +4546,9 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 		SetRndSeed(spec.seed);
 		const uint32_t afterPopulationSeedReset = GetLCGEngineState();
 		const std::string file = std::string(CatacombsClassSymbol(spec.heroClass))
-		    + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history" : spec.entry == ENTRY_TWARPDN ? "-town-warp-down" : "-cold")
+		    + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history"
+		            : spec.entry == ENTRY_TWARPDN                                                   ? "-town-warp-down"
+		                                                                                            : "-cold")
 		    + "-l" + std::to_string(spec.depth) + "-" + CatacombsEntrySymbol(spec.entry) + "-" + std::to_string(spec.seed) + ".json";
 		const std::filesystem::path casePath = outputGuard.root / "cases" / file;
 		std::ofstream caseOutput(casePath, std::ios::binary | std::ios::trunc);
@@ -3745,7 +4593,8 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterInitPlayer", afterInitPlayer);
 			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterPopulationSeedReset", afterPopulationSeedReset);
 			caseOutput << '}';
-			document.Key("uniqueItemHistory"); {
+			document.Key("uniqueItemHistory");
+			{
 				JsonObject history(caseOutput);
 				history.String("kind", spec.retainedUniqueHistory ? "retained-chain" : "cold");
 				if (spec.retainedUniqueHistory && spec.depth > 5)
@@ -3755,42 +4604,70 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 					history.Boolean("preparedFlagSeededThisCase", spec.depth == 5);
 					history.Boolean("preparedFlagPresentAtInput", historyAtCaseStart[PreparedCatacombsUniqueHistoryId]);
 				}
-				history.Key("inputFlags"); WriteFlags(caseOutput, inputUniqueFlags);
+				history.Key("inputFlags");
+				WriteFlags(caseOutput, inputUniqueFlags);
 			}
-			document.Key("playerPreEntryContext"); {
+			document.Key("playerPreEntryContext");
+			{
 				JsonObject context(caseOutput);
 				context.String("kind", "prepared-catacombs-entry-context");
 				context.Boolean("precedingFloorGameplayInput", false);
 				context.String("preparedInventorySeedPolicy", NativeCatacombsPreparedInventorySeedPolicy);
 				context.Number("level", MyPlayer->plrlevel);
-				context.Key("tile"); WriteRoomPoint(caseOutput, preEntryTile);
-				context.Key("future"); WriteRoomPoint(caseOutput, preEntryFuture);
-				context.Key("old"); WriteRoomPoint(caseOutput, preEntryOld);
-				context.Key("last"); WriteRoomPoint(caseOutput, preEntryLast);
-				context.Key("temp"); WriteRoomPoint(caseOutput, preEntryTemp);
+				context.Key("tile");
+				WriteRoomPoint(caseOutput, preEntryTile);
+				context.Key("future");
+				WriteRoomPoint(caseOutput, preEntryFuture);
+				context.Key("old");
+				WriteRoomPoint(caseOutput, preEntryOld);
+				context.Key("last");
+				WriteRoomPoint(caseOutput, preEntryLast);
+				context.Key("temp");
+				WriteRoomPoint(caseOutput, preEntryTemp);
 			}
-			document.Key("playerGenerationInput"); caseOutput << playerGenerationInput.str();
-			document.Key("playerBeforePopulation"); WriteCatacombsPlayer(caseOutput, *MyPlayer);
-			document.Key("bestiary"); WriteCatacombsBestiary(caseOutput);
-			document.Key("worldBeforePopulation"); WriteRoomWorld(caseOutput);
-			document.Key("themesBeforePopulation"); WriteCatacombsThemeState(caseOutput);
+			document.Key("playerGenerationInput");
+			caseOutput << playerGenerationInput.str();
+			document.Key("playerBeforePopulation");
+			WriteCatacombsPlayer(caseOutput, *MyPlayer);
+			document.Key("bestiary");
+			WriteCatacombsBestiary(caseOutput);
+			document.Key("worldBeforePopulation");
+			WriteRoomWorld(caseOutput);
+			document.Key("themesBeforePopulation");
+			WriteCatacombsThemeState(caseOutput);
 			SetRndSeed(spec.seed);
-			HoldThemeRooms(); afterHoldThemeRooms = GetLCGEngineState();
-			InitGolems(); afterInitGolems = GetLCGEngineState();
-			InitObjects(); afterInitObjects = GetLCGEngineState();
-			if (captureStages) { document.Key("worldAfterInitialObjects"); WriteRoomWorld(caseOutput); }
-			ASSERT_TRUE(InitMonsters().has_value()); afterInitMonsters = GetLCGEngineState();
-			if (captureStages) { document.Key("worldAfterInitMonsters"); WriteRoomWorld(caseOutput); }
-			InitItems(); afterInitItems = GetLCGEngineState();
-			if (captureStages) { document.Key("worldAfterInitItems"); WriteRoomWorld(caseOutput); }
+			HoldThemeRooms();
+			afterHoldThemeRooms = GetLCGEngineState();
+			InitGolems();
+			afterInitGolems = GetLCGEngineState();
+			InitObjects();
+			afterInitObjects = GetLCGEngineState();
+			if (captureStages) {
+				document.Key("worldAfterInitialObjects");
+				WriteRoomWorld(caseOutput);
+			}
+			ASSERT_TRUE(InitMonsters().has_value());
+			afterInitMonsters = GetLCGEngineState();
+			if (captureStages) {
+				document.Key("worldAfterInitMonsters");
+				WriteRoomWorld(caseOutput);
+			}
+			InitItems();
+			afterInitItems = GetLCGEngineState();
+			if (captureStages) {
+				document.Key("worldAfterInitItems");
+				WriteRoomWorld(caseOutput);
+			}
 			const std::array<bool, 128> outputUniqueFlagsAfterItems = CaptureFlags();
 			if (spec.retainedUniqueHistory)
 				ASSERT_TRUE(outputUniqueFlagsAfterItems[PreparedCatacombsUniqueHistoryId]);
-			CreateThemeRooms(); afterCreateThemeRooms = GetLCGEngineState();
+			CreateThemeRooms();
+			afterCreateThemeRooms = GetLCGEngineState();
 			outputUniqueFlags = CaptureFlags();
 			if (spec.retainedUniqueHistory)
 				ASSERT_TRUE(outputUniqueFlags[PreparedCatacombsUniqueHistoryId]);
-			document.Key("rngAfterPopulationStages"); {
+			document.Key("rngAfterPopulationStages");
+			{
 				JsonObject boundaries(caseOutput);
 				boundaries.Number("afterHoldThemeRooms", afterHoldThemeRooms);
 				boundaries.Number("afterInitGolems", afterInitGolems);
@@ -3799,22 +4676,30 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 				boundaries.Number("afterInitItems", afterInitItems);
 				boundaries.Number("afterCreateThemeRooms", afterCreateThemeRooms);
 			}
-			document.Key("uniqueItemHistoryAfterItems"); WriteFlags(caseOutput, outputUniqueFlagsAfterItems);
-			document.Key("uniqueItemHistoryOutput"); WriteFlags(caseOutput, outputUniqueFlags);
-			document.Key("populationResetRecords"); WriteCatacombsResetRecords(caseOutput);
-			document.Key("worldAfterThemeCreation"); WriteRoomWorld(caseOutput);
-			document.Key("themesAfterCreation"); WriteCatacombsThemeState(caseOutput);
+			document.Key("uniqueItemHistoryAfterItems");
+			WriteFlags(caseOutput, outputUniqueFlagsAfterItems);
+			document.Key("uniqueItemHistoryOutput");
+			WriteFlags(caseOutput, outputUniqueFlags);
+			document.Key("populationResetRecords");
+			WriteCatacombsResetRecords(caseOutput);
+			document.Key("worldAfterThemeCreation");
+			WriteRoomWorld(caseOutput);
+			document.Key("themesAfterCreation");
+			WriteCatacombsThemeState(caseOutput);
 			beforeReady = GetLCGEngineState();
 			CompleteFreshLevelForTesting(spec.entry);
 			afterReady = GetLCGEngineState();
-			document.Key("rngAfterLevelReady"); {
+			document.Key("rngAfterLevelReady");
+			{
 				JsonObject boundaries(caseOutput);
 				boundaries.Number("beforeReadySequence", beforeReady);
 				boundaries.Number("afterReadySequence", afterReady);
 				boundaries.String("sequence", "InitMissiles,InitCorpses,SavePreLighting,SyncPortals,SyncPlayerEntry,UpdateMonsterLights,UnstuckChargers,LoadGameLevelLightVision");
 			}
-			document.Key("ready"); WriteLevelReadyState(caseOutput);
-			document.Key("playerReady"); WriteCatacombsPlayer(caseOutput, *MyPlayer);
+			document.Key("ready");
+			WriteLevelReadyState(caseOutput);
+			document.Key("playerReady");
+			WriteCatacombsPlayer(caseOutput, *MyPlayer);
 		}
 		caseOutput << "\r\n";
 		caseOutput.flush();
@@ -3853,7 +4738,8 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			document.String("retainedUniqueHistoryCases", "seed 2588; Warrior and Sorcerer; level 5 seeds unique-item flag 7, then final flags carry through levels 6 to 8");
 			document.Number("preparedUniqueItemFlagId", PreparedCatacombsUniqueHistoryId);
 			document.String("playerPreEntryContext", "prepared context without preceding-floor gameplay; future 75,68; last 13,17; temp 19,23; InitPlayer supplies tile/old and ready sync supplies future");
-			document.Key("readyTail"); JsonString(manifest, "InitMissiles,InitCorpses,SavePreLighting,SyncPortals,SyncPlayerEntry,UpdateMonsterLights,UnstuckChargers,LoadGameLevelLightVision");
+			document.Key("readyTail");
+			JsonString(manifest, "InitMissiles,InitCorpses,SavePreLighting,SyncPortals,SyncPlayerEntry,UpdateMonsterLights,UnstuckChargers,LoadGameLevelLightVision");
 			document.Key("cases");
 			manifest << '[';
 			for (size_t index = 0; index < indexRows.size(); ++index) {
@@ -3861,9 +4747,10 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 					manifest << ',';
 				const NativeCatacombsPopulationCase &spec = indexRows[index];
 				JsonObject row(manifest);
-				row.String("file", "cases/" + std::string(CatacombsClassSymbol(spec.heroClass))
-				    + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history" : spec.entry == ENTRY_TWARPDN ? "-town-warp-down" : "-cold")
-				    + "-l" + std::to_string(spec.depth) + "-" + CatacombsEntrySymbol(spec.entry) + "-" + std::to_string(spec.seed) + ".json");
+				row.String("file", "cases/" + std::string(CatacombsClassSymbol(spec.heroClass)) + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history"
+				                           : spec.entry == ENTRY_TWARPDN                                                                                                                ? "-town-warp-down"
+				                                                                                                                                                                        : "-cold")
+				        + "-l" + std::to_string(spec.depth) + "-" + CatacombsEntrySymbol(spec.entry) + "-" + std::to_string(spec.seed) + ".json");
 				row.String("characterClass", CatacombsClassSymbol(spec.heroClass));
 				row.Number("characterClassId", spec.heroClass);
 				row.Number("levelId", spec.depth);
@@ -3939,7 +4826,6 @@ TEST_F(ThemeRoomGenerationTest, CaptureFreshLevelReady)
 	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_LEVEL_READY_ORACLE_DIRECTORY"), true, true);
 }
 
-
 // Actual L2 object operations on controlled SOL/occupancy inputs. No MPQ is required.
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsDoorOperations)
 {
@@ -3947,46 +4833,68 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsDoorOperations)
 	if (directory == nullptr || !*directory)
 		GTEST_SKIP() << "Select a private Catacombs door corpus explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	std::ofstream stream(root / "native-catacombs-door-operations.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	int count = 0;
 	{
 		JsonObject document(stream);
-		document.String("format", "godevilution-catacombs-door-operations"); document.Number("version", 1);
+		document.String("format", "godevilution-catacombs-door-operations");
+		document.Number("version", 1);
 		document.String("policy", "controlled-original-diablo-catacombs-l2-door-sol-and-occupancy");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		for (int depth = 5; depth <= 8; ++depth) {
 			for (const auto type : { OBJ_L2LDOOR, OBJ_L2RDOOR }) {
 				for (int occupancy = 0; occupancy < 4; ++occupancy) {
 					PrepareRoom(depth, 0, 0, 0, false);
 					currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
-					for (Tile &tile : tiles()) { tile.setPlayer(0); tile.setMonster(0); tile.setItem(0); tile.setCorpse(0); }
+					for (Tile &tile : tiles()) {
+						tile.setPlayer(0);
+						tile.setMonster(0);
+						tile.setItem(0);
+						tile.setCorpse(0);
+					}
 					for (int y = 48; y <= 52; ++y) {
 						for (int x = 48; x <= 52; ++x) {
 							tileAt(x, y).setPiece(100 + (y - 48) * 5 + x - 48);
-							tileAt(x, y).setSpecial(11); tileAt(x, y).setTransVal(23);
+							tileAt(x, y).setSpecial(11);
+							tileAt(x, y).setTransVal(23);
 						}
 					}
 					tileProperties()[537] = tileProperties()[539] = TileProperties::Solid | TileProperties::BlockLight | TileProperties::BlockMissile;
 					tileProperties()[12] = tileProperties()[16] = TileProperties::None;
 					SetRndSeed(2588);
-					Object *door = AddObject(type, { 50, 50 }); ASSERT_NE(door, nullptr);
+					Object *door = AddObject(type, { 50, 50 });
+					ASSERT_NE(door, nullptr);
 					Player remotePlayer;
 					if (count++ != 0) stream << ',';
-					JsonObject row(stream); row.Number("depth", depth); row.Number("nativeType", type); row.Number("occupancy", occupancy);
-					row.Key("initialObject"); WriteRoomObject(stream, door->GetId(), *door);
-					row.Key("states"); stream << '[';
+					JsonObject row(stream);
+					row.Number("depth", depth);
+					row.Number("nativeType", type);
+					row.Number("occupancy", occupancy);
+					row.Key("initialObject");
+					WriteRoomObject(stream, door->GetId(), *door);
+					row.Key("states");
+					stream << '[';
 					bool first = true;
 					auto capture = [&](std::string_view operation) {
-						if (!first) stream << ','; first = false;
-						JsonObject state(stream); state.String("operation", operation); state.Number("random", GetLCGEngineState());
-						state.Key("object"); WriteRoomObject(stream, door->GetId(), *door);
-						state.Key("cells"); stream << '[';
+						if (!first) stream << ',';
+						first = false;
+						JsonObject state(stream);
+						state.String("operation", operation);
+						state.Number("random", GetLCGEngineState());
+						state.Key("object");
+						WriteRoomObject(stream, door->GetId(), *door);
+						state.Key("cells");
+						stream << '[';
 						bool firstCell = true;
 						for (int y = 48; y <= 52; ++y) {
 							for (int x = 48; x <= 52; ++x) {
-								if (!firstCell) stream << ','; firstCell = false;
+								if (!firstCell) stream << ',';
+								firstCell = false;
 								const Tile &tile = tileAt(x, y);
 								stream << '[' << tile.piece() << ',' << static_cast<int>(tile.special()) << ',' << static_cast<int>(tile.transVal())
 								       << ',' << static_cast<int>(tileProperties()[tile.piece()]) << ']';
@@ -3995,31 +4903,50 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsDoorOperations)
 						stream << ']';
 					};
 					capture("initial");
-					SyncOpObject(remotePlayer, 0, *door); capture("open");
+					SyncOpObject(remotePlayer, 0, *door);
+					capture("open");
 					auto &center = tileAt(50, 50);
 					if (occupancy == 0) center.setCorpse(1);
 					if (occupancy == 1) center.setPlayer(-1);
 					if (occupancy == 2) center.setMonster(-1);
 					if (occupancy == 3) center.setItem(1);
-					SyncOpObject(remotePlayer, 0, *door); capture("blocked-close");
-					ProcessObjects(); capture("occupied-update");
-					SyncObjectAnim(*door); capture("occupied-sync");
-					ProcessObjects(); capture("occupied-update-after-sync");
-					center.setCorpse(0); center.setPlayer(0); center.setMonster(0); center.setItem(0);
-					ProcessObjects(); capture("clear-update");
-					SyncOpObject(remotePlayer, 0, *door); capture("close");
-					DeltaSyncOpObject(*door); capture("delta-open");
-					DeltaSyncOpObject(*door); capture("repeat-delta-open");
-					SyncObjectAnim(*door); capture("open-sync");
-					SyncOpObject(remotePlayer, 0, *door); capture("close-after-delta");
-					SyncObjectAnim(*door); capture("closed-sync");
+					SyncOpObject(remotePlayer, 0, *door);
+					capture("blocked-close");
+					ProcessObjects();
+					capture("occupied-update");
+					SyncObjectAnim(*door);
+					capture("occupied-sync");
+					ProcessObjects();
+					capture("occupied-update-after-sync");
+					center.setCorpse(0);
+					center.setPlayer(0);
+					center.setMonster(0);
+					center.setItem(0);
+					ProcessObjects();
+					capture("clear-update");
+					SyncOpObject(remotePlayer, 0, *door);
+					capture("close");
+					DeltaSyncOpObject(*door);
+					capture("delta-open");
+					DeltaSyncOpObject(*door);
+					capture("repeat-delta-open");
+					SyncObjectAnim(*door);
+					capture("open-sync");
+					SyncOpObject(remotePlayer, 0, *door);
+					capture("close-after-delta");
+					SyncObjectAnim(*door);
+					capture("closed-sync");
 					stream << ']';
 				}
 			}
 		}
-		stream << ']'; document.Number("caseCount", count);
+		stream << ']';
+		document.Number("caseCount", count);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(count, 32);
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	EXPECT_EQ(count, 32);
 }
 
 // The follower observes its leader at its own active-list turn, before AI.
@@ -4029,48 +4956,81 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsGargoylePackOrder)
 	if (directory == nullptr || !*directory)
 		GTEST_SKIP() << "Select a private Gargoyle pack reference directory.";
 	const auto root = std::filesystem::weakly_canonical(directory);
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	std::ofstream stream(root / "native-catacombs-gargoyle-pack-order.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	{
-		JsonObject document(stream); document.String("format", "godevilution-catacombs-gargoyle-pack-order"); document.Number("version", 1);
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-gargoyle-pack-order");
+		document.Number("version", 1);
 		document.String("policy", "prepared-inactive-gargoyle-pack-special-completion-order");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		for (int followerFirst = 0; followerFirst < 2; ++followerFirst) {
 			PrepareRoom(5, 0, 0, 0, false);
 			currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
-			for (Tile &tile : tiles()) { tile.setPiece(0); tile.setPlayer(0); tile.setMonster(0); tile.setFlags(DungeonFlag::None); }
-			MyPlayer->position.tile = { 90, 90 }; MyPlayer->position.future = { 90, 90 }; MyPlayer->position.old = { 90, 90 };
-			MyPlayer->life.current = 6400; tileAt(90, 90).setPlayer(1);
-			LevelBestiary.init(); const auto type = LevelBestiary.addType(MT_GARGOYLE, PLACE_SCATTER); ASSERT_TRUE(type.has_value());
-			SetRndSeed(2588);
-			Monster *leader = AddMonster({ 10, 10 }, Direction::SouthEast, *type, true); ASSERT_NE(leader, nullptr);
-			Monster *follower = AddMonster({ 11, 10 }, Direction::SouthEast, *type, true); ASSERT_NE(follower, nullptr);
-			leader->packSize = 1; follower->setLeader(leader); follower->leaderRelation = LeaderRelation::Leashed;
-			for (Monster *actor : { leader, follower }) {
-				actor->activeForTicks = 0; actor->enemy = 0; actor->enemyPosition = { 90, 90 }; actor->position.last = { 90, 90 };
+			for (Tile &tile : tiles()) {
+				tile.setPiece(0);
+				tile.setPlayer(0);
+				tile.setMonster(0);
+				tile.setFlags(DungeonFlag::None);
 			}
-			leader->flags &= ~MFLAG_ALLOW_SPECIAL; leader->animInfo.currentFrame = leader->animInfo.numberOfFrames - 1;
+			MyPlayer->position.tile = { 90, 90 };
+			MyPlayer->position.future = { 90, 90 };
+			MyPlayer->position.old = { 90, 90 };
+			MyPlayer->life.current = 6400;
+			tileAt(90, 90).setPlayer(1);
+			LevelBestiary.init();
+			const auto type = LevelBestiary.addType(MT_GARGOYLE, PLACE_SCATTER);
+			ASSERT_TRUE(type.has_value());
+			SetRndSeed(2588);
+			Monster *leader = AddMonster({ 10, 10 }, Direction::SouthEast, *type, true);
+			ASSERT_NE(leader, nullptr);
+			Monster *follower = AddMonster({ 11, 10 }, Direction::SouthEast, *type, true);
+			ASSERT_NE(follower, nullptr);
+			leader->packSize = 1;
+			follower->setLeader(leader);
+			follower->leaderRelation = LeaderRelation::Leashed;
+			for (Monster *actor : { leader, follower }) {
+				actor->activeForTicks = 0;
+				actor->enemy = 0;
+				actor->enemyPosition = { 90, 90 };
+				actor->position.last = { 90, 90 };
+			}
+			leader->flags &= ~MFLAG_ALLOW_SPECIAL;
+			leader->animInfo.currentFrame = leader->animInfo.numberOfFrames - 1;
 			leader->animInfo.tickCounterOfCurrentFrame = 0;
 			if (followerFirst != 0) std::swap(ActiveMonsters[0], ActiveMonsters[1]);
 			SetRndSeed(2588);
 			if (followerFirst != 0) stream << ',';
-			JsonObject row(stream); row.Boolean("followerFirst", followerFirst != 0);
-			row.Key("initialLeader"); WriteRoomMonster(stream, leader->getId(), *leader);
-			row.Key("initialFollower"); WriteRoomMonster(stream, follower->getId(), *follower);
-			row.Key("ticks"); stream << '[';
+			JsonObject row(stream);
+			row.Boolean("followerFirst", followerFirst != 0);
+			row.Key("initialLeader");
+			WriteRoomMonster(stream, leader->getId(), *leader);
+			row.Key("initialFollower");
+			WriteRoomMonster(stream, follower->getId(), *follower);
+			row.Key("ticks");
+			stream << '[';
 			for (int tick = 0; tick < 3; ++tick) {
 				ProcessMonsters();
 				if (tick != 0) stream << ',';
-				JsonObject state(stream); state.Number("tick", tick); state.Number("random", GetLCGEngineState());
-				state.Key("leader"); WriteRoomMonster(stream, leader->getId(), *leader);
-				state.Key("follower"); WriteRoomMonster(stream, follower->getId(), *follower);
+				JsonObject state(stream);
+				state.Number("tick", tick);
+				state.Number("random", GetLCGEngineState());
+				state.Key("leader");
+				WriteRoomMonster(stream, leader->getId(), *leader);
+				state.Key("follower");
+				WriteRoomMonster(stream, follower->getId(), *follower);
 			}
 			stream << ']';
 		}
-		stream << ']'; document.Number("caseCount", 2);
+		stream << ']';
+		document.Number("caseCount", 2);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good());
+	stream.flush();
+	ASSERT_TRUE(stream.good());
 }
 
 // Separate source metadata and actual Monster methods; older corpus bytes stay frozen.
@@ -4081,21 +5041,29 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
 	if (directory == nullptr || !*directory)
 		GTEST_SKIP() << "Select a private Catacombs actor corpus explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
-	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_TRUE(root.is_absolute());
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
 	LoadPlayerDataFiles();
 	std::ofstream stream(root / "native-catacombs-actor-phases.json", std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	int caseCount = 0;
 	{
 		JsonObject document(stream);
-		document.String("format", "godevilution-catacombs-actor-phases"); document.Number("version", 2);
+		document.String("format", "godevilution-catacombs-actor-phases");
+		document.Number("version", 2);
 		document.String("policy", "prepared-original-diablo-single-player-normal-catacombs-actor-arena");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		for (const HeroClass heroClass : { HeroClass::Warrior, HeroClass::Sorcerer }) {
 			for (const int lane : { 0, 5, 6, 7, 2, 3, 4 }) {
 				PrepareRoom(5, 0, 0, 0, false);
 				currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
-				for (Tile &tile : tiles()) { tile.setPlayer(0); tile.setMonster(0); tile.setFlags(DungeonFlag::None); }
+				for (Tile &tile : tiles()) {
+					tile.setPlayer(0);
+					tile.setMonster(0);
+					tile.setFlags(DungeonFlag::None);
+				}
 				LevelBestiary.init();
 				const bool fat = lane == 0 || lane >= 5;
 				const int nativeType = fat ? (lane == 0 ? 52 : lane + 48) : 81;
@@ -4103,29 +5071,44 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
 				ASSERT_TRUE(typeIndex.has_value());
 				// Character creation requires inventory cursor art. This controller seam
 				// prepares only class combat scalars from the canonical native tables.
-				Player hero; hero._pClass = heroClass; hero.setCharacterLevel(1);
+				Player hero;
+				hero._pClass = heroClass;
+				hero.setCharacterLevel(1);
 				const ClassAttributes &attributes = hero.getClassAttributes();
 				hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
 				hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
 				hero.attributes.dexterity.base = hero.attributes.dexterity.current = attributes.baseDex;
 				hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
-				const int life = hero.calculateBaseLife(); const int mana = hero.calculateBaseMana();
-				hero.life = { life, life, life, life, 100 }; hero.mana = { mana, mana, mana, mana, 100 };
-				hero.setAnimations(); *MyPlayer = std::move(hero);
-				MyPlayer->plractive = true; MyPlayer->plrlevel = 5; MyPlayer->_pLvlChanging = false;
-				MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pInvincible = false;
-				MyPlayer->_pBlockFlag = false; MyPlayer->_pmode = PM_STAND;
+				const int life = hero.calculateBaseLife();
+				const int mana = hero.calculateBaseMana();
+				hero.life = { life, life, life, life, 100 };
+				hero.mana = { mana, mana, mana, mana, 100 };
+				hero.setAnimations();
+				*MyPlayer = std::move(hero);
+				MyPlayer->plractive = true;
+				MyPlayer->plrlevel = 5;
+				MyPlayer->_pLvlChanging = false;
+				MyPlayer->plrIsOnSetLevel = false;
+				MyPlayer->_pInvincible = false;
+				MyPlayer->_pBlockFlag = false;
+				MyPlayer->_pmode = PM_STAND;
 				const Point playerPosition { static_cast<WorldTileCoord>(fat ? 51 : 60), 50 };
-				MyPlayer->position.tile = playerPosition; MyPlayer->position.future = playerPosition;
-				MyPlayer->position.old = playerPosition; tileAt(playerPosition).setPlayer(1);
+				MyPlayer->position.tile = playerPosition;
+				MyPlayer->position.future = playerPosition;
+				MyPlayer->position.old = playerPosition;
+				tileAt(playerPosition).setPlayer(1);
 				SetRndSeed(2588);
 				Monster *actor = AddMonster({ 50, 50 }, Direction::SouthEast, *typeIndex, true);
 				ASSERT_NE(actor, nullptr);
-				actor->activeForTicks = 255; actor->enemy = 0; actor->enemyPosition = playerPosition; actor->position.last = playerPosition;
+				actor->activeForTicks = 255;
+				actor->enemy = 0;
+				actor->enemyPosition = playerPosition;
+				actor->position.last = playerPosition;
 				uint32_t inputSeed = 2588;
 				if (fat) {
 					for (inputSeed = 0; inputSeed < 10000; ++inputSeed) {
-						SetRndSeed(inputSeed); const int roll = GenerateRnd(100);
+						SetRndSeed(inputSeed);
+						const int roll = GenerateRnd(100);
 						if (roll >= 4 * actor->intelligence + 15 && roll < 4 * actor->intelligence + 20) break;
 					}
 					ASSERT_LT(inputSeed, 10000U);
@@ -4133,24 +5116,39 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
 				SetRndSeed(inputSeed);
 				if (caseCount++ != 0) stream << ',';
 				JsonObject row(stream);
-				row.Number("classId", heroClass); row.Number("nativeType", nativeType); row.Number("lane", lane);
-				row.Number("inputSeed", inputSeed); row.Number("characterLevel", MyPlayer->getCharacterLevel());
-				row.Number("initialPlayerLifeQ6", MyPlayer->life.current); row.Boolean("canBlock", false);
-				row.Number("normalToHit", actor->toHit(DIFF_NORMAL)); row.Number("specialToHit", actor->toHitSpecial(DIFF_NORMAL));
-				row.Number("minimumDamage", actor->minDamage); row.Number("maximumDamage", actor->maxDamage);
-				row.Number("minimumSpecialDamage", actor->minDamageSpecial); row.Number("maximumSpecialDamage", actor->maxDamageSpecial);
-				row.Number("normalEffectFrame", actor->data().animFrameNum); row.Number("specialEffectFrame", actor->data().animFrameNumSpecial);
-				row.Number("intelligence", actor->intelligence); row.Number("monsterLevel", actor->level(DIFF_NORMAL));
-				row.Key("animations"); WriteArray(stream, actor->type().anims, [&](const AnimStruct &anim) {
+				row.Number("classId", heroClass);
+				row.Number("nativeType", nativeType);
+				row.Number("lane", lane);
+				row.Number("inputSeed", inputSeed);
+				row.Number("characterLevel", MyPlayer->getCharacterLevel());
+				row.Number("initialPlayerLifeQ6", MyPlayer->life.current);
+				row.Boolean("canBlock", false);
+				row.Number("normalToHit", actor->toHit(DIFF_NORMAL));
+				row.Number("specialToHit", actor->toHitSpecial(DIFF_NORMAL));
+				row.Number("minimumDamage", actor->minDamage);
+				row.Number("maximumDamage", actor->maxDamage);
+				row.Number("minimumSpecialDamage", actor->minDamageSpecial);
+				row.Number("maximumSpecialDamage", actor->maxDamageSpecial);
+				row.Number("normalEffectFrame", actor->data().animFrameNum);
+				row.Number("specialEffectFrame", actor->data().animFrameNumSpecial);
+				row.Number("intelligence", actor->intelligence);
+				row.Number("monsterLevel", actor->level(DIFF_NORMAL));
+				row.Key("animations");
+				WriteArray(stream, actor->type().anims, [&](const AnimStruct &anim) {
 					stream << '[' << static_cast<int>(anim.frames) << ',' << static_cast<int>(anim.rate) << ']';
 				});
-				row.Key("ticks"); stream << '[';
+				row.Key("ticks");
+				stream << '[';
 				for (int tick = 0; tick < 45; ++tick) {
 					if (tick != 0) stream << ',';
-					JsonObject state(stream); state.Number("tick", tick);
-					state.Number("beforeMode", actor->mode); state.Number("beforeFlags", actor->flags);
-					state.Number("beforeFrame", actor->animInfo.currentFrame); state.Number("beforeCounter", actor->animInfo.tickCounterOfCurrentFrame);
-					state.Number("beforeRandom", GetLCGEngineState()); state.Number("beforePlayerLifeQ6", MyPlayer->life.current);
+					JsonObject state(stream);
+					state.Number("tick", tick);
+					state.Number("beforeMode", actor->mode);
+					state.Number("beforeFlags", actor->flags);
+					state.Number("beforeFrame", actor->animInfo.currentFrame);
+					state.Number("beforeCounter", actor->animInfo.tickCounterOfCurrentFrame);
+					state.Number("beforeRandom", GetLCGEngineState());
+					state.Number("beforePlayerLifeQ6", MyPlayer->life.current);
 					bool consumedWake = false;
 					if (tick == 3 && lane == 3) {
 						MyPlayer->position.future = { 51, 50 };
@@ -4162,17 +5160,25 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
 					if (fat || (actor->flags & MFLAG_ALLOW_SPECIAL) == 0)
 						actor->activeForTicks = 0;
 					state.Boolean("consumedWake", consumedWake);
-					state.Number("mode", actor->mode); state.Number("flags", actor->flags);
-					state.Number("frame", actor->animInfo.currentFrame); state.Number("counter", actor->animInfo.tickCounterOfCurrentFrame);
-					state.Number("frameCount", actor->animInfo.numberOfFrames); state.Number("ticksPerFrame", actor->animInfo.ticksPerFrame);
-					state.Number("random", GetLCGEngineState()); state.Number("playerLifeQ6", MyPlayer->life.current);
+					state.Number("mode", actor->mode);
+					state.Number("flags", actor->flags);
+					state.Number("frame", actor->animInfo.currentFrame);
+					state.Number("counter", actor->animInfo.tickCounterOfCurrentFrame);
+					state.Number("frameCount", actor->animInfo.numberOfFrames);
+					state.Number("ticksPerFrame", actor->animInfo.ticksPerFrame);
+					state.Number("random", GetLCGEngineState());
+					state.Number("playerLifeQ6", MyPlayer->life.current);
 				}
 				stream << ']';
 			}
 		}
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(caseCount, 14);
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	EXPECT_EQ(caseCount, 14);
 }
 
 void WriteRangedPlayer(std::ostream &out, const Player &player)
@@ -4183,9 +5189,12 @@ void WriteRangedPlayer(std::ostream &out, const Player &player)
 	json.Number("mode", player._pmode);
 	json.Boolean("active", player.plractive);
 	json.Boolean("levelLoading", player.pLvlLoad != 0);
-	json.Key("tile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
-	json.Key("future"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
-	json.Key("old"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+	json.Key("tile");
+	WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+	json.Key("future");
+	WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+	json.Key("old");
+	WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
 }
 
 void WriteRangedMissile(std::ostream &out, const Missile &missile)
@@ -4203,12 +5212,18 @@ void WriteRangedMissile(std::ostream &out, const Missile &missile)
 	json.Number("animationDelay", missile._miAnimDelay);
 	json.Number("duration", missile.duration);
 	json.Boolean("delete", missile._miDelFlag);
-	json.Key("start"); WriteRoomPoint(out, { missile.position.start.x, missile.position.start.y });
-	json.Key("tile"); WriteRoomPoint(out, { missile.position.tile.x, missile.position.tile.y });
-	json.Key("velocity"); WriteRoomPoint(out, { missile.position.velocity.deltaX, missile.position.velocity.deltaY });
-	json.Key("traveled"); WriteRoomPoint(out, { missile.position.traveled.deltaX, missile.position.traveled.deltaY });
-	json.Key("rawProjectileUnionDestination"); WriteRoomPoint(out, { missile.projectile.destX, missile.projectile.destY });
-	json.Key("raw"); WriteArray(out, missile.raw, [&](int value) { out << value; });
+	json.Key("start");
+	WriteRoomPoint(out, { missile.position.start.x, missile.position.start.y });
+	json.Key("tile");
+	WriteRoomPoint(out, { missile.position.tile.x, missile.position.tile.y });
+	json.Key("velocity");
+	WriteRoomPoint(out, { missile.position.velocity.deltaX, missile.position.velocity.deltaY });
+	json.Key("traveled");
+	WriteRoomPoint(out, { missile.position.traveled.deltaX, missile.position.traveled.deltaY });
+	json.Key("rawProjectileUnionDestination");
+	WriteRoomPoint(out, { missile.projectile.destX, missile.projectile.destY });
+	json.Key("raw");
+	WriteArray(out, missile.raw, [&](int value) { out << value; });
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
@@ -4248,16 +5263,24 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 		document.String("format", "godevilution-catacombs-ranged-release");
 		document.Number("version", 1);
 		document.String("policy", "prepared-original-diablo-catacombs-ranged-controller-release-clock");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		auto nextCase = [&]() { if (caseCount++ != 0) stream << ','; };
 		auto writeIdentity = [&](JsonObject &row, std::string_view name, int depth, _monster_id nativeType, MonsterAIID ai, MissileID missileId, bool special, std::string_view uniqueName, Monster &actor) {
-			row.String("name", name); row.Number("depth", depth); row.Number("nativeType", nativeType);
-			row.Number("ai", ai); row.Number("missileId", missileId); row.Boolean("special", special);
-			row.String("uniqueName", uniqueName); row.Number("normalEffectFrame", actor.data().animFrameNum);
+			row.String("name", name);
+			row.Number("depth", depth);
+			row.Number("nativeType", nativeType);
+			row.Number("ai", ai);
+			row.Number("missileId", missileId);
+			row.Boolean("special", special);
+			row.String("uniqueName", uniqueName);
+			row.Number("normalEffectFrame", actor.data().animFrameNum);
 			row.Number("specialEffectFrame", actor.data().animFrameNumSpecial);
 			row.Number("sourceAnimationFrames", actor.animInfo.numberOfFrames);
-			row.Key("initialActor"); WriteRoomMonster(stream, static_cast<int>(actor.getId()), actor);
-			row.Key("initialPlayer"); WriteRangedPlayer(stream, *MyPlayer);
+			row.Key("initialActor");
+			WriteRoomMonster(stream, static_cast<int>(actor.getId()), actor);
+			row.Key("initialPlayer");
+			WriteRangedPlayer(stream, *MyPlayer);
 			row.Number("initialRandom", GetLCGEngineState());
 		};
 		auto writeMissiles = [&]() {
@@ -4275,15 +5298,23 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
 			std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
 			for (Tile &tile : tiles()) {
-				tile.setPiece(0); tile.setTransVal(0); tile.setFlags(DungeonFlag::None);
-				tile.setPlayer(0); tile.setMonster(0); tile.setObject(0); tile.setItem(0);
-				tile.setCorpse(0); tile.setLight(0); tile.setPreLight(0);
+				tile.setPiece(0);
+				tile.setTransVal(0);
+				tile.setFlags(DungeonFlag::None);
+				tile.setPlayer(0);
+				tile.setMonster(0);
+				tile.setObject(0);
+				tile.setItem(0);
+				tile.setCorpse(0);
+				tile.setLight(0);
+				tile.setPreLight(0);
 			}
 			LevelBestiary.init();
 			const auto typeIndex = LevelBestiary.addType(nativeType, PLACE_SCATTER);
 			if (!typeIndex) return nullptr;
 			Player hero;
-			hero._pClass = HeroClass::Warrior; hero.setCharacterLevel(1);
+			hero._pClass = HeroClass::Warrior;
+			hero.setCharacterLevel(1);
 			const ClassAttributes &attributes = hero.getClassAttributes();
 			hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
 			hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
@@ -4291,31 +5322,48 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
 			const int life = hero.calculateBaseLife();
 			const int mana = hero.calculateBaseMana();
-			hero.life = { life, life, life, life, 100 }; hero.mana = { mana, mana, mana, mana, 100 };
-			hero.setAnimations(); *MyPlayer = std::move(hero);
-			MyPlayer->plractive = true; MyPlayer->plrlevel = static_cast<uint8_t>(depth);
-			MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pLvlChanging = false; MyPlayer->pLvlLoad = 1;
-			MyPlayer->_pInvincible = false; MyPlayer->_pBlockFlag = false; MyPlayer->_pmode = PM_STAND;
+			hero.life = { life, life, life, life, 100 };
+			hero.mana = { mana, mana, mana, mana, 100 };
+			hero.setAnimations();
+			*MyPlayer = std::move(hero);
+			MyPlayer->plractive = true;
+			MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+			MyPlayer->plrIsOnSetLevel = false;
+			MyPlayer->_pLvlChanging = false;
+			MyPlayer->pLvlLoad = 1;
+			MyPlayer->_pInvincible = false;
+			MyPlayer->_pBlockFlag = false;
+			MyPlayer->_pmode = PM_STAND;
 			const Point playerPosition { 60, 50 };
-			MyPlayer->position.tile = playerPosition; MyPlayer->position.future = playerPosition; MyPlayer->position.old = playerPosition;
+			MyPlayer->position.tile = playerPosition;
+			MyPlayer->position.future = playerPosition;
+			MyPlayer->position.old = playerPosition;
 			tileAt(playerPosition).setPlayer(1);
 			CurrentLightManager.Init();
 			SetRndSeed(2588);
 			Monster *actor = AddMonster({ 50, 50 }, Direction::SouthEast, *typeIndex, true);
 			if (actor == nullptr) return nullptr;
-			actor->activeForTicks = UINT8_MAX; actor->enemy = 0; actor->enemyPosition = playerPosition;
-			actor->position.last = playerPosition; actor->position.future = actor->position.tile;
-			actor->goal = MonsterGoal::Normal; actor->goalVar1 = 0; actor->goalVar2 = 0; actor->goalVar3 = 0;
+			actor->activeForTicks = UINT8_MAX;
+			actor->enemy = 0;
+			actor->enemyPosition = playerPosition;
+			actor->position.last = playerPosition;
+			actor->position.future = actor->position.tile;
+			actor->goal = MonsterGoal::Normal;
+			actor->goalVar1 = 0;
+			actor->goalVar2 = 0;
+			actor->goalVar3 = 0;
 			actor->flags &= ~(MFLAG_NO_ENEMY | MFLAG_TARGETS_MONSTER | MFLAG_SEARCH | MFLAG_HIDDEN);
 			tileAt(actor->position.tile).addFlags(DungeonFlag::Visible);
 			if (unique != nullptr) {
 				const size_t uniqueIndex = static_cast<size_t>(unique - UniqueMonstersData.data());
 				actor->uniqueType = static_cast<UniqueMonsterType>(uniqueIndex);
-				actor->ai = unique->mAi; actor->intelligence = unique->mint;
+				actor->ai = unique->mAi;
+				actor->intelligence = unique->mint;
 				actor->minDamage = actor->minDamageSpecial = unique->mMinDamage;
 				actor->maxDamage = actor->maxDamageSpecial = unique->mMaxDamage;
 				actor->maxHitPoints = std::max<int>(unique->mmaxhp / 2, 1) << 6;
-				actor->hitPoints = actor->maxHitPoints; actor->uniqTrans = 0;
+				actor->hitPoints = actor->maxHitPoints;
+				actor->uniqTrans = 0;
 			}
 			return actor;
 		};
@@ -4329,14 +5377,21 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			return UINT32_MAX;
 		};
 
-		struct Lane { const char *name; int depth; _monster_id type; MissileID missile; bool special; bool unique; };
-		const std::array<Lane, 5> lanes {{
+		struct Lane {
+			const char *name;
+			int depth;
+			_monster_id type;
+			MissileID missile;
+			bool special;
+			bool unique;
+		};
+		const std::array<Lane, 5> lanes { {
 			{ "skeleton-bow", 5, MT_WSKELBW, MissileID::Arrow, false, false },
 			{ "goat-ranged", 5, MT_NGOATBW, MissileID::Arrow, false, false },
 			{ "magma", 8, MT_NMAGMA, MissileID::MagmaBall, true, false },
 			{ "acid", 6, MT_NACID, MissileID::Acid, true, false },
 			{ "deathspit", 6, MT_NACID, MissileID::Acid, true, true },
-		}};
+		} };
 		for (const Lane &lane : lanes) {
 			const UniqueMonsterData *unique = nullptr;
 			if (lane.unique) {
@@ -4346,7 +5401,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			}
 			Monster *actor = prepareActor(lane.depth, lane.type, unique);
 			ASSERT_NE(actor, nullptr);
-			Missiles.clear(); MissilePreFlag = false;
+			Missiles.clear();
+			MissilePreFlag = false;
 			uint32_t seed = 2588;
 			if (actor->ai == MonsterAIID::Magma || actor->ai == MonsterAIID::Acid) seed = specialSeed(*actor);
 			ASSERT_NE(seed, UINT32_MAX);
@@ -4354,7 +5410,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			nextCase();
 			JsonObject row(stream);
 			writeIdentity(row, lane.name, lane.depth, lane.type, actor->ai, lane.missile, lane.special, lane.unique ? "Deathspit" : "", *actor);
-			row.Key("ticks"); stream << '[';
+			row.Key("ticks");
+			stream << '[';
 			bool firstTick = true, sawRelease = false, completed = false;
 			for (int tick = 0; tick < 128; ++tick) {
 				const WorldTilePosition future { 60, static_cast<WorldTileCoord>(50 + ((tick + 1) % 3)) };
@@ -4370,21 +5427,30 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 				if (!firstTick) stream << ',';
 				firstTick = false;
 				JsonObject state(stream);
-				state.Number("tick", tick); state.Boolean("releaseFrameEligible", eligible);
+				state.Number("tick", tick);
+				state.Boolean("releaseFrameEligible", eligible);
 				state.Number("beforeRandom", GetLCGEngineState());
-				state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y });
+				state.Key("beforeActor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
 				state.Number("missileCountBefore", missileCount);
 				ProcessMonsters();
 				const bool created = Missiles.size() > missileCount;
 				if (eligible && created) sawRelease = true;
-				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size());
+				state.Number("random", GetLCGEngineState());
+				state.Number("missileCountAfter", Missiles.size());
 				state.Boolean("missileCreated", created);
-				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("playerFuture"); WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y });
-				state.Key("missiles"); writeMissiles();
+				state.Key("actor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture");
+				WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y });
+				state.Key("missiles");
+				writeMissiles();
 				if (sawRelease && beforeMode == expectedMode && wasLast
 				    && (actor->mode != expectedMode || actor->animInfo.currentFrame < beforeFrame)) {
 					completed = true;
@@ -4392,7 +5458,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 				}
 			}
 			stream << ']';
-			row.Boolean("naturalReleaseObserved", sawRelease); row.Boolean("completedAndRedispatched", completed);
+			row.Boolean("naturalReleaseObserved", sawRelease);
+			row.Boolean("completedAndRedispatched", completed);
 			EXPECT_TRUE(sawRelease) << lane.name;
 			EXPECT_TRUE(completed) << lane.name;
 		}
@@ -4400,83 +5467,175 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 		// Ordinary attack checks the effect frame every tick, so a deliberately
 		// held frame emits repeatedly. This is a prepared controller boundary.
 		{
-			Monster *actor = prepareActor(5, MT_NGOATBW, nullptr); ASSERT_NE(actor, nullptr);
-			Missiles.clear(); MissilePreFlag = false; SetRndSeed(2588); ProcessMonsters();
+			Monster *actor = prepareActor(5, MT_NGOATBW, nullptr);
+			ASSERT_NE(actor, nullptr);
+			Missiles.clear();
+			MissilePreFlag = false;
+			SetRndSeed(2588);
+			ProcessMonsters();
 			ASSERT_EQ(actor->mode, MonsterMode::RangedAttack);
 			actor->animInfo.currentFrame = actor->data().animFrameNum - 1;
-			actor->animInfo.ticksPerFrame = 2; actor->animInfo.tickCounterOfCurrentFrame = 0;
-			nextCase(); JsonObject row(stream); writeIdentity(row, "ordinary-held-effect-frame-repeat", 5, MT_NGOATBW, actor->ai, MissileID::Arrow, false, "", *actor);
-			row.String("boundary", "prepared-held-normal-effect-frame"); row.Key("ticks"); stream << '[';
+			actor->animInfo.ticksPerFrame = 2;
+			actor->animInfo.tickCounterOfCurrentFrame = 0;
+			nextCase();
+			JsonObject row(stream);
+			writeIdentity(row, "ordinary-held-effect-frame-repeat", 5, MT_NGOATBW, actor->ai, MissileID::Arrow, false, "", *actor);
+			row.String("boundary", "prepared-held-normal-effect-frame");
+			row.Key("ticks");
+			stream << '[';
 			for (int tick = 0; tick < 2; ++tick) {
 				if (tick != 0) stream << ',';
-				const size_t before = Missiles.size(); const WorldTilePosition future { 60, 51 }; MyPlayer->position.future = future;
-				JsonObject state(stream); state.Number("tick", tick); state.Boolean("releaseFrameEligible", true);
-				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
+				const size_t before = Missiles.size();
+				const WorldTilePosition future { 60, 51 };
+				MyPlayer->position.future = future;
+				JsonObject state(stream);
+				state.Number("tick", tick);
+				state.Boolean("releaseFrameEligible", true);
+				state.Number("beforeRandom", GetLCGEngineState());
+				state.Key("beforeActor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
+				state.Number("missileCountBefore", before);
 				ProcessMonsters();
-				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size()); state.Boolean("missileCreated", Missiles.size() > before);
-				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("playerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Key("missiles"); writeMissiles();
+				state.Number("random", GetLCGEngineState());
+				state.Number("missileCountAfter", Missiles.size());
+				state.Boolean("missileCreated", Missiles.size() > before);
+				state.Key("actor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
+				state.Key("missiles");
+				writeMissiles();
 			}
-			stream << ']'; row.Boolean("repeatObserved", Missiles.size() == 2U); EXPECT_EQ(Missiles.size(), 2U);
+			stream << ']';
+			row.Boolean("repeatObserved", Missiles.size() == 2U);
+			EXPECT_EQ(Missiles.size(), 2U);
 		}
 
 		// Special release additionally requires counter zero at the effect frame.
 		{
-			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr); ASSERT_NE(actor, nullptr);
-			Missiles.clear(); MissilePreFlag = false; SetRndSeed(specialSeed(*actor)); ProcessMonsters();
+			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr);
+			ASSERT_NE(actor, nullptr);
+			Missiles.clear();
+			MissilePreFlag = false;
+			SetRndSeed(specialSeed(*actor));
+			ProcessMonsters();
 			ASSERT_EQ(actor->mode, MonsterMode::SpecialRangedAttack);
 			actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1;
-			actor->animInfo.ticksPerFrame = 3; actor->animInfo.tickCounterOfCurrentFrame = 1;
-			nextCase(); JsonObject row(stream); writeIdentity(row, "special-counter-gated-release", 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
-			row.String("boundary", "prepared-special-effect-frame-counter-gate"); row.Key("ticks"); stream << '[';
+			actor->animInfo.ticksPerFrame = 3;
+			actor->animInfo.tickCounterOfCurrentFrame = 1;
+			nextCase();
+			JsonObject row(stream);
+			writeIdentity(row, "special-counter-gated-release", 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
+			row.String("boundary", "prepared-special-effect-frame-counter-gate");
+			row.Key("ticks");
+			stream << '[';
 			for (int tick = 0; tick < 2; ++tick) {
 				if (tick != 0) stream << ',';
-				if (tick == 1) { actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1; actor->animInfo.tickCounterOfCurrentFrame = 0; }
-				const size_t before = Missiles.size(); const WorldTilePosition future { 60, static_cast<WorldTileCoord>(51 + tick) }; MyPlayer->position.future = future;
+				if (tick == 1) {
+					actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1;
+					actor->animInfo.tickCounterOfCurrentFrame = 0;
+				}
+				const size_t before = Missiles.size();
+				const WorldTilePosition future { 60, static_cast<WorldTileCoord>(51 + tick) };
+				MyPlayer->position.future = future;
 				const bool eligible = actor->mode == MonsterMode::SpecialRangedAttack && actor->animInfo.currentFrame == actor->data().animFrameNumSpecial - 1 && actor->animInfo.tickCounterOfCurrentFrame == 0;
-				JsonObject state(stream); state.Number("tick", tick); state.Boolean("releaseFrameEligible", eligible);
-				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
+				JsonObject state(stream);
+				state.Number("tick", tick);
+				state.Boolean("releaseFrameEligible", eligible);
+				state.Number("beforeRandom", GetLCGEngineState());
+				state.Key("beforeActor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
+				state.Number("missileCountBefore", before);
 				ProcessMonsters();
-				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size()); state.Boolean("missileCreated", Missiles.size() > before);
-				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("playerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Key("missiles"); writeMissiles();
+				state.Number("random", GetLCGEngineState());
+				state.Number("missileCountAfter", Missiles.size());
+				state.Boolean("missileCreated", Missiles.size() > before);
+				state.Key("actor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
+				state.Key("missiles");
+				writeMissiles();
 			}
-			stream << ']'; row.Boolean("counterGateObserved", Missiles.size() == 1U); EXPECT_EQ(Missiles.size(), 1U);
+			stream << ']';
+			row.Boolean("counterGateObserved", Missiles.size() == 1U);
+			EXPECT_EQ(Missiles.size(), 1U);
 		}
 
 		auto writeInterruptedSpecial = [&](std::string_view name, bool petrified) {
-			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr); ASSERT_NE(actor, nullptr);
-			Missiles.clear(); MissilePreFlag = false; SetRndSeed(specialSeed(*actor)); ProcessMonsters();
+			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr);
+			ASSERT_NE(actor, nullptr);
+			Missiles.clear();
+			MissilePreFlag = false;
+			SetRndSeed(specialSeed(*actor));
+			ProcessMonsters();
 			ASSERT_EQ(actor->mode, MonsterMode::SpecialRangedAttack);
-			actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1; actor->animInfo.tickCounterOfCurrentFrame = 0;
-			if (petrified) actor->petrify(); else actor->startHit(std::numeric_limits<int>::max());
-			nextCase(); JsonObject row(stream); writeIdentity(row, name, 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
-			row.String("boundary", "prepared-special-effect-frame-interruption"); row.String("interrupt", petrified ? "petrified" : "hard-hit");
-			row.Key("ticks"); stream << '[';
-			const size_t before = Missiles.size(); const WorldTilePosition future { 60, 52 }; MyPlayer->position.future = future;
+			actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1;
+			actor->animInfo.tickCounterOfCurrentFrame = 0;
+			if (petrified)
+				actor->petrify();
+			else
+				actor->startHit(std::numeric_limits<int>::max());
+			nextCase();
+			JsonObject row(stream);
+			writeIdentity(row, name, 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
+			row.String("boundary", "prepared-special-effect-frame-interruption");
+			row.String("interrupt", petrified ? "petrified" : "hard-hit");
+			row.Key("ticks");
+			stream << '[';
+			const size_t before = Missiles.size();
+			const WorldTilePosition future { 60, 52 };
+			MyPlayer->position.future = future;
 			{
-				JsonObject state(stream); state.Number("tick", 0); state.Boolean("releaseFrameEligible", false);
-				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
-				ProcessMonsters(); state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size());
-				state.Boolean("missileCreated", Missiles.size() > before); state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
-				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
-				state.Key("playerFuture"); WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y }); state.Key("missiles"); writeMissiles();
+				JsonObject state(stream);
+				state.Number("tick", 0);
+				state.Boolean("releaseFrameEligible", false);
+				state.Number("beforeRandom", GetLCGEngineState());
+				state.Key("beforeActor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture");
+				WriteRoomPoint(stream, { future.x, future.y });
+				state.Number("missileCountBefore", before);
+				ProcessMonsters();
+				state.Number("random", GetLCGEngineState());
+				state.Number("missileCountAfter", Missiles.size());
+				state.Boolean("missileCreated", Missiles.size() > before);
+				state.Key("actor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition");
+				WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture");
+				WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y });
+				state.Key("missiles");
+				writeMissiles();
 			}
-			stream << ']'; row.Boolean("releaseSuppressed", Missiles.size() == before); EXPECT_EQ(Missiles.size(), before);
+			stream << ']';
+			row.Boolean("releaseSuppressed", Missiles.size() == before);
+			EXPECT_EQ(Missiles.size(), before);
 		};
 		writeInterruptedSpecial("special-petrified-before-release", true);
 		writeInterruptedSpecial("special-hard-hit-before-release", false);
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); ASSERT_TRUE(!stream.fail());
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	ASSERT_TRUE(!stream.fail());
 	EXPECT_EQ(caseCount, 9);
 	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-ranged-release.json"), 32U * 1024U * 1024U);
 }
@@ -4498,23 +5657,35 @@ struct NativeArrowMissileOrdinals {
 	{
 		values.erase(std::remove_if(values.begin(), values.end(), [&](const auto &entry) {
 			return std::none_of(Missiles.begin(), Missiles.end(), [&](const Missile &missile) { return &missile == entry.first; });
-		}), values.end());
+		}),
+		    values.end());
 	}
 };
 
 void WriteArrowPlayer(std::ostream &out, size_t index, const Player &player)
 {
 	JsonObject json(out);
-	json.Number("playerIndex", index); json.Number("heroClassId", player._pClass);
-	json.Number("characterLevel", player.getCharacterLevel()); json.Number("levelId", player.plrlevel);
+	json.Number("playerIndex", index);
+	json.Number("heroClassId", player._pClass);
+	json.Number("characterLevel", player.getCharacterLevel());
+	json.Number("levelId", player.plrlevel);
 	json.Number("experience", player._pExperience);
-	json.Boolean("active", player.plractive); json.Number("mode", player._pmode);
-	json.Number("direction", player.direction); json.Key("tile"); WriteRoomPoint(out, player.position.tile);
-	json.Key("future"); WriteRoomPoint(out, player.position.future); json.Key("old"); WriteRoomPoint(out, player.position.old);
-	json.Number("lifeQ6", player.life.current); json.Number("maximumLifeQ6", player.life.maximum);
-	json.Number("armorClass", player._pArmorClass); json.Number("armorValue", player.GetArmor());
+	json.Boolean("active", player.plractive);
+	json.Number("mode", player._pmode);
+	json.Number("direction", player.direction);
+	json.Key("tile");
+	WriteRoomPoint(out, player.position.tile);
+	json.Key("future");
+	WriteRoomPoint(out, player.position.future);
+	json.Key("old");
+	WriteRoomPoint(out, player.position.old);
+	json.Number("lifeQ6", player.life.current);
+	json.Number("maximumLifeQ6", player.life.maximum);
+	json.Number("armorClass", player._pArmorClass);
+	json.Number("armorValue", player.GetArmor());
 	json.Number("blockChanceWithoutLevel", player.GetBlockChance(false));
-	json.Boolean("blockFlag", player._pBlockFlag); json.Boolean("invincible", player._pInvincible);
+	json.Boolean("blockFlag", player._pBlockFlag);
+	json.Boolean("invincible", player._pInvincible);
 	json.Boolean("etherealized", HasAnyOf(player._pSpellFlags, SpellFlag::Etherealize));
 	json.Number("spellFlags", player._pSpellFlags);
 	json.Number("arghClangBaseSoundId", GetHeroSound(player._pClass, HeroSpeech::ArghClang));
@@ -4528,19 +5699,37 @@ bool IsArrowMonsterActive(size_t slot)
 void WriteArrowMonster(std::ostream &out, int slot, const Monster &monster)
 {
 	JsonObject json(out);
-	json.Number("slot", slot); json.Number("nativeType", monster.type().type); json.Boolean("active", IsArrowMonsterActive(slot));
-	json.Key("tile"); WriteRoomPoint(out, monster.position.tile); json.Key("future"); WriteRoomPoint(out, monster.position.future);
-	json.Key("old"); WriteRoomPoint(out, monster.position.old); json.Number("mode", monster.mode);
-	json.Number("hitPointsQ6", monster.hitPoints); json.Number("maximumHitPointsQ6", monster.maxHitPoints);
-	json.Boolean("hasNoLife", monster.hasNoLife()); json.Boolean("invalid", monster.isInvalid);
-	json.Number("goal", monster.goal); json.Number("whoHit", monster.whoHit); json.Number("corpseId", monster.corpseId);
-	json.Number("uniqueType", monster.uniqueType); json.Number("killCountForType", MonsterKillCounts[monster.type().type]);
-	json.Number("itemSeed", monster.rndItemSeed); json.Number("aiSeed", monster.aiSeed);
-	json.Number("treasure", monster.data().treasure); json.Number("experienceValue", monster.exp(DIFF_NORMAL));
-	json.Number("level", monster.level(DIFF_NORMAL)); json.Number("toHit", monster.toHit(DIFF_NORMAL));
-	json.Number("minimumDamage", monster.minDamage); json.Number("maximumDamage", monster.maxDamage);
-	json.Number("armorClass", monster.armorClass); json.Number("faction", monster.isPlayerMinion() ? 1 : 0);
-	json.Boolean("playerMinion", monster.isPlayerMinion()); json.Boolean("berserk", (monster.flags & MFLAG_BERSERK) != 0);
+	json.Number("slot", slot);
+	json.Number("nativeType", monster.type().type);
+	json.Boolean("active", IsArrowMonsterActive(slot));
+	json.Key("tile");
+	WriteRoomPoint(out, monster.position.tile);
+	json.Key("future");
+	WriteRoomPoint(out, monster.position.future);
+	json.Key("old");
+	WriteRoomPoint(out, monster.position.old);
+	json.Number("mode", monster.mode);
+	json.Number("hitPointsQ6", monster.hitPoints);
+	json.Number("maximumHitPointsQ6", monster.maxHitPoints);
+	json.Boolean("hasNoLife", monster.hasNoLife());
+	json.Boolean("invalid", monster.isInvalid);
+	json.Number("goal", monster.goal);
+	json.Number("whoHit", monster.whoHit);
+	json.Number("corpseId", monster.corpseId);
+	json.Number("uniqueType", monster.uniqueType);
+	json.Number("killCountForType", MonsterKillCounts[monster.type().type]);
+	json.Number("itemSeed", monster.rndItemSeed);
+	json.Number("aiSeed", monster.aiSeed);
+	json.Number("treasure", monster.data().treasure);
+	json.Number("experienceValue", monster.exp(DIFF_NORMAL));
+	json.Number("level", monster.level(DIFF_NORMAL));
+	json.Number("toHit", monster.toHit(DIFF_NORMAL));
+	json.Number("minimumDamage", monster.minDamage);
+	json.Number("maximumDamage", monster.maxDamage);
+	json.Number("armorClass", monster.armorClass);
+	json.Number("faction", monster.isPlayerMinion() ? 1 : 0);
+	json.Boolean("playerMinion", monster.isPlayerMinion());
+	json.Boolean("berserk", (monster.flags & MFLAG_BERSERK) != 0);
 	json.Boolean("petrified", monster.mode == MonsterMode::Petrified || monster.animInfo.isPetrified);
 	json.Number("flags", monster.flags);
 }
@@ -4548,24 +5737,36 @@ void WriteArrowMonster(std::ostream &out, int slot, const Monster &monster)
 void WriteArrowMissile(std::ostream &out, const Missile &missile, int ordinal)
 {
 	JsonObject json(out);
-	json.Number("ordinal", ordinal); json.Number("type", missile._mitype); json.Number("sourceSlot", missile._misource);
-	json.Number("caster", missile._micaster); json.Number("damage", missile._midam);
-	json.Number("frameGroupDirection16", missile.getFrameGroupRaw()); json.Number("animationFrameRaw", missile._miAnimFrame);
-	json.Number("duration", missile.duration); json.Number("distance", missile._midist);
-	json.Boolean("hit", missile._miHitFlag); json.Boolean("delete", missile._miDelFlag);
+	json.Number("ordinal", ordinal);
+	json.Number("type", missile._mitype);
+	json.Number("sourceSlot", missile._misource);
+	json.Number("caster", missile._micaster);
+	json.Number("damage", missile._midam);
+	json.Number("frameGroupDirection16", missile.getFrameGroupRaw());
+	json.Number("animationFrameRaw", missile._miAnimFrame);
+	json.Number("duration", missile.duration);
+	json.Number("distance", missile._midist);
+	json.Boolean("hit", missile._miHitFlag);
+	json.Boolean("delete", missile._miDelFlag);
 	json.Number("lastCollisionTargetHash", missile.lastCollisionTargetHash);
-	json.Key("start"); WriteRoomPoint(out, missile.position.start);
-	json.Key("tile"); WriteRoomPoint(out, missile.position.tile);
-	json.Key("velocity16_16"); WriteRoomPoint(out, { missile.position.velocity.deltaX, missile.position.velocity.deltaY });
-	json.Key("traveled16_16"); WriteRoomPoint(out, { missile.position.traveled.deltaX, missile.position.traveled.deltaY });
-	json.Key("rawProjectileUnionDestination"); WriteRoomPoint(out, { missile.projectile.destX, missile.projectile.destY });
+	json.Key("start");
+	WriteRoomPoint(out, missile.position.start);
+	json.Key("tile");
+	WriteRoomPoint(out, missile.position.tile);
+	json.Key("velocity16_16");
+	WriteRoomPoint(out, { missile.position.velocity.deltaX, missile.position.velocity.deltaY });
+	json.Key("traveled16_16");
+	WriteRoomPoint(out, { missile.position.traveled.deltaX, missile.position.traveled.deltaY });
+	json.Key("rawProjectileUnionDestination");
+	WriteRoomPoint(out, { missile.projectile.destX, missile.projectile.destY });
 }
 
 void WriteArrowActiveMonsterPool(std::ostream &out)
 {
 	JsonObject json(out);
 	json.Number("activeCount", ActiveMonsterCount);
-	json.Key("activeIds"); out << '[';
+	json.Key("activeIds");
+	out << '[';
 	for (size_t index = 0; index < ActiveMonsterCount; ++index) {
 		if (index != 0) out << ',';
 		out << ActiveMonsters[index];
@@ -4577,21 +5778,26 @@ void WriteArrowItemPool(std::ostream &out)
 {
 	JsonObject json(out);
 	json.Number("activeCount", ActiveItemCount);
-	json.Key("poolOrder"); out << '[';
+	json.Key("poolOrder");
+	out << '[';
 	for (int index = 0; index < MAXITEMS; ++index) {
 		if (index != 0) out << ',';
 		out << static_cast<int>(ActiveItems[index]);
 	}
 	out << ']';
-	json.Key("activeItems"); out << '[';
+	json.Key("activeItems");
+	out << '[';
 	for (int index = 0; index < ActiveItemCount; ++index) {
 		if (index != 0) out << ',';
 		JsonObject row(out);
 		const int slot = ActiveItems[index];
-		row.Number("slot", slot); row.Key("item"); WriteItem(out, Items[slot]);
+		row.Number("slot", slot);
+		row.Key("item");
+		WriteItem(out, Items[slot]);
 	}
 	out << ']';
-	json.Key("itemRefs"); out << '[';
+	json.Key("itemRefs");
+	out << '[';
 	int tileIndex = 0;
 	for (const Tile &tile : tiles()) {
 		if (tileIndex++ != 0) out << ',';
@@ -4644,19 +5850,28 @@ void WriteArrowCollisionCells(std::ostream &out, const std::vector<Point> &focus
 		const int signedPlayer = tile.player();
 		const int objectValue = tile.object();
 		JsonObject json(out);
-		json.Key("position"); WriteRoomPoint(out, position); json.Number("piece", piece);
+		json.Key("position");
+		WriteRoomPoint(out, position);
+		json.Number("piece", piece);
 		json.Number("solFlags", piece >= 0 && piece < MAXTILES ? tileProperties()[piece] : TileProperties::None);
-		json.Number("signedMonster", signedMonster); json.Number("signedPlayer", signedPlayer);
+		json.Number("signedMonster", signedMonster);
+		json.Number("signedPlayer", signedPlayer);
 		json.Number("signedOccupancyXor", signedMonster ^ signedPlayer);
-		json.Number("signedObject", objectValue); json.Number("item", tile.item()); json.Number("corpse", tile.corpse());
+		json.Number("signedObject", objectValue);
+		json.Number("item", tile.item());
+		json.Number("corpse", tile.corpse());
 		json.Boolean("blockedByTileOrObject", IsMissileBlockedByTile(position));
 		if (objectValue == 0) {
-			json.Key("object"); out << "null";
+			json.Key("object");
+			out << "null";
 		} else {
 			const Object &object = Objects[std::abs(objectValue) - 1];
-			json.Key("object"); JsonObject objectJson(out);
-			objectJson.Number("slot", std::abs(objectValue) - 1); objectJson.Number("type", object._otype);
-			objectJson.Number("breakState", object._oBreak); objectJson.Boolean("missilePassable", object._oMissFlag);
+			json.Key("object");
+			JsonObject objectJson(out);
+			objectJson.Number("slot", std::abs(objectValue) - 1);
+			objectJson.Number("type", object._otype);
+			objectJson.Number("breakState", object._oBreak);
+			objectJson.Boolean("missilePassable", object._oMissFlag);
 		}
 	}
 	out << ']';
@@ -4684,15 +5899,22 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 		}
 		~ExecutionGuard()
 		{
-			Missiles.swap(savedMissiles); MissilePreFlag = missilePreFlag;
+			Missiles.swap(savedMissiles);
+			MissilePreFlag = missilePreFlag;
 			std::copy(oldMonsterKillCounts.begin(), oldMonsterKillCounts.end(), MonsterKillCounts);
 			if (networkInitialized) SNetDestroy();
-			MyPlayerId = playerId; gbSndInited = sound; HeadlessMode = headless; SetRndSeed(random);
+			MyPlayerId = playerId;
+			gbSndInited = sound;
+			HeadlessMode = headless;
+			SetRndSeed(random);
 		}
 	} guard;
 	ASSERT_TRUE(guard.networkInitialized);
-	HeadlessMode = true; gbSndInited = false; MyPlayerId = 0;
-	LoadPlayerDataFiles(); LoadMissileData();
+	HeadlessMode = true;
+	gbSndInited = false;
+	MyPlayerId = 0;
+	LoadPlayerDataFiles();
+	LoadMissileData();
 	ASSERT_TRUE(IsMissileDataAvailable(MissileID::Arrow));
 	const MissileData &arrowData = GetMissileData(MissileID::Arrow);
 
@@ -4704,7 +5926,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 		document.String("format", "godevilution-catacombs-arrow-flight");
 		document.Number("version", 1);
 		document.String("policy", "prepared-original-diablo-catacombs-arrow-flight-impact");
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		auto className = [](HeroClass heroClass) -> std::string_view {
 			switch (heroClass) {
 			case HeroClass::Warrior: return "warrior";
@@ -4723,11 +5946,23 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 			hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
 			const int life = hero.calculateBaseLife();
 			const int mana = hero.calculateBaseMana();
-			hero.life = { life, life, life, life, 100 }; hero.mana = { mana, mana, mana, mana, 100 };
-			hero.setAnimations(); hero.plractive = true; hero.plrlevel = 5; hero.plrIsOnSetLevel = false;
-			hero._pLvlChanging = false; hero.pLvlLoad = 1; hero._pInvincible = false;
-			hero._pBlockFlag = false; hero._pArmorClass = 0; hero._pIAC = 0; hero._pIBonusAC = 0; hero._pmode = PM_STAND;
-			hero.position.tile = position; hero.position.future = position; hero.position.old = position;
+			hero.life = { life, life, life, life, 100 };
+			hero.mana = { mana, mana, mana, mana, 100 };
+			hero.setAnimations();
+			hero.plractive = true;
+			hero.plrlevel = 5;
+			hero.plrIsOnSetLevel = false;
+			hero._pLvlChanging = false;
+			hero.pLvlLoad = 1;
+			hero._pInvincible = false;
+			hero._pBlockFlag = false;
+			hero._pArmorClass = 0;
+			hero._pIAC = 0;
+			hero._pIBonusAC = 0;
+			hero._pmode = PM_STAND;
+			hero.position.tile = position;
+			hero.position.future = position;
+			hero.position.old = position;
 			return hero;
 		};
 		auto seedForPlayerHit = [&](const Player &hero, const Monster &source, bool requireBlock, bool requireHit) {
@@ -4786,9 +6021,15 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 		                   Point sourcePosition, Point heroPosition, Point destination, int tickLimit,
 		                   auto prepare, auto chooseSeed, auto launch, auto mutate) {
 			PrepareRoom(5, 0, 0, 0, false);
-			for (Tile &tile : tiles()) { tile.setPlayer(0); tile.setMonster(0); tile.setObject(0); }
-			Missiles.clear(); MissilePreFlag = false;
-			Players.resize(1); MyPlayer = &Players[0];
+			for (Tile &tile : tiles()) {
+				tile.setPlayer(0);
+				tile.setMonster(0);
+				tile.setObject(0);
+			}
+			Missiles.clear();
+			MissilePreFlag = false;
+			Players.resize(1);
+			MyPlayer = &Players[0];
 			*MyPlayer = configureHero(heroClass, heroLevel, heroPosition);
 			MyPlayer->occupyTile(heroPosition, false);
 			LevelBestiary.init();
@@ -4796,29 +6037,36 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 			std::vector<Monster *> actors;
 			std::vector<int> actorSlots;
 			std::vector<Point> focusCells { sourcePosition, heroPosition, destination };
-			auto spawnActor = [&]( _monster_id type, Point position) -> Monster * {
+			auto spawnActor = [&](_monster_id type, Point position) -> Monster * {
 				const auto existing = std::find_if(typeIndices.begin(), typeIndices.end(), [&](const auto &entry) { return entry.first == type; });
 				size_t typeIndex;
 				if (existing == typeIndices.end()) {
 					const auto added = LevelBestiary.addType(type, PLACE_SCATTER);
 					if (!added.has_value()) return nullptr;
-					typeIndex = *added; typeIndices.emplace_back(type, typeIndex);
+					typeIndex = *added;
+					typeIndices.emplace_back(type, typeIndex);
 				} else {
 					typeIndex = existing->second;
 				}
 				Monster *actor = AddMonster(position, Direction::SouthEast, typeIndex, true);
 				if (actor != nullptr) {
-					actor->enemy = 0; actor->enemyPosition = heroPosition; actor->activeForTicks = 0;
-					actor->position.last = position; actor->position.future = position; actor->position.old = position;
+					actor->enemy = 0;
+					actor->enemyPosition = heroPosition;
+					actor->activeForTicks = 0;
+					actor->position.last = position;
+					actor->position.future = position;
+					actor->position.old = position;
 					actor->hitPoints = actor->maxHitPoints = 10000 << 6;
-					actors.push_back(actor); actorSlots.push_back(static_cast<int>(actor->getId()));
+					actors.push_back(actor);
+					actorSlots.push_back(static_cast<int>(actor->getId()));
 					AddArrowSampleCell(focusCells, position);
 				}
 				return actor;
 			};
 			Monster *source = spawnActor(MT_WSKELBW, sourcePosition);
 			ASSERT_NE(source, nullptr);
-			source->minDamage = 1; source->maxDamage = 1;
+			source->minDamage = 1;
+			source->maxDamage = 1;
 			prepare(*MyPlayer, *source, spawnActor, actors, actorSlots, focusCells);
 			const uint32_t seed = chooseSeed(*MyPlayer, *source);
 			ASSERT_NE(seed, UINT32_MAX) << "No deterministic seed matches the requested native hit/block boundary: " << name;
@@ -4829,35 +6077,56 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 			if (caseCount != 0)
 				stream << ',';
 			JsonObject row(stream);
-			row.String("name", name); row.String("boundary", boundary);
-			row.Number("heroClassId", heroClass); row.String("heroClass", className(heroClass));
-			row.Number("heroLevel", MyPlayer->getCharacterLevel()); row.Number("sourceSlot", source->getId());
-			row.Number("sourceType", source->type().type); row.Key("sourceStart"); WriteRoomPoint(stream, sourcePosition);
-			row.Key("destination"); WriteRoomPoint(stream, destination); row.Number("initialSeed", seed);
-			row.Key("missileData"); {
-				JsonObject data(stream); data.Number("missileId", MissileID::Arrow); data.Number("damageType", arrowData.damageType());
-				data.Number("castSoundId", arrowData.castSound); data.Number("hitSoundId", arrowData.hitSound);
+			row.String("name", name);
+			row.String("boundary", boundary);
+			row.Number("heroClassId", heroClass);
+			row.String("heroClass", className(heroClass));
+			row.Number("heroLevel", MyPlayer->getCharacterLevel());
+			row.Number("sourceSlot", source->getId());
+			row.Number("sourceType", source->type().type);
+			row.Key("sourceStart");
+			WriteRoomPoint(stream, sourcePosition);
+			row.Key("destination");
+			WriteRoomPoint(stream, destination);
+			row.Number("initialSeed", seed);
+			row.Key("missileData");
+			{
+				JsonObject data(stream);
+				data.Number("missileId", MissileID::Arrow);
+				data.Number("damageType", arrowData.damageType());
+				data.Number("castSoundId", arrowData.castSound);
+				data.Number("hitSoundId", arrowData.hitSound);
 				data.Number("movementDistribution", arrowData.movementDistribution);
 			}
 			int launchCount = 0;
-				auto emitArrow = [&](std::ostream &out, Point start, Point target, Direction fallbackDirection, bool stationary) {
+			auto emitArrow = [&](std::ostream &out, Point start, Point target, Direction fallbackDirection, bool stationary) {
 				const uint32_t rngBefore = GetLCGEngineState();
 				Missile *missile = AddMissile(start, target, fallbackDirection, MissileID::Arrow, TARGET_PLAYERS, *source, 0, 0, nullptr, SfxID::None);
-				if (missile == nullptr) { ADD_FAILURE() << "Native Arrow creation failed."; return; }
+				if (missile == nullptr) {
+					ADD_FAILURE() << "Native Arrow creation failed.";
+					return;
+				}
 				if (stationary) missile->position.velocity = { 0, 0 };
 				if (launchCount++ != 0) out << ',';
 				JsonObject launchRow(out);
 				const int ordinal = ordinals.Get(*missile);
-				launchRow.Number("ordinal", ordinal); launchRow.Number("rngBefore", rngBefore); launchRow.Number("rngAfter", GetLCGEngineState());
-				launchRow.Key("start"); WriteRoomPoint(out, start);
-				launchRow.Number("requestedTargetX", target.x); launchRow.Number("requestedTargetY", target.y);
-				launchRow.Number("launchFacingDirection", fallbackDirection); launchRow.Boolean("preparedStationaryVelocity", stationary);
+				launchRow.Number("ordinal", ordinal);
+				launchRow.Number("rngBefore", rngBefore);
+				launchRow.Number("rngAfter", GetLCGEngineState());
+				launchRow.Key("start");
+				WriteRoomPoint(out, start);
+				launchRow.Number("requestedTargetX", target.x);
+				launchRow.Number("requestedTargetY", target.y);
+				launchRow.Number("launchFacingDirection", fallbackDirection);
+				launchRow.Boolean("preparedStationaryVelocity", stationary);
 				launchRow.Number("direction16", missile->_miAnimFrame - 1);
 				launchRow.Number("frameGroupDirection16", missile->getFrameGroupRaw());
 				launchRow.Number("animationFrameRaw", missile->_miAnimFrame);
-				launchRow.Key("velocity16_16"); WriteRoomPoint(out, { missile->position.velocity.deltaX, missile->position.velocity.deltaY });
+				launchRow.Key("velocity16_16");
+				WriteRoomPoint(out, { missile->position.velocity.deltaX, missile->position.velocity.deltaY });
 			};
-			row.Key("launches"); stream << '[';
+			row.Key("launches");
+			stream << '[';
 			launch(stream, *MyPlayer, *source, actors, actorSlots, focusCells, emitArrow);
 			stream << ']';
 			auto writePlayers = [&]() {
@@ -4890,33 +6159,57 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 				stream << ']';
 				return ordinalsNow;
 			};
-			row.Key("initial"); {
-				JsonObject initial(stream); initial.Number("rng", GetLCGEngineState());
-				initial.Key("players"); writePlayers(); initial.Key("actors"); writeActors();
-				initial.Key("activeMonsterPool"); WriteArrowActiveMonsterPool(stream);
-				if (captureItemPool) { initial.Key("itemPool"); WriteArrowItemPool(stream); }
-				initial.Key("missiles"); writeMissiles(); initial.Key("collisionCells"); WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
+			row.Key("initial");
+			{
+				JsonObject initial(stream);
+				initial.Number("rng", GetLCGEngineState());
+				initial.Key("players");
+				writePlayers();
+				initial.Key("actors");
+				writeActors();
+				initial.Key("activeMonsterPool");
+				WriteArrowActiveMonsterPool(stream);
+				if (captureItemPool) {
+					initial.Key("itemPool");
+					WriteArrowItemPool(stream);
+				}
+				initial.Key("missiles");
+				writeMissiles();
+				initial.Key("collisionCells");
+				WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
 			}
-			row.Key("ticks"); stream << '[';
+			row.Key("ticks");
+			stream << '[';
 			for (int tick = 0; tick < tickLimit; ++tick) {
 				if (tick != 0) stream << ',';
-				JsonObject state(stream); state.Number("tickIndex", tick);
-				state.Key("mutationInputs"); {
+				JsonObject state(stream);
+				state.Number("tickIndex", tick);
+				state.Key("mutationInputs");
+				{
 					JsonObject inputs(stream);
 					mutate(tick, *MyPlayer, *source, spawnActor, actors, actorSlots, focusCells, inputs);
 				}
-				state.Number("rngBefore", GetLCGEngineState()); state.Boolean("missilePreFlagBefore", MissilePreFlag);
-				state.Key("playersBefore"); writePlayers(); state.Key("actorsBefore"); writeActors();
+				state.Number("rngBefore", GetLCGEngineState());
+				state.Boolean("missilePreFlagBefore", MissilePreFlag);
+				state.Key("playersBefore");
+				writePlayers();
+				state.Key("actorsBefore");
+				writeActors();
 				state.Key("missilesBefore");
 				const std::vector<int> liveBefore = writeMissiles();
-				state.Key("collisionCellsBefore"); WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
+				state.Key("collisionCellsBefore");
+				WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
 				const int playerLifeBeforeStep = MyPlayer->life.current;
 				const int targetHitPointsBeforeStep = actorSlots.size() > 1 ? Monsters[actorSlots.back()].hitPoints : 0;
 				const int targetKillCountBeforeStep = actorSlots.size() > 1 ? MonsterKillCounts[Monsters[actorSlots.back()].type().type] : 0;
 				const size_t activeMonsterCountBeforeStep = ActiveMonsterCount;
 				const uint8_t activeItemCountBeforeStep = ActiveItemCount;
-				state.Key("activeMonsterPoolBefore"); WriteArrowActiveMonsterPool(stream);
-				if (captureItemPool) { state.Key("itemPoolBefore"); WriteArrowItemPool(stream); }
+				state.Key("activeMonsterPoolBefore");
+				WriteArrowActiveMonsterPool(stream);
+				if (captureItemPool) {
+					state.Key("itemPoolBefore");
+					WriteArrowItemPool(stream);
+				}
 				ProcessMissiles();
 				if (tick == 0) {
 					if (name == "warrior-low-damage-hit-no-recovery" || name == "sorcerer-low-damage-hit-no-recovery") {
@@ -4947,7 +6240,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					ASSERT_LT(MyPlayer->life.current, playerLifeBeforeStep);
 				if (tick == 0 && name == "ordered-two-arrow-block-then-hit") {
 					ASSERT_EQ(liveBefore.size(), 2U);
-					EXPECT_EQ(liveBefore[0], 1); EXPECT_EQ(liveBefore[1], 2);
+					EXPECT_EQ(liveBefore[0], 1);
+					EXPECT_EQ(liveBefore[1], 2);
 					EXPECT_LT(MyPlayer->life.current, playerLifeBeforeStep);
 					EXPECT_EQ(MyPlayer->_pmode, PM_BLOCK);
 				}
@@ -4973,16 +6267,22 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					EXPECT_EQ(Objects[0]._oBreak, -1);
 					EXPECT_TRUE(Objects[0]._oMissFlag);
 				}
-				state.Number("rngAfter", GetLCGEngineState()); state.Boolean("missilePreFlagAfter", MissilePreFlag);
-				state.Key("playersAfter"); writePlayers(); state.Key("actorsAfter"); writeActors();
+				state.Number("rngAfter", GetLCGEngineState());
+				state.Boolean("missilePreFlagAfter", MissilePreFlag);
+				state.Key("playersAfter");
+				writePlayers();
+				state.Key("actorsAfter");
+				writeActors();
 				state.Key("missilesAfter");
 				const std::vector<int> liveAfter = writeMissiles();
-				state.Key("deletedMissileOrdinals"); stream << '[';
+				state.Key("deletedMissileOrdinals");
+				stream << '[';
 				bool firstDeleted = true;
 				for (int ordinal : liveBefore) {
 					if (std::find(liveAfter.begin(), liveAfter.end(), ordinal) != liveAfter.end()) continue;
 					if (!firstDeleted) stream << ',';
-					firstDeleted = false; stream << ordinal;
+					firstDeleted = false;
+					stream << ordinal;
 				}
 				stream << ']';
 				if (name == "natural-map-edge-out-of-bounds-delete" && !liveBefore.empty()
@@ -4990,9 +6290,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					observedMapEdgeDeletion = true;
 					EXPECT_LT(tick, 32) << "An edge flight must expire by leaving the map, well before its 256-tick lifetime.";
 				}
-				state.Key("activeMonsterPoolAfter"); WriteArrowActiveMonsterPool(stream);
-				if (captureItemPool) { state.Key("itemPoolAfter"); WriteArrowItemPool(stream); }
-				state.Key("collisionCellsAfter"); WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
+				state.Key("activeMonsterPoolAfter");
+				WriteArrowActiveMonsterPool(stream);
+				if (captureItemPool) {
+					state.Key("itemPoolAfter");
+					WriteArrowItemPool(stream);
+				}
+				state.Key("collisionCellsAfter");
+				WriteArrowCollisionCells(stream, focusCells, actorSlots, ordinals);
 				ordinals.Prune();
 				if (name == "natural-map-edge-out-of-bounds-delete" && Missiles.empty()) break;
 				if (Missiles.empty() && tick + 1 >= tickLimit) break;
@@ -5010,9 +6315,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 		};
 
 		for (int order = 0; order < 2; ++order) {
-			runCase(order == 0 ? "direction-16-ordered-burst" : "direction-16-reversed-burst", "prepared-same-tick-native-add-arrow-order",
-			    HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 50, 50 }, 1, noPrepare, fixedSeed,
-			    [&, order](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
+			runCase(order == 0 ? "direction-16-ordered-burst" : "direction-16-reversed-burst", "prepared-same-tick-native-add-arrow-order", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 50, 50 }, 1, noPrepare, fixedSeed, [&, order](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
 				std::vector<std::pair<int, Point>> destinations;
 				for (int direction = 0; direction < 16; ++direction) {
 					Point best { 50, 50 }; int bestScore = INT_MAX;
@@ -5028,15 +6331,13 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 				}
 				if (order != 0) std::reverse(destinations.begin(), destinations.end());
 				for (const auto &[direction, destination] : destinations)
-					emitArrow(out, { 50, 50 }, destination, Direction::South, false);
-			}, noMutation);
+					emitArrow(out, { 50, 50 }, destination, Direction::South, false); }, noMutation);
 		}
 
 		for (int direction = 0; direction < 16; ++direction) {
-			std::ostringstream name; name << "natural-direction-" << std::setfill('0') << std::setw(2) << direction;
-			runCase(name.str(), "native-add-arrow-direction16-fixed-point-flight", HeroClass::Warrior, 1,
-			    { 44, 50 }, { 80, 80 }, { 54, 54 }, 12, noPrepare, fixedSeed,
-			    [&, direction](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
+			std::ostringstream name;
+			name << "natural-direction-" << std::setfill('0') << std::setw(2) << direction;
+			runCase(name.str(), "native-add-arrow-direction16-fixed-point-flight", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 54, 54 }, 12, noPrepare, fixedSeed, [&, direction](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
 				Point destination { 50, 50 }; int bestScore = INT_MAX;
 				for (int y = -12; y <= 12; ++y) for (int x = -12; x <= 12; ++x) {
 					if (x == 0 && y == 0) continue;
@@ -5046,44 +6347,29 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					if (score < bestScore) { destination = candidate; bestScore = score; }
 				}
 				ASSERT_NE(destination, (Point { 50, 50 }));
-				emitArrow(out, { 50, 50 }, destination, Direction::South, false);
-			}, noMutation);
+				emitArrow(out, { 50, 50 }, destination, Direction::South, false); }, noMutation);
 		}
 
-		runCase("natural-flight-beyond-requested-endpoint", "native-arrow-continues-until-collision-or-lifetime",
-		    HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 52, 50 }, 16, noPrepare, fixedSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
-				emitArrow(out, { 50, 50 }, { 52, 50 }, Direction::East, false);
-		    }, noMutation);
-		runCase("natural-skipped-tile-diagonal", "native-arrow-fixed-point-skipped-tile-sampling",
-		    HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 58, 57 }, 16, noPrepare, fixedSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
-				emitArrow(out, { 50, 50 }, { 58, 57 }, Direction::SouthEast, false);
-		    }, noMutation);
-		runCase("natural-map-edge-out-of-bounds-delete", "native-putmissile-deletes-after-leaving-dungeon-bounds",
-	    HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 111, 50 }, 32,
-	    [](Player &, Monster &, auto &, auto &, auto &, auto &cells) {
+		runCase("natural-flight-beyond-requested-endpoint", "native-arrow-continues-until-collision-or-lifetime", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 52, 50 }, 16, noPrepare, fixedSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 52, 50 }, Direction::East, false); }, noMutation);
+		runCase("natural-skipped-tile-diagonal", "native-arrow-fixed-point-skipped-tile-sampling", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 58, 57 }, 16, noPrepare, fixedSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 58, 57 }, Direction::SouthEast, false); }, noMutation);
+		runCase("natural-map-edge-out-of-bounds-delete", "native-putmissile-deletes-after-leaving-dungeon-bounds", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 111, 50 }, 32, [](Player &, Monster &, auto &, auto &, auto &, auto &cells) {
 			for (int x = 104; x <= 111; ++x) {
 				tileAt({ x, 50 }).setPiece(0);
 				tileAt({ x, 50 }).setTransVal(1);
 				ASSERT_FALSE(IsMissileBlockedByTile({ x, 50 }));
 				AddArrowSampleCell(cells, { x, 50 });
-			}
-	    }, fixedSeed,
-	    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
+			} }, fixedSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
 				emitArrow(out, { 110, 50 }, { 111, 50 }, Direction::East, false);
 				ASSERT_GT(Missiles.back().position.velocity.deltaX, 0);
-				ASSERT_GT(Missiles.back().position.velocity.deltaY, 0);
-	    }, noMutation);
-		runCase("stationary-full-256-tick-lifetime", "prepared-zero-velocity-arrow-lifetime-boundary",
-		    HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 50, 50 }, 256, noPrepare, fixedSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
-				emitArrow(out, { 50, 50 }, { 51, 50 }, Direction::East, true);
-		    }, noMutation);
+				ASSERT_GT(Missiles.back().position.velocity.deltaY, 0); }, noMutation);
+		runCase("stationary-full-256-tick-lifetime", "prepared-zero-velocity-arrow-lifetime-boundary", HeroClass::Warrior, 1, { 44, 50 }, { 80, 80 }, { 50, 50 }, 256, noPrepare, fixedSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 51, 50 }, Direction::East, true); }, noMutation);
 
 		auto playerCell = [](Player &hero, Monster &, auto &, auto &, auto &, auto &cells) {
-			hero.position.tile = { 50, 50 }; hero.position.future = hero.position.tile; hero.position.old = hero.position.tile;
-			for (Tile &tile : tiles()) tile.setPlayer(0);
+			hero.position.tile = { 50, 50 };
+			hero.position.future = hero.position.tile;
+			hero.position.old = hero.position.tile;
+			for (Tile &tile : tiles())
+				tile.setPlayer(0);
 			hero.occupyTile(hero.position.tile, false);
 			ASSERT_GT(tileAt(hero.position.tile).player(), 0);
 			AddArrowSampleCell(cells, hero.position.tile);
@@ -5102,64 +6388,51 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 		    HeroClass::Sorcerer, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed, emitOneStationary, lowDamage);
 		runCase("player-arrow-miss", "native-arrow-player-hit-roll-miss", HeroClass::Warrior, 2,
 		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, missSeed, emitOneStationary, lowDamage);
-			auto blockPrepare = [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
-			playerCell(hero, source, spawn, actors, slots, cells); hero.attributes.dexterity.current = 90; hero._pBlockFlag = true;
+		auto blockPrepare = [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
+			playerCell(hero, source, spawn, actors, slots, cells);
+			hero.attributes.dexterity.current = 90;
+			hero._pBlockFlag = true;
 			ASSERT_GT(hero.GetBlockChance(false), 0);
 		};
 		auto blockSeed = [&](const Player &hero, const Monster &source) { return seedForPlayerHit(hero, source, true, true); };
 		runCase("player-arrow-block", "native-arrow-hit-then-block-roll-and-start-block", HeroClass::Warrior, 2,
 		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, blockPrepare, blockSeed, emitOneStationary, lowDamage);
-		runCase("ordered-two-arrow-block-then-hit", "native-same-tick-arrow-order-changes-player-block-eligibility",
-	    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1,
-	    [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
+		runCase("ordered-two-arrow-block-then-hit", "native-same-tick-arrow-order-changes-player-block-eligibility", HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
 			playerCell(hero, source, spawn, actors, slots, cells);
 			hero.attributes.dexterity.current = 90;
 			hero._pBlockFlag = true;
-			ASSERT_GT(hero.GetBlockChance(false), 0);
-	    }, seedForBlockThenHit,
-	    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
+			ASSERT_GT(hero.GetBlockChance(false), 0); }, seedForBlockThenHit, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
 				emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true);
-				emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true);
-	    },
-	    [](int tick, Player &, Monster &, auto &, auto &, auto &, auto &, JsonObject &inputs) {
+				emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true); }, [](int tick, Player &, Monster &, auto &, auto &, auto &, auto &, JsonObject &inputs) {
 			if (tick == 0) {
 				inputs.String("kind", "native-ordered-two-arrow-block-then-hit");
 				inputs.Number("firstExpectedOrdinal", 1); inputs.Number("secondExpectedOrdinal", 2);
-			} else inputs.String("kind", "none");
-	    });
-		runCase("player-arrow-invincible", "native-player-mhit-invincible-early-return", HeroClass::Warrior, 2,
-		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1,
-		    [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero._pInvincible = true; ASSERT_TRUE(hero._pInvincible); },
-		    fixedSeed, emitOneStationary, lowDamage);
-		runCase("player-arrow-etherealized", "native-arrow-etherealize-early-return", HeroClass::Sorcerer, 2,
-		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1,
-		    [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero._pSpellFlags |= SpellFlag::Etherealize; ASSERT_TRUE(HasAnyOf(hero._pSpellFlags, SpellFlag::Etherealize)); },
-		    fixedSeed, emitOneStationary, lowDamage);
-		runCase("player-arrow-already-dead", "native-player-mhit-dead-early-return", HeroClass::Warrior, 2,
-		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1,
-		    [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero.life.current = 0; ASSERT_EQ(hero.life.current, 0); },
-		    fixedSeed, emitOneStationary, lowDamage);
+			} else inputs.String("kind", "none"); });
+		runCase("player-arrow-invincible", "native-player-mhit-invincible-early-return", HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero._pInvincible = true; ASSERT_TRUE(hero._pInvincible); }, fixedSeed, emitOneStationary, lowDamage);
+		runCase("player-arrow-etherealized", "native-arrow-etherealize-early-return", HeroClass::Sorcerer, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero._pSpellFlags |= SpellFlag::Etherealize; ASSERT_TRUE(HasAnyOf(hero._pSpellFlags, SpellFlag::Etherealize)); }, fixedSeed, emitOneStationary, lowDamage);
+		runCase("player-arrow-already-dead", "native-player-mhit-dead-early-return", HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) { playerCell(hero, source, spawn, actors, slots, cells); hero.life.current = 0; ASSERT_EQ(hero.life.current, 0); }, fixedSeed, emitOneStationary, lowDamage);
 
 		auto movingPlayerPrepare = [&](Player &hero, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
-			playerCell(hero, source, spawn, actors, slots, cells); hero.position.future = { 51, 50 }; hero.occupyTile({ 50, 50 }, true);
+			playerCell(hero, source, spawn, actors, slots, cells);
+			hero.position.future = { 51, 50 };
+			hero.occupyTile({ 50, 50 }, true);
 		};
 		auto movingPlayerMutation = [](int tick, Player &hero, Monster &, auto &, auto &, auto &, auto &, JsonObject &inputs) {
 			if (tick == 0) {
 				ASSERT_LT(tileAt({ 50, 50 }).player(), 0);
-				inputs.String("kind", "moving-player-negative-occupancy"); inputs.Number("signedPlayerBefore", tileAt({ 50, 50 }).player());
+				inputs.String("kind", "moving-player-negative-occupancy");
+				inputs.Number("signedPlayerBefore", tileAt({ 50, 50 }).player());
 			} else {
-				hero.position.future = hero.position.tile; hero.occupyTile(hero.position.tile, false);
+				hero.position.future = hero.position.tile;
+				hero.occupyTile(hero.position.tile, false);
 				ASSERT_GT(tileAt({ 50, 50 }).player(), 0);
-				inputs.String("kind", "moving-player-settled-to-positive-occupancy"); inputs.Number("signedPlayerBefore", tileAt({ 50, 50 }).player());
+				inputs.String("kind", "moving-player-settled-to-positive-occupancy");
+				inputs.Number("signedPlayerBefore", tileAt({ 50, 50 }).player());
 			}
 		};
 		runCase("moving-player-negative-then-settled", "native-stationary-target-hash-change-and-moving-player-ignore",
 		    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 2, movingPlayerPrepare, hitSeed, emitOneStationary, movingPlayerMutation);
-		runCase("new-monster-interceptor-at-current-cell", "prepared-new-interceptor-before-native-arrow-step",
-		    HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 3,
-		    noPrepare, fixedSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 56, 50 }, Direction::East, false); },
-		    [](int tick, Player &, Monster &, auto &spawn, auto &actors, auto &, auto &cells, JsonObject &inputs) {
+		runCase("new-monster-interceptor-at-current-cell", "prepared-new-interceptor-before-native-arrow-step", HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 3, noPrepare, fixedSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 56, 50 }, Direction::East, false); }, [](int tick, Player &, Monster &, auto &spawn, auto &actors, auto &, auto &cells, JsonObject &inputs) {
 				if (tick != 1 || Missiles.empty()) { inputs.String("kind", "none"); return; }
 				const Point position = Missiles.front().position.tile;
 				Missiles.front().position.velocity = { 0, 0 };
@@ -5172,15 +6445,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					cells.push_back(position); inputs.Number("slot", interceptor->getId()); inputs.Number("signedOccupancy", tileAt(position).monster());
 				}
 				else inputs.Number("slot", -1);
-				(void)actors;
-			});
-		runCase("new-player-interceptor-at-current-cell", "prepared-player-moves-onto-stationary-arrow-cell",
-		    HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 3,
-		    noPrepare, hitSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
-				emitArrow(out, { 50, 50 }, { 56, 50 }, Direction::East, false);
-		    },
-		    [](int tick, Player &hero, Monster &, auto &, auto &, auto &, auto &cells, JsonObject &inputs) {
+				(void)actors; });
+		runCase("new-player-interceptor-at-current-cell", "prepared-player-moves-onto-stationary-arrow-cell", HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 3, noPrepare, hitSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 56, 50 }, Direction::East, false); }, [](int tick, Player &hero, Monster &, auto &, auto &, auto &, auto &cells, JsonObject &inputs) {
 				if (tick != 1 || Missiles.empty()) { inputs.String("kind", "none"); return; }
 				const Point oldPosition = hero.position.tile;
 				const Point position = Missiles.front().position.tile;
@@ -5193,17 +6459,23 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 				inputs.String("kind", "move-player-to-current-arrow-cell-before-step");
 				inputs.Number("oldPositionX", oldPosition.x); inputs.Number("oldPositionY", oldPosition.y);
 				inputs.Number("newPositionX", position.x); inputs.Number("newPositionY", position.y);
-				inputs.Number("signedPlayerInput", tileAt(position).player());
-		    });
+				inputs.Number("signedPlayerInput", tileAt(position).player()); });
 
 		auto stationaryMonsterTarget = [&](std::string_view caseName, bool sourceGolem, bool sourceBerserk, bool targetGolem, bool targetBerserk, bool targetPetrified, bool targetMoving) {
 			auto prepare = [=](Player &, Monster &source, auto &spawn, auto &actors, auto &slots, auto &cells) {
 				source.minDamage = source.maxDamage = 1;
-				if (sourceGolem) { source.flags |= MFLAG_GOLEM; source.golemToHit = 80; ASSERT_TRUE(source.isPlayerMinion()); }
+				if (sourceGolem) {
+					source.flags |= MFLAG_GOLEM;
+					source.golemToHit = 80;
+					ASSERT_TRUE(source.isPlayerMinion());
+				}
 				if (sourceBerserk) source.flags |= MFLAG_BERSERK;
 				Monster *target = spawn(MT_WSKELBW, { 50, 50 });
 				ASSERT_NE(target, nullptr);
-				if (targetGolem) { target->flags |= MFLAG_GOLEM; target->golemToHit = 80; }
+				if (targetGolem) {
+					target->flags |= MFLAG_GOLEM;
+					target->golemToHit = 80;
+				}
 				if (targetBerserk) target->flags |= MFLAG_BERSERK;
 				if (targetPetrified) {
 					target->petrify();
@@ -5216,7 +6488,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					ASSERT_FALSE(target->mode == MonsterMode::Petrified || target->animInfo.isPetrified);
 				}
 				AddArrowSampleCell(cells, { 50, 50 });
-				(void)actors; (void)slots;
+				(void)actors;
+				(void)slots;
 			};
 			auto launch = [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true); };
 			runCase(caseName, "native-checkmissilecol-monster-faction-and-signed-occupancy",
@@ -5247,42 +6520,47 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 				AddArrowSampleCell(cells, { 50, 50 });
 			};
 			auto recordInput = [](int tick, Player &, Monster &, auto &, auto &, auto &slots, auto &, JsonObject &inputs) {
-				if (tick != 0) { inputs.String("kind", "none"); return; }
+				if (tick != 0) {
+					inputs.String("kind", "none");
+					return;
+				}
 				const Monster &target = Monsters[slots.back()];
 				inputs.String("kind", "prepared-q6-monster-life-boundary");
-				inputs.Number("targetSlot", target.getId()); inputs.Number("targetHitPointsQ6", target.hitPoints);
+				inputs.Number("targetSlot", target.getId());
+				inputs.Number("targetHitPointsQ6", target.hitPoints);
 				inputs.Number("sourceMinimumDamage", Monsters[slots.front()].minDamage);
 				inputs.Number("sourceMaximumDamage", Monsters[slots.front()].maxDamage);
 				inputs.Boolean("nativeArrowDamageIsAlreadyQ6", false);
-				inputs.Number("expectedDamageQ6", 64); inputs.Number("expectedResidualHitPointsQ6", target.hitPoints - 64);
+				inputs.Number("expectedDamageQ6", 64);
+				inputs.Number("expectedResidualHitPointsQ6", target.hitPoints - 64);
 			};
-			runCase(caseName, "native-monstertrap-hit-q6-death-boundary-and-loot-pool",
-			    HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 1, prepare, seedForMonsterHit,
-			    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
-					emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true);
-			    }, recordInput);
+			runCase(caseName, "native-monstertrap-hit-q6-death-boundary-and-loot-pool", HeroClass::Warrior, 2, { 44, 50 }, { 80, 80 }, { 50, 50 }, 1, prepare, seedForMonsterHit, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) { emitArrow(out, { 50, 50 }, { 50, 50 }, Direction::East, true); }, recordInput);
 		};
 		monsterImpactBoundary("monster-impact-remaining-life-64", 128);
 		monsterImpactBoundary("monster-impact-lethal-fractional-63", 127);
 
 		auto wallOnlyPrepare = [](Player &, Monster &, auto &, auto &, auto &, auto &cells) {
-			tileAt({ 50, 50 }).setPiece(3); tileProperties()[3] = TileProperties::BlockMissile;
-			ASSERT_TRUE(IsMissileBlockedByTile({ 50, 50 })); AddArrowSampleCell(cells, { 50, 50 });
+			tileAt({ 50, 50 }).setPiece(3);
+			tileProperties()[3] = TileProperties::BlockMissile;
+			ASSERT_TRUE(IsMissileBlockedByTile({ 50, 50 }));
+			AddArrowSampleCell(cells, { 50, 50 });
 		};
 		auto blockerPrepare = [](Player &hero, Monster &, auto &, auto &, auto &, auto &cells) {
-			hero.position.tile = { 50, 50 }; hero.position.future = hero.position.tile; hero.position.old = hero.position.tile;
-			hero.occupyTile(hero.position.tile, false); tileAt({ 50, 50 }).setPiece(3);
+			hero.position.tile = { 50, 50 };
+			hero.position.future = hero.position.tile;
+			hero.position.old = hero.position.tile;
+			hero.occupyTile(hero.position.tile, false);
+			tileAt({ 50, 50 }).setPiece(3);
 			tileProperties()[3] = TileProperties::BlockMissile;
-			ASSERT_TRUE(IsMissileBlockedByTile({ 50, 50 })); ASSERT_GT(tileAt({ 50, 50 }).player(), 0);
+			ASSERT_TRUE(IsMissileBlockedByTile({ 50, 50 }));
+			ASSERT_GT(tileAt({ 50, 50 }).player(), 0);
 			AddArrowSampleCell(cells, { 50, 50 });
 		};
 		runCase("tile-missile-blocker", "native-arrow-tile-blocker", HeroClass::Warrior, 2,
 		    { 44, 50 }, { 80, 80 }, { 50, 50 }, 1, wallOnlyPrepare, fixedSeed, emitOneStationary, lowDamage);
 		runCase("player-hit-before-same-cell-tile-blocker", "native-monster-player-object-check-order", HeroClass::Warrior, 2,
 		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, blockerPrepare, hitSeed, emitOneStationary, lowDamage);
-		runCase("player-hit-before-same-cell-breakable-crux", "native-monster-player-crux-check-order", HeroClass::Warrior, 2,
-		    { 44, 50 }, { 50, 50 }, { 50, 50 }, 1,
-			[&](Player &hero, Monster &, auto &, auto &, auto &, auto &cells) {
+		runCase("player-hit-before-same-cell-breakable-crux", "native-monster-player-crux-check-order", HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, [&](Player &hero, Monster &, auto &, auto &, auto &, auto &cells) {
 				hero.position.tile = { 50, 50 }; hero.position.future = hero.position.tile; hero.position.old = hero.position.tile; hero.occupyTile(hero.position.tile, false);
 				ActiveObjectCount = 2; ActiveObjects[0] = 0; ActiveObjects[1] = 1;
 				for (int slot = 0; slot < 2; ++slot) {
@@ -5291,43 +6569,60 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsArrowFlightAndImpact)
 					Objects[slot].position = slot == 0 ? Point { 50, 50 } : Point { 70, 70 };
 					tileAt(Objects[slot].position).setObject(static_cast<int8_t>(slot + 1));
 				}
-				AddArrowSampleCell(cells, { 50, 50 }); AddArrowSampleCell(cells, { 70, 70 });
-			}, hitSeed, emitOneStationary, lowDamage);
+				AddArrowSampleCell(cells, { 50, 50 }); AddArrowSampleCell(cells, { 70, 70 }); }, hitSeed, emitOneStationary, lowDamage);
 
 		auto sourceStatMutation = [](int tick, Player &, Monster &source, auto &, auto &, auto &, auto &, JsonObject &inputs) {
-			if (tick == 0) { source.minDamage = 9; source.maxDamage = 13; inputs.String("kind", "source-stat-change-before-impact"); inputs.Number("minimumDamageInput", 9); inputs.Number("maximumDamageInput", 13); }
-			else inputs.String("kind", "none");
+			if (tick == 0) {
+				source.minDamage = 9;
+				source.maxDamage = 13;
+				inputs.String("kind", "source-stat-change-before-impact");
+				inputs.Number("minimumDamageInput", 9);
+				inputs.Number("maximumDamageInput", 13);
+			} else
+				inputs.String("kind", "none");
 		};
 		runCase("source-live-damage-changed-before-impact", "native-processarrow-reads-current-source-slot-damage",
 		    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed, emitOneStationary, sourceStatMutation);
 		auto removeSourceMutation = [](int tick, Player &, Monster &source, auto &, auto &, auto &, auto &cells, JsonObject &inputs) {
-			if (tick != 0) { inputs.String("kind", "none"); return; }
+			if (tick != 0) {
+				inputs.String("kind", "none");
+				return;
+			}
 			const size_t slot = source.getId();
 			const auto active = std::find(ActiveMonsters, ActiveMonsters + ActiveMonsterCount, static_cast<unsigned>(slot));
 			ASSERT_NE(active, ActiveMonsters + ActiveMonsterCount);
 			const size_t index = static_cast<size_t>(std::distance(ActiveMonsters, active));
-			tileAt(source.position.tile).setMonster(0); DeleteMonsterAtActiveIndex(index);
-			inputs.String("kind", "remove-source-from-active-pool-retain-slot-state"); inputs.Number("sourceSlotInput", slot);
+			tileAt(source.position.tile).setMonster(0);
+			DeleteMonsterAtActiveIndex(index);
+			inputs.String("kind", "remove-source-from-active-pool-retain-slot-state");
+			inputs.Number("sourceSlotInput", slot);
 			AddArrowSampleCell(cells, source.position.tile);
 		};
 		runCase("source-removed-before-impact", "native-arrow-reads-retained-source-slot-after-active-removal",
 		    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed, emitOneStationary, removeSourceMutation);
 		auto sourceDeadMutation = [](int tick, Player &, Monster &source, auto &, auto &, auto &, auto &, JsonObject &inputs) {
-			if (tick == 0) { source.hitPoints = 0; source.mode = MonsterMode::Death; inputs.String("kind", "source-dead-but-slot-retained"); inputs.Number("hitPointsInputQ6", 0); inputs.Number("modeInput", source.mode); }
-			else inputs.String("kind", "none");
+			if (tick == 0) {
+				source.hitPoints = 0;
+				source.mode = MonsterMode::Death;
+				inputs.String("kind", "source-dead-but-slot-retained");
+				inputs.Number("hitPointsInputQ6", 0);
+				inputs.Number("modeInput", source.mode);
+			} else
+				inputs.String("kind", "none");
 		};
 		runCase("source-dead-before-impact", "native-arrow-reads-dead-source-slot-state",
 		    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed, emitOneStationary, sourceDeadMutation);
-		runCase("final-lifetime-tick-collision", "native-processarrow-collides-before-duration-expiry-deletion",
-		    HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed,
-		    [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
+		runCase("final-lifetime-tick-collision", "native-processarrow-collides-before-duration-expiry-deletion", HeroClass::Warrior, 2, { 44, 50 }, { 50, 50 }, { 50, 50 }, 1, playerCell, hitSeed, [](std::ostream &out, Player &, Monster &, auto &, auto &, auto &, auto &emitArrow) {
 				emitArrow(out, { 50, 50 }, { 51, 50 }, Direction::East, true);
-				Missiles.back().duration = 1;
-			}, lowDamage);
+				Missiles.back().duration = 1; }, lowDamage);
 
-		stream << ']'; document.Number("caseCount", caseCount);
+		stream << ']';
+		document.Number("caseCount", caseCount);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); ASSERT_TRUE(!stream.fail());
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
+	ASSERT_TRUE(!stream.fail());
 	EXPECT_EQ(caseCount, 48);
 	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-arrow-flight.json"), 32U * 1024U * 1024U);
 }
@@ -5354,7 +6649,9 @@ TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 		      << '\t' << static_cast<int>(data.selectionRegion) << '\t' << data.treasure
 		      << '\t' << data.exp << '\t' << static_cast<int>(data.resistanceHell) << "\r\n";
 	}
-	table.flush(); ASSERT_TRUE(table.good()); table.close();
+	table.flush();
+	ASSERT_TRUE(table.good());
+	table.close();
 	std::ofstream stream(root / "native-monster-runtime.json", std::ios::binary);
 	ASSERT_TRUE(stream.good());
 	int count = 0;
@@ -5362,7 +6659,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 		JsonObject document(stream);
 		document.String("format", "godevilution-cathedral-monster-runtime");
 		document.Number("version", 1);
-		document.Key("cases"); stream << '[';
+		document.Key("cases");
+		stream << '[';
 		auto capture = [&](int nativeId, int uniqueId, _difficulty difficulty, bool golem, bool berserk) {
 			LevelBestiary.types[0].type = static_cast<_monster_id>(nativeId);
 			Monster monster {};
@@ -5372,16 +6670,21 @@ TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 			monster.golemToHit = UINT16_MAX;
 			if (count++ != 0) stream << ',';
 			JsonObject row(stream);
-			row.Number("nativeId", nativeId); row.Number("uniqueId", uniqueId);
-			row.Number("difficulty", difficulty); row.Boolean("playerMinion", monster.isPlayerMinion());
+			row.Number("nativeId", nativeId);
+			row.Number("uniqueId", uniqueId);
+			row.Number("difficulty", difficulty);
+			row.Boolean("playerMinion", monster.isPlayerMinion());
 			row.Number("golemToHit", monster.golemToHit);
 			row.Number("uniqueDungeonLevel", uniqueId < 0 ? 0 : UniqueMonstersData[uniqueId].mlevel);
 			row.Number("uniqueCustomToHit", uniqueId < 0 ? 0 : UniqueMonstersData[uniqueId].customToHit);
-			row.Number("level", monster.level(difficulty)); row.Number("experience", monster.exp(difficulty));
-			row.Number("toHit", monster.toHit(difficulty)); row.Number("toHitSpecial", monster.toHitSpecial(difficulty));
+			row.Number("level", monster.level(difficulty));
+			row.Number("experience", monster.exp(difficulty));
+			row.Number("toHit", monster.toHit(difficulty));
+			row.Number("toHitSpecial", monster.toHitSpecial(difficulty));
 		};
 		for (int i = 0; i < 138; ++i)
-			for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL }) capture(i, -1, difficulty, false, false);
+			for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL })
+				capture(i, -1, difficulty, false, false);
 		for (int i = 0; i < 100; ++i)
 			for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL })
 				capture(UniqueMonstersData[i].mtype, i, difficulty, false, false);
@@ -5389,11 +6692,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 			capture(MT_GOLEM, -1, difficulty, true, false);
 			capture(MT_GOLEM, -1, difficulty, true, true);
 		}
-		stream << ']'; document.Number("caseCount", count);
+		stream << ']';
+		document.Number("caseCount", count);
 		document.Key("uniqueBaseTypes");
 		WriteArray(stream, UniqueMonstersData, [&](const auto &unique) { stream << static_cast<int>(unique.mtype); });
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	stream.flush();
+	ASSERT_TRUE(stream.good());
+	stream.close();
 	EXPECT_EQ(count, 720);
 }
 

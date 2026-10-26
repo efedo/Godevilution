@@ -4,7 +4,6 @@
  * Implementation of reencode dun cels.
  */
 
-
 #include "game/levels/reencode_dun_cels.hpp"
 
 #include <cstddef>
@@ -21,8 +20,8 @@
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/endian/endian_write.hpp"
-#include "utils/string/format_int.hpp"
 #include "utils/log.hpp"
+#include "utils/string/format_int.hpp"
 
 namespace devilution {
 namespace {

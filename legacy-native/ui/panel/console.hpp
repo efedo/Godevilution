@@ -4,7 +4,6 @@
  * Interface for debug console.
  */
 
-
 #ifdef _DEBUG
 #pragma once
 

@@ -4,7 +4,6 @@
  * Implementation of random number generation.
  */
 
-
 #include "engine/random.hpp"
 
 #include <bit>

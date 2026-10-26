@@ -6,15 +6,14 @@
  * Interface for spell icons.
  */
 
-
 #include <cstdint>
 #include <string>
 
 #include <expected.hpp>
 
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 #include "tables/spelldat.h"
 
 #define SPLICONLENGTH 56

@@ -18,23 +18,23 @@
 
 #include <config.h>
 
-#include "ui/menu/diabloui.h"
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
 #include "engine/assets.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/graphics_pipeline.h"
-#include "engine/sdl_events.hpp"
-#include "application/game_mode.hpp"
-#include "application/headless_mode.hpp"
 #include "engine/hwcursor.hpp"
+#include "engine/sdl_events.hpp"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
+#include "ui/menu/diabloui.h"
 #include "utils/file/file_util.h"
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/paths.h"
 #include "utils/string/str_split.hpp"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 #ifndef UNPACKED_MPQS
 #include "data/mpq/mpq_reader.hpp"

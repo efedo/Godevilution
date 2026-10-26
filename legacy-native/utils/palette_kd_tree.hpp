@@ -6,7 +6,6 @@
  * Interface for palette KD-tree for color matching.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>

@@ -4,7 +4,6 @@
  * Interface for UTF-8 string utilities.
  */
 
-
 #pragma once
 
 #include <cstddef>

@@ -6,11 +6,10 @@
  * Interface for scrollbar widget.
  */
 
-
 #include <cstdint>
 
-#include "ui/menu/ui_item.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/sdl/sdl_geometry.h"
 
 namespace devilution {

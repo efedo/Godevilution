@@ -4,7 +4,6 @@
  * Interface for palette blending operations.
  */
 
-
 #pragma once
 
 #include <cstdint>

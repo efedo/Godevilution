@@ -333,7 +333,11 @@ void CaptureTown(const std::filesystem::path &root)
 		if (std::string(mutation) == "hive") TownOpenHive();
 		if (std::string(mutation) == "grave") TownOpenGrave();
 		if (std::string(mutation) == "fountain") CleanTownFountain();
-		if (std::string(mutation) == "all") { TownOpenHive(); TownOpenGrave(); CleanTownFountain(); }
+		if (std::string(mutation) == "all") {
+			TownOpenHive();
+			TownOpenGrave();
+			CleanTownFountain();
+		}
 		const auto name = "geometry-" + std::to_string(serial++) + ".bin";
 		std::ofstream out(directory / name, std::ios::binary);
 		TownState(out);
@@ -375,23 +379,26 @@ void CaptureTown(const std::filesystem::path &root)
 TEST(NativeSceneArtTest, WarpPolicyCoversModesBitsThresholdsAndQuestStates)
 {
 	NativeSceneGuard guard;
-	for (bool spawn : { false, true }) for (bool mp : { false, true }) for (bool hf : { false, true })
-	for (int bits = 0; bits < 8; ++bits) for (int level : { 1, 9, 10, 14, 15, 19, 20 })
-	for (quest_state farmer : { QUEST_NOTAVAIL, QUEST_INIT, QUEST_ACTIVE, QUEST_DONE, QUEST_HIVE_DONE })
-	for (quest_state grave : { QUEST_NOTAVAIL, QUEST_INIT, QUEST_ACTIVE, QUEST_DONE }) {
-		gbIsSpawn = spawn;
-		gbIsMultiplayer = mp;
-		gbIsHellfire = hf;
-		MyPlayer->pTownWarps = bits;
-		MyPlayer->setCharacterLevel(static_cast<uint8_t>(level));
-		Quests[Q_FARMER]._qactive = farmer;
-		Quests[Q_GRAVE]._qactive = grave;
-		EXPECT_EQ(IsWarpOpen(DTYPE_CATACOMBS), !spawn && (mp || (bits & 1) != 0 || (hf && level >= 10)));
-		EXPECT_EQ(IsWarpOpen(DTYPE_CAVES), !spawn && (mp || (bits & 2) != 0 || (hf && level >= 15)));
-		EXPECT_EQ(IsWarpOpen(DTYPE_HELL), !spawn && (mp || (bits & 4) != 0 || (hf && level >= 20)));
-		EXPECT_EQ(IsWarpOpen(DTYPE_NEST), !spawn && hf && (farmer == QUEST_DONE || farmer == QUEST_HIVE_DONE));
-		EXPECT_EQ(IsWarpOpen(DTYPE_CRYPT), !spawn && (mp || (hf && grave == QUEST_DONE)));
-	}
+	for (bool spawn : { false, true })
+		for (bool mp : { false, true })
+			for (bool hf : { false, true })
+				for (int bits = 0; bits < 8; ++bits)
+					for (int level : { 1, 9, 10, 14, 15, 19, 20 })
+						for (quest_state farmer : { QUEST_NOTAVAIL, QUEST_INIT, QUEST_ACTIVE, QUEST_DONE, QUEST_HIVE_DONE })
+							for (quest_state grave : { QUEST_NOTAVAIL, QUEST_INIT, QUEST_ACTIVE, QUEST_DONE }) {
+								gbIsSpawn = spawn;
+								gbIsMultiplayer = mp;
+								gbIsHellfire = hf;
+								MyPlayer->pTownWarps = bits;
+								MyPlayer->setCharacterLevel(static_cast<uint8_t>(level));
+								Quests[Q_FARMER]._qactive = farmer;
+								Quests[Q_GRAVE]._qactive = grave;
+								EXPECT_EQ(IsWarpOpen(DTYPE_CATACOMBS), !spawn && (mp || (bits & 1) != 0 || (hf && level >= 10)));
+								EXPECT_EQ(IsWarpOpen(DTYPE_CAVES), !spawn && (mp || (bits & 2) != 0 || (hf && level >= 15)));
+								EXPECT_EQ(IsWarpOpen(DTYPE_HELL), !spawn && (mp || (bits & 4) != 0 || (hf && level >= 20)));
+								EXPECT_EQ(IsWarpOpen(DTYPE_NEST), !spawn && hf && (farmer == QUEST_DONE || farmer == QUEST_HIVE_DONE));
+								EXPECT_EQ(IsWarpOpen(DTYPE_CRYPT), !spawn && (mp || (hf && grave == QUEST_DONE)));
+							}
 }
 
 /** Explicit private original-data export; never opens a game window or writes into an archive. */

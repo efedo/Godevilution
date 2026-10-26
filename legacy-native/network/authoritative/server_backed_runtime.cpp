@@ -2,15 +2,15 @@
 
 #include <array>
 
-#include "network/authoritative/server_backed_player_ui.hpp"
-#include "network/authoritative/authoritative_level_id.hpp"
-#include "network/authoritative/protocol_limits.hpp"
-#include "network/protocol/legacy_world_state_policy.hpp"
-#include "network/protocol/multi.h"
 #include "engine/cursor.h"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
 #include "game/quests/quests.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
+#include "network/authoritative/protocol_limits.hpp"
+#include "network/authoritative/server_backed_player_ui.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/multi.h"
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -38,10 +38,10 @@ bool SameItemReference(const ServerBackedItemReference &left, const ServerBacked
 std::string LoadResumeToken(const std::string &path)
 {
 	if (path.empty())
-		return { };
+		return {};
 	std::ifstream tokenFile(path, std::ios::binary);
 	if (!tokenFile)
-		return { };
+		return {};
 	std::string token;
 	std::getline(tokenFile, token);
 	return token;
@@ -50,7 +50,7 @@ std::string LoadResumeToken(const std::string &path)
 tl::expected<void, std::string> SaveResumeToken(const std::string &path, const std::string &token)
 {
 	if (path.empty() || token.empty())
-		return { };
+		return {};
 	try {
 		const std::filesystem::path tokenPath(path);
 		if (tokenPath.has_parent_path())
@@ -59,7 +59,7 @@ tl::expected<void, std::string> SaveResumeToken(const std::string &path, const s
 		if (!tokenFile)
 			return tl::make_unexpected("Could not write the authoritative resume token to " + tokenPath.string() + ".");
 		tokenFile << token << '\n';
-		return { };
+		return {};
 	} catch (const std::exception &exception) {
 		return tl::make_unexpected("Could not persist the authoritative resume token: " + std::string(exception.what()));
 	}
@@ -105,7 +105,7 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 {
 	Stop();
 	if (!configuration.enabled && configuration.mode != ServerBackedRuntimeConfiguration::GameMode::Authoritative)
-		return { };
+		return {};
 	if (configuration.clientBuildId.empty() || configuration.protocolSchemaVersion.empty() || configuration.contentManifestHash.empty())
 		return tl::make_unexpected("Server-backed runtime requires client build, protocol, and content identity values.");
 	if (configuration.protocolSchemaVersion == "0.2.0" && configuration.rulesetIdentityHash.empty())
@@ -176,13 +176,13 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 			return result;
 		}
 	}
-	return { };
+	return {};
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::PrepareNativeLevel()
 {
 	if (!session_ || player_ == nullptr)
-		return { };
+		return {};
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
@@ -194,7 +194,7 @@ tl::expected<void, std::string> ServerBackedRuntime::PrepareNativeLevel()
 	InvalidateNativeLevelPresentation();
 	ApplyServerBackedQuestSnapshots(session_->QuestState());
 	nativePresentationLevelId_ = snapshot->levelId;
-	return { };
+	return {};
 }
 
 void ServerBackedRuntime::InvalidateNativeLevelPresentation() noexcept
@@ -208,7 +208,7 @@ void ServerBackedRuntime::InvalidateNativeLevelPresentation() noexcept
 tl::expected<void, std::string> ServerBackedRuntime::MarkNativeLevelReady()
 {
 	if (!session_ || player_ == nullptr)
-		return { };
+		return {};
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
@@ -220,7 +220,7 @@ tl::expected<void, std::string> ServerBackedRuntime::MarkNativeLevelReady()
 		worldPresentation_.Clear();
 		return result;
 	}
-	return { };
+	return {};
 }
 
 std::vector<uint32_t> ServerBackedRuntime::NativeObjectPresentationIds() const
@@ -234,7 +234,8 @@ std::vector<uint32_t> ServerBackedRuntime::NativeObjectPresentationIds() const
 		const auto presentationKind = static_cast<ObjectPresentationKind>(snapshot.presentationKind);
 		const uint32_t nativeObjectId = UsesAuthoredObjectPresentationIdentity(presentationKind)
 		    ? snapshot.objectId
-		    : snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
+		    : snapshot.nativeObjectId == 0 ? snapshot.objectId
+		                                   : snapshot.nativeObjectId;
 		if (std::find(result.begin(), result.end(), nativeObjectId) == result.end())
 			result.push_back(nativeObjectId);
 	}
@@ -425,7 +426,7 @@ tl::expected<void, std::string> ServerBackedRuntime::CloseStorytellerStore(uint6
 		return tl::make_unexpected("The server-backed runtime is not connected.");
 	const auto *snapshot = session_->VendorState().Snapshot();
 	if (snapshot == nullptr)
-		return { };
+		return {};
 	if (snapshot->storeId != StorytellerStoreId)
 		return tl::make_unexpected("A different server-backed vendor is active.");
 	return CloseVendor(requestedTick, nowMs);
@@ -723,7 +724,7 @@ tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint
 
 tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
 {
-	return Cast(spellId, targetEntityId, targetX, targetY, { }, requestedTick, nowMs);
+	return Cast(spellId, targetEntityId, targetX, targetY, {}, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick, uint64_t nowMs)
@@ -917,13 +918,13 @@ tl::expected<void, std::string> ServerBackedRuntime::RestartTown(uint64_t reques
 		return result;
 	if (player_ != nullptr)
 		PresentRestartTown(*player_);
-	return { };
+	return {};
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::Poll(uint64_t nowMs)
 {
 	if (!session_)
-		return { };
+		return {};
 	if (auto result = session_->Poll(nowMs); !result.has_value())
 		return result;
 	return ApplyCurrentPlayerSnapshot();
@@ -1050,34 +1051,34 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 	for (std::size_t index = 0; index < snapshot->inventory.size(); ++index) {
 		if (snapshot->inventory[index].itemSeed == itemSeed)
 			return ServerBackedItemReference {
-			    .location = ServerBackedItemLocation::Inventory,
-			    .slot = static_cast<uint32_t>(index),
-			    .stableItemId = snapshot->inventory[index].stableItemId,
+				.location = ServerBackedItemLocation::Inventory,
+				.slot = static_cast<uint32_t>(index),
+				.stableItemId = snapshot->inventory[index].stableItemId,
 			};
 	}
 	for (const auto &beltItem : snapshot->belt) {
 		if (beltItem.itemSeed == itemSeed)
 			return ServerBackedItemReference {
-			    .location = ServerBackedItemLocation::Belt,
-			    .slot = beltItem.slot,
-			    .stableItemId = beltItem.stableItemId,
+				.location = ServerBackedItemLocation::Belt,
+				.slot = beltItem.slot,
+				.stableItemId = beltItem.stableItemId,
 			};
 	}
 	for (const auto &equipment : snapshot->equipment) {
 		if (equipment.itemSeed == itemSeed)
 			return ServerBackedItemReference {
-			    .location = ServerBackedItemLocation::Equipment,
-			    .slot = equipment.slot,
-			    .stableItemId = equipment.stableItemId,
+				.location = ServerBackedItemLocation::Equipment,
+				.slot = equipment.slot,
+				.stableItemId = equipment.stableItemId,
 			};
 	}
 	for (const auto &stashItem : snapshot->stash) {
 		if (stashItem.itemSeed == itemSeed)
 			return ServerBackedItemReference {
-			    .location = ServerBackedItemLocation::Stash,
-			    .slot = stashItem.cell,
-			    .stableItemId = stashItem.stableItemId,
-			    .page = stashItem.page,
+				.location = ServerBackedItemLocation::Stash,
+				.slot = stashItem.cell,
+				.stableItemId = stashItem.stableItemId,
+				.page = stashItem.page,
 			};
 	}
 	return std::nullopt;
@@ -1101,10 +1102,10 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::StashItemReference
 		    && targetRow >= itemRow
 		    && targetRow < itemRow + stashItem.height)
 			return ServerBackedItemReference {
-			    .location = ServerBackedItemLocation::Stash,
-			    .slot = stashItem.cell,
-			    .stableItemId = stashItem.stableItemId,
-			    .page = page,
+				.location = ServerBackedItemLocation::Stash,
+				.slot = stashItem.cell,
+				.stableItemId = stashItem.stableItemId,
+				.page = page,
 			};
 	}
 	return std::nullopt;
@@ -1119,7 +1120,7 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::FindStashPlacement
 		return std::nullopt;
 	for (uint32_t pageOffset = 0; pageOffset < NativeStashPageCount; ++pageOffset) {
 		const uint32_t page = (preferredPage + pageOffset) % NativeStashPageCount;
-		std::array<bool, NativeStashCellCount> occupied { };
+		std::array<bool, NativeStashCellCount> occupied {};
 		for (const auto &stashItem : snapshot->stash) {
 			if (stashItem.page != page)
 				continue;
@@ -1143,10 +1144,10 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::FindStashPlacement
 				}
 				if (fits)
 					return ServerBackedItemReference {
-					    .location = ServerBackedItemLocation::Stash,
-					    .slot = row * 10 + column,
-					    .stableItemId = 0,
-					    .page = page,
+						.location = ServerBackedItemLocation::Stash,
+						.slot = row * 10 + column,
+						.stableItemId = 0,
+						.page = page,
 					};
 			}
 		}
@@ -1191,7 +1192,7 @@ void ServerBackedRuntime::CancelOilUse() noexcept
 tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot()
 {
 	if (!session_ || player_ == nullptr)
-		return { };
+		return {};
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
@@ -1234,10 +1235,10 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 			InvalidateNativeLevelPresentation();
 			nativeLevelLoadPending_ = true;
 		} else if (auto result = worldPresentation_.Apply(
-			           worldProjection_,
-			           snapshot->levelId,
-			           session_->PlayerStates(),
-			           session_->EntityId());
+		               worldProjection_,
+		               snapshot->levelId,
+		               session_->PlayerStates(),
+		               session_->EntityId());
 		           !result.has_value()) {
 			return result;
 		}
@@ -1271,15 +1272,15 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	if (auto result = ApplyServerBackedStashProjection(*snapshot); !result.has_value())
 		return result;
 	if (!pendingInventoryItemDrag_.has_value() || !pendingItem.has_value())
-		return { };
+		return {};
 	const auto currentReference = PlayerItemReferenceForSeed(*pendingInventoryItemDragSeed_);
 	if (!currentReference.has_value() || !SameItemReference(*currentReference, *pendingInventoryItemDrag_)) {
 		CancelInventoryItemDrag();
-		return { };
+		return {};
 	}
 	player_->HoldItem = *pendingItem;
 	NewCursor(player_->HoldItem);
-	return { };
+	return {};
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::EnsureCommandAccepted() const
@@ -1289,7 +1290,7 @@ tl::expected<void, std::string> ServerBackedRuntime::EnsureCommandAccepted() con
 	switch (session_->LastCommandResolution()) {
 	case ServerBackedSession::CommandResolution::Accepted:
 	case ServerBackedSession::CommandResolution::Duplicate:
-		return { };
+		return {};
 	case ServerBackedSession::CommandResolution::Rejected:
 		return tl::make_unexpected("The authoritative server rejected the command.");
 	case ServerBackedSession::CommandResolution::Rescheduled:

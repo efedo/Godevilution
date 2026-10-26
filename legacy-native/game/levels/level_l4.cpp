@@ -11,8 +11,8 @@
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/monsters/monsters.hpp"
-#include "network/protocol/multi.h"
 #include "game/players/players.hpp"
+#include "network/protocol/multi.h"
 #include "tables/objdat.h"
 #include "utils/is_of.hpp"
 

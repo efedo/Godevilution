@@ -6,7 +6,6 @@
  * Interface for ZeroTier protocol implementation.
  */
 
-
 #include <algorithm>
 #include <array>
 #include <atomic>

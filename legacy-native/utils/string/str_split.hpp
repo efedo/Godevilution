@@ -6,7 +6,6 @@
  * Interface for string splitting.
  */
 
-
 #include <iterator>
 #include <string_view>
 #include <type_traits>

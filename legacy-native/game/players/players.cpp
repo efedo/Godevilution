@@ -16,44 +16,36 @@
 
 #include <fmt/core.h>
 
-#include "ui/panel/control.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
 #include "game/monsters/monster_corpses.hpp"
+#include "ui/panel/control.hpp"
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
+#include "engine/gfx/translation_table.hpp"
+#include "engine/lighting.h"
 #include "engine/load/load_cl2.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/math/world_tile.hpp"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
-#include "engine/gfx/translation_table.hpp"
-#include "engine/math/world_tile.hpp"
-#include "application/game_mode.hpp"
-#include "ui/gamemenu.h"
-#include "application/headless_mode.hpp"
-#include "ui/help.h"
-#include "game/players/inv_iterators.hpp"
+#include "game/events/event_bus.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/triggers.h"
-#include "engine/lighting.h"
-#include "persistence/loadsave.h"
-#include "game/events/event_bus.hpp"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
-#include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
-#include "game/items/item_pool.hpp"
-#include "network/protocol/network_ticks.h"
-#include "game/objects/objects.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
-#include "persistence/options.h"
+#include "game/objects/objects.hpp"
+#include "game/players/inv_iterators.hpp"
 #include "game/players/players.hpp"
-#include "qol/autopickup.h"
-#include "qol/stash.h"
 #include "game/spells/spells.hpp"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
@@ -62,6 +54,14 @@
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_transition_policy.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/network_ticks.h"
+#include "persistence/loadsave.h"
+#include "persistence/options.h"
+#include "qol/autopickup.h"
+#include "qol/stash.h"
+#include "ui/gamemenu.h"
+#include "ui/help.h"
+#include "ui/minitext.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
@@ -456,11 +456,11 @@ void DropHalfPlayersGold(Player &player)
 void InitLevelChange(Player &player)
 {
 	const Player &myPlayer = *MyPlayer;
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	const bool serverConnected = authoritative::GetServerBackedRuntime().IsConnected();
-	#else
+#else
 	const bool serverConnected = false;
-	#endif
+#endif
 
 	RemoveEnemyReferences(player);
 	player.removeMissiles();
@@ -940,15 +940,15 @@ bool DoAttack(Player &player)
 			position = player.position.tile + Right(player.direction);
 			monster = FindMonsterAtPosition(position);
 			if (monster != nullptr) {
-					if (!monster->canTalk() && monster->position.old == position) {
-						if (PlrHitMonst(player, *monster, true))
-							didhit = true;
-					}
+				if (!monster->canTalk() && monster->position.old == position) {
+					if (PlrHitMonst(player, *monster, true))
+						didhit = true;
 				}
-				position = player.position.tile + Left(player.direction);
-				monster = FindMonsterAtPosition(position);
-				if (monster != nullptr) {
-					if (!monster->canTalk() && monster->position.old == position) {
+			}
+			position = player.position.tile + Left(player.direction);
+			monster = FindMonsterAtPosition(position);
+			if (monster != nullptr) {
+				if (!monster->canTalk() && monster->position.old == position) {
 					if (PlrHitMonst(player, *monster, true))
 						didhit = true;
 				}
@@ -1430,7 +1430,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 					d = GetDirection(player.position.tile, object->position);
 					StartAttack(player, d, pmWillBeCalled);
 				} else {
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
 						const auto objectEntityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(object->position.x, object->position.y);
 						switch (ResolveServerBackedObjectInteractionRoute(
@@ -1449,7 +1449,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 						}
 						break;
 					}
-				#endif
+#endif
 					TryDisarm(player, *object);
 					OperateObject(player, *object);
 				}
@@ -1465,7 +1465,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 				x = std::abs(player.position.tile.x - item->position.x);
 				y = std::abs(player.position.tile.y - item->position.y);
 				if (x <= 1 && y <= 1 && pcurs == CURSOR_HAND && !item->_iRequest) {
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
 						const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(item->position.x, item->position.y);
 						if (!entityId.has_value()) {
@@ -1478,7 +1478,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 							item->_iRequest = true;
 						break;
 					}
-				#endif
+#endif
 					NetSendCmdGItem(true, CMD_REQUESTGITEM, player, targetId);
 					item->_iRequest = true;
 				}
@@ -1489,7 +1489,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 				x = std::abs(player.position.tile.x - item->position.x);
 				y = std::abs(player.position.tile.y - item->position.y);
 				if (x <= 1 && y <= 1 && pcurs == CURSOR_HAND) {
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
 						const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(item->position.x, item->position.y);
 						if (!entityId.has_value()) {
@@ -1502,7 +1502,7 @@ void CheckNewPath(Player &player, bool pmWillBeCalled)
 							item->_iRequest = true;
 						break;
 					}
-				#endif
+#endif
 					NetSendCmdGItem(true, CMD_REQUESTAGITEM, player, targetId);
 				}
 			}
@@ -1895,10 +1895,10 @@ int Player::UpdateManaPercentage()
 
 void Player::RemoveInvItem(int iv, bool calcScrolls)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	if (this == MyPlayer) {
 		// Locate the first grid index containing this item and notify remote clients
@@ -1945,10 +1945,10 @@ void Player::RemoveInvItem(int iv, bool calcScrolls)
 
 void Player::RemoveSpdBarItem(int iv)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyInventoryMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	if (this == MyPlayer) {
 		NetSendCmdParam1(false, CMD_DELBELTITEMS, iv);
@@ -3182,7 +3182,7 @@ Player::startKill(DeathReason deathReason)
 	bool processLegacyDeathDrops = true;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	processLegacyDeathDrops = ShouldProcessLegacyDeathDrops(
-		&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
+	    &player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
 #endif
 
 	if (&player == MyPlayer) {
@@ -3907,11 +3907,13 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 			return;
 		}
 		if (auto result = authoritative::GetServerBackedRuntime().Cast(
-		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value())
+		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup());
+		    !result.has_value())
 			LogError("Server-backed spell cast failed: {}", result.error());
 		LastPlayerAction = targetEntityId == 0
 		    ? PlayerActionType::Spell
-		    : PlayerUnderCursor != nullptr ? PlayerActionType::SpellPlayerTarget : PlayerActionType::SpellMonsterTarget;
+		    : PlayerUnderCursor != nullptr ? PlayerActionType::SpellPlayerTarget
+		                                   : PlayerActionType::SpellMonsterTarget;
 		return;
 	}
 #endif
@@ -4195,10 +4197,10 @@ enum {
 
 void PlayDungMsgs()
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyWorldStateMessage(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	assert(MyPlayer != nullptr);
 	Player &myPlayer = *MyPlayer;
@@ -4255,8 +4257,8 @@ void TestPlayerProcessDestinationWalkTick(Player &player)
 	bool completed;
 	do {
 		completed = player._pmode == PM_WALK_NORTHWARDS
-		        || player._pmode == PM_WALK_SOUTHWARDS
-		        || player._pmode == PM_WALK_SIDEWAYS;
+		    || player._pmode == PM_WALK_SOUTHWARDS
+		    || player._pmode == PM_WALK_SIDEWAYS;
 		completed = completed && DoWalk(player);
 		CheckNewPath(player, completed);
 	} while (completed);

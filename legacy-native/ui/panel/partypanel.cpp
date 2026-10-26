@@ -4,34 +4,33 @@
  * Implementation of party panel.
  */
 
-
 #include "ui/panel/partypanel.hpp"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <expected.hpp>
 #include <optional>
 
-#include "ui/automap.h"
-#include "ui/panel/control.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/palette.h"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_clx.hpp"
-#include "engine/gfx/palette.h"
 #include "engine/math/rectangle.hpp"
+#include "engine/math/size.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "engine/math/size.hpp"
 #include "game/players/inventory.hpp"
+#include "game/stores/stores.hpp"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
 #include "qol/monhealthbar.h"
 #include "qol/stash.h"
-#include "game/stores/stores.hpp"
 #include "tables/playerdat.hpp"
-#include "utils/status_macros.hpp"
+#include "ui/automap.h"
+#include "ui/panel/control.hpp"
 #include "utils/image/surface_to_clx.hpp"
+#include "utils/status_macros.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -169,13 +168,13 @@ PartySpriteOffset GetClassSpriteOffset(HeroClass hClass)
 }
 
 void DrawPartyMember(
-	const Surface &out,
-	const Player &player,
-	int displayId,
-	bool interactive,
-	Point &pos,
-	int &currentLongestNameWidth,
-	bool &portraitUnderCursor)
+    const Surface &out,
+    const Player &player,
+    int displayId,
+    bool interactive,
+    Point &pos,
+    int &currentLongestNameWidth,
+    bool &portraitUnderCursor)
 {
 	const Rectangle currentPortraitRect = { pos, PortraitFrameSize };
 	const Surface gameScreen = out.subregionY(0, gnViewportHeight);
@@ -205,8 +204,8 @@ void DrawPartyMember(
 
 	if (interactive && displayId >= 0 && displayId < MAX_PLRS) {
 		PortraitFrameRects[displayId] = {
-		    { frameSubregion.region.x, frameSubregion.region.y },
-		    { frameSubregion.region.w, frameSubregion.region.h }
+			{ frameSubregion.region.x, frameSubregion.region.y },
+			{ frameSubregion.region.w, frameSubregion.region.h }
 		};
 	}
 

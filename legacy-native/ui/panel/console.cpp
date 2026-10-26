@@ -4,7 +4,6 @@
  * Implementation of debug console.
  */
 
-
 #ifdef _DEBUG
 #include "ui/panel/console.hpp"
 
@@ -28,23 +27,23 @@
 #endif
 #endif
 
-#include "ui/menu/text_input.hpp"
-#include "ui/panel/control.hpp"
-#include "ui/debug_overlay/imgui_overlay.hpp"
-#include "engine/assets.hpp"
-#include "application/debug_commands.hpp"
 #include "application/debug.h"
-#include "engine/math/displacement.hpp"
+#include "application/debug_commands.hpp"
+#include "engine/assets.hpp"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/gfx/palette.h"
+#include "engine/gfx/surface.hpp"
+#include "engine/math/displacement.hpp"
 #include "engine/math/rectangle.hpp"
+#include "engine/math/size.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/math/size.hpp"
-#include "engine/gfx/surface.hpp"
 #include "lua/autocomplete.hpp"
 #include "lua/metadoc.hpp"
 #include "lua/repl.hpp"
+#include "ui/debug_overlay/imgui_overlay.hpp"
+#include "ui/menu/text_input.hpp"
+#include "ui/panel/control.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_configuration.hpp"
 #endif
@@ -69,71 +68,70 @@ constexpr std::string_view HelpText =
     " Shift+Up/Down to fill the input from output history,"
     " Ctrl+L to clear history, Esc to close.";
 
-constexpr std::string_view CommandHelpText =
-    "Debug console commands:\n"
-    "  help\n"
-    "    Show this command list.\n"
-    "  help <module>\n"
-    "    Show documented members for a Lua module (example: help dev.player).\n"
-    "\n"
-    "Common debug Lua commands:\n"
-    "  dev.player.god()\n"
-    "  dev.player.invisible()\n"
-    "  dev.display.grid()\n"
-    "  dev.display.vision()\n"
-    "  dev.level.seed()\n"
-    "\n"
-    "Other useful modules:\n"
-    "  dev.items, dev.level, dev.monsters, dev.quests, dev.search, dev.towners\n"
-    "\n"
-    "\n"
-    "Native debug commands:\n"
-    "  debug.player.arrow <normal|fire|lightning|spectral>\n"
-    "  debug.player.god [on|off]\n"
-    "  debug.player.invisible [on|off]\n"
-    "  debug.player.info [id]\n"
-    "  debug.player.rejuvenate\n"
-    "  debug.player.health <amount>\n"
-    "  debug.player.mana <amount>\n"
-    "  debug.player.attributes.max\n"
-    "  debug.player.attributes.min\n"
-    "  debug.player.levelUp [amount]\n"
-    "  debug.player.gold.give [amount]\n"
-    "  debug.player.gold.take [amount]\n"
-    "  debug.player.spells.setLevel <level>\n"
-    "  debug.quests.activate <id>\n"
-    "  debug.quests.activateAll\n"
-    "  debug.quests.info <id>\n"
-    "  debug.quests.all\n"
-    "  debug.player.trn <asset-path|clear>\n"
-    "  debug.display.grid [on|off]\n"
-    "  debug.display.vision [on|off]\n"
-    "  debug.display.path [on|off]\n"
-    "  debug.display.fps [on|off]\n"
-    "  debug.display.fullbright\n"
-    "  debug.display.scrollView [on|off]\n"
-    "  debug.display.tileData [name]\n"
-    "  debug.level.map.reveal\n"
-    "  debug.level.map.hide\n"
-    "  debug.level.reset <level> [seed]\n"
-    "  debug.level.warp.dungeon <level>\n"
-    "  debug.level.warp.quest <level>\n"
-    "  debug.level.warp.map <path> <dunType> <x> <y>\n"
-    "  debug.items.info\n"
-    "  debug.items.spawn <name>\n"
-    "  debug.items.spawnUnique <name>\n"
-    "  debug.monsters.spawn <name> [count]\n"
-    "  debug.monsters.spawnUnique <name> [count]\n"
-    "  debug.level.exportDun\n"
-    "  debug.towners.talk <name>\n"
-    "  debug.towners.visit <name>\n"
-    "  debug.level.seed [level]\n"
-    "  debug.search.clear\n"
-    "  debug.search.item <name>\n"
-    "  debug.search.monster <name>\n"
-    "  debug.search.object <name>\n"
-    "\n"
-    "Tip: Tab autocompletes Lua symbols (for example: dev.player.<Tab>).";
+constexpr std::string_view CommandHelpText = "Debug console commands:\n"
+                                             "  help\n"
+                                             "    Show this command list.\n"
+                                             "  help <module>\n"
+                                             "    Show documented members for a Lua module (example: help dev.player).\n"
+                                             "\n"
+                                             "Common debug Lua commands:\n"
+                                             "  dev.player.god()\n"
+                                             "  dev.player.invisible()\n"
+                                             "  dev.display.grid()\n"
+                                             "  dev.display.vision()\n"
+                                             "  dev.level.seed()\n"
+                                             "\n"
+                                             "Other useful modules:\n"
+                                             "  dev.items, dev.level, dev.monsters, dev.quests, dev.search, dev.towners\n"
+                                             "\n"
+                                             "\n"
+                                             "Native debug commands:\n"
+                                             "  debug.player.arrow <normal|fire|lightning|spectral>\n"
+                                             "  debug.player.god [on|off]\n"
+                                             "  debug.player.invisible [on|off]\n"
+                                             "  debug.player.info [id]\n"
+                                             "  debug.player.rejuvenate\n"
+                                             "  debug.player.health <amount>\n"
+                                             "  debug.player.mana <amount>\n"
+                                             "  debug.player.attributes.max\n"
+                                             "  debug.player.attributes.min\n"
+                                             "  debug.player.levelUp [amount]\n"
+                                             "  debug.player.gold.give [amount]\n"
+                                             "  debug.player.gold.take [amount]\n"
+                                             "  debug.player.spells.setLevel <level>\n"
+                                             "  debug.quests.activate <id>\n"
+                                             "  debug.quests.activateAll\n"
+                                             "  debug.quests.info <id>\n"
+                                             "  debug.quests.all\n"
+                                             "  debug.player.trn <asset-path|clear>\n"
+                                             "  debug.display.grid [on|off]\n"
+                                             "  debug.display.vision [on|off]\n"
+                                             "  debug.display.path [on|off]\n"
+                                             "  debug.display.fps [on|off]\n"
+                                             "  debug.display.fullbright\n"
+                                             "  debug.display.scrollView [on|off]\n"
+                                             "  debug.display.tileData [name]\n"
+                                             "  debug.level.map.reveal\n"
+                                             "  debug.level.map.hide\n"
+                                             "  debug.level.reset <level> [seed]\n"
+                                             "  debug.level.warp.dungeon <level>\n"
+                                             "  debug.level.warp.quest <level>\n"
+                                             "  debug.level.warp.map <path> <dunType> <x> <y>\n"
+                                             "  debug.items.info\n"
+                                             "  debug.items.spawn <name>\n"
+                                             "  debug.items.spawnUnique <name>\n"
+                                             "  debug.monsters.spawn <name> [count]\n"
+                                             "  debug.monsters.spawnUnique <name> [count]\n"
+                                             "  debug.level.exportDun\n"
+                                             "  debug.towners.talk <name>\n"
+                                             "  debug.towners.visit <name>\n"
+                                             "  debug.level.seed [level]\n"
+                                             "  debug.search.clear\n"
+                                             "  debug.search.item <name>\n"
+                                             "  debug.search.monster <name>\n"
+                                             "  debug.search.object <name>\n"
+                                             "\n"
+                                             "Tip: Tab autocompletes Lua symbols (for example: dev.player.<Tab>).";
 
 std::optional<tl::expected<AssetData, std::string>> ConsolePrelude;
 
@@ -745,7 +743,7 @@ bool IsNativeOnlyConsole()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	return authoritative::GetServerBackedRuntimeConfiguration().mode
-		== authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+	    == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
 #else
 	return false;
 #endif
@@ -817,9 +815,7 @@ void RunInConsole(std::string_view code)
 	AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Input, .text = StrCat(Prompt, code) });
 	if (const std::optional<std::string_view> helpQuery = GetHelpQuery(code); helpQuery.has_value()) {
 		if (helpQuery->empty()) {
-			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = IsNativeOnlyConsole()
-				? CurrentDebugCommandRegistry.HelpText()
-				: std::string(CommandHelpText) });
+			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = IsNativeOnlyConsole() ? CurrentDebugCommandRegistry.HelpText() : std::string(CommandHelpText) });
 		} else if (IsNativeOnlyConsole()) {
 			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Error, .text = "Module help is unavailable in native-only mode." });
 		} else {

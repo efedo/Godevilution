@@ -6,7 +6,6 @@
  * Interface for monsters.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

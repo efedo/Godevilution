@@ -6,7 +6,6 @@
  * Interface for CLX format decoding.
  */
 
-
 #include <cstdint>
 
 #include "application/fatal_error.h"

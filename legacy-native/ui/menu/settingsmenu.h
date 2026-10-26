@@ -6,7 +6,6 @@
  * Interface for settings menu.
  */
 
-
 #include "ui/menu/diabloui.h"
 
 namespace devilution {

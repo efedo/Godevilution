@@ -6,7 +6,6 @@
  * Interface for dungeon_common defs.
  */
 
-
 #include <cstdint>
 
 #include "engine/math/rectangle.hpp"

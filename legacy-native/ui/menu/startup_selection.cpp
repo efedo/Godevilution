@@ -4,7 +4,6 @@
  * Implementation of start game selection.
  */
 
-
 #include "startup_selection.h"
 
 #include <cstddef>
@@ -12,12 +11,12 @@
 #include <optional>
 #include <vector>
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
 #include "engine/load/load_clx.hpp"
 #include "engine/math/point.hpp"
 #include "persistence/options.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/language.h"
 #include "utils/ui_fwd.h"
 

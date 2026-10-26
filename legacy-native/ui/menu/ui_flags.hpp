@@ -6,7 +6,6 @@
  * Interface for UI state flags.
  */
 
-
 #include <cstdint>
 
 #include "utils/enum_traits.h"

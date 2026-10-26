@@ -4,7 +4,6 @@
  * Interface for pointer-value union type.
  */
 
-
 #pragma once
 
 #include <cstdint>

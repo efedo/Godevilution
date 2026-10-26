@@ -6,7 +6,6 @@
  * Interface for audio decoder push source.
  */
 
-
 #include <chrono>
 #include <cstdint>
 #include <cstring>

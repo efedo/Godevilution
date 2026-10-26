@@ -14,8 +14,8 @@
 #include <iomanip>
 #include <iterator>
 #include <limits>
-#include <sstream>
 #include <span>
+#include <sstream>
 #include <utility>
 
 #include <asio/connect.hpp>
@@ -173,7 +173,8 @@ tl::expected<void, std::string> ServerBackedClient::ConnectTransport(bool expect
 		clientHello->set_requested_character_name(*configuration_.requestedCharacterName);
 	const std::optional<std::chrono::steady_clock::time_point> handshakeDeadline = configuration_.supportsClockGatedCommands
 	    ? std::optional<std::chrono::steady_clock::time_point> {
-		  std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max<uint64_t>(configuration_.gatedReceiveTimeoutMs, 1)) }
+		      std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max<uint64_t>(configuration_.gatedReceiveTimeoutMs, 1))
+	      }
 	    : std::nullopt;
 	if (auto result = handshakeDeadline.has_value() ? WriteEnvelope(hello, *handshakeDeadline) : WriteEnvelope(hello); !result.has_value()) {
 		if (handshakeDeadline.has_value())
@@ -200,7 +201,8 @@ tl::expected<void, std::string> ServerBackedClient::ConnectTransport(bool expect
 	const bool rulesetMismatch = !configuration_.rulesetIdentityHash.empty()
 	    && serverHello.ruleset_identity_hash() != configuration_.rulesetIdentityHash;
 	if (protocolMismatch || contentMismatch || rulesetMismatch) {
-		const std::string reason = protocolMismatch ? "protocol-mismatch" : contentMismatch ? "content-hash-mismatch" : "ruleset-hash-mismatch";
+		const std::string reason = protocolMismatch ? "protocol-mismatch" : contentMismatch ? "content-hash-mismatch"
+		                                                                                    : "ruleset-hash-mismatch";
 		const std::string diagnosticPath = WriteHandshakeDiagnosticDump(reason, &*response);
 		const std::string detail = "Authoritative server returned incompatible protocol, content, or ruleset identity."
 		    + (diagnosticPath.empty() ? std::string {} : " Diagnostic dump: " + diagnosticPath);
@@ -384,8 +386,7 @@ tl::expected<protocol::Snapshot, std::string> ServerBackedClient::ReadSnapshot()
 		auto response = gatedTransactionDeadline_.has_value()
 		    ? ReadEnvelope(*gatedTransactionDeadline_)
 		    : ReadEnvelope();
-		if (!response.has_value())
-		{
+		if (!response.has_value()) {
 			if (clockGated_ && gatedTransactionDeadline_.has_value())
 				CloseAfterGatedTimeout();
 			return tl::make_unexpected(response.error());
@@ -403,8 +404,7 @@ tl::expected<protocol::Snapshot, std::string> ServerBackedClient::ReadSnapshot()
 			}
 			continue;
 		}
-		if (response->payload_case() != protocol::Envelope::kSnapshot)
-		{
+		if (response->payload_case() != protocol::Envelope::kSnapshot) {
 			if (clockGated_)
 				Close();
 			return tl::make_unexpected(ProtocolErrorMessage(*response));
@@ -448,7 +448,8 @@ tl::expected<void, std::string> ServerBackedClient::ObserveTimingReply(const pro
 		return {};
 	pendingTimingProbe_.reset();
 	const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-	    std::chrono::steady_clock::now() - probe.sentAt).count();
+	    std::chrono::steady_clock::now() - probe.sentAt)
+	                         .count();
 	if (elapsed >= 0)
 		gatedRoundTripMs_ = std::max(gatedRoundTripMs_, static_cast<uint64_t>(elapsed));
 	return {};
@@ -732,8 +733,7 @@ tl::expected<protocol::Envelope, std::string> ServerBackedClient::ReadEnvelope(s
 tl::expected<void, std::string> ServerBackedClient::WriteEnvelope(const protocol::Envelope &envelope, std::chrono::steady_clock::time_point deadline)
 {
 	const std::string payload = envelope.SerializeAsString();
-	return EnvelopeCodec::Write(socket_, std::span<const uint8_t>(
-	    reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline);
+	return EnvelopeCodec::Write(socket_, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline);
 }
 
 uint64_t ServerBackedClient::GatedCurrentTick() const noexcept
@@ -780,8 +780,7 @@ void ServerBackedClient::CloseAfterGatedTimeout() noexcept
 tl::expected<void, std::string> ServerBackedClient::WriteEnvelope(const protocol::Envelope &envelope)
 {
 	const std::string payload = envelope.SerializeAsString();
-	return EnvelopeCodec::Write(socket_, std::span<const uint8_t>(
-	    reinterpret_cast<const uint8_t *>(payload.data()), payload.size()));
+	return EnvelopeCodec::Write(socket_, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()));
 }
 
 } // namespace devilution::authoritative

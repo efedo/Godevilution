@@ -4,7 +4,6 @@
  * Implementation of monsters.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/monsters.hpp"
 

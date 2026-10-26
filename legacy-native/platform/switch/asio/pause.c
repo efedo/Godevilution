@@ -4,7 +4,6 @@
  * pause.
  */
 
-
 #include <errno.h>
 
 int pause(void)

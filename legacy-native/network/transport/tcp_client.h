@@ -6,7 +6,6 @@
  * Interface for TCP client transport.
  */
 
-
 #include <memory>
 #include <string>
 

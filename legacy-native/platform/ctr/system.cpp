@@ -4,7 +4,6 @@
  * Implementation of system.
  */
 
-
 #include <3ds.h>
 #include <cstdio>
 #include <cstdlib>

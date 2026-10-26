@@ -48,10 +48,10 @@ TEST(CommandDelivery, ResubmissionResetsTheTimeout)
 TEST(CommandDelivery, EveryServerOutcomeResolvesThePendingCommand)
 {
 	constexpr std::array outcomes {
-	    CommandAckStatus::Accepted,
-	    CommandAckStatus::Rejected,
-	    CommandAckStatus::Rescheduled,
-	    CommandAckStatus::Duplicate,
+		CommandAckStatus::Accepted,
+		CommandAckStatus::Rejected,
+		CommandAckStatus::Rescheduled,
+		CommandAckStatus::Duplicate,
 	};
 
 	for (const CommandAckStatus status : outcomes) {

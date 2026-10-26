@@ -19,12 +19,12 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "application/fatal_error.h"
-#include "engine/cursor.h"
-#include "data/mpq_file.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
-#include "game/items/items.hpp"
+#include "engine/cursor.h"
 #include "game/events/event_bus.hpp"
+#include "game/items/items.hpp"
 #include "game/monsters/monsters.hpp"
 #include "tables/textdat.h"
 #include "utils/language.h"

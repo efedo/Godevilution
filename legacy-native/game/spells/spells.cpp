@@ -5,21 +5,21 @@
  */
 #include "game/spells/spells.hpp"
 
-#include "ui/panel/control.hpp"
 #include "engine/cursor.h"
+#include "ui/panel/control.hpp"
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
+#include "application/game_mode.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/math/point.hpp"
-#include "engine/random.hpp"
 #include "engine/math/world_tile.hpp"
-#include "application/game_mode.hpp"
-#include "ui/gamemenu.h"
-#include "game/players/inventory.hpp"
+#include "engine/random.hpp"
 #include "game/missiles/missiles.hpp"
-#include "network/protocol/legacy_player_state_policy.hpp"
+#include "game/players/inventory.hpp"
 #include "network/protocol/legacy_combat_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
+#include "ui/gamemenu.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif

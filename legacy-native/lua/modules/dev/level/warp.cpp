@@ -4,7 +4,6 @@
  * Implementation of warp.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/level/warp.hpp"
 

@@ -6,7 +6,6 @@
  * Interface for party panel.
  */
 
-
 #include <string>
 
 #include <expected.hpp>

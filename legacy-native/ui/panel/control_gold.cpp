@@ -4,19 +4,18 @@
  * Implementation of gold control.
  */
 
-
 #include "control.hpp"
 #include "control_chat.hpp"
 
-#include "ui/menu/text_input.hpp"
 #include "engine/render/clx_render.hpp"
 #include "game/players/inventory.hpp"
-#include "utils/display.h"
-#include "utils/string/format_int.hpp"
-#include "utils/log.hpp"
-#include "utils/timer.hpp"
-#include "utils/sdl/sdl_compat.h"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "ui/menu/text_input.hpp"
+#include "utils/display.h"
+#include "utils/log.hpp"
+#include "utils/sdl/sdl_compat.h"
+#include "utils/string/format_int.hpp"
+#include "utils/timer.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -35,7 +34,7 @@ std::optional<NumberInputState> GoldDropInputState;
 
 void RemoveGold(Player &player, int goldIndex, int amount)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		uint32_t itemSeed = 0;
 		if (goldIndex >= INVITEM_INV_FIRST && goldIndex <= INVITEM_INV_LAST) {
@@ -52,7 +51,7 @@ void RemoveGold(Player &player, int goldIndex, int amount)
 			LogError("Failed to submit authoritative gold split: {}", result.error());
 		return;
 	}
-	#endif
+#endif
 
 	const int gi = goldIndex - INVITEM_INV_FIRST;
 	player.InvList[gi]._ivalue -= amount;

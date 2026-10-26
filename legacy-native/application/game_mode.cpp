@@ -4,7 +4,6 @@
  * Implementation of game mode management.
  */
 
-
 #include "application/game_mode.hpp"
 
 #include <function_ref.hpp>

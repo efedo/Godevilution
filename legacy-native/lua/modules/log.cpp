@@ -4,7 +4,6 @@
  * Implementation of logging system.
  */
 
-
 #include "lua/modules/log.hpp"
 
 #ifdef USE_SDL3

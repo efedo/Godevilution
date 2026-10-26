@@ -4,7 +4,6 @@
  * Implementation of keyboard.
  */
 
-
 #include <cstdlib>
 #include <cstring>
 

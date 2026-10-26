@@ -4,7 +4,6 @@
  * signal.
  */
 
-
 #include <errno.h>
 #include <sys/signal.h>
 

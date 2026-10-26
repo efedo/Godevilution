@@ -6,7 +6,6 @@
  * Interface for cfgu service.
  */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

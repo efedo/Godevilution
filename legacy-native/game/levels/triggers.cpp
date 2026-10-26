@@ -10,14 +10,14 @@
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
-#include "ui/diablo_msg.hpp"
-#include "application/game_mode.hpp"
-#include "network/protocol/multi.h"
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/multi.h"
+#include "ui/diablo_msg.hpp"
+#include "ui/panel/control.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -865,13 +865,13 @@ void CheckTrigForce()
 
 void CheckTriggers()
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	// Authoritative movement applies level transitions on the server when the
 	// projected walk action reaches its trigger tile. Do not emit legacy
 	// CMD_NEWLVL commands from the native presentation loop as well.
 	if (!ShouldProcessLegacyTriggerCheck(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Player &myPlayer = *MyPlayer;
 

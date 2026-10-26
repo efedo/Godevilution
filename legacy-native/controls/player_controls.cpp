@@ -4,7 +4,6 @@
  * Implementation of player controls.
  */
 
-
 #include "controls/player_controls.h"
 
 #include <algorithm>
@@ -24,41 +23,41 @@
 #endif
 #endif
 
+#include "controls/controller_motion.h"
 #include "ui/automap.h"
 #include "ui/panel/control.hpp"
-#include "controls/controller_motion.h"
 #ifndef USE_SDL1
 #include "controls/devices/game_controller.h"
 #endif
+#include "application/game_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/game_controls.h"
 #include "controls/touch/gamepad.h"
 #include "engine/cursor.h"
-#include "game/quests/quest_stars.hpp"
+#include "engine/hwcursor.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
-#include "application/game_mode.hpp"
-#include "ui/menu_framework.h"
-#include "ui/help.h"
-#include "engine/hwcursor.hpp"
-#include "game/players/inventory.hpp"
+#include "engine/track.h"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/town.h"
 #include "game/levels/triggers.h"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monster_pool.hpp"
-#include "ui/panel/spell_icons.hpp"
-#include "ui/panel/spell_list.hpp"
-#include "ui/panel/ui_panels.hpp"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
+#include "game/stores/stores.hpp"
+#include "game/towners/towners.hpp"
 #include "qol/chatlog.h"
 #include "qol/stash.h"
 #include "qol/visual_store.h"
-#include "game/stores/stores.hpp"
-#include "game/towners/towners.hpp"
-#include "engine/track.h"
+#include "ui/help.h"
+#include "ui/menu_framework.h"
+#include "ui/minitext.h"
+#include "ui/panel/spell_icons.hpp"
+#include "ui/panel/spell_list.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/is_of.hpp"
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
@@ -525,12 +524,12 @@ bool IsStandingGround()
 void Interact()
 {
 	if (levelType() == DTYPE_TOWN && pcursmonst != -1) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			TalkToTowner(*MyPlayer, pcursmonst);
 			return;
 		}
-	#endif
+#endif
 		NetSendCmdLocParam1(true, CMD_TALKXY, Towners[pcursmonst].position, pcursmonst);
 		return;
 	}
@@ -597,21 +596,21 @@ void Interact()
 			position = Monsters[pcursmonst].position.tile;
 		}
 
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(position.x, position.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed controller cell attack failed: {}", result.error());
 			LastPlayerAction = PlayerActionType::Attack;
 			return;
 		}
-	#endif
+#endif
 		NetSendCmdLoc(MyPlayerId, true, myPlayer.UsesRangedWeapon() ? CMD_RATTACKXY : CMD_SATTACKXY, position);
 		LastPlayerAction = PlayerActionType::Attack;
 		return;
 	}
 
 	if (pcursmonst != -1) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
@@ -622,7 +621,7 @@ void Interact()
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			return;
 		}
-	#endif
+#endif
 		if (!myPlayer.UsesRangedWeapon() || Monsters[pcursmonst].canTalk()) {
 			NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 		} else {
@@ -633,7 +632,7 @@ void Interact()
 	}
 
 	if (levelType() != DTYPE_TOWN && PlayerUnderCursor != nullptr && !PlayerUnderCursor->hasNoLife() && !myPlayer.friendlyMode) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
@@ -644,7 +643,7 @@ void Interact()
 			LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 			return;
 		}
-	#endif
+#endif
 		NetSendCmdParam1(true, myPlayer.UsesRangedWeapon() ? CMD_RATTACKPID : CMD_ATTACKPID, PlayerUnderCursor->getId());
 		LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 		return;
@@ -1862,8 +1861,10 @@ void WalkInDir(Player &player, AxisDirection dir)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
-		const int directionX = dir.x == AxisDirectionX_LEFT ? -1 : dir.x == AxisDirectionX_RIGHT ? 1 : 0;
-		const int directionY = dir.y == AxisDirectionY_UP ? -1 : dir.y == AxisDirectionY_DOWN ? 1 : 0;
+		const int directionX = dir.x == AxisDirectionX_LEFT ? -1 : dir.x == AxisDirectionX_RIGHT ? 1
+		                                                                                         : 0;
+		const int directionY = dir.y == AxisDirectionY_UP ? -1 : dir.y == AxisDirectionY_DOWN ? 1
+		                                                                                      : 0;
 		if (auto result = authoritative::GetServerBackedRuntime().Move(directionX, directionY, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed movement failed: {}", result.error());
 		return;
@@ -2771,7 +2772,7 @@ void PerformSecondaryAction()
 		NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJXY, cursPosition);
 		LastPlayerAction = PlayerActionType::OperateObject;
 	} else {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			std::optional<Point> target;
 			if (pcursmissile != nullptr)
@@ -2787,7 +2788,7 @@ void PerformSecondaryAction()
 			}
 			return;
 		}
-	#endif
+#endif
 		if (pcursmissile != nullptr) {
 			myPlayer.makePath(pcursmissile->position.tile, true);
 			myPlayer.destAction = ACTION_WALK;

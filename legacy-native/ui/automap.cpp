@@ -10,22 +10,22 @@
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
-#include "engine/load/load_file.hpp"
 #include "engine/gfx/palette.h"
+#include "engine/load/load_file.hpp"
 #include "engine/render/automap_render.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
+#include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
 #include "persistence/options.h"
-#include "game/players/players.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/attributes.h"
 #include "utils/enum_traits.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
@@ -953,7 +953,7 @@ AutomapTile GetAutomapTileType(Point position)
  */
 AutomapTile GetAutomapTypeView(Point map)
 {
-	uint8_t (*view)[DMAXY] = CurrentAutomapManager.GetAutomapView();
+	uint8_t(*view)[DMAXY] = CurrentAutomapManager.GetAutomapView();
 	if (map.x == -1 && map.y >= 0 && map.y < DMAXY && view[0][map.y] != MAP_EXP_NONE) {
 		if (HasAutomapFlag({ 0, map.y + 1 }, AutomapTile::Flags::Dirt) && HasAutomapFlag({ 0, map.y }, AutomapTile::Flags::Dirt) && HasAutomapFlag({ 0, map.y - 1 }, AutomapTile::Flags::Dirt)) {
 			return {};

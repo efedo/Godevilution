@@ -6,7 +6,6 @@
  * Interface for string concatenation.
  */
 
-
 #include <cstdint>
 #include <cstring>
 #include <string>

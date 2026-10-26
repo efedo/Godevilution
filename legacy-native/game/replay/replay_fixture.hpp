@@ -613,7 +613,7 @@ struct ReplayFixtureExecutionState {
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	uint32_t activeStoreId = 0;
-	std::array<int32_t, 8> attributes { };
+	std::array<int32_t, 8> attributes {};
 	std::vector<ReplayFixtureInventoryItem> inventory;
 	bool heldItemDefined = false;
 	ReplayFixtureInventoryItem heldItem;

@@ -4,7 +4,6 @@
  * Implementation of backbuffer state management.
  */
 
-
 #include "engine/gfx/backbuffer_state.hpp"
 
 #include <array>

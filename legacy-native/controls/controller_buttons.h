@@ -5,7 +5,6 @@
  * Interface for controller button definitions.
  */
 
-
 // Unifies joystick, gamepad, and keyboard controller APIs.
 
 #include <cstdint>

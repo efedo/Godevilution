@@ -4,13 +4,12 @@
  * Implementation of loopback network transport.
  */
 
-
 #include "network/transport/loopback.h"
 
 #include <cstdint>
 
-#include "network/protocol/multi.h"
 #include "game/players/players.hpp"
+#include "network/protocol/multi.h"
 #include "utils/language.h"
 #include "utils/stubs.h"
 

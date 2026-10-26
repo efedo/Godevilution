@@ -9,8 +9,8 @@
 #include <span>
 #include <vector>
 
-#include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 #include "game/items/items.hpp"
 #include "utils/attributes.h"
 

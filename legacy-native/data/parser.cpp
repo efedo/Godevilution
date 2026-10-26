@@ -4,7 +4,6 @@
  * Implementation of game data parsing.
  */
 
-
 #include "parser.hpp"
 
 namespace devilution {

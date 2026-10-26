@@ -4,7 +4,6 @@
  * Interface for keyboard.
  */
 
-
 #pragma once
 
 #include <string_view>

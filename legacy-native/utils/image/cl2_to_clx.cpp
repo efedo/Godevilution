@@ -4,7 +4,6 @@
  * Implementation of CL2 to CLX format conversion.
  */
 
-
 #include "utils/image/cl2_to_clx.hpp"
 
 #include <cstdint>
@@ -12,10 +11,10 @@
 
 #include <vector>
 
-#include "utils/image/clx_decode.hpp"
-#include "utils/image/clx_encode.hpp"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_write.hpp"
+#include "utils/image/clx_decode.hpp"
+#include "utils/image/clx_encode.hpp"
 
 namespace devilution {
 

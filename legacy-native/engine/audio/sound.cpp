@@ -26,8 +26,8 @@
 #include <expected.hpp>
 
 #include "application/fatal_error.h"
-#include "engine/assets.hpp"
 #include "application/game_mode.hpp"
+#include "engine/assets.hpp"
 #include "persistence/options.h"
 #include "utils/log.hpp"
 #include "utils/math.h"

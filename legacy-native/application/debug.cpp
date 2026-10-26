@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
-#include <cmath>
 #include <climits>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <random>
@@ -33,29 +33,29 @@
 #include "engine/render/world_renderer.h"
 
 #include "engine/assets.hpp"
+#include "engine/cursor.h"
 #include "engine/gfx/backbuffer_state.hpp"
-#include "game/items/items.hpp"
+#include "engine/lighting.h"
+#include "engine/load/load_cel.hpp"
+#include "engine/math/point.hpp"
 #include "game/items/item_pool.hpp"
+#include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
 #include "game/levels/tile_properties.hpp"
-#include "game/objects/objects.hpp"
-#include "game/spells/spells.hpp"
-#include "game/quests/quests.hpp"
-#include "game/players/players.hpp"
-#include "ui/automap.h"
-#include "engine/cursor.h"
-#include "engine/load/load_cel.hpp"
-#include "engine/math/point.hpp"
-#include "engine/lighting.h"
 #include "game/missiles/missiles.hpp"
-#include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
+#include "game/monsters/monsters.hpp"
+#include "game/objects/objects.hpp"
+#include "game/players/players.hpp"
+#include "game/quests/quests.hpp"
+#include "game/spells/spells.hpp"
 #include "game/towners/towners.hpp"
-#include "network/protocol/msg.h"
 #include "network/protocol/legacy_debug_policy.hpp"
+#include "network/protocol/msg.h"
 #include "persistence/pack.h"
 #include "tables/spelldat.h"
+#include "ui/automap.h"
 #include "ui/load_screens.h"
 #include "ui/player_messages.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -180,8 +180,8 @@ NamedCountArguments ParseNamedCountArguments(std::string_view value)
 
 	const size_t nameEnd = value.find_last_not_of(" \t", separator);
 	return NamedCountArguments {
-	    nameEnd == std::string_view::npos ? std::string_view {} : value.substr(0, nameEnd + 1),
-	    count,
+		nameEnd == std::string_view::npos ? std::string_view {} : value.substr(0, nameEnd + 1),
+		count,
 	};
 }
 
@@ -1453,7 +1453,7 @@ bool GetDebugGridText(Point dungeonCoords, std::string &debugGridText)
 	case DebugGridTextItem::DCorpse:
 		info = tileAt(dungeonCoords).corpse();
 		break;
-	case DebugGridTextItem::DItem:  // Updated from dItem to DItem
+	case DebugGridTextItem::DItem: // Updated from dItem to DItem
 		info = tileAt(dungeonCoords).item();
 		break;
 	case DebugGridTextItem::DSpecial:

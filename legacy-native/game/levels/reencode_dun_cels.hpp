@@ -6,7 +6,6 @@
  * Interface for reencode dun cels.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>

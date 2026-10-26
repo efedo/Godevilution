@@ -8,11 +8,11 @@
 
 #include <limits>
 
-#include "game/levels/dungeon_common.h"
 #include "engine/lighting.h"
 #include "game/items/item_pool.hpp"
-#include "game/monsters/monsters.hpp"
+#include "game/levels/dungeon_common.h"
 #include "game/monsters/monster_pool.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/monsters/validation.hpp"
 #include "game/players/players.hpp"
 #include "network/protocol/legacy_sync_policy.hpp"

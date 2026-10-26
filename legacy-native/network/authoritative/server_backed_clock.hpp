@@ -51,10 +51,10 @@ public:
 		uint64_t elapsedTicks = 0;
 		if (now > lastSnapshotObservedAt_) {
 			const auto elapsedMs = static_cast<uint64_t>(
-				std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotObservedAt_).count());
+			    std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotObservedAt_).count());
 			elapsedTicks = elapsedMs > std::numeric_limits<uint64_t>::max() / rate
-				? std::numeric_limits<uint64_t>::max()
-				: (elapsedMs * rate) / 1000U;
+			    ? std::numeric_limits<uint64_t>::max()
+			    : (elapsedMs * rate) / 1000U;
 		}
 		return SaturatingAdd(lastSnapshotTick_, elapsedTicks);
 	}
@@ -70,8 +70,8 @@ private:
 	static uint64_t SaturatingAdd(uint64_t left, uint64_t right) noexcept
 	{
 		return left > std::numeric_limits<uint64_t>::max() - right
-			? std::numeric_limits<uint64_t>::max()
-			: left + right;
+		    ? std::numeric_limits<uint64_t>::max()
+		    : left + right;
 	}
 
 	uint64_t lastSnapshotTick_ = 0;

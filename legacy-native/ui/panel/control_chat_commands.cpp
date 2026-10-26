@@ -4,16 +4,15 @@
  * Implementation of chat commands.
  */
 
-
 #include "control_chat_commands.hpp"
 #include "control.hpp"
 
-#include "ui/diablo_msg.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
-#include "game/players/inventory.hpp"
 #include "game/levels/setmaps.h"
+#include "game/players/inventory.hpp"
 #include "game/quests/quests.hpp"
 #include "network/storm/storm_net.hpp"
+#include "ui/diablo_msg.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/log.hpp"
 #include "utils/parse_int.hpp"
@@ -282,7 +281,7 @@ bool CheckChatCommand(const std::string_view text)
 	const TextCmdItem &textCmd = *textCmdIterator;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyChatMutation(authoritative::GetServerBackedRuntime().IsConnected())
-		&& (textCmd.text == "/arena" || textCmd.text == "/arenapot")) {
+	    && (textCmd.text == "/arena" || textCmd.text == "/arenapot")) {
 		InitDiabloMsg(_("This legacy gameplay command is unavailable in a server-backed session."));
 		return true;
 	}

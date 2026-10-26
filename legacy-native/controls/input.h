@@ -6,7 +6,6 @@
  * Interface for input system.
  */
 
-
 #ifdef USE_SDL3
 #include <SDL3/SDL_events.h>
 #else

@@ -6,7 +6,6 @@
  * Interface for CL2 sprite loading.
  */
 
-
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -16,13 +15,13 @@
 #include <function_ref.hpp>
 
 #include "application/fatal_error.h"
+#include "data/mpq/mpq_common.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_file.hpp"
-#include "data/mpq/mpq_common.hpp"
+#include "utils/container/static_vector.hpp"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_write.hpp"
 #include "utils/pointer_value_union.hpp"
-#include "utils/container/static_vector.hpp"
 #include "utils/status_macros.hpp"
 #include "utils/string/str_cat.hpp"
 

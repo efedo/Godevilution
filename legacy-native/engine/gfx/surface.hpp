@@ -6,7 +6,6 @@
  * Interface for 8-bit surface wrapper.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 

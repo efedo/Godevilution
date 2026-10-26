@@ -202,7 +202,7 @@ TEST_F(Phase4BEntityTest, CorpseEntityRead)
 
 	// Set corpse with encoded direction
 	// corpse() & 0x1F = index, corpse() >> 5 = direction
-	int8_t encoded = (2 << 5) | 5;  // direction 2, index 5
+	int8_t encoded = (2 << 5) | 5; // direction 2, index 5
 	tile.setCorpse(encoded);
 	EXPECT_EQ(tile.corpse(), encoded);
 	EXPECT_TRUE(tile.hasCorpse());
@@ -414,12 +414,12 @@ TEST_F(Phase4BEntityTest, EntityClear)
 	// Clear individual entities
 	tile.setPlayer(0);
 	EXPECT_FALSE(tile.hasPlayer());
-	EXPECT_TRUE(tile.hasMonster());  // Others still set
+	EXPECT_TRUE(tile.hasMonster()); // Others still set
 
 	tile.setMonster(0);
 	EXPECT_FALSE(tile.hasMonster());
 
-	tile.clear();  // Clear all
+	tile.clear(); // Clear all
 	EXPECT_FALSE(tile.hasPlayer());
 	EXPECT_FALSE(tile.hasMonster());
 	EXPECT_FALSE(tile.hasObject());
@@ -542,19 +542,19 @@ TEST_F(Phase4BEntityTest, StressTestTileOccupancy)
 	tile.clear();
 	tile.setCorpse(1);
 	EXPECT_FALSE(tile.isEmpty());
-	EXPECT_FALSE(tile.isOccupied());  // Corpse doesn't block
+	EXPECT_FALSE(tile.isOccupied()); // Corpse doesn't block
 
 	// With item only
 	tile.clear();
 	tile.setItem(1);
 	EXPECT_FALSE(tile.isEmpty());
-	EXPECT_TRUE(tile.isOccupied());  // Items occupy tiles()
+	EXPECT_TRUE(tile.isOccupied()); // Items occupy tiles()
 
 	// With object only
 	tile.clear();
 	tile.setObject(1);
 	EXPECT_FALSE(tile.isEmpty());
-	EXPECT_TRUE(tile.isOccupied());  // Objects occupy tiles()
+	EXPECT_TRUE(tile.isOccupied()); // Objects occupy tiles()
 }
 
 } // namespace devilution

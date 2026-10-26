@@ -4,7 +4,6 @@
  * Implementation of CD wrapper network transport.
  */
 
-
 #include "network/transport/cdwrap.h"
 
 namespace devilution::net {

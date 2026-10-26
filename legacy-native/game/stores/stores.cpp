@@ -15,35 +15,35 @@
 
 #include <fmt/format.h>
 
+#include "application/game_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
 #include "engine/gfx/backbuffer_state.hpp"
+#include "engine/gfx/translation_table.hpp"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/gfx/translation_table.hpp"
-#include "application/game_mode.hpp"
 #include "game/events/event_bus.hpp"
-#include "ui/minitext.h"
-#include "ui/player_messages.h"
-#include "network/protocol/multi.h"
 #include "network/protocol/legacy_lua_policy.hpp"
 #include "network/protocol/legacy_player_state_policy.hpp"
 #include "network/protocol/legacy_store_policy.hpp"
+#include "network/protocol/multi.h"
+#include "ui/minitext.h"
+#include "ui/player_messages.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
+#include "game/towners/towners.hpp"
 #include "persistence/options.h"
-#include "ui/panel/info_box.hpp"
 #include "qol/stash.h"
 #include "qol/visual_store.h"
 #include "tables/townerdat.hpp"
-#include "game/towners/towners.hpp"
-#include "utils/string/format_int.hpp"
+#include "ui/panel/info_box.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
 #include "utils/timer.hpp"
@@ -1300,13 +1300,13 @@ void SmithEnter()
 		CurrentStoreManager.StartStore(TalkID::SmithBuy);
 		break;
 	case 14:
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			LogError("Server-backed premium store purchases have no authoritative command.");
 			CurrentStoreManager.activeStore() = TalkID::None;
 			return;
 		}
-	#endif
+#endif
 		CurrentStoreManager.StartStore(TalkID::SmithPremiumBuy);
 		break;
 	case 16:
@@ -1326,10 +1326,10 @@ void SmithEnter()
  */
 void SmithBuyItem(Item &item)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	CurrentStoreManager.TakePlrsMoney(item._iIvalue);
 	if (item._iMagical == ITEM_QUALITY_NORMAL)
@@ -1372,10 +1372,10 @@ void SmithBuyEnter()
  */
 void SmithBuyPItem(Item &item)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	CurrentStoreManager.TakePlrsMoney(item._iIvalue);
 	if (item._iMagical == ITEM_QUALITY_NORMAL)
@@ -1433,10 +1433,10 @@ bool StoreGoldFit(Item &item)
  */
 void StoreSellItem()
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Player &myPlayer = *MyPlayer;
 
@@ -1489,10 +1489,10 @@ void SmithSellEnter()
  */
 void SmithRepairItem(int price)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	const int idx = CurrentStoreManager.oldScrollPos() + ((CurrentStoreManager.oldTextLine() - PreviousScrollPos) / 4);
 	CurrentStoreManager.playerItems()[idx]._iDurability = CurrentStoreManager.playerItems()[idx]._iMaxDur;
@@ -1598,10 +1598,10 @@ void WitchEnter()
  */
 void WitchBuyItem(Item &item)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	int idx = CurrentStoreManager.oldScrollPos() + ((CurrentStoreManager.oldTextLine() - PreviousScrollPos) / 4);
 
@@ -1674,10 +1674,10 @@ void WitchSellEnter()
  */
 void WitchRechargeItem(int price)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	const int idx = CurrentStoreManager.oldScrollPos() + ((CurrentStoreManager.oldTextLine() - PreviousScrollPos) / 4);
 	CurrentStoreManager.playerItems()[idx]._iCharges = CurrentStoreManager.playerItems()[idx]._iMaxCharges;
@@ -1780,10 +1780,10 @@ void BoyEnter()
 
 void BoyBuyItem(Item &item, int itemPrice)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	CurrentStoreManager.TakePlrsMoney(itemPrice);
 	CurrentStoreManager.StoreAutoPlace(item, true);
@@ -1798,10 +1798,10 @@ void BoyBuyItem(Item &item, int itemPrice)
  */
 void HealerBuyItem(Item &item)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	int idx = CurrentStoreManager.oldScrollPos() + ((CurrentStoreManager.oldTextLine() - PreviousScrollPos) / 4);
 	if (!gbIsMultiplayer) {
@@ -1862,10 +1862,10 @@ void BoyBuyEnter()
 
 void StorytellerIdentifyItem(Item &item)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Player &myPlayer = *MyPlayer;
 
@@ -2285,10 +2285,10 @@ void DrunkEnter()
 
 int TakeGold(Player &player, int cost, bool skipMaxPiles)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return cost;
-	#endif
+#endif
 
 	for (int i = 0; i < player._pNumInv; i++) {
 		auto &item = player.InvList[i];
@@ -2335,10 +2335,10 @@ void WitchRefillManaEnter()
 
 bool StoreManager::StoreAutoPlace(Item &item, bool persistItem)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (persistItem && !ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return false;
-	#endif
+#endif
 
 	Player &player = *MyPlayer;
 
@@ -2542,7 +2542,7 @@ void StoreManager::StartStore(TalkID s)
 	bool processLegacyLuaEvents = true;
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	processLegacyLuaEvents = ShouldProcessLegacyLuaEvents(
-		    authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
+	    authoritative::GetServerBackedRuntime().IsAuthoritativeMode());
 #endif
 	if (processLegacyLuaEvents) {
 		if (std::optional<std::string_view> name = TownerNameForTalkID(s); name.has_value())
@@ -2920,10 +2920,10 @@ void StoreManager::StoreNext()
 
 void StoreManager::TakePlrsMoney(int cost)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyStoreMutation(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	Player &myPlayer = *MyPlayer;
 

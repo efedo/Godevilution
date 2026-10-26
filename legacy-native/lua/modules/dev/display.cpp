@@ -4,7 +4,6 @@
  * Implementation of display and window management.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/display.hpp"
 

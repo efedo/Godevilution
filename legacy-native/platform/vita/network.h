@@ -6,5 +6,4 @@
  * Interface for network.
  */
 
-
 void vita_enable_network();

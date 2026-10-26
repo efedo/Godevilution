@@ -4,15 +4,14 @@
  * Implementation of drlg l1.
  */
 
-
 #include "game/levels/level_l1.h"
 
 #include <cstdint>
 
 #include "engine/load/load_file.hpp"
 #include "engine/math/point.hpp"
-#include "engine/random.hpp"
 #include "engine/math/rectangle.hpp"
+#include "engine/random.hpp"
 #include "game/levels/crypt.h"
 #include "game/levels/dungeon_common.h"
 #include "game/players/players.hpp"
@@ -25,10 +24,10 @@ namespace devilution {
 namespace {
 
 Bitset2d<DMAXX, DMAXY> Chamber; // Marks where walls may not be added to the level
-bool VerticalLayout; // Specifies whether to generate a horizontal or vertical layout.
-bool HasChamber1; // Specifies whether to generate a room at position 1 in the Cathedral.
-bool HasChamber2; // Specifies whether to generate a room at position 2 in the Cathedral.
-bool HasChamber3; // Specifies whether to generate a room at position 3 in the Cathedral.
+bool VerticalLayout;            // Specifies whether to generate a horizontal or vertical layout.
+bool HasChamber1;               // Specifies whether to generate a room at position 1 in the Cathedral.
+bool HasChamber2;               // Specifies whether to generate a room at position 2 in the Cathedral.
+bool HasChamber3;               // Specifies whether to generate a room at position 3 in the Cathedral.
 
 // Miniset: stairs up on a corner wall.
 const Miniset STAIRSUP {

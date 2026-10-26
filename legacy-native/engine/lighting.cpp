@@ -13,20 +13,20 @@
 
 #include <expected.hpp>
 
-#include "ui/automap.h"
-#include "engine/math/displacement.hpp"
 #include "engine/lighting_defs.hpp"
 #include "engine/load/load_file.hpp"
+#include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
 #include "engine/math/world_tile.hpp"
+#include "engine/vision.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
+#include "ui/automap.h"
 #include "utils/attributes.h"
 #include "utils/is_of.hpp"
 #include "utils/status_macros.hpp"
-#include "engine/vision.hpp"
 
 namespace devilution {
 

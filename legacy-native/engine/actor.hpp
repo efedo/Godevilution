@@ -35,30 +35,30 @@ namespace devilution {
  * through their own appropriately-typed fields.
  */
 struct Actor {
-    AnimationInfo animInfo; // Current animation state, used for sprite selection and frame advance.
-    Direction direction = Direction::South; // Direction the actor is currently facing.
-    int lightId = -1;  // Index into the global lights array, or -1 if this actor does not emit light.
+	AnimationInfo animInfo;                 // Current animation state, used for sprite selection and frame advance.
+	Direction direction = Direction::South; // Direction the actor is currently facing.
+	int lightId = -1;                       // Index into the global lights array, or -1 if this actor does not emit light.
 
-    // Current hit points in fixed-point format (lower 6 bits are fractional).
-    // Use `hitPoints >> 6` to obtain the integer part.
-    int hitPoints = 0;
+	// Current hit points in fixed-point format (lower 6 bits are fractional).
+	// Use `hitPoints >> 6` to obtain the integer part.
+	int hitPoints = 0;
 
-    // Maximum hit points in fixed-point format (lower 6 bits are fractional).
-    int maxHitPoints = 0;
+	// Maximum hit points in fixed-point format (lower 6 bits are fractional).
+	int maxHitPoints = 0;
 
-    // Returns true when the actor's integer hit points are zero or below.
-    // Always returns false for towners (they have no life to lose).
-    [[nodiscard]] bool hasNoLife() const
-    {
-        return hitPoints >> 6 <= 0;
-    }
+	// Returns true when the actor's integer hit points are zero or below.
+	// Always returns false for towners (they have no life to lose).
+	[[nodiscard]] bool hasNoLife() const
+	{
+		return hitPoints >> 6 <= 0;
+	}
 
-    Actor() = default;
-    Actor(const Actor &) = default;
-    Actor(Actor &&) noexcept = default;
-    Actor &operator=(const Actor &) = default;
-    Actor &operator=(Actor &&) noexcept = default;
-    ~Actor() = default;
+	Actor() = default;
+	Actor(const Actor &) = default;
+	Actor(Actor &&) noexcept = default;
+	Actor &operator=(const Actor &) = default;
+	Actor &operator=(Actor &&) noexcept = default;
+	~Actor() = default;
 };
 
 } // namespace devilution

@@ -22,10 +22,10 @@
 
 #include "ui_test.hpp"
 
-#include "ui/panel/control.hpp"
-#include "ui/panel/control_panel.hpp"
 #include "application/diablo.h"
 #include "game/players/players.hpp"
+#include "ui/panel/control.hpp"
+#include "ui/panel/control_panel.hpp"
 
 namespace devilution {
 namespace {

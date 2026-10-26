@@ -4,7 +4,6 @@
  * Implementation of headless mode support.
  */
 
-
 #include "application/headless_mode.hpp"
 
 namespace devilution {

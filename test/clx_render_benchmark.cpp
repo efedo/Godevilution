@@ -3,10 +3,10 @@
 #include <benchmark/benchmark.h>
 
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/math/displacement.hpp"
-#include "engine/load/load_clx.hpp"
-#include "engine/render/clx_render.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/load/load_clx.hpp"
+#include "engine/math/displacement.hpp"
+#include "engine/render/clx_render.hpp"
 #include "utils/log.hpp"
 #include "utils/sdl_wrap.h"
 
