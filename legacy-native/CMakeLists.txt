@@ -42,7 +42,6 @@ set(libdevilutionx_SRCS
   game/quests/quest_stars.cpp
   game/events/event_bus.cpp
   game/replay/replay.cpp
-  game/replay/replay_fixture.cpp
   ui/gamemenu.cpp
   ui/menu_framework.cpp
   ui/help.cpp

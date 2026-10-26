@@ -8,6 +8,8 @@
 
 #include <picosha2.h>
 
+#include "application/fatal_error.h"
+
 namespace devilution {
 namespace {
 
@@ -45,7 +47,11 @@ void AppendTable(CanonicalContentHasher &hasher, const ContentManifestTable &tab
 	hasher.AppendUint64(table.rows.size());
 	for (const ContentManifestRow &row : table.rows) {
 		if (row.cells.size() != table.columns.size())
+#ifdef __cpp_exceptions
 			throw std::invalid_argument("Content manifest row cell count does not match the table column count.");
+#else
+			app_fatal("Content manifest row cell count does not match the table column count.");
+#endif
 		hasher.AppendUint64(row.lineNumber);
 		for (size_t column = 0; column < table.columns.size(); ++column)
 			hasher.AppendString(row.cells[column]);
