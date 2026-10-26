@@ -45,7 +45,7 @@ jobs:
       run: |
         cmake -S. -Bbuild -G Ninja -DUSE_SDL3=ON -DDEVILUTIONX_SYSTEM_SDL3=OFF -DDEVILUTIONX_STATIC_SDL3=ON -DDEVILUTIONX_SYSTEM_SDL_IMAGE=OFF -DDEVILUTIONX_SYSTEM_BENCHMARK=OFF
         wget -qnc https://github.com/diasurgical/devilutionx-assets/releases/download/v2/spawn.mpq -P build
-        cmake --build build -j $(nproc) -- -k 0 || true
+        cmake --build build -j $(nproc)
 
     - name: Run tests
-      run: cd build && ctest --output-on-failure || true
+      run: cd build && ctest --output-on-failure

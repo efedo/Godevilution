@@ -45,10 +45,10 @@ jobs:
       run: |
         cmake -S. -Bbuild -G Ninja -DENABLE_CODECOVERAGE=ON -DDEVILUTIONX_SYSTEM_BENCHMARK=OFF
         wget -qnc https://github.com/diasurgical/devilutionx-assets/releases/download/v2/spawn.mpq -P build
-        cmake --build build -j $(nproc) -- -k 0 || true
+        cmake --build build -j $(nproc)
 
     - name: Run tests
-      run: cd build && ctest --output-on-failure || true
+      run: cd build && ctest --output-on-failure
 
     - name: Upload results
       uses: codecov/codecov-action@v6

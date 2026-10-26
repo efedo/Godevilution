@@ -5,6 +5,17 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-26
+
+- Native CI repair: format `legacy-native/` and `test/` with clang-format 18;
+  build `replay_fixture.cpp` only into `replay_test` (3DS); fall back to
+  `app_fatal` in the content manifest without exceptions (Switch); fix stale test
+  includes, the `pack_test` rename, `path_test` matchers and SDL3 fills. Delete
+  the workflows whose packaging `2fe67d708` removed (Linux cross, MinGW, Win9x,
+  XP, MSVC, PS4, PS5, Xbox, Xbox One, Amiga, Vita, Miyoo, OpenDingux, RetroFW);
+  Linux SDL1 and macOS now build without packaging. Six pre-existing native test
+  failures (pack, writehero, Wirt purchase, timedemo) remain open.
+
 ## 2026-10-25
 
 - Cathedral L1-L4 by default (batch 1.3): the all-class profile's new
