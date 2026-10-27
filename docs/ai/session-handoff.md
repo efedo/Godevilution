@@ -48,7 +48,34 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
-## Current batch: 1.4 Rendered slice
+## Current batch: 1.5a Multiplayer native Cathedral
+
+1.4 stays open for the user's Town-L4-Town playtest. Batch 1.5 was split: the
+native profile's Cathedral owners reject multiplayer ("Only ordinary
+original-Diablo Cathedral SP Normal generation is supported"), so two players
+first need the native multiplayer rules.
+
+- **Player-visible outcome:** a multiplayer game on the native profile starts,
+  generates Town and Cathedral L1-L4, and plays with native multiplayer rules.
+- **Native source:** `monsters.cpp` InitMonster and PrepareUniqueMonst (no
+  single-player life halving); `items.cpp` spell-book and oil pools,
+  `UniqueItemFlags` reuse, Healer multiplayer pinned stock; `diablo.cpp`
+  LoadGameLevel re-entry (multiplayer regenerates from the level seed); the
+  monster AI random streams gated on single-player in the combat processor.
+- **Files and contracts owned:** the single-player gates in the Cathedral
+  population, item, monster-metadata and door owners and in combat AI; the
+  native population oracle export (`test/cathedral_population_test.cpp`) gains
+  a multiplayer variant; the launcher accepts `-Multiplayer` with the native
+  profile.
+- **Exit check:** multiplayer native oracles for L1-L4 match the C# generators;
+  Diablo.Tests and Server.Tests pass; a headless two-client create on the
+  native profile reaches L1.
+- **Out of scope:** quests, Catacombs, multiplayer-only spells in play
+  (Resurrect, Heal Other), the two-client fight and resume (1.5b).
+- **Size:** several days; split again if the population oracle work alone
+  exceeds that.
+
+## Batch 1.4 Rendered slice (awaiting playtest)
 
 - **Player-visible outcome:** the windowed native launch draws Town and
   Cathedral L1-L4 with native player, scene, resident and object art, and the
