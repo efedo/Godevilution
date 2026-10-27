@@ -99,7 +99,7 @@ public sealed partial class DiabloWorldState
         ArgumentNullException.ThrowIfNull(missiles);
         var missileBindings = missiles.Definitions
             .Select(AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint).Order().ToArray();
-        if (nativeCatacombsRangedMissileCatalogs.Values.Any(catalog => !catalog.Definitions
+        if (LevelValues(state => state.RangedMissiles).Any(entry => !entry.Value.Definitions
                 .Select(AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint).Order()
                 .SequenceEqual(missileBindings)))
             throw new InvalidDataException("A Catacombs run cannot change its trusted ranged mappings.");
@@ -119,30 +119,9 @@ public sealed partial class DiabloWorldState
             || !old.NativeSpellBindings!.OrderBy(pair => pair.Key)
                 .SequenceEqual(build.Items.NativeSpellBindings!.OrderBy(pair => pair.Key)))
             throw new InvalidDataException("Native floors require the same validated item, spell and actor catalogs.");
-        var bindings = old.ItemBindings.ToDictionary();
-        foreach (var entry in build.Items.ItemBindings) {
-            if (bindings.TryGetValue(entry.Key, out var previous) && previous != entry.Value)
-                throw new InvalidDataException("A Catacombs floor changed an existing stable item binding.");
-            bindings[entry.Key] = entry.Value;
-        }
         var owners = NativePopulationOwners.Append(owner).OrderBy(value => value.LevelId).ToArray();
-        var fingerprint = AuthoritativeNativePopulationBindings.ComputeFamilyItemGenerationFingerprint(owners);
-        var initial = old.InitialCheckpoint with {
-            GenerationFingerprint = fingerprint,
-            UniqueItemFlags = old.InitialCheckpoint.UniqueItemFlags
-                .Union(build.Items.InitialCheckpoint.UniqueItemFlags).Order().ToArray(),
-            Levels = old.InitialCheckpoint.Levels.Concat(build.Items.InitialCheckpoint.Levels)
-                .OrderBy(value => value.LevelId).ToArray(),
-        };
-        var profile = old with {
-            GenerationFingerprint = fingerprint, InitialCheckpoint = initial, ItemBindings = bindings,
-            LevelProfiles = old.LevelProfiles.Concat(build.Items.LevelProfiles).OrderBy(value => value.LevelId).ToArray(),
-        };
-        var checkpoint = current with {
-            GenerationFingerprint = fingerprint,
-            UniqueItemFlags = current.UniqueItemFlags.Union(build.Items.InitialCheckpoint.UniqueItemFlags).Order().ToArray(),
-            Levels = current.Levels.Concat(build.Items.InitialCheckpoint.Levels).OrderBy(value => value.LevelId).ToArray(),
-        };
+        var (profile, checkpoint) = CombineFloorItems(old, current,
+            build.Items, AuthoritativeNativePopulationBindings.ComputeFamilyItemGenerationFingerprint(owners));
         var combined = new AuthoritativeCathedralItemRuntime(profile, checkpoint, items.NativeGoldStackMetadata,
             owners.ToDictionary(value => value.LevelId, value => value.ItemFamilyContext));
         return new(floor, build, combined, CaptureNativeFamilyAdmissionState(this),
@@ -170,24 +149,8 @@ public sealed partial class DiabloWorldState
             || nativeCatacombsDoorCatalogFingerprint is not null
                 && nativeCatacombsDoorCatalogFingerprint != floor.nativeCatacombsDoorCatalogFingerprint)
             throw new InvalidOperationException("A prepared Catacombs floor is stale.");
-        RequireNativeAdmissionKeys(nativePopulationPolicies, floor.nativePopulationPolicies);
-        RequireNativeAdmissionKeys(nativeSarcophagiByEntityId, floor.nativeSarcophagiByEntityId);
-        RequireNativeAdmissionKeys(nativeBarrelsByEntityId, floor.nativeBarrelsByEntityId);
-        RequireNativeAdmissionKeys(nativeTrapsByEntityId, floor.nativeTrapsByEntityId);
-        RequireNativeAdmissionKeys(nativeInitialSpecialStand, floor.nativeInitialSpecialStand);
-        RequireNativeAdmissionKeys(nativeCatacombsDoorOwners, floor.nativeCatacombsDoorOwners);
-        RequireNativeAdmissionKeys(nativeCatacombsDoorLevels, floor.nativeCatacombsDoorLevels);
-        RequireNativeAdmissionKeys(nativeCatacombsDoorsByEntityId, floor.nativeCatacombsDoorsByEntityId);
-        RequireNativeAdmissionKeys(nativeCatacombsMonsterPhases, floor.nativeCatacombsMonsterPhases);
-        RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseOrders, floor.nativeCatacombsMonsterPhaseOrders);
-        RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
-        RequireNativeAdmissionKeys(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
-        RequireNativeAdmissionKeys(nativeCatacombsArrows, floor.nativeCatacombsArrows);
-        RequireNativeAdmissionKeys(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
-        if (nativeCatacombsRangedConfiguredLevels.Overlaps(floor.nativeCatacombsRangedConfiguredLevels))
-            throw new InvalidOperationException("A prepared Catacombs ranged floor is already registered.");
-        if (nativeCatacombsMonsterPhaseLevels.Overlaps(floor.nativeCatacombsMonsterPhaseLevels))
-            throw new InvalidOperationException("A prepared Catacombs phase floor is already registered.");
+        RequireAdoptableLevelStates(floor);
+        AdoptFloorEntities(floor, apply: false);
         var replacement = owner.CreateBackingLevel();
         var geometry = new AuthoritativeWorld();
         foreach (var level in World.Levels)
@@ -196,25 +159,8 @@ public sealed partial class DiabloWorldState
         // All throwing validation is complete. Only validated dictionary copies follow.
         World.ReplaceLevel(replacement);
         projectedLevels[levelId] = floor.projectedLevels[levelId];
-        CopyNativeAdmissionMap(CombatTargets, floor.CombatTargets);
-        CopyNativeAdmissionMap(Objects, floor.Objects);
-        CopyNativeAdmissionMap(WorldItems, floor.WorldItems);
-        CopyNativeAdmissionMap(nativePopulationPolicies, floor.nativePopulationPolicies);
-        CopyNativeAdmissionMap(nativeSarcophagiByEntityId, floor.nativeSarcophagiByEntityId);
-        CopyNativeAdmissionMap(nativeBarrelsByEntityId, floor.nativeBarrelsByEntityId);
-        CopyNativeAdmissionMap(nativeTrapsByEntityId, floor.nativeTrapsByEntityId);
-        CopyNativeAdmissionMap(nativeInitialSpecialStand, floor.nativeInitialSpecialStand);
-        CopyNativeAdmissionMap(nativeCatacombsDoorOwners, floor.nativeCatacombsDoorOwners);
-        CopyNativeAdmissionMap(nativeCatacombsDoorLevels, floor.nativeCatacombsDoorLevels);
-        CopyNativeAdmissionMap(nativeCatacombsDoorsByEntityId, floor.nativeCatacombsDoorsByEntityId);
-        CopyNativeAdmissionMap(nativeCatacombsMonsterPhases, floor.nativeCatacombsMonsterPhases);
-        CopyNativeAdmissionMap(nativeCatacombsMonsterPhaseOrders, floor.nativeCatacombsMonsterPhaseOrders);
-        CopyNativeAdmissionMap(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
-        nativeCatacombsMonsterPhaseLevels.UnionWith(floor.nativeCatacombsMonsterPhaseLevels);
-        CopyNativeAdmissionMap(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
-        CopyNativeAdmissionMap(nativeCatacombsArrows, floor.nativeCatacombsArrows);
-        CopyNativeAdmissionMap(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
-        nativeCatacombsRangedConfiguredLevels.UnionWith(floor.nativeCatacombsRangedConfiguredLevels);
+        AdoptFloorEntities(floor, apply: true);
+        AdoptLevelStates(floor);
         nativeCatacombsDoorCatalog ??= floor.nativeCatacombsDoorCatalog;
         nativeCatacombsDoorCatalogFingerprint ??= floor.nativeCatacombsDoorCatalogFingerprint;
         cathedralItems = admission.Items;
@@ -228,16 +174,28 @@ public sealed partial class DiabloWorldState
             || Projectiles.Values.Any(value => value.LevelId == levelId)
             || Portals.Values.Any(value => value.SourceLevelId == levelId || value.DestinationLevelId == levelId);
 
-    private static void RequireNativeAdmissionKeys<T>(Dictionary<uint, T> current, Dictionary<uint, T> incoming)
+    /** Checks (apply false) or copies a detached floor's entities and entity-keyed native state. */
+    private void AdoptFloorEntities(DiabloWorldState floor, bool apply)
     {
-        if (incoming.Keys.Any(current.ContainsKey))
-            throw new InvalidOperationException("A prepared Catacombs owner map collides with live state.");
-    }
-
-    private static void CopyNativeAdmissionMap<T>(Dictionary<uint, T> destination, Dictionary<uint, T> source)
-    {
-        foreach (var entry in source)
-            destination.Add(entry.Key, entry.Value);
+        static void Adopt<T>(Dictionary<uint, T> live, Dictionary<uint, T> incoming, bool apply)
+        {
+            if (!apply && incoming.Keys.Any(live.ContainsKey))
+                throw new InvalidOperationException("A prepared floor's entity state collides with live state.");
+            foreach (var entry in apply ? incoming : [])
+                live.Add(entry.Key, entry.Value);
+        }
+        Adopt(CombatTargets, floor.CombatTargets, apply);
+        Adopt(Objects, floor.Objects, apply);
+        Adopt(WorldItems, floor.WorldItems, apply);
+        Adopt(nativeSarcophagiByEntityId, floor.nativeSarcophagiByEntityId, apply);
+        Adopt(nativeBarrelsByEntityId, floor.nativeBarrelsByEntityId, apply);
+        Adopt(nativeTrapsByEntityId, floor.nativeTrapsByEntityId, apply);
+        Adopt(nativeInitialSpecialStand, floor.nativeInitialSpecialStand, apply);
+        Adopt(cathedralDoors, floor.cathedralDoors, apply);
+        Adopt(nativeCatacombsDoorsByEntityId, floor.nativeCatacombsDoorsByEntityId, apply);
+        Adopt(nativeCatacombsMonsterPhases, floor.nativeCatacombsMonsterPhases, apply);
+        Adopt(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions, apply);
+        Adopt(nativeCatacombsArrows, floor.nativeCatacombsArrows, apply);
     }
 
     private static string CaptureNativeAdmissionItems(AuthoritativeCathedralItemRuntime items)
@@ -263,8 +221,8 @@ public sealed partial class DiabloWorldState
             Phases = floor.CaptureNativeCatacombsMonsterPhases(),
             Ranged = floor.CaptureNativeCatacombsRangedActions(),
             Arrows = floor.CaptureNativeCatacombsArrows(),
-            RangedLevels = floor.nativeCatacombsRangedConfiguredLevels.Order().ToArray(),
-            RangedMappings = floor.nativeCatacombsRangedMissileCatalogs.OrderBy(row => row.Key)
+            RangedLevels = floor.LevelValues(state => state.RangedMissiles).Select(row => row.Key).Order().ToArray(),
+            RangedMappings = floor.LevelValues(state => state.RangedMissiles).OrderBy(row => row.Key)
                 .Select(row => new { LevelId = row.Key, Definitions = row.Value.Definitions
                     .OrderBy(value => value.NativeAi, StringComparer.Ordinal).ThenBy(value => value.MonsterId).ToArray() }).ToArray(),
             Actors = floor.CombatTargets.OrderBy(entry => entry.Key).Select(entry => new {

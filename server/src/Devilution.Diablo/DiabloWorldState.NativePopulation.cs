@@ -3,19 +3,18 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private AuthoritativeNativePopulationBindings? nativePopulationPolicy;
-    private readonly Dictionary<uint, AuthoritativeNativePopulationBindings> nativePopulationPolicies = [];
 
     private AuthoritativeNativePopulationBindings? NativePopulationForLevel(uint levelId)
-        => nativePopulationPolicies.GetValueOrDefault(levelId)
+        => FindLevelState(levelId)?.Population
             ?? (nativePopulationPolicy?.LevelId == levelId ? nativePopulationPolicy : null);
 
     private AuthoritativeNativePopulationBindings? NativePopulationForEntity(uint entityId)
         => NativePopulationOwners.SingleOrDefault(policy => policy.BoundEntityIds.Contains(entityId));
 
     private IEnumerable<AuthoritativeNativePopulationBindings> NativePopulationOwners
-        => nativePopulationPolicies.Count == 0
+        => !levelStates.Values.Any(state => state.Population is not null)
             ? nativePopulationPolicy is null ? [] : [nativePopulationPolicy]
-            : nativePopulationPolicies.Values;
+            : LevelValues(state => state.Population).Select(entry => entry.Value);
 
     private uint? nativePopulationParticipantClassId;
     private bool nativePopulationMultiplayer;
@@ -51,7 +50,7 @@ public sealed partial class DiabloWorldState
         if (nativePopulationLifecycleConfigured)
             throw new InvalidOperationException("Native population lifecycle state is configured once on a detached world.");
         nativePopulationPolicy ??= policy;
-        nativePopulationPolicies.TryAdd(policy.LevelId, policy);
+        LevelStateFor(policy.LevelId).Population ??= policy;
         ConfigureNativeSarcophagi(policy, nativeSarcophagusFormatVersion, nativeSarcophagusStates);
         ConfigureNativeBarrels(policy, nativeSarcophagusFormatVersion, nativeBarrelStates);
         ConfigureNativeTraps(policy, nativeSarcophagusFormatVersion, nativeTrapStates);

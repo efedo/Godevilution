@@ -65,37 +65,42 @@ public sealed partial class DiabloWorldState
         if (oldProfile.MetadataFingerprint != build.Items.MetadataFingerprint
             || oldProfile.MonsterCatalog.Fingerprint != build.Items.MonsterCatalog.Fingerprint)
             throw new InvalidDataException("All native floors must use the same validated item and actor catalogs.");
-        var bindings = oldProfile.ItemBindings.ToDictionary();
-        foreach (var entry in build.Items.ItemBindings) {
-            if (bindings.TryGetValue(entry.Key, out var old) && old != entry.Value)
-                throw new InvalidDataException("A new floor changed an existing stable item binding.");
-            bindings[entry.Key] = entry.Value;
-        }
         var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(
             NativePopulationOwners.Append(build.Policy.Bindings).OrderBy(policy => policy.LevelId)
                 .Select(policy => new { policy.LevelId, policy.Fingerprint }).ToArray())));
-        var initial = oldProfile.InitialCheckpoint with {
-            GenerationFingerprint = fingerprint,
-            UniqueItemFlags = oldProfile.InitialCheckpoint.UniqueItemFlags
-                .Union(build.Items.InitialCheckpoint.UniqueItemFlags).Order().ToArray(),
-            Levels = oldProfile.InitialCheckpoint.Levels.Concat(build.Items.InitialCheckpoint.Levels)
-                .OrderBy(level => level.LevelId).ToArray(),
-        };
-        var profile = oldProfile with {
-            GenerationFingerprint = fingerprint, InitialCheckpoint = initial, ItemBindings = bindings,
-            LevelProfiles = oldProfile.LevelProfiles.Concat(build.Items.LevelProfiles)
-                .OrderBy(level => level.LevelId).ToArray(),
-        };
-        var checkpoint = current with {
-            GenerationFingerprint = fingerprint,
-            UniqueItemFlags = current.UniqueItemFlags.Union(build.Items.InitialCheckpoint.UniqueItemFlags).Order().ToArray(),
-            Levels = current.Levels.Concat(build.Items.InitialCheckpoint.Levels).OrderBy(level => level.LevelId).ToArray(),
-        };
+        var (profile, checkpoint) = CombineFloorItems(oldProfile, current, build.Items, fingerprint);
         var combined = new AuthoritativeCathedralItemRuntime(profile, checkpoint, items.NativeGoldStackMetadata);
         return new(floor, build,
             new AuthoritativeCathedralDoorCatalog(cathedralDoorCatalog.Definitions.Append(door)), combined,
             JsonSerializer.Serialize(current), CaptureNativeAdmissionState(floor),
             JsonSerializer.Serialize(combined.CaptureCheckpoint()), participants.ToArray());
+    }
+
+    /** Adds a new floor's item bindings, unique history and level rows to the run's item registry. */
+    private static (AuthoritativeCathedralItemRuntimeProfile Profile, DiabloCathedralItemCheckpoint Checkpoint) CombineFloorItems(
+        AuthoritativeCathedralItemRuntimeProfile old, DiabloCathedralItemCheckpoint current,
+        AuthoritativeCathedralItemRuntimeProfile floor, string fingerprint)
+    {
+        var bindings = old.ItemBindings.ToDictionary();
+        foreach (var entry in floor.ItemBindings) {
+            if (bindings.TryGetValue(entry.Key, out var previous) && previous != entry.Value)
+                throw new InvalidDataException("A new floor changed an existing stable item binding.");
+            bindings[entry.Key] = entry.Value;
+        }
+        var added = floor.InitialCheckpoint;
+        var initial = old.InitialCheckpoint with {
+            GenerationFingerprint = fingerprint,
+            UniqueItemFlags = old.InitialCheckpoint.UniqueItemFlags.Union(added.UniqueItemFlags).Order().ToArray(),
+            Levels = old.InitialCheckpoint.Levels.Concat(added.Levels).OrderBy(level => level.LevelId).ToArray(),
+        };
+        return (old with {
+            GenerationFingerprint = fingerprint, InitialCheckpoint = initial, ItemBindings = bindings,
+            LevelProfiles = old.LevelProfiles.Concat(floor.LevelProfiles).OrderBy(level => level.LevelId).ToArray(),
+        }, current with {
+            GenerationFingerprint = fingerprint,
+            UniqueItemFlags = current.UniqueItemFlags.Union(added.UniqueItemFlags).Order().ToArray(),
+            Levels = current.Levels.Concat(added.Levels).OrderBy(level => level.LevelId).ToArray(),
+        });
     }
 
     private static string CaptureNativeAdmissionState(DiabloWorldState floor)
@@ -137,18 +142,12 @@ public sealed partial class DiabloWorldState
             || JsonSerializer.Serialize(admission.Items.CaptureCheckpoint()) != admission.ExpectedCombinedItems
             || JsonSerializer.Serialize(CaptureCathedralItems()) != admission.ExpectedItemCheckpoint)
             throw new InvalidOperationException("A prepared native floor is stale.");
+        RequireAdoptableLevelStates(floor);
+        AdoptFloorEntities(floor, apply: false);
         World!.ReplaceLevel(policy.CreateBackingLevel());
         projectedLevels[policy.LevelId] = floor.projectedLevels[policy.LevelId];
-        foreach (var entry in floor.CombatTargets) CombatTargets.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.Objects) Objects.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.WorldItems) WorldItems.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.nativeSarcophagiByEntityId) nativeSarcophagiByEntityId.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.nativeBarrelsByEntityId) nativeBarrelsByEntityId.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.nativeTrapsByEntityId) nativeTrapsByEntityId.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.nativeInitialSpecialStand) nativeInitialSpecialStand.Add(entry.Key, entry.Value);
-        foreach (var entry in floor.cathedralDoors) cathedralDoors.Add(entry.Key, entry.Value);
-        cathedralDoorLevels.Add(policy.LevelId, floor.cathedralDoorLevels[policy.LevelId]);
-        nativePopulationPolicies.Add(policy.LevelId, policy.Bindings);
+        AdoptFloorEntities(floor, apply: true);
+        AdoptLevelStates(floor);
         cathedralItems = admission.Items;
         cathedralDoorCatalog = admission.Doors;
         trustedCathedralDoorBackingGeometry = World.CaptureGeometryState();

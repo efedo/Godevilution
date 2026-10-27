@@ -3,18 +3,16 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private readonly Dictionary<uint, AuthoritativeNativeCatacombsMonsterPhase> nativeCatacombsMonsterPhases = [];
-    private readonly Dictionary<uint, IReadOnlyList<uint>> nativeCatacombsMonsterPhaseOrders = [];
-    private readonly HashSet<uint> nativeCatacombsMonsterPhaseLevels = [];
-    private readonly Dictionary<uint, IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase>> nativeCatacombsMonsterPhaseBindings = [];
 
     internal IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase> CaptureNativeCatacombsMonsterPhases()
-        => Array.AsReadOnly(nativeCatacombsMonsterPhaseOrders.OrderBy(entry => entry.Key)
-            .SelectMany(entry => entry.Value)
+        => Array.AsReadOnly(LevelValues(state => state.MonsterPhaseBindings).OrderBy(entry => entry.Key)
+            .SelectMany(entry => entry.Value.Select(phase => phase.EntityId))
             .Where(nativeCatacombsMonsterPhases.ContainsKey)
             .Select(entityId => nativeCatacombsMonsterPhases[entityId] with { }).ToArray());
 
     internal IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase> CaptureNativeCatacombsMonsterPhases(uint levelId)
-        => Array.AsReadOnly(nativeCatacombsMonsterPhaseOrders.GetValueOrDefault(levelId, Array.Empty<uint>())
+        => Array.AsReadOnly((FindLevelState(levelId)?.MonsterPhaseBindings ?? [])
+            .Select(phase => phase.EntityId)
             .Where(nativeCatacombsMonsterPhases.ContainsKey)
             .Select(entityId => nativeCatacombsMonsterPhases[entityId] with { }).ToArray());
 
@@ -23,7 +21,7 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase>? saved = null)
     {
         ArgumentNullException.ThrowIfNull(admission);
-        if (nativeCatacombsMonsterPhaseLevels.Contains(admission.LevelId))
+        if (FindLevelState(admission.LevelId)?.MonsterPhaseBindings is not null)
             throw new InvalidOperationException("Catacombs monster phases are configured once per owned floor.");
 
         var expected = admission.GargoylePhases;
@@ -32,7 +30,6 @@ public sealed partial class DiabloWorldState
             throw new InvalidDataException("Catacombs phase state omitted or added a generated Gargoyle.");
 
         var detached = new Dictionary<uint, AuthoritativeNativeCatacombsMonsterPhase>();
-        var ordered = new uint[expected.Count];
         for (var index = 0; index < expected.Count; index++)
         {
             var phase = actual[index];
@@ -78,15 +75,11 @@ public sealed partial class DiabloWorldState
             {
                 throw new InvalidDataException("A retained Catacombs phase has no exact live actor or terminal corpse on its bound floor.");
             }
-            ordered[index] = phase.EntityId;
         }
 
         foreach (var phase in actual)
             nativeCatacombsMonsterPhases.Add(phase.EntityId, phase with { });
-        nativeCatacombsMonsterPhaseOrders.Add(admission.LevelId, Array.AsReadOnly(ordered));
-        nativeCatacombsMonsterPhaseLevels.Add(admission.LevelId);
-        nativeCatacombsMonsterPhaseBindings.Add(admission.LevelId,
-            Array.AsReadOnly(expected.Select(phase => phase with { }).ToArray()));
+        LevelStateFor(admission.LevelId).MonsterPhaseBindings = Array.AsReadOnly(expected.Select(phase => phase with { }).ToArray());
     }
 
     /** Validates mutable phase clocks against the complete immutable per-floor admission. */
@@ -94,10 +87,7 @@ public sealed partial class DiabloWorldState
     {
         if (owner.Family != AuthoritativeNativePopulationFamily.Catacombs
             || !ReferenceEquals(NativePopulationForLevel(owner.LevelId), owner)
-            || !nativeCatacombsMonsterPhaseLevels.Contains(owner.LevelId)
-            || !nativeCatacombsMonsterPhaseOrders.TryGetValue(owner.LevelId, out var order)
-            || !nativeCatacombsMonsterPhaseBindings.TryGetValue(owner.LevelId, out var bindings)
-            || !order.SequenceEqual(bindings.Select(phase => phase.EntityId))
+            || FindLevelState(owner.LevelId) is not { MonsterPhaseBindings: { } bindings }
             || nativeCatacombsMonsterPhases.Values.Count(phase => phase.LevelId == owner.LevelId) != bindings.Count)
             throw new InvalidDataException("Catacombs phase coverage lost its exact per-floor population owner.");
         foreach (var bound in bindings) {

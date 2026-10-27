@@ -7,7 +7,13 @@ public sealed partial class DiabloWorldState
     private AuthoritativeCathedralDoorCatalog? cathedralDoorCatalog;
     private DiabloWorldGeometryState? trustedCathedralDoorBackingGeometry;
     private readonly Dictionary<uint, (uint LevelId, AuthoritativeCathedralDoorState Door)> cathedralDoors = [];
-    private readonly Dictionary<uint, AuthoritativeLevel> cathedralDoorLevels = [];
+    private void ReplaceCathedralDoorLevels(IEnumerable<KeyValuePair<uint, AuthoritativeLevel>> levels)
+    {
+        foreach (var state in levelStates.Values)
+            state.CathedralDoorLevel = null;
+        foreach (var (levelId, level) in levels)
+            Bind(ref LevelStateFor(levelId).CathedralDoorLevel, level);
+    }
     /** Cached per-level immutable presentation; the public result remains a fresh ordered array. */
     private sealed record PresentationLevelGeometryCacheEntry(
         AuthoritativeLevel Source,
@@ -61,7 +67,7 @@ public sealed partial class DiabloWorldState
             var backing = World.Levels.Single(value => value.LevelId == levelId);
             World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(backing,
                 special: AuthoritativeCathedralDoors.Discover(backing).Level.NativeSpecialLayer));
-            cathedralDoorLevels.Add(levelId, discovery.Level);
+            Bind(ref LevelStateFor(levelId).CathedralDoorLevel, discovery.Level);
             projectedLevels[levelId] = discovery.Level;
             foreach (var door in discovery.Doors) {
                 var entityId = GetCathedralDoorEntityId(levelId, discovery.Level.Width, door.PositionX, door.PositionY);
@@ -81,10 +87,10 @@ public sealed partial class DiabloWorldState
     {
         if (!cathedralDoors.TryGetValue(entityId, out var entry))
             return false;
-        var changed = AuthoritativeCathedralDoors.Operate(cathedralDoorLevels[entry.LevelId], entry.Door,
+        var changed = AuthoritativeCathedralDoors.Operate(levelStates[entry.LevelId].CathedralDoorLevel!, entry.Door,
             IsCathedralDoorOccupied(entry.LevelId, entry.Door, players));
         cathedralDoors[entityId] = (entry.LevelId, changed.Door);
-        cathedralDoorLevels[entry.LevelId] = changed.Level;
+        levelStates[entry.LevelId].CathedralDoorLevel = changed.Level;
         projectedLevels[entry.LevelId] = changed.Level;
         ApplyDoorFields(Objects[entityId], changed.Door);
         return true;
@@ -131,7 +137,7 @@ public sealed partial class DiabloWorldState
     /** Refreshes unrelated projections without replaying or losing door operation history. */
     private void PreserveCathedralDoorProjection()
     {
-        foreach (var (levelId, level) in cathedralDoorLevels)
+        foreach (var (levelId, level) in LevelValues(state => state.CathedralDoorLevel))
             projectedLevels[levelId] = level;
         foreach (var (entityId, entry) in cathedralDoors) {
             if (Objects.TryGetValue(entityId, out var value))
@@ -163,7 +169,7 @@ public sealed partial class DiabloWorldState
             cathedralDoorCatalog.Definitions.Select(definition => new DiabloCathedralDoorLevelState(
                 definition.LevelId,
                 World.Levels.Single(value => value.LevelId == definition.LevelId).NativeSpecialLayer.ToArray(),
-                cathedralDoorLevels[definition.LevelId].NativeSpecialLayer.ToArray(),
+                levelStates[definition.LevelId].CathedralDoorLevel!.NativeSpecialLayer.ToArray(),
                 cathedralDoors.Where(value => value.Value.LevelId == definition.LevelId)
                     .OrderBy(value => value.Value.Door.PositionY).ThenBy(value => value.Value.Door.PositionX)
                     .Select(value => CaptureDoor(value.Key, value.Value.LevelId, value.Value.Door)).ToArray()))
@@ -286,9 +292,8 @@ public sealed partial class DiabloWorldState
         projectedLevels.Clear();
         foreach (var (levelId, level) in effective)
             projectedLevels.Add(levelId, level);
-        cathedralDoorLevels.Clear();
-        foreach (var saved in checkpoint.DoorLevels)
-            cathedralDoorLevels.Add(saved.LevelId, effective[saved.LevelId]);
+        ReplaceCathedralDoorLevels(checkpoint.DoorLevels.Select(saved =>
+            KeyValuePair.Create(saved.LevelId, effective[saved.LevelId])));
         cathedralDoors.Clear();
         foreach (var (entityId, entry) in restored)
             cathedralDoors.Add(entityId, entry);
@@ -458,13 +463,13 @@ public sealed partial class DiabloWorldState
 
     /** Reserved scanner lights are solid but non-selectable; animation/RNG is separate. */
     internal bool IsCathedralLightObjectSolid(uint levelId, int x, int y)
-        => cathedralDoorLevels.TryGetValue(levelId, out var level)
+        => FindLevelState(levelId)?.CathedralDoorLevel is { } level
             && level.ContainsPosition(x, y) && level.NativePieceLayer[y * level.Width + x] == 269;
 
     /** Fixed scanner lights cannot become a legitimate pending live move destination. */
     internal bool IsPendingPlayerMoveIntoCathedralLight(int life, uint levelId, int x, int y,
         AuthoritativePlayerActionState? action)
-        => cathedralDoorLevels.ContainsKey(levelId) && life > 0
+        => FindLevelState(levelId)?.CathedralDoorLevel is not null && life > 0
             && action is { Kind: DiabloPlayerActionKind.Move, EffectApplied: false }
             && IsCathedralLightObjectSolid(levelId, checked(x + action.DirectionX), checked(y + action.DirectionY));
 
@@ -478,7 +483,7 @@ public sealed partial class DiabloWorldState
             var source = levels[index];
             currentLevelIds.Add(source.LevelId);
             var nativePopulationPolicy = NativePopulationForLevel(source.LevelId);
-            var hasCathedralDoors = cathedralDoorLevels.ContainsKey(source.LevelId);
+            var hasCathedralDoors = FindLevelState(source.LevelId)?.CathedralDoorLevel is not null;
             var brokenBarrelEntityIds = nativePopulationPolicy is null
                 ? Array.Empty<uint>()
                 : CaptureBrokenBarrelEntityIds(source.LevelId, nativePopulationPolicy);

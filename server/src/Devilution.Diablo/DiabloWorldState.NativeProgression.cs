@@ -3,7 +3,6 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private AuthoritativeCathedralNativeProgression? nativeProgression;
-    private readonly Dictionary<uint, DiabloNativeFloorEntry> nativeFloorEntries = [];
 
     internal bool HasNativeProgression => nativeProgression is not null;
     internal string? NativeProgressionFingerprint => nativeProgression?.Fingerprint;
@@ -49,12 +48,12 @@ public sealed partial class DiabloWorldState
 
     internal void CommitNativeProgressionEntry(NativeFloorAdmission admission, DiabloNativeFloorEntry entry)
     {
-        if (nativeProgression is null || nativeFloorEntries.ContainsKey(entry.LevelId)
+        if (nativeProgression is null || FindLevelState(entry.LevelId)?.FloorEntry is not null
             || entry.LevelId != admission.Build.Policy.LevelId
             || entry.GenerationFingerprint != admission.Build.Policy.Fingerprint)
             throw new InvalidOperationException("A native floor entry lost its configured run or immutable generation identity.");
         CommitNativeFloorAdmission(admission);
-        nativeFloorEntries.Add(entry.LevelId, entry with { InitialUniqueItemFlags = entry.InitialUniqueItemFlags.ToArray() });
+        Bind(ref LevelStateFor(entry.LevelId).FloorEntry, CopyFloorEntry(entry));
     }
 
     internal NativeProgressionRestoreContext CaptureNativeProgressionOwners()
@@ -80,10 +79,13 @@ public sealed partial class DiabloWorldState
         // Item restoration follows this method; configure the run after that boundary.
         nativeProgression = definition;
         foreach (var entry in state.NativeProgression!.Entries)
-            nativeFloorEntries.Add(entry.LevelId, entry with { InitialUniqueItemFlags = entry.InitialUniqueItemFlags.ToArray() });
+            Bind(ref LevelStateFor(entry.LevelId).FloorEntry, CopyFloorEntry(entry));
     }
 
+    private static DiabloNativeFloorEntry CopyFloorEntry(DiabloNativeFloorEntry entry)
+        => entry with { InitialUniqueItemFlags = entry.InitialUniqueItemFlags.ToArray() };
+
     internal IReadOnlyList<DiabloNativeFloorEntry>? CaptureNativeFloorEntries()
-        => nativeProgression is null ? null : nativeFloorEntries.Values.OrderBy(entry => entry.LevelId)
-            .Select(entry => entry with { InitialUniqueItemFlags = entry.InitialUniqueItemFlags.ToArray() }).ToArray();
+        => nativeProgression is null ? null : LevelValues(state => state.FloorEntry).Select(entry => entry.Value)
+            .OrderBy(entry => entry.LevelId).Select(CopyFloorEntry).ToArray();
 }

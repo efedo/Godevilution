@@ -48,6 +48,28 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 1.6 Shared per-level state (done)
+
+- **Player-visible outcome:** none by design; later floors extend one per-level
+  state instead of adding a registry per feature.
+- **Native source:** none (structural).
+- **Files and contracts owned:** the level-keyed registries in the
+  `DiabloWorldState` partials (population owners, C1/C2 door levels, C2 door
+  owners, monster-phase orders and bindings, ranged missile catalogs, floor
+  entries) become one `LevelState` per level, and both floor admissions adopt a
+  detached floor's level states in one step. Entity-keyed state maps stay.
+- **Exit check:** Diablo.Tests, Server.Tests and client protocol tests pass; the
+  CI oracle comparisons pass; cohort and native save captures are byte-identical
+  (existing checkpoint tests); the native depth journey and resume pass headless.
+- **Out of scope:** the entity-keyed maps, cohort save formats, behavior changes.
+- **Size:** one to two days.
+- **State (2026-10-27):** done; net 3 fewer lines. Diablo.Tests (except the known
+  worker-delegation document check), Server.Tests and client protocol tests pass;
+  all 132 archive-free Cathedral/Catacombs oracle consumers pass on fresh captures.
+  The MPQ reader capture needs `spawn.mpq`, absent locally; CI runs it. Entity-keyed
+  maps (barrels, sarcophagi, traps, doors, phases, ranged actions) stay per entity.
+  The headless Town-L4 journey (`warrior-l4`) and fresh-host resume pass. 1.7 is next.
+
 ## Batch 1.5b Two-player smoke (done)
 
 - **Player-visible outcome:** two clients join one native multiplayer host,

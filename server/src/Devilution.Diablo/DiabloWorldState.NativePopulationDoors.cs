@@ -34,7 +34,7 @@ public sealed partial class DiabloWorldState
                 || restored.Owners.Any(owner => owner.MonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint))
                 throw new InvalidDataException("Native restored floor owners do not match the explicit run and item registry.");
             foreach (var owner in restored.Owners)
-                nativePopulationPolicies.Add(owner.LevelId, owner.Bindings);
+                Bind(ref LevelStateFor(owner.LevelId).Population, owner.Bindings);
         } else {
             nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
         }
@@ -88,7 +88,7 @@ public sealed partial class DiabloWorldState
             throw new InvalidDataException("The populated level omitted a generated native door.");
         foreach (var entry in prepared)
             cathedralDoors.Add(entry.Key, entry.Value);
-        cathedralDoorLevels.Add(policy.LevelId, level);
+        Bind(ref LevelStateFor(policy.LevelId).CathedralDoorLevel, level);
         PreserveCathedralDoorProjection();
     }
 
@@ -156,8 +156,7 @@ public sealed partial class DiabloWorldState
                 special: owner.InitialState.Special.Select(number => (ushort)number)));
         projectedLevels.Clear();
         foreach (var entry in effective) projectedLevels.Add(entry.Key, entry.Value);
-        cathedralDoorLevels.Clear();
-        foreach (var entry in doorLevels) cathedralDoorLevels.Add(entry.Key, entry.Value);
+        ReplaceCathedralDoorLevels(doorLevels);
         cathedralDoors.Clear();
         foreach (var entry in restored) cathedralDoors.Add(entry.Key, entry.Value);
         PreserveCathedralDoorProjection();

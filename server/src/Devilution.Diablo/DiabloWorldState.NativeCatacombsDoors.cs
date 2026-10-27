@@ -18,9 +18,7 @@ public sealed partial class DiabloWorldState
         int Depth,
         AuthoritativeCatacombsDoorState State);
 
-    private readonly Dictionary<uint, AuthoritativeNativePopulationBindings> nativeCatacombsDoorOwners = [];
     private readonly Dictionary<uint, NativeCatacombsDoorEntry> nativeCatacombsDoorsByEntityId = [];
-    private readonly Dictionary<uint, AuthoritativeLevel> nativeCatacombsDoorLevels = [];
     private string? nativeCatacombsDoorCatalogFingerprint;
 
     internal bool HasNativeCatacombsDoors => nativeCatacombsDoorCatalogFingerprint is not null;
@@ -38,7 +36,7 @@ public sealed partial class DiabloWorldState
             || owner.CatacombsDoorCatalogFingerprint != catalog.Fingerprint
             || World is null
             || !ReferenceEquals(NativePopulationForLevel(owner.LevelId), owner)
-            || nativeCatacombsDoorOwners.ContainsKey(owner.LevelId)
+            || FindLevelState(owner.LevelId)?.CatacombsDoorOwner is not null
             || nativeCatacombsDoorCatalogFingerprint is not null
                 && !string.Equals(nativeCatacombsDoorCatalogFingerprint, catalog.Fingerprint, StringComparison.Ordinal))
             throw new InvalidOperationException("Native Catacombs doors require one explicit owner and stable catalog per level.");
@@ -94,8 +92,8 @@ public sealed partial class DiabloWorldState
 
         // Publish only after every raw row, entity and geometry binding has passed.
         nativeCatacombsDoorCatalogFingerprint ??= catalog.Fingerprint;
-        nativeCatacombsDoorOwners.Add(owner.LevelId, owner);
-        nativeCatacombsDoorLevels.Add(owner.LevelId, currentLevel);
+        var level = LevelStateFor(owner.LevelId);
+        (level.CatacombsDoorOwner, level.CatacombsDoorLevel) = (owner, currentLevel);
         foreach (var (entityId, state) in prepared)
             nativeCatacombsDoorsByEntityId.Add(entityId,
                 new(owner.LevelId, owner.Depth, state));
@@ -115,10 +113,10 @@ public sealed partial class DiabloWorldState
         if (Objects[entityId].TrapArmed)
             return false;
         var transition = AuthoritativeCatacombsDoors.Operate(
-            nativeCatacombsDoorLevels[entry.LevelId], checked((uint)entry.Depth), catalog,
+            levelStates[entry.LevelId].CatacombsDoorLevel!, checked((uint)entry.Depth), catalog,
             entry.State, IsNativeCatacombsDoorOccupied(entry.LevelId, entry.State, participants));
         nativeCatacombsDoorsByEntityId[entityId] = entry with { State = transition.Door };
-        nativeCatacombsDoorLevels[entry.LevelId] = transition.Level;
+        levelStates[entry.LevelId].CatacombsDoorLevel = transition.Level;
         projectedLevels[entry.LevelId] = transition.Level;
         ApplyNativeCatacombsDoorFields(Objects[entityId], transition.Door);
         return true;
@@ -144,7 +142,7 @@ public sealed partial class DiabloWorldState
     /** Reinstates door-owned piece/special geometry after a generic geometry projection rebuild. */
     internal void PreserveNativeCatacombsDoorProjection()
     {
-        foreach (var (levelId, retained) in nativeCatacombsDoorLevels) {
+        foreach (var (levelId, retained) in LevelValues(state => state.CatacombsDoorLevel)) {
             if (World is null || !World.ContainsLevel(levelId))
                 throw new InvalidDataException("A retained Catacombs door lost its world level.");
             projectedLevels[levelId] = retained;
@@ -154,7 +152,7 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("A retained Catacombs door lost its object entity.");
             ApplyNativeCatacombsDoorFields(value, entry.State);
         }
-        foreach (var owner in nativeCatacombsDoorOwners.Values)
+        foreach (var (_, owner) in LevelValues(state => state.CatacombsDoorOwner))
             ValidateNativeCatacombsDoors(owner);
     }
 
@@ -189,7 +187,7 @@ public sealed partial class DiabloWorldState
         if (!HasNativeCatacombsDoors)
             return Array.Empty<AuthoritativeNativeCatacombsDoorFloorState>();
         var catalogFingerprint = RequireNativeCatacombsDoorCatalog().Fingerprint;
-        var result = nativeCatacombsDoorOwners.OrderBy(pair => pair.Key).Select(pair => {
+        var result = LevelValues(state => state.CatacombsDoorOwner).OrderBy(pair => pair.Key).Select(pair => {
             var (levelId, owner) = (pair.Key, pair.Value);
             ValidateNativeCatacombsDoors(owner);
             var states = nativeCatacombsDoorsByEntityId
@@ -198,7 +196,7 @@ public sealed partial class DiabloWorldState
                 .OrderBy(state => state.PositionY).ThenBy(state => state.PositionX).ToArray();
             return new AuthoritativeNativeCatacombsDoorFloorState(
                 levelId, owner.Depth, owner.Fingerprint, catalogFingerprint,
-                owner.CreateBackingLevel(), nativeCatacombsDoorLevels[levelId], Array.AsReadOnly(states));
+                owner.CreateBackingLevel(), levelStates[levelId].CatacombsDoorLevel!, Array.AsReadOnly(states));
         }).ToArray();
         return Array.AsReadOnly(result);
     }
@@ -207,9 +205,8 @@ public sealed partial class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(owner);
         var levelId = owner.LevelId;
-        if (!nativeCatacombsDoorOwners.TryGetValue(levelId, out var configuredOwner)
-            || !ReferenceEquals(configuredOwner, owner)
-            || !nativeCatacombsDoorLevels.TryGetValue(levelId, out var level))
+        if (FindLevelState(levelId) is not { CatacombsDoorOwner: { } configuredOwner, CatacombsDoorLevel: { } level }
+            || !ReferenceEquals(configuredOwner, owner))
             throw new InvalidDataException("A Catacombs door level has no exact retained owner.");
         var catalog = RequireNativeCatacombsDoorCatalog();
         if (World is null || !World.ContainsLevel(levelId))
@@ -268,9 +265,8 @@ public sealed partial class DiabloWorldState
 
     private void ValidateNativeCatacombsDoor(NativeCatacombsDoorEntry entry)
     {
-        if (!nativeCatacombsDoorOwners.TryGetValue(entry.LevelId, out var owner)
+        if (FindLevelState(entry.LevelId) is not { CatacombsDoorOwner: { } owner, CatacombsDoorLevel: { } level }
             || owner.Depth != entry.Depth
-            || !nativeCatacombsDoorLevels.TryGetValue(entry.LevelId, out var level)
             || !Objects.TryGetValue(entry.State.EntityId, out var value))
             throw new InvalidDataException("A Catacombs door state lost its owner, level or object.");
         var catalog = RequireNativeCatacombsDoorCatalog();

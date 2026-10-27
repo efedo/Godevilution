@@ -3,8 +3,9 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private readonly Dictionary<uint, AuthoritativeNativeCatacombsRangedAction> nativeCatacombsRangedActions = [];
-    private readonly HashSet<uint> nativeCatacombsRangedConfiguredLevels = [];
-    private readonly Dictionary<uint, AuthoritativeMonsterMissileCatalog> nativeCatacombsRangedMissileCatalogs = [];
+
+    private AuthoritativeMonsterMissileCatalog? NativeCatacombsRangedMissiles(uint levelId)
+        => FindLevelState(levelId)?.RangedMissiles;
 
     internal IReadOnlyList<AuthoritativeNativeCatacombsRangedAction> CaptureNativeCatacombsRangedActions()
         => CaptureNativeCatacombsRangedActionsCore(null);
@@ -47,8 +48,7 @@ public sealed partial class DiabloWorldState
             || NativePopulationForLevel(bindings.LevelId) is not { } current
             || !ReferenceEquals(current, bindings)
             || actual.Count > AuthoritativeCathedralThemeRoomState.MonsterCapacity
-            || nativeCatacombsRangedConfiguredLevels.Contains(bindings.LevelId)
-            || nativeCatacombsRangedMissileCatalogs.ContainsKey(bindings.LevelId))
+            || NativeCatacombsRangedMissiles(bindings.LevelId) is not null)
             throw new InvalidDataException("Catacombs ranged actions require one exact, unconfigured floor owner.");
 
         ValidateNativeCatacombsRangedMissileCoverage(bindings, missiles);
@@ -79,8 +79,7 @@ public sealed partial class DiabloWorldState
 
         foreach (var action in detached)
             nativeCatacombsRangedActions.Add(action.EntityId, action);
-        nativeCatacombsRangedMissileCatalogs.Add(bindings.LevelId, missiles);
-        nativeCatacombsRangedConfiguredLevels.Add(bindings.LevelId);
+        LevelStateFor(bindings.LevelId).RangedMissiles = missiles;
     }
 
     /** Checks the complete owner/action relationship before admission, capture, or restore. */
@@ -91,13 +90,11 @@ public sealed partial class DiabloWorldState
             || bindings.Depth is < 5 or > 8
             || NativePopulationForLevel(bindings.LevelId) is not { } current
             || !ReferenceEquals(current, bindings)
-            || !nativeCatacombsRangedConfiguredLevels.Contains(bindings.LevelId)
-            || !nativeCatacombsRangedMissileCatalogs.ContainsKey(bindings.LevelId))
+            || NativeCatacombsRangedMissiles(bindings.LevelId) is null)
             throw new InvalidDataException("Catacombs ranged action state is not configured for this exact floor owner.");
 
-        if (!nativeCatacombsRangedConfiguredLevels.SetEquals(nativeCatacombsRangedMissileCatalogs.Keys)
-            || nativeCatacombsRangedConfiguredLevels.Any(levelId =>
-                NativePopulationForLevel(levelId) is not { Family: AuthoritativeNativePopulationFamily.Catacombs }))
+        if (LevelValues(state => state.RangedMissiles).Any(entry =>
+                NativePopulationForLevel(entry.Key) is not { Family: AuthoritativeNativePopulationFamily.Catacombs }))
             throw new InvalidDataException("Catacombs ranged configuration contains an orphan floor or missile catalog.");
 
         foreach (var action in nativeCatacombsRangedActions.Values) {
@@ -105,7 +102,7 @@ public sealed partial class DiabloWorldState
             if (actionBindings is not { Family: AuthoritativeNativePopulationFamily.Catacombs }
                 || actionBindings.Depth is < 5 or > 8
                 || actionBindings.LevelId != action.LevelId
-                || !nativeCatacombsRangedConfiguredLevels.Contains(action.LevelId)
+                || NativeCatacombsRangedMissiles(action.LevelId) is null
                 || !CombatTargets.TryGetValue(action.EntityId, out var target))
                 throw new InvalidDataException("A pending Catacombs ranged action is detached from its live floor owner or combat target.");
             action.ValidateTarget(target, actionBindings.Fingerprint);
@@ -145,7 +142,7 @@ public sealed partial class DiabloWorldState
         ArgumentNullException.ThrowIfNull(missile);
         ArgumentNullException.ThrowIfNull(victim);
         var bindings = RequireNativeCatacombsRangedBindings(target);
-        if (!nativeCatacombsRangedConfiguredLevels.Contains(bindings.LevelId)
+        if (NativeCatacombsRangedMissiles(bindings.LevelId) is null
             || !CombatTargets.TryGetValue(target.EntityId, out var currentTarget)
             || !ReferenceEquals(target, currentTarget)
             || nativeCatacombsRangedActions.ContainsKey(target.EntityId))
@@ -270,7 +267,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeCombatTarget target,
         AuthoritativeNativeCatacombsRangedAction action)
     {
-        if (!nativeCatacombsRangedMissileCatalogs.TryGetValue(bindings.LevelId, out var catalog)
+        if (NativeCatacombsRangedMissiles(bindings.LevelId) is not { } catalog
             || !catalog.TryGet(target.NativeAi ?? string.Empty, target.MonsterId, out var missile)
             || missile.NativeAi != target.NativeAi
             || missile.MissileId != action.MissileId)
@@ -283,7 +280,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeCombatTarget target,
         AuthoritativeMonsterMissileDefinition missile)
     {
-        if (!nativeCatacombsRangedMissileCatalogs.TryGetValue(bindings.LevelId, out var catalog)
+        if (NativeCatacombsRangedMissiles(bindings.LevelId) is not { } catalog
             || !catalog.TryGet(target.NativeAi ?? string.Empty, target.MonsterId, out var configured)
             || configured.NativeAi != target.NativeAi
             || AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint(configured)

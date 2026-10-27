@@ -69,12 +69,12 @@ public sealed partial class DiabloWorldState
         ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(missile);
         var bindings = RequireNativeCatacombsRangedBindings(source);
-        if (!nativeCatacombsRangedConfiguredLevels.Contains(bindings.LevelId)
+        if (NativeCatacombsRangedMissiles(bindings.LevelId) is null
             || nativePopulationParticipantClassId is not (0 or 2)
             || Projectiles.ContainsKey(projectile.EntityId)
             || nativeCatacombsArrows.ContainsKey(projectile.EntityId)
             || projectile.LevelId != bindings.LevelId
-            || !nativeCatacombsRangedMissileCatalogs.TryGetValue(bindings.LevelId, out var configured)
+            || NativeCatacombsRangedMissiles(bindings.LevelId) is not { } configured
             || !configured.TryGet(source.NativeAi ?? string.Empty, source.MonsterId, out var configuredMissile)
             || AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint(configuredMissile)
                 != AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint(missile))
@@ -181,8 +181,7 @@ public sealed partial class DiabloWorldState
             || bindings.Fingerprint != state.PopulationFingerprint
             || bindings.MonsterMetadataFingerprint != state.MetadataFingerprint
             || (int?)nativePopulationParticipantClassId != state.CharacterClassId
-            || !nativeCatacombsRangedConfiguredLevels.Contains(state.LevelId)
-            || !nativeCatacombsRangedMissileCatalogs.TryGetValue(state.LevelId, out var catalog)
+            || NativeCatacombsRangedMissiles(state.LevelId) is not { } catalog
             || !catalog.TryGet(state.NativeAi, state.ContentMonsterId, out var missile)
             || missile.MissileId != "Arrow"
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.MonsterArrow

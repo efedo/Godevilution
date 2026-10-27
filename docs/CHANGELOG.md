@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-10-27
 
+- Shared per-level state (batch 1.6): ten level-keyed registries in `DiabloWorldState`
+  (population owners, door levels and owners, monster phases, ranged mappings, floor
+  entries) are one `LevelState` per level; both floor admissions share adoption and item merging.
+
 - Two-player native smoke closed (batch 1.5b): both multiplayer phases wait until
   L1 draws both participants natively, and `test-godot-native-multiplayer.ps1
   -Windowed` runs the pair windowed, saving each client's capture of its peer.
