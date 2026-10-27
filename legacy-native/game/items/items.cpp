@@ -1365,8 +1365,8 @@ void GetItemPowerPrefixAndSuffix(
     tl::function_ref<void(const PLStruct &suffix)> suffixFound)
 {
 	const auto &cfg = CurrentItemGenerationConfig;
-	bool allocatePrefix = GenerateRnd(100) < cfg.prefixPercent;
-	bool allocateSuffix = GenerateRnd(100) < cfg.suffixPercent;
+	bool allocatePrefix = FlipCoin(4);
+	bool allocateSuffix = !FlipCoin(3);
 	if (!allocatePrefix && !allocateSuffix) {
 		// At least try and give each item a prefix or suffix
 		if (FlipCoin())
@@ -1375,7 +1375,7 @@ void GetItemPowerPrefixAndSuffix(
 			allocateSuffix = true;
 	}
 	goodorevil goe = GOE_ANY;
-	if (!onlygood && GenerateRnd(100) < cfg.onlygoodChance)
+	if (!onlygood && !FlipCoin(3))
 		onlygood = true;
 
 	if (allocatePrefix) {
@@ -1578,7 +1578,7 @@ _item_indexes RndUItem(Monster *monster)
 
 _item_indexes RndAllItems()
 {
-	if (GenerateRnd(100) < CurrentItemGenerationConfig.goldPercent)
+	if (GenerateRnd(100) > 25)
 		return IDI_GOLD;
 
 	int itemMaxLevel = ItemsGetCurrlevel() * 2;
@@ -3501,7 +3501,7 @@ _item_indexes RndItemForMonsterLevel(int8_t monsterLevel)
 	if (GenerateRnd(100) >= 100 - cfg.noDropPercent)
 		return IDI_NONE;
 
-	if (GenerateRnd(100) < cfg.goldPercent)
+	if (GenerateRnd(100) > 25)
 		return IDI_GOLD;
 
 	return GetItemIndexForDroppableItem(true, [&monsterLevel](const ItemData &item) {
