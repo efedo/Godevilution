@@ -54,8 +54,10 @@ public sealed partial class DiabloWorldState
         var reference = occupancy.MonsterRefs[index];
         var monster = reference > 0 ? CombatTargets.Values.SingleOrDefault(value =>
             value.LevelId == levelId && value.NativeInitialization?.Binding.NativeSlot == reference - 1) : null;
-        var player = occupancy.PlayerRefs[index] > 0
-            ? players.SingleOrDefault(value => value.LevelId == levelId && value.Life > 0)
+        // PlayerRefs holds the 1-based entity-ordered index on this level.
+        var playerReference = occupancy.PlayerRefs[index];
+        var player = playerReference > 0
+            ? players.Where(value => value.LevelId == levelId).OrderBy(value => value.EntityId).ElementAt(playerReference - 1)
             : null;
         return (monster, player);
     }

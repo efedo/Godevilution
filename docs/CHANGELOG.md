@@ -5,6 +5,15 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-27
+
+- Two-player native smoke (batch 1.5b, headless): `tools/test-godot-native-multiplayer.ps1`
+  runs `NativeMultiplayerJourney` (a Warrior and a Rogue each kill on shared L1) and
+  `NativeMultiplayerResume` (both restore on a fresh host and take their next
+  command). Native item occupancy now marks every participant on a level (native
+  `dPlayer` index + 1) instead of refusing a second player, and barrel collision
+  resolves the player by that index.
+
 ## 2026-10-26
 
 - Multiplayer native Cathedral (batch 1.5a): the all-class native profile hosts

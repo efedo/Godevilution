@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume', 'NativeMultiplayerCreate')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume', 'NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
@@ -145,13 +145,13 @@ if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and
 # NativeDepth* is the Warrior Town-L1-L4 journey on the all-class Town profile.
 $nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
-$nativeMultiplayerPhase = $AcceptancePhase -ceq 'NativeMultiplayerCreate'
+$nativeMultiplayerPhase = $AcceptancePhase -cin @('NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume')
 if ($nativeMultiplayerPhase -and (-not $cathedralNativeTown -or -not $Headless -or -not $Automated -or $CharacterClassId -ge 0 -or
     -not [string]::IsNullOrWhiteSpace($CharacterName))) {
     throw 'Native multiplayer acceptance requires the all-class native Town profile and an automated headless launch without class or name overrides.'
 }
 if ($nativeMultiplayer -and ($nativeClassPhase -or $SessionMenuAcceptance)) {
-    throw 'Native multiplayer only supports a direct launch or NativeMultiplayerCreate.'
+    throw 'Native multiplayer only supports a direct launch or its NativeMultiplayer* phases.'
 }
 if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
@@ -230,7 +230,7 @@ if ($cooperative -and -not $Multiplayer) {
     throw 'Cooperative acceptance requires -Multiplayer so two independent clients are launched.'
 }
 if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent) -and -not $cooperative) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'NativeMultiplayerCreate')))) {
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
 if ($multiplayerRecovery -and $PersistenceMode -cne 'cohort') {

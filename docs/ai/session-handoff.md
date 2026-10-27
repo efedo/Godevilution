@@ -60,6 +60,9 @@ separate. The server owns gameplay, RNG, world state and persistence. The
 - **Exit check:** scripted two-client journey with cold resume; both clients draw
   each other natively. Windowed runs need the user's approval; run headless first.
 - **Out of scope:** Resurrect/Heal Other in play, Catacombs, Town warps.
+- **State (2026-10-27):** the headless journey and resume pass
+  (`tools/test-godot-native-multiplayer.ps1`). Open: the windowed run in which
+  both clients draw each other, which needs the user's approval.
 
 ## Batch 1.5a Multiplayer native Cathedral (done)
 

@@ -47,6 +47,9 @@ The all-class profile also hosts multiplayer (batch 1.5a): `run-local-client.ps1
 -SessionDirectory <new> -Headless -Automated -AcceptancePhase NativeMultiplayerCreate`
 starts one host and two clients; slot 1 creates the Warrior that generates the
 run and walks to L1, then slot 2 joins as a Rogue and both meet on L1.
+`tools/test-godot-native-multiplayer.ps1 -ProfileDirectory <profile>` runs
+`NativeMultiplayerJourney` (each participant kills on L1 in turn) and the
+fresh-host `NativeMultiplayerResume` on one new session.
 
 The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 `tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>

@@ -394,14 +394,15 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("Native actor occupancy has conflicting bindings.");
             grid[index] = marker;
         }
-        var localPlayers = players.Where(value => value.LevelId == levelId).ToArray();
-        if (localPlayers.Length > 1)
-            throw new NotSupportedException("The current native item policy is single-player only.");
-        foreach (var player in localPlayers) {
+        // Native dPlayer holds player index + 1 (negated on the future tile); multiplayer
+        // participants take their stable entity order.
+        var localPlayers = players.Where(value => value.LevelId == levelId).OrderBy(value => value.EntityId).ToArray();
+        for (var index = 0; index < localPlayers.Length; index++) {
+            var player = localPlayers[index];
             if (player.Life <= 0)
                 continue;
-            Mark(playerRefs, player.PositionX, player.PositionY, 1);
-            if (player.IsMoving) Mark(playerRefs, player.FuturePositionX, player.FuturePositionY, -1);
+            Mark(playerRefs, player.PositionX, player.PositionY, index + 1);
+            if (player.IsMoving) Mark(playerRefs, player.FuturePositionX, player.FuturePositionY, -(index + 1));
         }
         foreach (var monster in CombatTargets.Values.Where(value => value.LevelId == levelId
             && (value.HitPointsQ6 > 0 || value.DeathTicksRemaining > 0 || value.IsPetrified))) {

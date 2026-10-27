@@ -9,6 +9,17 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-27 — Two-player native smoke (headless)
+
+`tools/test-godot-native-multiplayer.ps1` passed twice on the setup-built
+all-class profile: the Warrior and the Rogue each killed on shared L1 (90 and 64
+XP on the first run), then both clients restored entity, L1 position, experience
+and command cursor on a fresh host and took the next command (a clock-gated
+`TooLate` refusal is repeated). The first attempts found the host refusing any
+kill with two players on a level; the explicit server test
+`MultiplayerWarriorKillsWithRogueOnSharedL1` fails without the occupancy fix and
+passes with it. The windowed run, where both clients draw each other, was not run.
+
 ### 2026-10-26 — Multiplayer native Cathedral
 
 `test-cathedral-fresh-population.ps1 -Multiplayer` captured 16 fresh native

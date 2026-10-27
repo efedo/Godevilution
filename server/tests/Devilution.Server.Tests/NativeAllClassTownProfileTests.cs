@@ -76,7 +76,44 @@ public sealed class NativeAllClassTownProfileTests
         Assert.True(multiplayerL1.Max(monster => monster.MaxHitPointsQ6) > singlePlayerL1.Max(monster => monster.MaxHitPointsQ6));
     }
 
+    /** A kill with both participants on L1 runs native drop occupancy for two players (batch 1.5b). */
+    [Fact(Explicit = true)]
+    public void MultiplayerWarriorKillsWithRogueOnSharedL1()
+    {
+        var participants = new[] { ("first", PlayerEntityId, 0U), ("second", PlayerEntityId + 1, 1U) };
+        var (adapter, tick, _) = EnterCathedralL1Run(AuthoritativeGameMode.Multiplayer, participants);
+        var refusals = new List<string>();
+        // Emerging or special-stand monsters refuse attacks; pick another.
+        var refused = new HashSet<uint>();
+        for (var work = 0; work < 400; work++) {
+            var snapshot = adapter.CreateSnapshot("first", PlayerEntityId, tick);
+            var player = snapshot.Players.Single(candidate => candidate.EntityId == PlayerEntityId);
+            Assert.True(player.Life > 0, "The Warrior died before its first kill.");
+            if (player.Experience > 0) {
+                Assert.All(snapshot.Players, participant => Assert.Equal(1U, participant.LevelId));
+                return;
+            }
+            var target = snapshot.Monsters.Where(monster => monster.Alive && monster.LevelId == 1 && !refused.Contains(monster.EntityId))
+                .OrderBy(monster => Math.Max(Math.Abs(monster.PositionX - player.PositionX), Math.Abs(monster.PositionY - player.PositionY)))
+                .First();
+            var adjacent = Math.Max(Math.Abs(target.PositionX - player.PositionX), Math.Abs(target.PositionY - player.PositionY)) <= 1;
+            var result = adapter.Execute("first", adjacent
+                ? new Command { AttackRequested = new AttackRequested { TargetEntityId = target.EntityId } }
+                : new Command { MoveRequested = new MoveRequested { TargetCell = true, FollowPath = true, TargetX = target.PositionX, TargetY = target.PositionY } },
+                tick + 1);
+            if (!result.Succeeded && refused.Add(target.EntityId))
+                refusals.Add($"{(adjacent ? "attack" : "move")} {target.EntityId}@{target.PositionX},{target.PositionY} from {player.PositionX},{player.PositionY}: {result.RejectReason}");
+            for (var wait = 0; wait < 12; wait++)
+                adapter.AdvanceTo(++tick);
+        }
+        Assert.Fail($"The Warrior earned no experience on shared L1; {refusals.Count} refusals: {string.Join("; ", refusals.Take(8))}");
+    }
+
     private static Snapshot EnterCathedralL1(AuthoritativeGameMode gameMode, (string Session, uint EntityId, uint ClassId)[] participants)
+        => EnterCathedralL1Run(gameMode, participants).Snapshot;
+
+    private static (IAuthoritativeGameHostAdapter Adapter, ulong Tick, Snapshot Snapshot) EnterCathedralL1Run(
+        AuthoritativeGameMode gameMode, (string Session, uint EntityId, uint ClassId)[] participants)
     {
         var (factory, registry, content) = Load();
         var adapter = factory.Activate(registry, content, new AuthoritativePlayerStartConfiguration(null, null, null) {
@@ -104,6 +141,6 @@ public sealed class NativeAllClassTownProfileTests
                     break;
             }
         }
-        return adapter.CreateSnapshot(participants[0].Session, participants[0].EntityId, tick);
+        return (adapter, tick, adapter.CreateSnapshot(participants[0].Session, participants[0].EntityId, tick));
     }
 }
