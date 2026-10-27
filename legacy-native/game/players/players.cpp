@@ -14,7 +14,7 @@
 #include <SDL.h>
 #endif
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"

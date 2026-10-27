@@ -8,7 +8,7 @@
 #include <array>
 #include <cstdint>
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "application/game_mode.hpp"
 #include "engine/gfx/clx_sprite.hpp"

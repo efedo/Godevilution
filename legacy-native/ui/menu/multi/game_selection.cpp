@@ -23,7 +23,7 @@
 #include <SDL.h>
 #endif
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "application/diablo.h"
 #include "config.h"

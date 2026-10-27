@@ -22,7 +22,7 @@
 
 #include <ankerl/unordered_dense.h>
 #include <expected.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "utils/algorithm/container.hpp"
 #include "utils/string/str_cat.hpp"

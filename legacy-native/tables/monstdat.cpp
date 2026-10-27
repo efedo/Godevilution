@@ -15,7 +15,7 @@
 
 #include <ankerl/unordered_dense.h>
 #include <expected.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
 #include "application/fatal_error.h"
