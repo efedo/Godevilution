@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -857,6 +858,41 @@ static void compareGold(const ItemPack &is, int iCurs)
 	ItemPack is2;
 	PackItem(is2, id, gbIsHellfire);
 	ComparePackedItems(is, is2);
+}
+
+// Pins the vanilla item rolls that saves depend on: the shipped 25/66/66 affix chances must roll
+// FlipCoin(4) and !FlipCoin(3), and the lower-case alwaysMagicMisc entries must load as STAFF, RING
+// and AMULET. With percent rolls or an empty always-magic list these seeds regenerate other items.
+TEST_F(PackTest, UnPackItem_diablo_vanilla_rolls)
+{
+	SetHellfireState(false);
+	gbIsMultiplayer = false;
+	gbIsSpawn = false;
+
+	EXPECT_EQ(CurrentItemGenerationConfig.prefixPercent, 25);
+	EXPECT_EQ(CurrentItemGenerationConfig.suffixPercent, 66);
+	EXPECT_EQ(CurrentItemGenerationConfig.onlygoodChance, 66);
+	EXPECT_EQ(CurrentItemGenerationConfig.alwaysMagicMisc, (std::vector<item_misc_id> { IMISC_STAFF, IMISC_RING, IMISC_AMULET }));
+
+	const struct {
+		ItemPack packed;
+		const char *name;
+	} vanillaItems[] = {
+		{ { 1286225254, 13 | CF_UPER1, 151, 3, 0, 0, 0, 0, 0, 0 }, "Steel Ring of accuracy" },
+		{ { 1140525626, 1 | CF_UPER1, 138, 3, 16, 30, 0, 0, 0, 0 }, "Short Bow of atrophy" },
+		{ { 1187758333, 2 | CF_UPER1, 113, 3, 11, 16, 0, 0, 0, 0 }, "Brass Dagger of weakness" },
+		{ { 1283803700, 11 | CF_UPER1, 138, 3, 16, 30, 0, 0, 0, 0 }, "Clumsy Short Bow" },
+		{ { 1317748726, 5 | CF_UPER1, 114, 3, 17, 24, 0, 0, 0, 0 }, "Tin Short Sword of the fool" },
+		{ { 1970135469, 2 | CF_UPER1, 48, 3, 5, 15, 0, 0, 0, 0 }, "Cap of tears" },
+		{ { 2008721689, 2 | CF_UPER1, 54, 3, 9, 12, 0, 0, 0, 0 }, "Rusted Cape of dyslexia" },
+		{ { 278391972, 7 | CF_UPER1, 119, 3, 1, 1, 0, 0, 0, 0 }, "Clumsy Sabre of fragility" },
+		{ { 1375639122, 13 | CF_UPER1, 146, 3, 18, 25, 46, 46, 0, 0 }, "Dull Staff of Lightning" },
+	};
+	for (const auto &vanilla : vanillaItems) {
+		Item item;
+		UnPackItem(SwappedLE(vanilla.packed), *MyPlayer, item, false);
+		EXPECT_STREQ(item._iIName, vanilla.name);
+	}
 }
 
 TEST_F(PackTest, UnPackItem_gold_small)

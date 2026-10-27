@@ -18,7 +18,10 @@ contracts stay in their existing guides.
 - Vanilla item regeneration: the `item_generation.tsv` prefix, suffix, onlygood
   and gold rolls again draw like vanilla for the shipped values (native and the
   C# Cathedral generators), so items rebuilt from vanilla seeds match; native now
-  applies `alwaysMagicMisc` (case-insensitive, unknown entries fatal). Fixes the
+  applies `alwaysMagicMisc` (case-insensitive, unknown entries fatal), and the C#
+  native-source exporter and its `always_magic_misc` fixture follow (STAFF, RING,
+  AMULET). Pin vanilla save seeds in native `pack_test` and C#
+  `AuthoritativeVanillaItemRollTests`. Fixes the
   pack, writehero and Wirt purchase tests. Skip the vanilla timedemo, which
   diverges (the warrior dies on level 1). Use `<fmt/format.h>` in SDL_audiolib
   (force-included) and in native files that call `fmt::format`, so macOS builds
