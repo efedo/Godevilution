@@ -6,7 +6,6 @@
  * Interface for TCP server transport.
  */
 
-
 #include <array>
 #include <memory>
 #include <string>
@@ -28,10 +27,10 @@
 #include <asio/ts/net.hpp>
 #include <asio_handle_exception.hpp>
 
+#include "network/protocol/multi.h"
 #include "network/transport/abstract_net.h"
 #include "network/transport/frame_queue.h"
 #include "network/transport/packet.h"
-#include "network/protocol/multi.h"
 
 namespace devilution::net {
 

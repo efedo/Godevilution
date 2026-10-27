@@ -4,7 +4,6 @@
  * Implementation of hero selection screen.
  */
 
-
 #include "ui/menu/hero/hero_selection.h"
 
 #include <algorithm>
@@ -25,28 +24,28 @@
 
 #include <fmt/core.h>
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/dialogs.h"
-#include "ui/menu/multi/game_selection.h"
-#include "ui/menu/scrollbar.h"
-#include "ui/menu/ok_dialog.h"
-#include "ui/menu/yes_no_dialog.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
+#include "application/game_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "engine/assets.hpp"
 #include "engine/math/point.hpp"
-#include "application/game_mode.hpp"
 #include "game/levels/dungeon_common.h"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
 #include "tables/playerdat.hpp"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/dialogs.h"
+#include "ui/menu/multi/game_selection.h"
+#include "ui/menu/ok_dialog.h"
+#include "ui/menu/scrollbar.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
+#include "ui/menu/yes_no_dialog.h"
 #include "utils/enum_traits.h"
 #include "utils/language.h"
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/string/str_cat.hpp"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 

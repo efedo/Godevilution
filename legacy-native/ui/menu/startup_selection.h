@@ -6,7 +6,6 @@
  * Interface for start game selection.
  */
 
-
 namespace devilution {
 
 void UiSelStartUpGameOption();

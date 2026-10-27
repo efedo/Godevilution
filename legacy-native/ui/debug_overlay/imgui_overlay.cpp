@@ -4,7 +4,6 @@
  * Implementation of ImGui debug overlay.
  */
 
-
 #include "ui/debug_overlay/imgui_overlay.hpp"
 
 #if defined(_DEBUG) && !defined(USE_SDL1)
@@ -26,24 +25,24 @@
 #include <backends/imgui_impl_sdlrenderer2.h>
 #endif
 
-#include "engine/cursor.h"
-#include "ui/debug_overlay/console_history.hpp"
-#include "ui/debug_overlay/overlay_state.hpp"
 #include "application/diablo.h"
+#include "application/game_mode.hpp"
+#include "engine/cursor.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/gfx/palette.h"
+#include "engine/gfx/surface.hpp"
+#include "engine/lighting.h"
 #include "engine/render/dun_render.hpp"
 #include "engine/render/light_render.hpp"
-#include "engine/gfx/surface.hpp"
-#include "application/game_mode.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/tile_properties.hpp"
-#include "engine/lighting.h"
 #include "game/monsters/monsters.hpp"
-#include "network/protocol/multi.h"
 #include "game/objects/objects.hpp"
+#include "network/protocol/multi.h"
+#include "ui/debug_overlay/console_history.hpp"
+#include "ui/debug_overlay/overlay_state.hpp"
 #include "ui/panel/console.hpp"
 #include "utils/display.h"
 #include "utils/sdl/sdl_compat.h"
@@ -589,8 +588,8 @@ void DrawOverlayToolbar()
 	ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, 0.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
 	ImGui::SetNextWindowBgAlpha(0.85f);
 	constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
-		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
-		| ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
+	    | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+	    | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
 
 	if (ImGui::Begin("##OverlayToolbar", nullptr, flags)) {
 		// Returns true when the button was just toggled ON.

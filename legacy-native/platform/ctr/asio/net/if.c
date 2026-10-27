@@ -4,7 +4,6 @@
  * if.
  */
 
-
 #include <errno.h>
 #include <net/if.h>
 #include <stddef.h>

@@ -4,7 +4,6 @@
  * Implementation of 8-bit surface wrapper.
  */
 
-
 #include "engine/gfx/surface.hpp"
 
 #include <cstdint>

@@ -4,7 +4,6 @@
  * Implementation of items.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/items.hpp"
 

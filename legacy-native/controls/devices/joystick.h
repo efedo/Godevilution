@@ -5,7 +5,6 @@
  * Interface for joystick device.
  */
 
-
 // Joystick mappings for SDL1 and additional buttons on SDL2.
 
 #include <array>

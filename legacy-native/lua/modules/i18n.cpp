@@ -4,7 +4,6 @@
  * Implementation of i18n.
  */
 
-
 #include "lua/modules/i18n.hpp"
 
 #include <string_view>

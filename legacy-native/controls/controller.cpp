@@ -4,7 +4,6 @@
  * Implementation of controller input handling.
  */
 
-
 #include "controls/controller.h"
 
 #include <cmath>

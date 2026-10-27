@@ -14,23 +14,23 @@
 
 #include <gtest/gtest.h>
 
-#include "ui/panel/control.hpp"
 #include "controls/control_mode.hpp"
-#include "engine/cursor.h"
 #include "engine/assets.hpp"
-#include "game/players/inventory.hpp"
+#include "engine/cursor.h"
 #include "game/items/items.hpp"
-#include "ui/minitext.h"
-#include "persistence/options.h"
+#include "game/players/inventory.hpp"
 #include "game/players/players.hpp"
-#include "qol/stash.h"
-#include "qol/visual_store.h"
 #include "game/quests/quests.hpp"
 #include "game/stores/stores.hpp"
 #include "network/storm/storm_net.hpp"
+#include "persistence/options.h"
+#include "qol/stash.h"
+#include "qol/visual_store.h"
 #include "tables/itemdat.h"
 #include "tables/playerdat.hpp"
 #include "tables/spelldat.h"
+#include "ui/minitext.h"
+#include "ui/panel/control.hpp"
 
 namespace devilution {
 

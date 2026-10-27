@@ -4,7 +4,6 @@
  * Implementation of language and localization.
  */
 
-
 #include "utils/language.h"
 
 #include <cstdint>

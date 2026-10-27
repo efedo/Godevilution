@@ -4,7 +4,6 @@
  * Implementation of surface to PCX conversion.
  */
 
-
 #include "utils/image/surface_to_pcx.hpp"
 
 #include <cerrno>

@@ -12,9 +12,9 @@
 
 #include "engine/math/direction.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/towners/towners.hpp"
 #include "tables/objdat.h"
 #include "tables/textdat.h"
-#include "game/towners/towners.hpp"
 #include "utils/attributes.h"
 
 namespace devilution {

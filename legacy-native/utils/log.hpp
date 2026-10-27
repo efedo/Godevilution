@@ -6,7 +6,6 @@
  * Interface for logging system.
  */
 
-
 #include <string_view>
 
 #ifdef USE_SDL3

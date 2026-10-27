@@ -6,7 +6,6 @@
  * Interface for hero selection screen.
  */
 
-
 #include <cstdint>
 
 namespace devilution {

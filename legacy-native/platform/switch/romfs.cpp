@@ -4,7 +4,6 @@
  * Implementation of romfs.
  */
 
-
 #include "platform/switch/romfs.hpp"
 
 #include <cstdlib>

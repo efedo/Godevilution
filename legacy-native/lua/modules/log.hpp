@@ -6,7 +6,6 @@
  * Interface for logging system.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

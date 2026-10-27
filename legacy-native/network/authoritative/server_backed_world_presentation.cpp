@@ -8,7 +8,9 @@
 #include <unordered_set>
 
 #include "application/headless_mode.hpp"
+#include "devilution.pb.h"
 #include "engine/lighting_defs.hpp"
+#include "engine/render/world_renderer.h"
 #include "game/items/item_pool.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
@@ -17,8 +19,6 @@
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
-#include "engine/render/world_renderer.h"
-#include "devilution.pb.h"
 #include "game/spells/spells.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/protocol_limits.hpp"
@@ -189,13 +189,13 @@ void AdvanceProjectedPlayerAnimationInternal(Player &player, player_graphic grap
 }
 
 void ApplyProjectedPlayerAnimationInternal(
-	Player &player,
-	const ProjectedPlayerSnapshot &snapshot,
-	player_graphic graphic,
-	bool reset,
-	bool hasPreviousTick,
-	uint64_t previousTick,
-	uint64_t presentationTicksSincePreviousSnapshot)
+    Player &player,
+    const ProjectedPlayerSnapshot &snapshot,
+    player_graphic graphic,
+    bool reset,
+    bool hasPreviousTick,
+    uint64_t previousTick,
+    uint64_t presentationTicksSincePreviousSnapshot)
 {
 	if (reset)
 		player.setAnimation(graphic, player.direction);
@@ -274,8 +274,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	});
 	player._pSpellFlags &= ~SpellFlag::Etherealize;
 	if (std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
-			return effect.behavior == 3;
-		})) {
+		    return effect.behavior == 3;
+	    })) {
 		player._pSpellFlags |= SpellFlag::Etherealize;
 	}
 	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
@@ -340,8 +340,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	    && snapshot.currentAction->directionY >= MinimumNativeDirection && snapshot.currentAction->directionY <= MaximumNativeDirection
 	    && (snapshot.currentAction->directionX != 0 || snapshot.currentAction->directionY != 0)) {
 		player.position.future += Displacement {
-		    static_cast<int8_t>(snapshot.currentAction->directionX),
-		    static_cast<int8_t>(snapshot.currentAction->directionY),
+			static_cast<int8_t>(snapshot.currentAction->directionX),
+			static_cast<int8_t>(snapshot.currentAction->directionY),
 		};
 	}
 	player.position.last = player.position.tile;
@@ -355,7 +355,8 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player._pBlockFlag = snapshot.combatMode == static_cast<uint32_t>(PM_BLOCK);
 	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH
 	    ? PM_DEATH
-	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
+	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode)
+	                                     : PM_STAND;
 	// Remote players are presentation-only, but native lighting and automap
 	// still consult this transition gate while drawing them.
 	player._pLvlChanging = player._pmode == PM_NEWLVL;
@@ -370,10 +371,10 @@ void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &s
 
 /** Returns the native sprite family that can be presented without simulation. */
 std::optional<MissileID> NativePresentationMissileId(
-	int behavior,
-	int nativeVisual,
-	const std::string &nativeMissileId,
-	int damageType)
+    int behavior,
+    int nativeVisual,
+    const std::string &nativeMissileId,
+    int damageType)
 {
 	if (nativeVisual != 0) {
 		switch (static_cast<protocol::NativeProjectileVisual>(nativeVisual)) {
@@ -554,9 +555,9 @@ Missile *FindAuthoritativePresentationMissile(uint32_t entityId)
 }
 
 Missile *CreateAuthoritativePresentationMissile(
-	uint32_t entityId,
-	MissileID missileId,
-	const ProjectedProjectileSnapshot &snapshot)
+    uint32_t entityId,
+    MissileID missileId,
+    const ProjectedProjectileSnapshot &snapshot)
 {
 	if (!IsMissileDataAvailable(missileId))
 		return nullptr;
@@ -595,8 +596,8 @@ void RemoveAuthoritativePresentationMissile(uint32_t entityId)
 }
 
 void ApplyAuthoritativePresentationMissile(
-	Missile &missile,
-	const ProjectedProjectileSnapshot &snapshot)
+    Missile &missile,
+    const ProjectedProjectileSnapshot &snapshot)
 {
 	const WorldTilePosition position { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) };
 	// The server already resolved movement. Do not reuse native velocity or
@@ -740,8 +741,8 @@ void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snap
 	monster.armorClass = static_cast<uint8_t>(std::clamp(snapshot.armorClass, 0, 255));
 	monster.minDamage = static_cast<uint8_t>(std::clamp(snapshot.attackDamage, 0, 255));
 	monster.maxDamage = monster.minDamage;
-		monster.activeForTicks = static_cast<uint8_t>(std::clamp(snapshot.activeForTicks, 0, MaximumNativeMonsterActiveTicks));
-		monster.packSize = static_cast<uint8_t>(std::clamp(snapshot.packSize, 0, MaximumNativeMonsterPackSize));
+	monster.activeForTicks = static_cast<uint8_t>(std::clamp(snapshot.activeForTicks, 0, MaximumNativeMonsterActiveTicks));
+	monster.packSize = static_cast<uint8_t>(std::clamp(snapshot.packSize, 0, MaximumNativeMonsterPackSize));
 	// Resolve the entity-based leader reference after all projected slots have
 	// been assigned. A hidden leader is intentionally treated as an ordinary
 	// presentation monster so native compatibility code never follows a null
@@ -832,7 +833,8 @@ tl::expected<void, std::string> ApplyObjectSnapshot(Object &object, int objectSl
 		object._oSolidFlag = door.solid;
 		object.selectionRegion = static_cast<SelectionRegion>(door.selectionRegion);
 		if (InDungeonBounds(position))
-			tileAt(position).setSpecial(door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7 : 8);
+			tileAt(position).setSpecial(door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7
+			                                                                               : 8);
 	} else if (object.isDoor()) {
 		// Match only the native draw/selection state. Door map mutations and
 		// collision decisions still belong to the authoritative server.
@@ -845,7 +847,8 @@ tl::expected<void, std::string> ApplyObjectSnapshot(Object &object, int objectSl
 	}
 	object._oTrapFlag = snapshot.trapArmed;
 	object._oMissFlag = snapshot.missilePassable;
-	object._oBreak = snapshot.destroyed && snapshot.breakable ? -1 : snapshot.breakable ? 1 : 0;
+	object._oBreak = snapshot.destroyed && snapshot.breakable ? -1 : snapshot.breakable ? 1
+	                                                                                    : 0;
 	return {};
 }
 
@@ -918,8 +921,8 @@ void RemoveUnclaimedObjectSlots(const std::unordered_set<int> &claimedSlots)
 }
 
 tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
-	const ProjectedLevelGeometrySnapshot *geometry,
-	uint32_t levelId)
+    const ProjectedLevelGeometrySnapshot *geometry,
+    uint32_t levelId)
 {
 	if (geometry == nullptr || geometry->levelId != levelId)
 		return {};
@@ -941,37 +944,37 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 	const auto coarseCellCount = coarseWidth * coarseHeight;
 	const auto hasInvalidSize = [cellCount, coarseCellCount](const ProjectedLevelGeometrySnapshot &candidate) {
 		return (candidate.width == 0 || candidate.height == 0)
-		        ? (!candidate.nativeTransparency.empty()
-		            || !candidate.nativeObjectLayer.empty()
-		            || !candidate.nativeMegaTileLayer.empty()
-		            || !candidate.nativePieceLayer.empty()
-		            || !candidate.nativeMonsterLayer.empty()
-		            || !candidate.nativeSpecialLayer.empty())
-		        : (( !candidate.nativeTransparency.empty() && candidate.nativeTransparency.size() != cellCount)
-		            || (!candidate.nativeObjectLayer.empty() && candidate.nativeObjectLayer.size() != cellCount)
-		            || (!candidate.nativeMegaTileLayer.empty() && candidate.nativeMegaTileLayer.size() != coarseCellCount)
-		            || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount)
-		            || (!candidate.nativeMonsterLayer.empty() && candidate.nativeMonsterLayer.size() != cellCount)
-		            || (!candidate.nativeSpecialLayer.empty() && candidate.nativeSpecialLayer.size() != cellCount));
+		    ? (!candidate.nativeTransparency.empty()
+		          || !candidate.nativeObjectLayer.empty()
+		          || !candidate.nativeMegaTileLayer.empty()
+		          || !candidate.nativePieceLayer.empty()
+		          || !candidate.nativeMonsterLayer.empty()
+		          || !candidate.nativeSpecialLayer.empty())
+		    : ((!candidate.nativeTransparency.empty() && candidate.nativeTransparency.size() != cellCount)
+		          || (!candidate.nativeObjectLayer.empty() && candidate.nativeObjectLayer.size() != cellCount)
+		          || (!candidate.nativeMegaTileLayer.empty() && candidate.nativeMegaTileLayer.size() != coarseCellCount)
+		          || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount)
+		          || (!candidate.nativeMonsterLayer.empty() && candidate.nativeMonsterLayer.size() != cellCount)
+		          || (!candidate.nativeSpecialLayer.empty() && candidate.nativeSpecialLayer.size() != cellCount));
 	};
 	if (hasInvalidSize(*geometry))
 		return tl::make_unexpected("Authoritative level geometry layer dimensions do not match the projected level.");
 
 	if (std::any_of(geometry->nativeTransparency.begin(), geometry->nativeTransparency.end(), [](uint16_t value) {
-			return value > std::numeric_limits<uint8_t>::max();
-		})
+		    return value > std::numeric_limits<uint8_t>::max();
+	    })
 	    || std::any_of(geometry->nativeMegaTileLayer.begin(), geometry->nativeMegaTileLayer.end(), [](uint16_t value) {
-			return value > std::numeric_limits<uint8_t>::max();
-		})
+		       return value > std::numeric_limits<uint8_t>::max();
+	       })
 	    || std::any_of(geometry->nativeObjectLayer.begin(), geometry->nativeObjectLayer.end(), [](uint16_t value) {
-			return value > DUN_OBJECT_ID_LAST;
-		})
+		       return value > DUN_OBJECT_ID_LAST;
+	       })
 	    || std::any_of(geometry->nativeMonsterLayer.begin(), geometry->nativeMonsterLayer.end(), [](uint16_t value) {
-			return value > NativeMaximumDunMonsterLayerId;
-		})
+		       return value > NativeMaximumDunMonsterLayerId;
+	       })
 	    || std::any_of(geometry->nativeSpecialLayer.begin(), geometry->nativeSpecialLayer.end(), [](uint16_t value) {
-			return value > std::numeric_limits<uint8_t>::max();
-		}))
+		       return value > std::numeric_limits<uint8_t>::max();
+	       }))
 		return tl::make_unexpected("Authoritative level geometry contains a value outside the native presentation range.");
 
 	if (!geometry->nativeMegaTileLayer.empty()) {
@@ -1018,7 +1021,7 @@ uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
 	// compatibility client. Only explicit native families and older unspecified
 	// snapshots may use native_object_id as a presentation fallback.
 	if (UsesAuthoredObjectPresentationIdentity(
-		static_cast<ObjectPresentationKind>(snapshot.presentationKind)))
+	        static_cast<ObjectPresentationKind>(snapshot.presentationKind)))
 		return snapshot.objectId;
 	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
 }
@@ -1047,13 +1050,13 @@ void RefreshProjectedPlayerGraphics(Player &player, const ProjectedPlayerSnapsho
 }
 
 void ApplyProjectedPlayerAnimation(
-	Player &player,
-	const ProjectedPlayerSnapshot &snapshot,
-	player_graphic graphic,
-	bool reset,
-	bool hasPreviousTick,
-	uint64_t previousTick,
-	uint64_t presentationTicksSincePreviousSnapshot)
+    Player &player,
+    const ProjectedPlayerSnapshot &snapshot,
+    player_graphic graphic,
+    bool reset,
+    bool hasPreviousTick,
+    uint64_t previousTick,
+    uint64_t presentationTicksSincePreviousSnapshot)
 {
 	ApplyProjectedPlayerAnimationInternal(
 	    player,
@@ -1343,10 +1346,10 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
 			continue;
 		const auto missileId = NativePresentationMissileId(
-			snapshot.behavior,
-			snapshot.nativeVisual,
-			snapshot.nativeMissileId,
-			snapshot.damageType);
+		    snapshot.behavior,
+		    snapshot.nativeVisual,
+		    snapshot.nativeMissileId,
+		    snapshot.damageType);
 		if (!missileId)
 			continue;
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
@@ -1481,14 +1484,14 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	if (projection.ServerTick().has_value())
 		lastWorldServerTick_ = projection.ServerTick();
 
-	return { };
+	return {};
 }
 
 void ServerBackedWorldPresentation::DrawRemotePlayers(
-	const Surface &out,
-	Point tilePosition,
-	Point targetBufferPosition,
-	int lightTableIndex) const
+    const Surface &out,
+    Point tilePosition,
+    Point targetBufferPosition,
+    int lightTableIndex) const
 {
 	for (const auto &[entityId, remote] : remotePlayers_) {
 		(void)entityId;

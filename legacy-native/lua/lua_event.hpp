@@ -6,7 +6,6 @@
  * Interface for lua event.
  */
 
-
 namespace devilution {
 
 void InitializeLuaEventAdapter();

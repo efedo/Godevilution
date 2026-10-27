@@ -9,15 +9,15 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include "application/game_mode.hpp"
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/random.hpp"
-#include "application/game_mode.hpp"
 #include "game/players/inventory.hpp"
-#include "ui/minitext.h"
 #include "game/stores/stores.hpp"
+#include "ui/minitext.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
@@ -851,7 +851,8 @@ bool StartServerBackedTownerMenu(_talker_id type)
 		if (auto result = runtime.TalkToTowner(
 		        static_cast<uint32_t>(type),
 		        0,
-		        GetMillisecondsSinceStartup()); !result.has_value()) {
+		        GetMillisecondsSinceStartup());
+		    !result.has_value()) {
 			LogError("Failed to submit the authoritative towner greeting: {}", result.error());
 			return false;
 		}
@@ -927,7 +928,8 @@ void TalkToTowner(Player &player, int t)
 				        *questId,
 				        static_cast<uint32_t>(towner._ttype),
 				        0,
-				        GetMillisecondsSinceStartup()); !result.has_value()) {
+				        GetMillisecondsSinceStartup());
+				    !result.has_value()) {
 					LogError("Failed to submit the authoritative quest turn-in: {}", result.error());
 				}
 				return;
@@ -964,10 +966,10 @@ void UpdateCowFarmerAnimAfterQuestComplete()
 #ifdef _DEBUG
 bool DebugTalkToTowner(_talker_id type)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode())
 		return false;
-	#endif
+#endif
 
 	if (!IsTownerPresent(type))
 		return false;

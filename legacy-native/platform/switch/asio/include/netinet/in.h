@@ -6,7 +6,6 @@
  * Interface for in.
  */
 
-
 #include_next <netinet/in.h>
 
 struct ipv6_mreq {

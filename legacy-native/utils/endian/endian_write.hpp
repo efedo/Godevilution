@@ -6,7 +6,6 @@
  * Interface for little-endian writing.
  */
 
-
 #include <cstdint>
 #include <cstring>
 

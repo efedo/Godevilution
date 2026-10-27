@@ -4,7 +4,6 @@
  * Implementation of CEL sprite loading.
  */
 
-
 #include "engine/load/load_cel.hpp"
 
 #include <cstddef>

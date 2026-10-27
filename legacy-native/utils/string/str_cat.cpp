@@ -4,7 +4,6 @@
  * Implementation of string concatenation.
  */
 
-
 #include "utils/string/str_cat.hpp"
 
 #include <cstdint>

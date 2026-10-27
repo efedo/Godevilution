@@ -4,14 +4,12 @@
  * Implementation of spell list.
  */
 
-
 #include "ui/panel/spell_list.hpp"
 
 #include <cstdint>
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/gfx/backbuffer_state.hpp"
@@ -19,11 +17,12 @@
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
 #include "game/players/inv_iterators.hpp"
-#include "persistence/options.h"
-#include "ui/panel/spell_icons.hpp"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
+#include "persistence/options.h"
 #include "qol/stash.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/spell_icons.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif

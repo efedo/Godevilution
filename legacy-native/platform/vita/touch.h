@@ -6,7 +6,6 @@
  * Interface for touch.
  */
 
-
 #ifdef __vita__
 
 #include <SDL.h>

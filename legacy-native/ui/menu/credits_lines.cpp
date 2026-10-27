@@ -4,7 +4,6 @@
  * Implementation of credits text data.
  */
 
-
 #include <cstddef>
 
 #include "ui/menu/credits_lines.h"

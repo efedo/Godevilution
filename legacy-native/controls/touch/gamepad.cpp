@@ -4,7 +4,6 @@
  * Implementation of gamepad.
  */
 
-
 #include <cmath>
 
 #ifdef USE_SDL3
@@ -13,10 +12,10 @@
 #include <SDL.h>
 #endif
 
-#include "ui/panel/control.hpp"
 #include "controls/touch/event_handlers.h"
 #include "controls/touch/gamepad.h"
 #include "game/quests/quests.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/display.h"
 #include "utils/ui_fwd.h"
 

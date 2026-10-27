@@ -4,7 +4,6 @@
  * Implementation of towners.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/towners.hpp"
 

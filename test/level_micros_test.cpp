@@ -77,7 +77,7 @@ TEST_F(LevelMicrosTest, FreshMicrosAreZeroInitialised)
 	// SetUp() already zeroed everything
 	for (int block = 0; block < 16; ++block) {
 		EXPECT_EQ(levelMicros()[0].mt[block].data, 0u)
-			<< "block " << block << " of entry 0 should be zero";
+		    << "block " << block << " of entry 0 should be zero";
 	}
 }
 
@@ -95,7 +95,7 @@ TEST_F(LevelMicrosTest, AllSixteenBlocksRoundTrip)
 	for (int block = 0; block < 16; ++block) {
 		const uint16_t expected = static_cast<uint16_t>(block * 7 + 1);
 		EXPECT_EQ(levelMicros()[kEntry].mt[block].data, expected)
-			<< "block " << block;
+		    << "block " << block;
 	}
 }
 

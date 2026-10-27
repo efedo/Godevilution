@@ -17,8 +17,9 @@
 #include <ankerl/unordered_dense.h>
 #include <fmt/core.h>
 
-#include "ui/menu/ui_flags.hpp"
+#include "application/game_mode.hpp"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/surface.hpp"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/load/load_file.hpp"
@@ -27,9 +28,8 @@
 #include "engine/math/rectangle.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "engine/gfx/surface.hpp"
 #include "engine/ticks.hpp"
-#include "application/game_mode.hpp"
+#include "ui/menu/ui_flags.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"

@@ -4,7 +4,6 @@
  * Interface for support information lines.
  */
 
-
 #include <cstddef>
 
 namespace devilution {

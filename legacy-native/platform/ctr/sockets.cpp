@@ -4,7 +4,6 @@
  * Implementation of sockets.
  */
 
-
 #include "platform/ctr/sockets.hpp"
 
 #include <cstdint>

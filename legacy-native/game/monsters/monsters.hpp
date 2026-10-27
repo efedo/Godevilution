@@ -16,13 +16,13 @@
 #include <expected.hpp>
 #include <function_ref.hpp>
 
+#include "application/game_mode.hpp"
 #include "engine/actor.hpp"
+#include "engine/actor_position.hpp"
 #include "engine/bestiary.hpp"
 #include "engine/combat_actor.hpp"
-#include "engine/actor_position.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/world_tile.hpp"
-#include "application/game_mode.hpp"
 #include "game/levels/dun_tile.hpp"
 #include "tables/misdat.h"
 #include "tables/monstdat.h"
@@ -52,9 +52,9 @@ enum class ServerBackedMonsterInteractionRoute : uint8_t {
  * caller must fail closed when no authored quest dialogue is available.
  */
 constexpr ServerBackedMonsterInteractionRoute ResolveServerBackedMonsterInteractionRoute(
-	bool serverConnected,
-	bool projectedEntityAvailable,
-	bool questAvailable) noexcept
+    bool serverConnected,
+    bool projectedEntityAvailable,
+    bool questAvailable) noexcept
 {
 	if (!serverConnected)
 		return ServerBackedMonsterInteractionRoute::None;
@@ -113,7 +113,7 @@ enum class MonsterMode : uint8_t {
 	Stand,
 	MoveNorthwards, // Movement towards N, NW, or NE
 	MoveSouthwards, // Movement towards S, SW, or SE
-	MoveSideways, // Movement towards W or E
+	MoveSideways,   // Movement towards W or E
 	MeleeAttack,
 	HitRecovery,
 	Death,
@@ -151,7 +151,7 @@ enum class MonsterGoal : uint8_t {
 // If value is different from Individual Monster, the leader must also be set
 enum class LeaderRelation : uint8_t {
 	None,
-	Leashed, // Minion that sticks to the leader
+	Leashed,   // Minion that sticks to the leader
 	Separated, // Minion that was separated from the leader and acts individually until it reaches the leader again
 };
 
@@ -161,28 +161,28 @@ struct Monster : CombatActor { // note: missing field _mAFNum
 	// animInfo, direction, lightId, hitPoints, maxHitPoints are inherited from Actor
 	uint32_t flags;
 	uint32_t rndItemSeed; // Seed used to determine item drops on death
-	uint32_t aiSeed; // Seed used to determine AI behaviour/sync sounds in multiplayer games?
+	uint32_t aiSeed;      // Seed used to determine AI behaviour/sync sounds in multiplayer games?
 	uint16_t golemToHit;
 	uint16_t resistance;
 	_speech_id talkMsg;
 	int16_t goalVar1; // Specifies monster's behaviour regarding moving and changing goals.
-	int8_t goalVar2; // Specifies turning direction for @p RoundWalk in most cases.
-	                 // Used in custom way by @p FallenAi, @p SnakeAi, @p M_FallenFear and @p FallenAi.
-	int8_t goalVar3; // Controls monster's behaviour regarding special actions.
-					 // Used only by @p ScavengerAi, @p MegaAi and @p GolemAi.
+	int8_t goalVar2;  // Specifies turning direction for @p RoundWalk in most cases.
+	                  // Used in custom way by @p FallenAi, @p SnakeAi, @p M_FallenFear and @p FallenAi.
+	int8_t goalVar3;  // Controls monster's behaviour regarding special actions.
+	                  // Used only by @p ScavengerAi, @p MegaAi and @p GolemAi.
 	int16_t var1;
 	int16_t var2;
 	int8_t var3;
-	MonsterGoal goal; // Specifies current goal of the monster
+	MonsterGoal goal;                // Specifies current goal of the monster
 	WorldTilePosition enemyPosition; // Usually corresponds to the enemy's future position
 	uint8_t levelType;
 	MonsterMode mode;
 	uint8_t pathCount;
 	uint8_t enemy; // The current target of the monster.
-				   // An index in to either the player or monster array based on the _meflag value.
+	               // An index in to either the player or monster array based on the _meflag value.
 	bool isInvalid;
 	MonsterAIID ai;
-	uint8_t intelligence; // Affects monster thinking; higher value results in more aggressive behaviour (e.g. some monsters use this to calculate the @p AiDelay)
+	uint8_t intelligence;   // Affects monster thinking; higher value results in more aggressive behaviour (e.g. some monsters use this to calculate the @p AiDelay)
 	uint8_t activeForTicks; // Stores information for how many ticks the monster will remain active
 	UniqueMonsterType uniqueType;
 	uint8_t uniqTrans;

@@ -4,7 +4,6 @@
  * Implementation of scrollbar widget.
  */
 
-
 #include "scrollbar.h"
 
 #include <optional>

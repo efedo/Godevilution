@@ -4,7 +4,6 @@
  * Implementation of flask indicators.
  */
 
-
 #include "control_flasks.hpp"
 #include "control.hpp"
 

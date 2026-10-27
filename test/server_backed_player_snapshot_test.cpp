@@ -6,30 +6,30 @@
 #include <utility>
 #include <vector>
 
-#include "devilution.pb.h"
 #include "application/headless_mode.hpp"
+#include "devilution.pb.h"
 #include "engine/cursor.h"
 #include "game/items/item_pool.hpp"
+#include "game/levels/dungeon_common.h"
+#include "game/levels/triggers.h"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
-#include "game/levels/dungeon_common.h"
-#include "game/levels/triggers.h"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
-#include "network/authoritative/player_snapshot.hpp"
-#include "network/authoritative/protocol_limits.hpp"
 #include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/item_snapshot.hpp"
+#include "network/authoritative/player_snapshot.hpp"
+#include "network/authoritative/protocol_limits.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
-#include "tables/playerdat.hpp"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
-#include "ui/minitext.h"
+#include "tables/playerdat.hpp"
 #include "ui/automap.h"
+#include "ui/minitext.h"
 #include "utils/paths.h"
 
 namespace devilution::authoritative {
@@ -220,10 +220,10 @@ TEST(ServerBackedPlayerSnapshot, ValidatesNonEmptyStateHashShape)
 	player->set_character_level(1);
 
 	for (const std::string &hash : {
-		     std::string("not-a-hash"),
-		     std::string(63, '0'),
-		     std::string(65, '0'),
-		     std::string(64, 'g'),
+	         std::string("not-a-hash"),
+	         std::string(63, '0'),
+	         std::string(65, '0'),
+	         std::string(64, 'g'),
 	     }) {
 		snapshot.set_state_sha256(hash);
 		EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value()) << hash;
@@ -278,9 +278,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)
 	player->set_character_level(1);
 
 	for (const std::string &name : {
-		     std::string(32, 'A'),
-		     std::string("bad\nname"),
-		     std::string("bad\0name", 8),
+	         std::string(32, 'A'),
+	         std::string("bad\nname"),
+	         std::string("bad\0name", 8),
 	     }) {
 		snapshot.mutable_players(0)->set_character_name(name);
 		EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value()) << name;
@@ -1157,10 +1157,10 @@ TEST(ServerBackedPlayerSnapshot, EnforcesNativeQuestRewardOffsetBounds)
 {
 	for (const int rewardKind : { 1, 2 }) {
 		for (const auto &[offsetX, offsetY] : std::array<std::pair<int, int>, 4> {
-			     std::pair { -32, 0 },
-			     std::pair { 32, 0 },
-			     std::pair { 0, -32 },
-			     std::pair { 0, 32 },
+		         std::pair { -32, 0 },
+		         std::pair { 32, 0 },
+		         std::pair { 0, -32 },
+		         std::pair { 0, 32 },
 		     }) {
 			protocol::Snapshot snapshot;
 			auto *object = snapshot.add_objects();
@@ -1175,10 +1175,10 @@ TEST(ServerBackedPlayerSnapshot, EnforcesNativeQuestRewardOffsetBounds)
 		}
 
 		for (const auto &[offsetX, offsetY] : std::array<std::pair<int, int>, 4> {
-			     std::pair { -33, 0 },
-			     std::pair { 33, 0 },
-			     std::pair { 0, -33 },
-			     std::pair { 0, 33 },
+		         std::pair { -33, 0 },
+		         std::pair { 33, 0 },
+		         std::pair { 0, -33 },
+		         std::pair { 0, 33 },
 		     }) {
 			protocol::Snapshot snapshot;
 			auto *object = snapshot.add_objects();
@@ -1220,7 +1220,7 @@ TEST(ServerBackedPlayerSnapshot, ExplicitGenericObjectPresentationDoesNotUseLega
 	ASSERT_TRUE(projected.has_value());
 	ASSERT_EQ(projected->size(), 1U);
 	EXPECT_EQ(projected->front().presentationKind,
-		static_cast<int32_t>(ObjectPresentationKind::Generic));
+	    static_cast<int32_t>(ObjectPresentationKind::Generic));
 
 	ServerBackedWorldProjection worldProjection;
 	ASSERT_TRUE(worldProjection.Apply({}, {}, *projected, 1).has_value());
@@ -1275,12 +1275,12 @@ TEST(ServerBackedPlayerSnapshot, ExplicitNativeObjectPresentationRetainsNativeId
 TEST(ServerBackedPlayerSnapshot, AuthoredSemanticObjectFamiliesIgnoreLegacyNativeIdentity)
 {
 	for (const auto presentationKind : {
-		ObjectPresentationKind::Generic,
-		ObjectPresentationKind::Shrine,
-		ObjectPresentationKind::Quest,
-		ObjectPresentationKind::Breakable,
-		ObjectPresentationKind::Trap,
-	}) {
+	         ObjectPresentationKind::Generic,
+	         ObjectPresentationKind::Shrine,
+	         ObjectPresentationKind::Quest,
+	         ObjectPresentationKind::Breakable,
+	         ObjectPresentationKind::Trap,
+	     }) {
 		EXPECT_TRUE(UsesAuthoredObjectPresentationIdentity(presentationKind));
 		InitializeItemPool();
 		ObjectPoolAdapter::ResetLegacyObjectPools();
@@ -1301,7 +1301,7 @@ TEST(ServerBackedPlayerSnapshot, AuthoredSemanticObjectFamiliesIgnoreLegacyNativ
 		object->set_position_x(14);
 		object->set_position_y(14);
 		object->set_presentation_kind(
-			static_cast<protocol::ObjectPresentationKind>(presentationKind));
+		    static_cast<protocol::ObjectPresentationKind>(presentationKind));
 
 		auto projected = ProjectObjectSnapshots(snapshot);
 		ASSERT_TRUE(projected.has_value());
@@ -1401,7 +1401,6 @@ TEST(ServerBackedPlayerSnapshot, AuthoritativeObjectsRejectMissingNativeArt)
 	const auto result = presentation.Apply(projection, 1);
 	EXPECT_FALSE(result.has_value());
 	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 0);
-
 }
 
 TEST(ServerBackedPlayerSnapshot, ReplacesObjectTemplateAtFullNativeCapacity)
@@ -3042,7 +3041,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsStaticObjectBlockedCellsWithoutVisionUn
 	EXPECT_EQ(projected->front().staticObjectBlockedCells, std::vector<int32_t>({ 3 }));
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, *projected, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, *projected, 1).has_value());
 	EXPECT_TRUE(projection.IsBlocked(1, 1).value());
 	EXPECT_FALSE(projection.IsVisionBlocked(1, 1).value());
 }
@@ -3076,7 +3075,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsTypedDoorWithConflictingNativeSpecialLay
 	geometry.nativeSpecialLayer = { 8 };
 
 	ServerBackedWorldProjection projection;
-	EXPECT_FALSE(projection.Apply({ }, { }, { object }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(projection.Apply({}, {}, { object }, {}, { geometry }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, DirectProjectionRejectsMalformedSupplementalGeometryAtomically)
@@ -3122,7 +3121,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 	monster.entityId = 7;
 	monster.levelId = 2;
 
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
 	ASSERT_EQ(projection.Monsters().size(), 1U);
 	EXPECT_EQ(projection.Monsters()[0].levelId, 2U);
 	EXPECT_TRUE(projection.Projectiles().empty());
@@ -3143,7 +3142,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	geometry.nativeVisionBlockedCells = { 3 };
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, { geometry }, 1).has_value());
 	ASSERT_TRUE(projection.CurrentLevelGeometry() != nullptr);
 	EXPECT_EQ(projection.LevelGeometryAt(1), projection.CurrentLevelGeometry());
 	ASSERT_TRUE(projection.IsBlocked(1, 1).has_value());
@@ -3205,7 +3204,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	} restore { previousPiece, previousTransparency, previousSpecial, previousMegaTile };
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, { geometry }, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(tileAt(1, 1).piece(), 77);
@@ -3219,25 +3218,25 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	townGeometry.width = MAXDUNX;
 	townGeometry.height = MAXDUNY;
 	ServerBackedWorldProjection townProjection;
-	ASSERT_TRUE(townProjection.Apply({ }, { }, { }, { }, { townGeometry }, 0).has_value());
+	ASSERT_TRUE(townProjection.Apply({}, {}, {}, {}, { townGeometry }, 0).has_value());
 	EXPECT_TRUE(presentation.Apply(townProjection, 0).has_value());
 
 	ProjectedLevelGeometrySnapshot invalid = geometry;
 	invalid.nativeMegaTileLayer[0] = 256;
 	ServerBackedWorldProjection invalidProjection;
-	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
+	ASSERT_TRUE(invalidProjection.Apply({}, {}, {}, {}, { invalid }, 1).has_value());
 	const auto result = presentation.Apply(invalidProjection, 1);
 	EXPECT_FALSE(result.has_value());
 
 	invalid = geometry;
 	invalid.nativeObjectLayer.assign(16, 0);
 	invalid.nativeObjectLayer[0] = static_cast<uint16_t>(DUN_OBJECT_ID_LAST) + 1;
-	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
+	ASSERT_TRUE(invalidProjection.Apply({}, {}, {}, {}, { invalid }, 1).has_value());
 	EXPECT_FALSE(presentation.Apply(invalidProjection, 1).has_value());
 
 	invalid = geometry;
 	invalid.nativeSpecialLayer[0] = 256;
-	EXPECT_FALSE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
+	EXPECT_FALSE(invalidProjection.Apply({}, {}, {}, {}, { invalid }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
@@ -3245,7 +3244,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)
 	ProjectedLevelGeometrySnapshot first;
 	first.levelId = 1;
 	ProjectedLevelGeometrySnapshot duplicate = first;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { }, { first, duplicate }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, {}, { first, duplicate }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedGeometry)
@@ -3259,26 +3258,26 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedG
 	monster.entityId = 11;
 	monster.levelId = 1;
 	monster.positionX = 2;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ monster }, {}, {}, {}, { geometry }, 1).has_value());
 
 	ProjectedMonsterSnapshot movingMonster = monster;
 	movingMonster.entityId = 12;
 	movingMonster.positionX = 1;
 	movingMonster.futurePositionX = 2;
 	movingMonster.moving = true;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ movingMonster }, { }, { }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ movingMonster }, {}, {}, {}, { geometry }, 1).has_value());
 
 	ProjectedWorldItemSnapshot item;
 	item.entityId = 13;
 	item.levelId = 1;
 	item.positionY = -1;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { item }, { }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, { item }, {}, {}, { geometry }, 1).has_value());
 
 	ProjectedObjectSnapshot object;
 	object.entityId = 14;
 	object.levelId = 1;
 	object.positionX = 2;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { object }, { }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, { object }, {}, { geometry }, 1).has_value());
 
 	ProjectedProjectileSnapshot projectile;
 	projectile.entityId = 15;
@@ -3287,7 +3286,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedG
 	projectile.levelId = 1;
 	projectile.positionY = 2;
 	projectile.remainingTicks = 1;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { projectile }, { geometry }, 1).has_value());
 
 	projectile.positionY = 1;
 	projectile.positionX = 2;
@@ -3295,71 +3294,71 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedG
 	projectile.targetY = 1;
 	projectile.behavior = static_cast<int>(ProjectileBehavior::Elemental);
 	projectile.phase = ElementalProjectileImpactPhase;
-	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { projectile }, { geometry }, 1).has_value());
 	projectile.targetX = 3;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { projectile }, { geometry }, 1).has_value());
 	projectile.targetX = 2;
 	projectile.behavior = static_cast<int>(ProjectileBehavior::Firebolt);
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { projectile }, { geometry }, 1).has_value());
 	projectile.behavior = static_cast<int>(ProjectileBehavior::Elemental);
 	projectile.phase = 0;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { projectile }, { geometry }, 1).has_value());
 
 	ProjectedWorldItemSnapshot invalidNativeCoordinate;
 	invalidNativeCoordinate.entityId = 16;
 	invalidNativeCoordinate.positionX = -1;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { invalidNativeCoordinate }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, { invalidNativeCoordinate }, {}, 1).has_value());
 	invalidNativeCoordinate.entityId = 17;
 	invalidNativeCoordinate.positionX = 256;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { invalidNativeCoordinate }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, { invalidNativeCoordinate }, {}, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonsters)
 {
 	ProjectedMonsterSnapshot invalid;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalid }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalid }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot first;
 	first.entityId = 11;
 	ProjectedMonsterSnapshot duplicate = first;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first, duplicate }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first, duplicate }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidDirection = first;
 	invalidDirection.entityId = 12;
 	invalidDirection.direction = 8;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidDirection }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidDirection }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot nonAdjacent = first;
 	nonAdjacent.entityId = 13;
 	nonAdjacent.moving = true;
 	nonAdjacent.futurePositionX = 2;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ nonAdjacent }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ nonAdjacent }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidTiming = first;
 	invalidTiming.entityId = 20;
 	invalidTiming.movementStartedTick = 12;
 	invalidTiming.movementEffectTick = 11;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidTiming }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidTiming }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot stationaryTiming = first;
 	stationaryTiming.entityId = 21;
 	stationaryTiming.movementEffectTick = 13;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ stationaryTiming }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ stationaryTiming }, {}, {}, 1).has_value());
 
 	ProjectedWorldItemSnapshot item;
 	item.entityId = first.entityId;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first }, { item }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ first }, { item }, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidGroupRelation = first;
 	invalidGroupRelation.entityId = 14;
 	invalidGroupRelation.leaderRelation = 3;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupRelation }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupRelation }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidGroupLeader = first;
 	invalidGroupLeader.entityId = 15;
 	invalidGroupLeader.leaderRelation = 1;
 	invalidGroupLeader.leaderEntityId = 99;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupLeader }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidGroupLeader }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot leader = first;
 	leader.entityId = 16;
@@ -3370,17 +3369,17 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateMonster
 	member.levelId = 1;
 	member.leaderEntityId = leader.entityId;
 	member.leaderRelation = 1;
-	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ member, leader }, { }, { }, 1).has_value());
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ member, leader }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidUniqueMember = member;
 	invalidUniqueMember.entityId = 18;
 	invalidUniqueMember.isUnique = true;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidUniqueMember, leader }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidUniqueMember, leader }, {}, {}, 1).has_value());
 
 	ProjectedMonsterSnapshot invalidPackSize = first;
 	invalidPackSize.entityId = 19;
 	invalidPackSize.packSize = 256;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidPackSize }, { }, { }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ invalidPackSize }, {}, {}, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjectiles)
@@ -3400,7 +3399,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjec
 	first.nativeVisual = 6;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { second, first }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { second, first }, 1).has_value());
 	ASSERT_EQ(projection.Projectiles().size(), 2U);
 	EXPECT_EQ(projection.Projectiles()[0].entityId, 11U);
 	EXPECT_EQ(projection.Projectiles()[0].behavior, 7);
@@ -3425,7 +3424,7 @@ TEST(ServerBackedPlayerSnapshot, WorldPresentationIgnoresOlderAuthoritativeProje
 	projectile.behavior = 2; // Firebolt
 
 	ServerBackedWorldProjection newer;
-	ASSERT_TRUE(newer.Apply({ }, { }, { }, { projectile }, { }, 1, 10).has_value());
+	ASSERT_TRUE(newer.Apply({}, {}, {}, { projectile }, {}, 1, 10).has_value());
 	EXPECT_EQ(newer.ServerTick(), std::optional<uint64_t> { 10 });
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(newer, 1).has_value());
@@ -3433,12 +3432,12 @@ TEST(ServerBackedPlayerSnapshot, WorldPresentationIgnoresOlderAuthoritativeProje
 
 	projectile.positionX = 5;
 	ServerBackedWorldProjection older;
-	ASSERT_TRUE(older.Apply({ }, { }, { }, { projectile }, { }, 1, 9).has_value());
+	ASSERT_TRUE(older.Apply({}, {}, {}, { projectile }, {}, 1, 9).has_value());
 	ASSERT_TRUE(presentation.Apply(older, 1).has_value());
 	EXPECT_EQ(Missiles.front().position.tile, (WorldTilePosition { 4, 4 }));
 
 	ServerBackedWorldProjection equal;
-	ASSERT_TRUE(equal.Apply({ }, { }, { }, { projectile }, { }, 1, 10).has_value());
+	ASSERT_TRUE(equal.Apply({}, {}, {}, { projectile }, {}, 1, 10).has_value());
 	ASSERT_TRUE(presentation.Apply(equal, 1).has_value());
 	EXPECT_EQ(Missiles.front().position.tile, (WorldTilePosition { 5, 4 }));
 
@@ -3449,7 +3448,7 @@ TEST(ServerBackedPlayerSnapshot, WorldPresentationIgnoresOlderAuthoritativeProje
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProjectiles)
 {
 	ProjectedProjectileSnapshot invalid;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalid }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { invalid }, 1).has_value());
 
 	ProjectedProjectileSnapshot first;
 	first.entityId = 11;
@@ -3457,44 +3456,44 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	first.spellId = 4;
 	first.remainingTicks = 1;
 	ProjectedProjectileSnapshot duplicate = first;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { first, duplicate }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { first, duplicate }, 1).has_value());
 
 	ProjectedProjectileSnapshot invalidBehavior = first;
 	invalidBehavior.entityId = 12;
 	invalidBehavior.behavior = 60;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidBehavior }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { invalidBehavior }, 1).has_value());
 
 	ProjectedProjectileSnapshot invalidDirection = first;
 	invalidDirection.entityId = 13;
 	invalidDirection.behavior = 2; // Firebolt
 	invalidDirection.originalDirection = 8;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidDirection }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { invalidDirection }, 1).has_value());
 
 	ProjectedProjectileSnapshot invalidNativeMissile = first;
 	invalidNativeMissile.entityId = 14;
 	invalidNativeMissile.behavior = 50; // MonsterMagic
 	invalidNativeMissile.nativeMissileId = "Invalid?";
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidNativeMissile }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { invalidNativeMissile }, 1).has_value());
 
 	ProjectedProjectileSnapshot misplacedNativeMissile = first;
 	misplacedNativeMissile.entityId = 15;
 	misplacedNativeMissile.behavior = 2; // Firebolt
 	misplacedNativeMissile.nativeMissileId = "Lightning";
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { misplacedNativeMissile }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { misplacedNativeMissile }, 1).has_value());
 
 	ProjectedProjectileSnapshot invalidDamageType = first;
 	invalidDamageType.entityId = 16;
 	invalidDamageType.damageType = 5;
-	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { invalidDamageType }, 1).has_value());
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { invalidDamageType }, 1).has_value());
 
 	ProjectedProjectileSnapshot arrow = first;
 	arrow.entityId = 17;
 	arrow.spellId = 0;
 	arrow.behavior = 58; // WeaponArrow
-	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { arrow }, 1).has_value());
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { arrow }, 1).has_value());
 	arrow.entityId = 18;
 	arrow.behavior = 59; // MonsterArrow
-	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { arrow }, 1).has_value());
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({}, {}, {}, { arrow }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsNativePoolOverflowPerLevel)
@@ -3559,12 +3558,12 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	projectile.positionX = 4;
 	projectile.positionY = 4;
 	projectile.remainingTicks = 5;
-	projectile.behavior = 2; // Firebolt
+	projectile.behavior = 2;      // Firebolt
 	projectile.nativeVisual = 25; // ChargedBolt; server metadata overrides behavior fallback.
 	projectile.originalDirection = 3;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 
@@ -3581,14 +3580,14 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	projectile.positionX = 5;
 	projectile.positionY = 6;
 	projectile.remainingTicks = 3;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	ASSERT_EQ(Missiles.size(), 1U);
 	const WorldTilePosition updatedPosition { 5, 6 };
 	EXPECT_EQ(Missiles.front().position.tile, updatedPosition);
 	EXPECT_EQ(Missiles.front().duration, 3);
 
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_TRUE(Missiles.empty());
 
@@ -3612,7 +3611,7 @@ TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMissileAnimationWithoutSim
 	projectile.behavior = 2; // Firebolt
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	ASSERT_EQ(Missiles.size(), 1U);
@@ -3677,7 +3676,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.inventoryGrid[0] = 0;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	EXPECT_EQ(presentation.RemotePlayerCount(), 1U);
@@ -3766,7 +3765,7 @@ TEST(ServerBackedPlayerSnapshot, ClearsRemoteInventoryWhenLegacyGridIsOmitted)
 	remote.heldItem = ProjectedInventoryItem { .item = held };
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
@@ -3806,7 +3805,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePo
 	};
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 
@@ -3841,7 +3840,7 @@ TEST(ServerBackedPlayerSnapshot, IgnoresStaleRemotePlayerSnapshots)
 	remote.serverTick = 10;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 
@@ -3875,7 +3874,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsRemoteWalkDestinationOutsideNativeDungeo
 	};
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	const auto result = presentation.Apply(projection, 1, { local, remote }, 1);
 
@@ -3907,7 +3906,7 @@ TEST(ServerBackedPlayerSnapshot, PlacesRemoteAnimationAtAuthoritativeActionTick)
 	};
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	int firstFrame = -1;
@@ -3982,7 +3981,7 @@ TEST(ServerBackedPlayerSnapshot, AdvancesRemotePlayerPresentationAnimationWithou
 	};
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	int initialFrame = -1;
@@ -4014,7 +4013,7 @@ TEST(ServerBackedPlayerSnapshot, DoesNotDoubleAdvanceRemotePlayerAnimationBetwee
 	remote.serverTick = 3;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	ASSERT_EQ(presentation.AdvanceAnimations(), 1U);
@@ -4148,18 +4147,24 @@ TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 	projectile.nativeVisual = 999;
 
 	ServerBackedWorldProjection projection;
-	const auto result = projection.Apply({ }, { }, { }, { projectile }, 1);
+	const auto result = projection.Apply({}, {}, {}, { projectile }, 1);
 	ASSERT_FALSE(result.has_value());
 	EXPECT_EQ(result.error(), "Authoritative projectile projection contains invalid identity, lifecycle, or presentation data.");
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
 {
-	struct Family { int nativeVisual; MissileID missileId; };
+	struct Family {
+		int nativeVisual;
+		MissileID missileId;
+	};
 	const Family families[] = {
-		{ 29, MissileID::Lightning }, { 30, MissileID::OrangeFlare },
-		{ 31, MissileID::BlueFlare }, { 32, MissileID::RedFlare },
-		{ 33, MissileID::YellowFlare }, { 34, MissileID::BlueFlare2 },
+		{ 29, MissileID::Lightning },
+		{ 30, MissileID::OrangeFlare },
+		{ 31, MissileID::BlueFlare },
+		{ 32, MissileID::RedFlare },
+		{ 33, MissileID::YellowFlare },
+		{ 34, MissileID::BlueFlare2 },
 		{ 35, MissileID::MagmaBall },
 	};
 	LoadMissileData();
@@ -4176,7 +4181,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsContentOwnedMonsterMagicVisualFamilies)
 		projectile.behavior = 50;
 		projectile.nativeVisual = family.nativeVisual;
 		ServerBackedWorldProjection projection;
-		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 		if (!IsMissileDataAvailable(family.missileId)) {
@@ -4203,12 +4208,12 @@ TEST(ServerBackedPlayerSnapshot, PrefersServerNativeVisualOverLegacyMonsterMagic
 	projectile.positionX = 4;
 	projectile.positionY = 5;
 	projectile.remainingTicks = 4;
-	projectile.behavior = 50; // MonsterMagic
+	projectile.behavior = 50;     // MonsterMagic
 	projectile.nativeVisual = 25; // ChargedBolt server-owned visual.
 	projectile.nativeMissileId = "Lightning";
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 
@@ -4247,7 +4252,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)
 		projectile.behavior = family.behavior;
 
 		ServerBackedWorldProjection projection;
-		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 		if (!IsMissileDataAvailable(family.missileId)) {
@@ -4296,7 +4301,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeAreaProjectileFamilies)
 		projectile.behavior = family.behavior;
 
 		ServerBackedWorldProjection projection;
-		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 		if (!IsMissileDataAvailable(family.missileId)) {
@@ -4342,7 +4347,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeLayeredAndArrowProjectileF
 		projectile.behavior = family.behavior;
 
 		ServerBackedWorldProjection projection;
-		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ASSERT_TRUE(projection.Apply({}, {}, {}, { projectile }, 1).has_value());
 		ServerBackedWorldPresentation presentation;
 		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 		if (!IsMissileDataAvailable(family.missileId)) {
@@ -4394,7 +4399,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_FALSE(projection.QuestObjectAt(4, 5).has_value());
 	EXPECT_EQ(projection.AuthoritativeObjectAt(4, 5), std::optional<uint32_t>(30));
 	monster.sneakHidden = true;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
 	EXPECT_FALSE(projection.MonsterAt(4, 5).has_value());
 	EXPECT_FALSE(projection.MonsterAt(5, 5).has_value());
 	ProjectedObjectSnapshot questObject;
@@ -4416,17 +4421,17 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	mutationObject.positionX = 9;
 	mutationObject.positionY = 10;
 	mutationObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation);
-	ASSERT_TRUE(projection.Apply({ }, { }, { mutationObject }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, {}, { mutationObject }, 1).has_value());
 	EXPECT_EQ(projection.AuthoritativeObjectAt(9, 10), std::optional<uint32_t>(33));
 	EXPECT_FALSE(projection.QuestObjectAt(9, 10).has_value());
 	object.activated = true;
-	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, { item }, { object }, 1).has_value());
 	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());
 	object.activated = false;
 	object.destroyed = true;
-	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({}, { item }, { object }, 1).has_value());
 	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());
-	ASSERT_TRUE(projection.Apply({ }, { item }, { }, 2).has_value());
+	ASSERT_TRUE(projection.Apply({}, { item }, {}, 2).has_value());
 	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t>(20));
 }
 
@@ -4447,14 +4452,14 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionMonsterLookupHonorsNativeVision)
 	geometry.nativeVisionBlockedCells = { 1 };
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, {}, { geometry }, 1).has_value());
 	EXPECT_EQ(projection.MonsterAt(4, 0), std::optional<uint32_t> { 40 });
 	EXPECT_FALSE(projection.MonsterAt(4, 0, 0, 0, 10).has_value());
 
 	geometry.width = 12;
 	geometry.nativeVisionBlockedCells.clear();
 	monster.positionX = 11;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, {}, { geometry }, 1).has_value());
 	EXPECT_FALSE(projection.MonsterAt(11, 0, 0, 0, 10).has_value());
 	EXPECT_EQ(projection.MonsterAt(11, 0, 0, 0, 11), std::optional<uint32_t> { 40 });
 }
@@ -4488,11 +4493,11 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionOrdersOverlappingEntitiesByIdent
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply(
-		{ higherMonster, lowerMonster },
-		{ higherItem, lowerItem },
-		{ higherObject, lowerObject },
-		1)
-		.has_value());
+	                          { higherMonster, lowerMonster },
+	                          { higherItem, lowerItem },
+	                          { higherObject, lowerObject },
+	                          1)
+	                .has_value());
 	EXPECT_EQ(projection.MonsterAt(4, 5), std::optional<uint32_t> { 39 });
 	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t> { 29 });
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t> { 19 });
@@ -4545,7 +4550,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMovingDestinationOutsideNativeDungeon)
 	monster.futurePositionX = -1;
 	monster.futurePositionY = 1;
 	ServerBackedWorldProjection projection;
-	const auto result = projection.Apply({ monster }, { }, { }, 1);
+	const auto result = projection.Apply({ monster }, {}, {}, 1);
 	ASSERT_FALSE(result.has_value());
 	EXPECT_EQ(result.error(), "Authoritative monster projection is outside projected level geometry.");
 }
@@ -4569,7 +4574,7 @@ TEST(ServerBackedPlayerSnapshot, AdvancesAuthoritativeMonsterWalkAnimation)
 	monster.direction = static_cast<int32_t>(Direction::East);
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 
@@ -4605,13 +4610,13 @@ TEST(ServerBackedPlayerSnapshot, NativePresentationHonorsProjectedMonsterVision)
 	geometry.nativeVisionBlockedCells = { 1 };
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, {}, { geometry }, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, local.entityId).has_value());
 	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 0U);
 
 	geometry.nativeVisionBlockedCells.clear();
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, { }, { geometry }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, {}, { geometry }, 1).has_value());
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, local.entityId).has_value());
 	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 1U);
 
@@ -4637,7 +4642,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoredMonsterDialogueStateToNativePres
 	monster.dialogueState = 1;
 
 	ServerBackedWorldProjection projection;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(
@@ -4645,7 +4650,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoredMonsterDialogueStateToNativePres
 	    AuthoritativeMonsterDialoguePresentationState::Inquiring);
 
 	monster.dialogueState = 2;
-	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(
 	    ResolveAuthoritativeMonsterDialoguePresentationState(monster.dialogueState),
@@ -4700,9 +4705,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidPresentation).has_value());
 
 	for (const auto kind : {
-		 protocol::OBJECT_PRESENTATION_KIND_NATIVE_ARMOR_STAND,
-		 protocol::OBJECT_PRESENTATION_KIND_NATIVE_WEAPON_RACK,
-	}) {
+	         protocol::OBJECT_PRESENTATION_KIND_NATIVE_ARMOR_STAND,
+	         protocol::OBJECT_PRESENTATION_KIND_NATIVE_WEAPON_RACK,
+	     }) {
 		protocol::Snapshot nativePresentation;
 		auto *nativeObject = nativePresentation.add_objects();
 		nativeObject->set_entity_id(7);
@@ -4720,9 +4725,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidReward).has_value());
 
 	for (const auto [originKind, setLevelId] : std::array<std::pair<int, int>, 3> {
-		     std::pair { -1, 0 },
-		     std::pair { 0, 1 },
-		     std::pair { 1, 9 },
+	         std::pair { -1, 0 },
+	         std::pair { 0, 1 },
+	         std::pair { 1, 9 },
 	     }) {
 		protocol::Snapshot invalidRewardOrigin;
 		auto *originObject = invalidRewardOrigin.add_objects();
@@ -4869,7 +4874,7 @@ public:
 		for (int y = 0; y < MAXDUNY; ++y) {
 			for (int x = 0; x < MAXDUNX; ++x) {
 				previousTiles_[y * MAXDUNX + x] = tileAt({ x, y });
-				tileAt({ x, y }) = Tile { };
+				tileAt({ x, y }) = Tile {};
 			}
 		}
 
@@ -4913,7 +4918,7 @@ public:
 
 private:
 	std::vector<Player> previousPlayers_;
-	std::array<Tile, MAXDUNX * MAXDUNY> previousTiles_ { };
+	std::array<Tile, MAXDUNX * MAXDUNY> previousTiles_ {};
 	Player *previousMyPlayer_;
 	uint8_t previousMyPlayerId_;
 	LevelId previousLevelId_;
@@ -5344,13 +5349,13 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	stashScroll._iSpell = SpellID::Healing;
 	snapshot.stashOpen = true;
 	snapshot.stash.push_back({
-		.page = 0,
-		.cell = 3,
-		.itemSeed = 45,
-		.stableItemId = 46,
-		.spellId = static_cast<uint32_t>(SpellID::Healing),
-		.spellTargetingKind = ProjectedSpellTargetingKind::Tile,
-		.item = stashScroll,
+	    .page = 0,
+	    .cell = 3,
+	    .itemSeed = 45,
+	    .stableItemId = 46,
+	    .spellId = static_cast<uint32_t>(SpellID::Healing),
+	    .spellTargetingKind = ProjectedSpellTargetingKind::Tile,
+	    .item = stashScroll,
 	});
 	Item heldItem;
 	heldItem._itype = ItemType::Gold;
@@ -5442,14 +5447,14 @@ TEST(ServerBackedPlayerSnapshot, ClearsStaleStashScrollSourcesOnSnapshotRefresh)
 	scroll._iMiscId = IMISC_SCROLL;
 	scroll._iSpell = SpellID::Healing;
 	snapshot.stash.push_back({
-		.page = 0,
-		.cell = 0,
-		.itemSeed = 1,
-		.spellId = static_cast<uint32_t>(SpellID::Healing),
-		.spellTargetingKind = ProjectedSpellTargetingKind::Tile,
-		.width = 1,
-		.height = 1,
-		.item = scroll,
+	    .page = 0,
+	    .cell = 0,
+	    .itemSeed = 1,
+	    .spellId = static_cast<uint32_t>(SpellID::Healing),
+	    .spellTargetingKind = ProjectedSpellTargetingKind::Tile,
+	    .width = 1,
+	    .height = 1,
+	    .item = scroll,
 	});
 	Player player;
 
@@ -5544,8 +5549,8 @@ TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)
 	Player transitioningPlayer;
 
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(
-	                transitioningPlayer,
-	                transition)
+	    transitioningPlayer,
+	    transition)
 	                .has_value());
 	EXPECT_EQ(transitioningPlayer._pmode, PM_NEWLVL);
 	EXPECT_TRUE(transitioningPlayer._pLvlChanging);

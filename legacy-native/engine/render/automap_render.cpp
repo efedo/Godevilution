@@ -7,8 +7,8 @@
 
 #include <cstdint>
 
-#include "ui/automap.h"
 #include "engine/render/primitive_render.hpp"
+#include "ui/automap.h"
 
 namespace devilution {
 namespace {

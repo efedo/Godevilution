@@ -11,16 +11,16 @@
 #include <expected.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-#include "data/mpq_file.hpp"
+#include "application/game_mode.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
-#include "engine/random.hpp"
 #include "engine/audio/sound.h"
 #include "engine/audio/sound_defs.hpp"
 #include "engine/audio/sound_position.hpp"
-#include "application/game_mode.hpp"
-#include "persistence/options.h"
+#include "engine/random.hpp"
 #include "game/players/players.hpp"
+#include "persistence/options.h"
 #include "utils/is_of.hpp"
 
 namespace devilution {

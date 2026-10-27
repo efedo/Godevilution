@@ -23,8 +23,8 @@
 #include "game/items/items.hpp"
 #include "game/players/players.hpp"
 #include "tables/textdat.h"
-#include "utils/language.h"
 #include "utils/container/static_vector.hpp"
+#include "utils/language.h"
 #include "utils/string/str_cat.hpp"
 
 namespace devilution {

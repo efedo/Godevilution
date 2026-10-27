@@ -6,7 +6,6 @@
  * Interface for tick and frame timing.
  */
 
-
 #include <cstdint>
 
 namespace devilution {

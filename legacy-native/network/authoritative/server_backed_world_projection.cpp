@@ -66,12 +66,12 @@ bool IsInsideGeometry(const ProjectedLevelGeometrySnapshot &geometry, int32_t x,
 }
 
 bool IsNativeVisionVisible(
-	const ProjectedLevelGeometrySnapshot &geometry,
-	int32_t viewerX,
-	int32_t viewerY,
-	int32_t targetX,
-	int32_t targetY,
-	int32_t viewerLightRadius)
+    const ProjectedLevelGeometrySnapshot &geometry,
+    int32_t viewerX,
+    int32_t viewerY,
+    int32_t targetX,
+    int32_t targetY,
+    int32_t viewerLightRadius)
 {
 	// Match the Godot presentation boundary: geometry that carries neither
 	// transparency nor an additive vision layer retains legacy visibility.
@@ -110,32 +110,32 @@ bool IsAuthoritativeLevelVisible(uint32_t projectedLevelId, uint32_t activeLevel
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
-	std::vector<ProjectedMonsterSnapshot> monsters,
-	std::vector<ProjectedWorldItemSnapshot> worldItems,
-	std::vector<ProjectedObjectSnapshot> objects,
-	uint32_t levelId)
+    std::vector<ProjectedMonsterSnapshot> monsters,
+    std::vector<ProjectedWorldItemSnapshot> worldItems,
+    std::vector<ProjectedObjectSnapshot> objects,
+    uint32_t levelId)
 {
 	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), {}, {}, levelId, std::nullopt);
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
-	std::vector<ProjectedMonsterSnapshot> monsters,
-	std::vector<ProjectedWorldItemSnapshot> worldItems,
-	std::vector<ProjectedObjectSnapshot> objects,
-	std::vector<ProjectedProjectileSnapshot> projectiles,
-	uint32_t levelId)
+    std::vector<ProjectedMonsterSnapshot> monsters,
+    std::vector<ProjectedWorldItemSnapshot> worldItems,
+    std::vector<ProjectedObjectSnapshot> objects,
+    std::vector<ProjectedProjectileSnapshot> projectiles,
+    uint32_t levelId)
 {
 	return Apply(std::move(monsters), std::move(worldItems), std::move(objects), std::move(projectiles), {}, levelId, std::nullopt);
 }
 
 tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
-	std::vector<ProjectedMonsterSnapshot> monsters,
-	std::vector<ProjectedWorldItemSnapshot> worldItems,
-	std::vector<ProjectedObjectSnapshot> objects,
-	std::vector<ProjectedProjectileSnapshot> projectiles,
-	std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
-	uint32_t levelId,
-	std::optional<uint64_t> serverTick)
+    std::vector<ProjectedMonsterSnapshot> monsters,
+    std::vector<ProjectedWorldItemSnapshot> worldItems,
+    std::vector<ProjectedObjectSnapshot> objects,
+    std::vector<ProjectedProjectileSnapshot> projectiles,
+    std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
+    uint32_t levelId,
+    std::optional<uint64_t> serverTick)
 {
 	// This boundary is also used by compatibility callers that do not pass
 	// through the protocol-session validators. Keep the structural invariants
@@ -144,8 +144,9 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		return left.levelId < right.levelId;
 	});
 	if (std::adjacent_find(levelGeometry.begin(), levelGeometry.end(), [](const auto &left, const auto &right) {
-			return left.levelId == right.levelId;
-		}) != levelGeometry.end()) {
+		    return left.levelId == right.levelId;
+	    })
+	    != levelGeometry.end()) {
 		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
 	}
 	for (const auto &geometry : levelGeometry) {
@@ -184,7 +185,8 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			continue;
 		const auto cell = static_cast<size_t>(object.positionY) * geometry->width + object.positionX;
 		const auto &door = *object.cathedralDoor;
-		const auto expected = door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7 : 8;
+		const auto expected = door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7
+		                                                                         : 8;
 		if (geometry->nativeSpecialLayer[cell] != expected)
 			return tl::make_unexpected("Authoritative Cathedral door conflicts with its projected native special layer.");
 	}
@@ -246,14 +248,14 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 				return tl::make_unexpected("Authoritative moving monster projection must target an adjacent tile.");
 		}
 		if ((!monster.moving
-		     && (monster.movementStartedTick != 0 || monster.movementEffectTick != 0))
+		        && (monster.movementStartedTick != 0 || monster.movementEffectTick != 0))
 		    || (monster.movementStartedTick != 0 || monster.movementEffectTick != 0)
 		        && monster.movementEffectTick <= monster.movementStartedTick)
 			return tl::make_unexpected("Authoritative monster projection contains invalid movement timing.");
 		if (monster.leaderRelation < 0 || monster.leaderRelation > MaximumMonsterLeaderRelation
 		    || (monster.leaderRelation == 0
-		        ? monster.leaderEntityId != 0
-		        : monster.leaderEntityId == 0)
+		            ? monster.leaderEntityId != 0
+		            : monster.leaderEntityId == 0)
 		    || (monster.leaderRelation != 0 && monster.isUnique)
 		    || monster.packSize < 0 || monster.packSize > MaximumNativeMonsterPackSize
 		    || monster.activeForTicks < 0 || monster.activeForTicks > MaximumNativeMonsterActiveTicks)
@@ -283,41 +285,42 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	if (hasDuplicateProjectedEntity(worldItems) || hasDuplicateProjectedEntity(objects) || hasDuplicateProjectedEntity(projectiles))
 		return tl::make_unexpected("Authoritative projection contains duplicate entity IDs across projected collections.");
 	if (std::any_of(worldItems.begin(), worldItems.end(), [&isInBounds](const auto &item) {
-			return !isInBounds(item.levelId, item.positionX, item.positionY);
-		})
+		    return !isInBounds(item.levelId, item.positionX, item.positionY);
+	    })
 	    || std::any_of(objects.begin(), objects.end(), [&isInBounds](const auto &object) {
-			return !isInBounds(object.levelId, object.positionX, object.positionY);
-		}))
+		       return !isInBounds(object.levelId, object.positionX, object.positionY);
+	       }))
 		return tl::make_unexpected("Authoritative projection entity is outside projected level geometry.");
 	if (std::any_of(projectiles.begin(), projectiles.end(), [&isValidProjectilePosition](const auto &projectile) {
-			return projectile.entityId == 0
-			    || projectile.sourceEntityId == 0
-			    || (projectile.spellId == 0
-			        && projectile.behavior != static_cast<int>(ProjectileBehavior::WeaponArrow)
-			        && projectile.behavior != static_cast<int>(ProjectileBehavior::MonsterArrow))
-			    || projectile.remainingTicks == 0
-			    || projectile.damage < 0
-			    || projectile.areaRadius < 0
-			    || projectile.damageType < 0 || projectile.damageType > MaximumProjectileDamageType
-			    || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
-			    || projectile.phase < 0 || projectile.phase > MaximumProjectilePhase
-			    || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
-			    || !isValidProjectilePosition(projectile, projectile.positionX, projectile.positionY)
-			    || !isValidProjectilePosition(projectile, projectile.targetX, projectile.targetY)
-			    || UsesDirectionalPresentation(projectile)
-			        && (projectile.originalDirection < 0 || projectile.originalDirection > MaximumNativeMonsterDirection)
-			    || !projectile.nativeMissileId.empty()
-			    && (projectile.behavior != static_cast<int>(ProjectileBehavior::MonsterMagic)
-			            || !IsValidNativeMissileIdentity(projectile.nativeMissileId));
-		})) {
+		    return projectile.entityId == 0
+		        || projectile.sourceEntityId == 0
+		        || (projectile.spellId == 0
+		            && projectile.behavior != static_cast<int>(ProjectileBehavior::WeaponArrow)
+		            && projectile.behavior != static_cast<int>(ProjectileBehavior::MonsterArrow))
+		        || projectile.remainingTicks == 0
+		        || projectile.damage < 0
+		        || projectile.areaRadius < 0
+		        || projectile.damageType < 0 || projectile.damageType > MaximumProjectileDamageType
+		        || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
+		        || projectile.phase < 0 || projectile.phase > MaximumProjectilePhase
+		        || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
+		        || !isValidProjectilePosition(projectile, projectile.positionX, projectile.positionY)
+		        || !isValidProjectilePosition(projectile, projectile.targetX, projectile.targetY)
+		        || UsesDirectionalPresentation(projectile)
+		        && (projectile.originalDirection < 0 || projectile.originalDirection > MaximumNativeMonsterDirection)
+		        || !projectile.nativeMissileId.empty()
+		        && (projectile.behavior != static_cast<int>(ProjectileBehavior::MonsterMagic)
+		            || !IsValidNativeMissileIdentity(projectile.nativeMissileId));
+	    })) {
 		return tl::make_unexpected("Authoritative projectile projection contains invalid identity, lifecycle, or presentation data.");
 	}
 	std::sort(projectiles.begin(), projectiles.end(), [](const auto &left, const auto &right) {
 		return left.entityId < right.entityId;
 	});
 	if (std::adjacent_find(projectiles.begin(), projectiles.end(), [](const auto &left, const auto &right) {
-			return left.entityId == right.entityId;
-		}) != projectiles.end()) {
+		    return left.entityId == right.entityId;
+	    })
+	    != projectiles.end()) {
 		return tl::make_unexpected("Authoritative projectile projection contains duplicate entity IDs.");
 	}
 	// Keep native presentation and interaction lookup order canonical. Godot
@@ -339,7 +342,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	levelGeometry_ = std::move(levelGeometry);
 	levelId_ = levelId;
 	serverTick_ = serverTick;
-	return { };
+	return {};
 }
 
 void ServerBackedWorldProjection::Clear() noexcept
@@ -370,7 +373,7 @@ std::optional<bool> ServerBackedWorldProjection::IsBlocked(int32_t positionX, in
 	const auto cell = positionY * geometry->width + positionX;
 	return std::find(geometry->blockedCells.begin(), geometry->blockedCells.end(), cell) != geometry->blockedCells.end()
 	    || std::find(geometry->staticObjectBlockedCells.begin(), geometry->staticObjectBlockedCells.end(), cell)
-	        != geometry->staticObjectBlockedCells.end();
+	    != geometry->staticObjectBlockedCells.end();
 }
 
 std::optional<bool> ServerBackedWorldProjection::IsMissileBlocked(int32_t positionX, int32_t positionY) const noexcept
@@ -397,11 +400,11 @@ std::optional<bool> ServerBackedWorldProjection::IsVisionBlocked(int32_t positio
 }
 
 std::optional<bool> ServerBackedWorldProjection::IsVisionVisibleFrom(
-	int32_t viewerX,
-	int32_t viewerY,
-	int32_t targetX,
-	int32_t targetY,
-	int32_t viewerLightRadius) const noexcept
+    int32_t viewerX,
+    int32_t viewerY,
+    int32_t targetX,
+    int32_t targetY,
+    int32_t viewerLightRadius) const noexcept
 {
 	const auto *geometry = CurrentLevelGeometry();
 	if (geometry == nullptr)
@@ -435,11 +438,11 @@ std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(int32_t positionX
 }
 
 std::optional<uint32_t> ServerBackedWorldProjection::MonsterAt(
-	int32_t positionX,
-	int32_t positionY,
-	int32_t viewerX,
-	int32_t viewerY,
-	int32_t viewerLightRadius) const noexcept
+    int32_t positionX,
+    int32_t positionY,
+    int32_t viewerX,
+    int32_t viewerY,
+    int32_t viewerLightRadius) const noexcept
 {
 	const auto levelId = levelId_;
 	const auto monster = std::find_if(monsters_.begin(), monsters_.end(), [positionX, positionY, levelId](const auto &candidate) {

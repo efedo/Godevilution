@@ -6,7 +6,6 @@
  * Interface for world tile type definitions.
  */
 
-
 #include <cstdint>
 
 #include "engine/math/point.hpp"

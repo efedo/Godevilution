@@ -35,13 +35,13 @@ void RepeatWalk(Player &player)
 	if (cursPosition == target)
 		return;
 
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 			LogError("Server-backed repeated walk-to-target failed: {}", result.error());
 		return;
 	}
-	#endif
+#endif
 	NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 }
 
@@ -95,18 +95,18 @@ void RepeatPlayerAction()
 	const bool rangedAttack = myPlayer.UsesRangedWeapon();
 	switch (LastPlayerAction) {
 	case PlayerActionType::Attack:
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed repeated cell attack failed: {}", result.error());
 			break;
 		}
-	#endif
+#endif
 		if (InDungeonBounds(cursPosition))
 			NetSendCmdLoc(MyPlayerId, true, rangedAttack ? CMD_RATTACKXY : CMD_SATTACKXY, cursPosition);
 		break;
 	case PlayerActionType::AttackMonsterTarget:
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (pcursmonst == -1)
 				return;
@@ -118,12 +118,12 @@ void RepeatPlayerAction()
 			}
 			return;
 		}
-	#endif
+#endif
 		if (pcursmonst != -1)
 			NetSendCmdParam1(true, rangedAttack ? CMD_RATTACKID : CMD_ATTACKID, pcursmonst);
 		break;
 	case PlayerActionType::AttackPlayerTarget:
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (PlayerUnderCursor == nullptr || myPlayer.friendlyMode)
 				return;
@@ -135,7 +135,7 @@ void RepeatPlayerAction()
 			}
 			return;
 		}
-	#endif
+#endif
 		if (PlayerUnderCursor != nullptr && !myPlayer.friendlyMode)
 			NetSendCmdParam1(true, rangedAttack ? CMD_RATTACKPID : CMD_ATTACKPID, PlayerUnderCursor->getId());
 		break;
@@ -154,7 +154,7 @@ void RepeatPlayerAction()
 			CheckPlrSpell(false);
 		break;
 	case PlayerActionType::OperateObject:
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (ObjectUnderCursor == nullptr || ObjectUnderCursor->isDoor())
 				return;
@@ -169,7 +169,7 @@ void RepeatPlayerAction()
 			}
 			return;
 		}
-	#endif
+#endif
 		if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->isDoor()) {
 			NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJXY, cursPosition);
 		}

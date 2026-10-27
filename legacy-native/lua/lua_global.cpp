@@ -4,7 +4,6 @@
  * Implementation of lua global.
  */
 
-
 #include "lua/lua_global.hpp"
 
 #include <algorithm>
@@ -32,6 +31,7 @@
 #include "application/fatal_error.h"
 #include "data/mod_manager.hpp"
 #include "engine/assets.hpp"
+#include "game/stores/stores.hpp"
 #include "lua/lua_event.hpp"
 #include "lua/modules/audio.hpp"
 #include "lua/modules/floatingnumbers.hpp"
@@ -44,7 +44,6 @@
 #include "lua/modules/system.hpp"
 #include "lua/modules/towners.hpp"
 #include "ui/player_messages.h"
-#include "game/stores/stores.hpp"
 #include "utils/console.h"
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
@@ -265,7 +264,6 @@ void LuaReloadActiveMods()
 	}
 
 	CurrentModManager.ReloadActiveModData();
-
 }
 
 void LuaInitialize()

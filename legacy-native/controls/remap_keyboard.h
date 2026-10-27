@@ -6,7 +6,6 @@
  * Interface for keyboard remapping.
  */
 
-
 #include <cstddef>
 
 #ifdef USE_SDL3

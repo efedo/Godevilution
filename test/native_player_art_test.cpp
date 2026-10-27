@@ -5,8 +5,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <mpqfs/mpqfs.h>
@@ -16,6 +16,7 @@
 #include "tables/playerdat.hpp"
 #include "utils/image/cl2_to_clx.hpp"
 #include "utils/paths.h"
+#include "utils/sdl/sdl_compat.h"
 
 namespace devilution {
 namespace {
@@ -36,8 +37,8 @@ void WriteNativePixels(std::ostream &out, ClxSprite sprite)
 	const int canvasWidth = sprite.width() + MaximumOpaqueSpill;
 	OwnedSurface first(canvasWidth, sprite.height());
 	OwnedSurface second(canvasWidth, sprite.height());
-	SDL_FillRect(first.surface, nullptr, 0xAB);
-	SDL_FillRect(second.surface, nullptr, 0xCD);
+	SDL_FillSurfaceRect(first.surface, nullptr, 0xAB);
+	SDL_FillSurfaceRect(second.surface, nullptr, 0xCD);
 	ClxDraw(first, { 0, static_cast<int>(sprite.height()) - 1 }, sprite);
 	ClxDraw(second, { 0, static_cast<int>(sprite.height()) - 1 }, sprite);
 	int footprintWidth = sprite.width();
@@ -203,7 +204,7 @@ TEST(NativePlayerArtTest, CaptureOriginalBaseClassClips)
 	// Require the playable starter families in both contexts, plus unarmed
 	// death. Other available equipment variants are all exported above.
 	for (const auto &[classPath, prefix] : std::array<std::pair<const char *, const char *>, 3> {
-		     { { "warrior", "wld" }, { "rogue", "rlb" }, { "sorceror", "slt" } } }) {
+	         { { "warrior", "wld" }, { "rogue", "rlb" }, { "sorceror", "slt" } } }) {
 		for (const char *suffix : { "st", "wl", "as", "aw", "at", "ht", "lm", "fm", "qm" }) {
 			const auto base = std::string("plrgfx/") + classPath + "/" + prefix + "/" + prefix + suffix;
 			EXPECT_TRUE(std::filesystem::exists(root / (base + ".cl2.native.bin"))) << base;

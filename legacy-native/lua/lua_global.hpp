@@ -6,7 +6,6 @@
  * Interface for lua global.
  */
 
-
 #include <string_view>
 
 #include <expected.hpp>

@@ -6,7 +6,6 @@
  * Interface for in.
  */
 
-
 #include <cstdint>
 #include_next <netinet/in.h>
 

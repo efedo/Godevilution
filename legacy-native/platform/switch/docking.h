@@ -6,7 +6,6 @@
  * Interface for docking.
  */
 
-
 namespace devilution {
 
 void HandleDocking();

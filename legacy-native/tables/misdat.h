@@ -102,8 +102,8 @@ enum class MissileGraphicID : uint8_t {
 
 // Specifies what if and how movement distribution is applied
 enum class MissileMovementDistribution : uint8_t {
-	Disabled, // No movement distribution is calculated. Normally this means the missile doesn't move at all.
-	Blockable, // The missile moves and if it hits an enemy it stops (for example firebolt)
+	Disabled,    // No movement distribution is calculated. Normally this means the missile doesn't move at all.
+	Blockable,   // The missile moves and if it hits an enemy it stops (for example firebolt)
 	Unblockable, // The missile moves and even if it hits an enemy it keeps moving (for example flame wave)
 };
 
@@ -165,7 +165,7 @@ struct MissileData {
 	ProcessFn processFn;
 
 	SfxID castSound; // Sound emitted when cast.
-	SfxID hitSound; // Sound emitted on impact.
+	SfxID hitSound;  // Sound emitted on impact.
 	MissileGraphicID graphic;
 	MissileDataFlags flags;
 	MissileMovementDistribution movementDistribution;

@@ -136,8 +136,8 @@ public:
 	    , savedPlayers_(std::move(Players))
 	    , savedMyPlayer_(MyPlayer)
 	    , savedMyPlayerId_(MyPlayerId)
-	    , savedQuests_{}
-	    , savedLevelSeeds_{}
+	    , savedQuests_ {}
+	    , savedLevelSeeds_ {}
 	    , savedGameInitInfo_(sgGameInitInfo)
 	    , savedSpawn_(gbIsSpawn)
 	    , savedMultiplayer_(gbIsMultiplayer)
@@ -146,7 +146,7 @@ public:
 	    , savedAssetsPath_(paths::AssetsPath())
 	    , savedOverridePaths_(OverridePaths)
 	    , savedArchives_(std::move(MpqArchives))
-	    , savedTriggers_{}
+	    , savedTriggers_ {}
 	{
 		std::copy(std::begin(Quests), std::end(Quests), savedQuests_.begin());
 		std::copy(std::begin(LevelSeeds), std::end(LevelSeeds), savedLevelSeeds_.begin());
@@ -318,7 +318,7 @@ void CaptureGeometry(GenerationSnapshot &snapshot)
 	for (int index = 0; index < themeCount(); ++index) {
 		const auto &room = themeLocations()[index].room;
 		snapshot.themes.push_back({ room.position.x, room.position.y,
-			room.size.width, room.size.height, themeLocations()[index].ttval });
+		    room.size.width, room.size.height, themeLocations()[index].ttval });
 	}
 }
 
@@ -333,7 +333,7 @@ void CaptureTriggers(GenerationSnapshot &snapshot)
 	for (int index = 0; index < numTriggers(); ++index) {
 		const TriggerStruct &trigger = trigs[index];
 		snapshot.triggers.push_back({ trigger.position.x, trigger.position.y,
-			static_cast<int>(trigger._tmsg), trigger._tlvl });
+		    static_cast<int>(trigger._tmsg), trigger._tlvl });
 	}
 }
 
@@ -550,88 +550,88 @@ std::vector<CaseSpec> BuildCases()
 
 TEST(NativeCatacombsGenerationTest, ScopedGuardRestoresPriorLevelAndGlobalState)
 {
-    // The outer guard keeps this MPQ-free restoration probe independent from
-    // the remaining native suite. Only the inner guard is under assertion.
-    NativeCatacombsStateGuard outer;
-    const LevelId priorId { .levelNum = 7, .type = DTYPE_CATACOMBS };
-    currentLevel().setId(priorId);
-    Players.emplace_back();
-    MyPlayer = &Players.back();
-    MyPlayerId = 1;
-    Player *const priorPlayer = MyPlayer;
-    LevelSeeds[5] = 0U;
-    LevelSeeds[6] = 0x12345678U;
-    Quests[Q_BLIND]._qactive = QUEST_DONE;
-    gbIsSpawn = true;
-    gbIsMultiplayer = true;
-    gbIsHellfire = true;
-    sgGameInitInfo.fullQuests = 0;
-    sgGameInitInfo.nDifficulty = DIFF_HELL;
-    SetRndSeed(0xFEDCBA98U);
-    paths::SetAssetsPath("catacombs-guard-assets/");
-    const std::string priorAssetsPath = paths::AssetsPath();
-    OverridePaths = { "catacombs-guard-override/" };
-    viewPosition() = { 29, 31 };
-    minimumDungeonPosition() = { 17, 19 };
-    maximumDungeonPosition() = { 91, 93 };
-    megaTileAt(2, 3).setCurrent(158);
-    megaTileAt(2, 3).setReplacement(159);
-    protectedTiles().set(2, 3);
-    dungeonMask().set(4, 5);
-    tileAt(11, 12).setPiece(177);
-    tileAt(11, 12).setSpecial(5);
-    tileAt(11, 12).setTransVal(-7);
-    tileAt(11, 12).addFlags(DungeonFlag::Populated);
-    themeCount() = 1;
-    themeLocations()[0] = { { { 4, 5 }, { 6, 7 } }, 8 };
-    nextTransparencyValue() = -7;
-    trigFlag() = true;
-    numTriggers() = 1;
-    trigs[0] = {};
-    trigs[0].position = { 43, 47 };
-    trigs[0]._tmsg = WM_DIABTWARPUP;
-    trigs[0]._tlvl = 5;
-    GenerationSnapshot before;
-    CaptureGeometry(before);
-    {
-        NativeCatacombsStateGuard inner;
-        currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
-        ResetGenerationState({ 101, 103 });
-        LevelSeeds[5] = std::nullopt;
-        LevelSeeds[6] = 9U;
-        SetRndSeed(1);
-        paths::SetAssetsPath("changed-catacombs-assets/");
-        OverridePaths = { "changed-catacombs-override/" };
-        trigs[0] = {};
-    }
-    GenerationSnapshot after;
-    CaptureGeometry(after);
-    ExpectSameGenerationExceptView(before, after);
-    EXPECT_EQ(before.view, after.view);
-    EXPECT_EQ(currentLevel().id(), priorId);
-    EXPECT_EQ(MyPlayer, priorPlayer);
-    EXPECT_EQ(MyPlayer, &Players.back());
-    EXPECT_EQ(MyPlayerId, 1);
-    EXPECT_EQ(Players.size(), 2U);
-    ASSERT_TRUE(LevelSeeds[5].has_value());
-    EXPECT_EQ(*LevelSeeds[5], 0U);
-    EXPECT_EQ(LevelSeeds[6], 0x12345678U);
-    EXPECT_EQ(Quests[Q_BLIND]._qactive, QUEST_DONE);
-    EXPECT_TRUE(gbIsSpawn);
-    EXPECT_TRUE(gbIsMultiplayer);
-    EXPECT_TRUE(gbIsHellfire);
-    EXPECT_EQ(sgGameInitInfo.fullQuests, 0);
-    EXPECT_EQ(sgGameInitInfo.nDifficulty, DIFF_HELL);
-    EXPECT_EQ(GetLCGEngineState(), 0xFEDCBA98U);
-    EXPECT_EQ(paths::AssetsPath(), priorAssetsPath);
-    EXPECT_EQ(OverridePaths, (std::vector<std::string> { "catacombs-guard-override/" }));
-    EXPECT_TRUE(MpqArchives.empty());
-    EXPECT_TRUE(dungeonMask().test(4, 5));
-    EXPECT_TRUE(trigFlag());
-    EXPECT_EQ(numTriggers(), 1);
-    EXPECT_EQ(trigs[0].position, (Point { 43, 47 }));
-    EXPECT_EQ(trigs[0]._tmsg, WM_DIABTWARPUP);
-    EXPECT_EQ(trigs[0]._tlvl, 5);
+	// The outer guard keeps this MPQ-free restoration probe independent from
+	// the remaining native suite. Only the inner guard is under assertion.
+	NativeCatacombsStateGuard outer;
+	const LevelId priorId { .levelNum = 7, .type = DTYPE_CATACOMBS };
+	currentLevel().setId(priorId);
+	Players.emplace_back();
+	MyPlayer = &Players.back();
+	MyPlayerId = 1;
+	Player *const priorPlayer = MyPlayer;
+	LevelSeeds[5] = 0U;
+	LevelSeeds[6] = 0x12345678U;
+	Quests[Q_BLIND]._qactive = QUEST_DONE;
+	gbIsSpawn = true;
+	gbIsMultiplayer = true;
+	gbIsHellfire = true;
+	sgGameInitInfo.fullQuests = 0;
+	sgGameInitInfo.nDifficulty = DIFF_HELL;
+	SetRndSeed(0xFEDCBA98U);
+	paths::SetAssetsPath("catacombs-guard-assets/");
+	const std::string priorAssetsPath = paths::AssetsPath();
+	OverridePaths = { "catacombs-guard-override/" };
+	viewPosition() = { 29, 31 };
+	minimumDungeonPosition() = { 17, 19 };
+	maximumDungeonPosition() = { 91, 93 };
+	megaTileAt(2, 3).setCurrent(158);
+	megaTileAt(2, 3).setReplacement(159);
+	protectedTiles().set(2, 3);
+	dungeonMask().set(4, 5);
+	tileAt(11, 12).setPiece(177);
+	tileAt(11, 12).setSpecial(5);
+	tileAt(11, 12).setTransVal(-7);
+	tileAt(11, 12).addFlags(DungeonFlag::Populated);
+	themeCount() = 1;
+	themeLocations()[0] = { { { 4, 5 }, { 6, 7 } }, 8 };
+	nextTransparencyValue() = -7;
+	trigFlag() = true;
+	numTriggers() = 1;
+	trigs[0] = {};
+	trigs[0].position = { 43, 47 };
+	trigs[0]._tmsg = WM_DIABTWARPUP;
+	trigs[0]._tlvl = 5;
+	GenerationSnapshot before;
+	CaptureGeometry(before);
+	{
+		NativeCatacombsStateGuard inner;
+		currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
+		ResetGenerationState({ 101, 103 });
+		LevelSeeds[5] = std::nullopt;
+		LevelSeeds[6] = 9U;
+		SetRndSeed(1);
+		paths::SetAssetsPath("changed-catacombs-assets/");
+		OverridePaths = { "changed-catacombs-override/" };
+		trigs[0] = {};
+	}
+	GenerationSnapshot after;
+	CaptureGeometry(after);
+	ExpectSameGenerationExceptView(before, after);
+	EXPECT_EQ(before.view, after.view);
+	EXPECT_EQ(currentLevel().id(), priorId);
+	EXPECT_EQ(MyPlayer, priorPlayer);
+	EXPECT_EQ(MyPlayer, &Players.back());
+	EXPECT_EQ(MyPlayerId, 1);
+	EXPECT_EQ(Players.size(), 2U);
+	ASSERT_TRUE(LevelSeeds[5].has_value());
+	EXPECT_EQ(*LevelSeeds[5], 0U);
+	EXPECT_EQ(LevelSeeds[6], 0x12345678U);
+	EXPECT_EQ(Quests[Q_BLIND]._qactive, QUEST_DONE);
+	EXPECT_TRUE(gbIsSpawn);
+	EXPECT_TRUE(gbIsMultiplayer);
+	EXPECT_TRUE(gbIsHellfire);
+	EXPECT_EQ(sgGameInitInfo.fullQuests, 0);
+	EXPECT_EQ(sgGameInitInfo.nDifficulty, DIFF_HELL);
+	EXPECT_EQ(GetLCGEngineState(), 0xFEDCBA98U);
+	EXPECT_EQ(paths::AssetsPath(), priorAssetsPath);
+	EXPECT_EQ(OverridePaths, (std::vector<std::string> { "catacombs-guard-override/" }));
+	EXPECT_TRUE(MpqArchives.empty());
+	EXPECT_TRUE(dungeonMask().test(4, 5));
+	EXPECT_TRUE(trigFlag());
+	EXPECT_EQ(numTriggers(), 1);
+	EXPECT_EQ(trigs[0].position, (Point { 43, 47 }));
+	EXPECT_EQ(trigs[0]._tmsg, WM_DIABTWARPUP);
+	EXPECT_EQ(trigs[0]._tlvl, 5);
 }
 
 TEST(NativeCatacombsGenerationTest, CaptureQuestDisabledOriginalDiabloGeneration)

@@ -4,7 +4,6 @@
  * Implementation of sound sample wrapper.
  */
 
-
 #include "utils/soundsample.h"
 
 #include <chrono>

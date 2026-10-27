@@ -6,7 +6,6 @@
  * Interface for game selection screen.
  */
 
-
 #include "game/levels/dungeon_common.h"
 
 namespace devilution {

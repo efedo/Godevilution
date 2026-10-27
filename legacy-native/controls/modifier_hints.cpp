@@ -4,14 +4,11 @@
  * Implementation of modifier key hints.
  */
 
-
 #include "controls/modifier_hints.h"
 
 #include <cstddef>
 #include <cstdint>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/panel/control.hpp"
 #include "controls/controller_motion.h"
 #include "controls/game_controls.h"
 #include "controls/player_controls.h"
@@ -20,6 +17,8 @@
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
 #include "persistence/options.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/panel/control.hpp"
 #include "ui/panel/spell_book.hpp"
 #include "ui/panel/spell_icons.hpp"
 #include "utils/language.h"

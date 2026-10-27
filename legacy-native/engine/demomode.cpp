@@ -4,7 +4,6 @@
  * Implementation of demo recording and playback.
  */
 
-
 #include "engine/demomode.h"
 
 #include <cstdint>
@@ -24,16 +23,16 @@
 #endif
 #endif
 
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/sdl_events.hpp"
-#include "application/game_mode.hpp"
-#include "ui/menu_framework.h"
-#include "application/headless_mode.hpp"
-#include "ui/menu.h"
 #include "network/protocol/network_ticks.h"
 #include "persistence/options.h"
 #include "persistence/save_file.h"
+#include "ui/menu.h"
+#include "ui/menu_framework.h"
 #include "utils/console.h"
 #include "utils/display.h"
 #include "utils/endian/endian_stream.hpp"

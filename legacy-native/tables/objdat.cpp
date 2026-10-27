@@ -12,10 +12,10 @@
 #include <ankerl/unordered_dense.h>
 #include <expected.hpp>
 
-#include "engine/cursor.h"
-#include "data/mpq_file.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
+#include "engine/cursor.h"
 
 namespace devilution {
 
@@ -171,8 +171,8 @@ const _object_id ObjTypeConv[] = {
 };
 
 static_assert(
-	std::size(ObjTypeConv) == static_cast<size_t>(DUN_OBJECT_ID_LAST) + 1,
-	"DUN_OBJECT_ID_LAST must match the native ObjTypeConv table.");
+    std::size(ObjTypeConv) == static_cast<size_t>(DUN_OBJECT_ID_LAST) + 1,
+    "DUN_OBJECT_ID_LAST must match the native ObjTypeConv table.");
 
 /** Contains the data related to each object ID. */
 std::vector<ObjectData> AllObjects;

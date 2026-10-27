@@ -6,11 +6,10 @@
  * Interface for backbuffer state management.
  */
 
-
 #include <cstdint>
 
-#include "engine/math/rectangle.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/rectangle.hpp"
 
 namespace devilution {
 

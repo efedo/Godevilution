@@ -5,7 +5,6 @@
  * Interface for towners.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

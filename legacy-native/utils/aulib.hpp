@@ -5,7 +5,6 @@
  * Interface for audio library wrapper.
  */
 
-
 #ifndef NOSOUND
 
 #include <memory>

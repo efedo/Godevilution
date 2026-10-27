@@ -9,11 +9,11 @@
 
 #include <fmt/core.h>
 
-#include "engine/path.h"
 #include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/path.h"
 #include "engine/random.hpp"
-#include "game/items/items.hpp"
 #include "game/items/item_pool.hpp"
+#include "game/items/items.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/triggers.h"
 #include "game/monsters/monsters.hpp"

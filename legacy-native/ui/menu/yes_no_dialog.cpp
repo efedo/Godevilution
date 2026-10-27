@@ -4,7 +4,6 @@
  * Implementation of yes/no confirmation dialog.
  */
 
-
 #include "yes_no_dialog.h"
 
 #include <cstddef>
@@ -18,14 +17,14 @@
 #include <SDL.h>
 #endif
 
+#include "engine/math/point.hpp"
+#include "engine/render/text_render.hpp"
 #include "ui/menu/diabloui.h"
 #include "ui/menu/ui_flags.hpp"
 #include "ui/menu/ui_item.h"
-#include "engine/math/point.hpp"
-#include "engine/render/text_render.hpp"
 #include "utils/language.h"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 namespace {

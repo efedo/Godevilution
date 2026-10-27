@@ -6,7 +6,6 @@
  * Interface for Storm video API compatibility.
  */
 
-
 namespace devilution {
 
 bool SVidPlayBegin(const char *filename, int flags);

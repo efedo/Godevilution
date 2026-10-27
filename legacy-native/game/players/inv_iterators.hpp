@@ -4,7 +4,6 @@
  * Interface for inv iterators.
  */
 
-
 #pragma once
 
 #include <cstddef>

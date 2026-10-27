@@ -6,7 +6,6 @@
  * Interface for SDL thread wrapper.
  */
 
-
 #include <memory>
 
 #ifdef USE_SDL3

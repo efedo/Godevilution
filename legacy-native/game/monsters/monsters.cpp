@@ -39,61 +39,61 @@
 #include <expected.hpp>
 #include <fmt/core.h>
 
-#include "ui/automap.h"
-#include "ui/panel/control.hpp"
+#include "application/diablo.h"
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
+#include "engine/animationinfo.h"
+#include "engine/audio/effects.h"
+#include "engine/audio/sound.h"
+#include "engine/audio/sound_position.hpp"
 #include "engine/crawl.hpp"
 #include "engine/cursor.h"
-#include "game/monsters/monster_corpses.hpp"
-#include "application/diablo.h"
-#include "network/transport/leaveinfo.hpp"
-#include "engine/audio/effects.h"
-#include "engine/animationinfo.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/math/direction.hpp"
+#include "engine/lighting.h"
 #include "engine/lighting_defs.hpp"
 #include "engine/load/load_cl2.hpp"
 #include "engine/load/load_file.hpp"
-#include "engine/path.h"
+#include "engine/math/direction.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/math/world_tile.hpp"
+#include "engine/path.h"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
-#include "engine/audio/sound.h"
-#include "engine/audio/sound_position.hpp"
-#include "engine/math/world_tile.hpp"
 #include "function_ref.hpp"
-#include "application/game_mode.hpp"
-#include "application/headless_mode.hpp"
-#include "game/players/inventory.hpp"
+#include "game/events/event_bus.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/crypt.h"
-#include "game/levels/level_l4.h"
 #include "game/levels/dun_tile.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/dungeon_common_defs.hpp"
+#include "game/levels/level_l4.h"
 #include "game/levels/themes.h"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/triggers.h"
-#include "engine/lighting.h"
-#include "game/events/event_bus.hpp"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
-#include "ui/movie.h"
+#include "game/monsters/monster_corpses.hpp"
+#include "game/players/inventory.hpp"
+#include "network/protocol/legacy_combat_policy.hpp"
+#include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
-#include "network/protocol/legacy_combat_policy.hpp"
-#include "network/protocol/legacy_world_state_policy.hpp"
-#include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/transport/leaveinfo.hpp"
+#include "ui/automap.h"
+#include "ui/minitext.h"
+#include "ui/movie.h"
+#include "ui/panel/control.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
+#include "engine/audio/sound_effect_enums.h"
 #include "game/objects/objects.hpp"
-#include "persistence/options.h"
 #include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
-#include "engine/audio/sound_effect_enums.h"
 #include "network/storm/storm_net.hpp"
+#include "persistence/options.h"
 #include "tables/itemdat.h"
 #include "tables/misdat.h"
 #include "tables/monstdat.h"
@@ -103,15 +103,15 @@
 #include "tables/textdat.h"
 #include "utils/algorithm/container.hpp"
 #include "utils/attributes.h"
-#include "utils/image/cl2_to_clx.hpp"
+#include "utils/container/static_vector.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/enum_traits.h"
 #include "utils/file/file_name_generator.hpp"
+#include "utils/image/cl2_to_clx.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/pointer_value_union.hpp"
-#include "utils/container/static_vector.hpp"
 #include "utils/status_macros.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/timer.hpp"
@@ -314,11 +314,11 @@ void InitMonster(Monster &monster, Direction rd, size_t typeIndex, Point positio
 bool CanPlaceMonster(Point position)
 {
 	return InDungeonBounds(position)
-		&& tileAt(position).monster() == 0
-		&& tileAt(position).player() == 0
-		&& !IsTileVisible(position)
-		&& !TileContainsSetPiece(position)
-		&& !IsTileOccupied(position);
+	    && tileAt(position).monster() == 0
+	    && tileAt(position).player() == 0
+	    && !IsTileVisible(position)
+	    && !TileContainsSetPiece(position)
+	    && !IsTileOccupied(position);
 }
 
 void PlaceMonster(size_t i, size_t typeIndex, Point position)
@@ -1533,10 +1533,10 @@ void MonsterDeath(Monster &monster)
 		if (monster.isUnique())
 			AddCorpse(monster.position.tile, monster.corpseId, monster.direction);
 		else
-				AddCorpse(monster.position.tile, monster.type().corpseId, monster.direction);
+			AddCorpse(monster.position.tile, monster.type().corpseId, monster.direction);
 
-			tileAt(monster.position.tile).setMonster(0);
-			monster.isInvalid = true;
+		tileAt(monster.position.tile).setMonster(0);
+		monster.isInvalid = true;
 
 		monster.updateRelations();
 	}
@@ -3101,46 +3101,46 @@ std::unordered_map<MonsterAIID, AiFunc> AiRegistry;
 void RegisterAiFunctions()
 {
 	auto &reg = AiRegistry;
-	reg[MonsterAIID::Zombie]          = &ZombieAi;
-	reg[MonsterAIID::Fat]             = &OverlordAi;
-	reg[MonsterAIID::SkeletonMelee]   = &SkeletonAi;
-	reg[MonsterAIID::SkeletonRanged]  = &SkeletonBowAi;
-	reg[MonsterAIID::Scavenger]       = &ScavengerAi;
-	reg[MonsterAIID::Rhino]           = &RhinoAi;
-	reg[MonsterAIID::GoatMelee]       = &AiAvoidance;
-	reg[MonsterAIID::GoatRanged]      = &AiRanged;
-	reg[MonsterAIID::Fallen]          = &FallenAi;
-	reg[MonsterAIID::Magma]           = &AiRangedAvoidance;
-	reg[MonsterAIID::SkeletonKing]    = &LeoricAi;
-	reg[MonsterAIID::Bat]             = &BatAi;
-	reg[MonsterAIID::Gargoyle]        = &GargoyleAi;
-	reg[MonsterAIID::Butcher]         = &ButcherAi;
-	reg[MonsterAIID::Succubus]        = &AiRanged;
-	reg[MonsterAIID::Sneak]           = &SneakAi;
-	reg[MonsterAIID::Storm]           = &AiRangedAvoidance;
-	reg[MonsterAIID::FireMan]         = nullptr;
-	reg[MonsterAIID::Gharbad]         = &GharbadAi;
-	reg[MonsterAIID::Acid]            = &AiRangedAvoidance;
-	reg[MonsterAIID::AcidUnique]      = &AiRanged;
-	reg[MonsterAIID::Golem]           = &GolumAi;
-	reg[MonsterAIID::Zhar]            = &ZharAi;
-	reg[MonsterAIID::Snotspill]       = &SnotSpilAi;
-	reg[MonsterAIID::Snake]           = &SnakeAi;
-	reg[MonsterAIID::Counselor]       = &CounselorAi;
-	reg[MonsterAIID::Mega]            = &MegaAi;
-	reg[MonsterAIID::Diablo]          = &AiRangedAvoidance;
-	reg[MonsterAIID::Lazarus]         = &LazarusAi;
+	reg[MonsterAIID::Zombie] = &ZombieAi;
+	reg[MonsterAIID::Fat] = &OverlordAi;
+	reg[MonsterAIID::SkeletonMelee] = &SkeletonAi;
+	reg[MonsterAIID::SkeletonRanged] = &SkeletonBowAi;
+	reg[MonsterAIID::Scavenger] = &ScavengerAi;
+	reg[MonsterAIID::Rhino] = &RhinoAi;
+	reg[MonsterAIID::GoatMelee] = &AiAvoidance;
+	reg[MonsterAIID::GoatRanged] = &AiRanged;
+	reg[MonsterAIID::Fallen] = &FallenAi;
+	reg[MonsterAIID::Magma] = &AiRangedAvoidance;
+	reg[MonsterAIID::SkeletonKing] = &LeoricAi;
+	reg[MonsterAIID::Bat] = &BatAi;
+	reg[MonsterAIID::Gargoyle] = &GargoyleAi;
+	reg[MonsterAIID::Butcher] = &ButcherAi;
+	reg[MonsterAIID::Succubus] = &AiRanged;
+	reg[MonsterAIID::Sneak] = &SneakAi;
+	reg[MonsterAIID::Storm] = &AiRangedAvoidance;
+	reg[MonsterAIID::FireMan] = nullptr;
+	reg[MonsterAIID::Gharbad] = &GharbadAi;
+	reg[MonsterAIID::Acid] = &AiRangedAvoidance;
+	reg[MonsterAIID::AcidUnique] = &AiRanged;
+	reg[MonsterAIID::Golem] = &GolumAi;
+	reg[MonsterAIID::Zhar] = &ZharAi;
+	reg[MonsterAIID::Snotspill] = &SnotSpilAi;
+	reg[MonsterAIID::Snake] = &SnakeAi;
+	reg[MonsterAIID::Counselor] = &CounselorAi;
+	reg[MonsterAIID::Mega] = &MegaAi;
+	reg[MonsterAIID::Diablo] = &AiRangedAvoidance;
+	reg[MonsterAIID::Lazarus] = &LazarusAi;
 	reg[MonsterAIID::LazarusSuccubus] = &LazarusMinionAi;
-	reg[MonsterAIID::Lachdanan]       = &LachdananAi;
-	reg[MonsterAIID::Warlord]         = &WarlordAi;
-	reg[MonsterAIID::FireBat]         = &AiRanged;
-	reg[MonsterAIID::Torchant]        = &AiRanged;
-	reg[MonsterAIID::HorkDemon]       = &HorkDemonAi;
-	reg[MonsterAIID::Lich]            = &AiRanged;
-	reg[MonsterAIID::ArchLich]        = &AiRanged;
-	reg[MonsterAIID::Psychorb]        = &AiRanged;
-	reg[MonsterAIID::Necromorb]       = &AiRanged;
-	reg[MonsterAIID::BoneDemon]       = &AiRangedAvoidance;
+	reg[MonsterAIID::Lachdanan] = &LachdananAi;
+	reg[MonsterAIID::Warlord] = &WarlordAi;
+	reg[MonsterAIID::FireBat] = &AiRanged;
+	reg[MonsterAIID::Torchant] = &AiRanged;
+	reg[MonsterAIID::HorkDemon] = &HorkDemonAi;
+	reg[MonsterAIID::Lich] = &AiRanged;
+	reg[MonsterAIID::ArchLich] = &AiRanged;
+	reg[MonsterAIID::Psychorb] = &AiRanged;
+	reg[MonsterAIID::Necromorb] = &AiRanged;
+	reg[MonsterAIID::BoneDemon] = &AiRangedAvoidance;
 }
 
 bool IsRelativeMoveOK(const Monster &monster, Point position, Direction mdir)
@@ -3265,10 +3265,10 @@ MonsterSpritesData LoadMonsterSpritesData(const MonsterData &monsterData)
 
 	MonsterSpritesData result;
 	result.data = MultiFileLoader<MonsterSpritesData::MaxAnims> {}(
-		numAnims,
-		FileNameWithCharAffixGenerator({ "monsters\\", monsterData.spritePath() }, DEVILUTIONX_CL2_EXT, Animletter),
-		result.offsets.data(),
-		[&monsterData](size_t index) { return monsterData.hasAnim(index); });
+	    numAnims,
+	    FileNameWithCharAffixGenerator({ "monsters\\", monsterData.spritePath() }, DEVILUTIONX_CL2_EXT, Animletter),
+	    result.offsets.data(),
+	    [&monsterData](size_t index) { return monsterData.hasAnim(index); });
 
 #ifndef UNPACKED_MPQS
 	// Convert CL2 to CLX:
@@ -3281,7 +3281,7 @@ MonsterSpritesData LoadMonsterSpritesData(const MonsterData &monsterData)
 		const uint32_t end = result.offsets[j + 1];
 		clxData.emplace_back();
 		Cl2ToClx(reinterpret_cast<uint8_t *>(&result.data[begin]), end - begin,
-			PointerOrValue<uint16_t> { monsterData.width }, clxData.back());
+		    PointerOrValue<uint16_t> { monsterData.width }, clxData.back());
 		result.offsets[j] = static_cast<uint32_t>(accumulatedSize);
 		accumulatedSize += clxData.back().size();
 		++j;

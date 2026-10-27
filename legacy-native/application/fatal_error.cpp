@@ -22,9 +22,9 @@
 #include <fmt/format.h>
 
 #include "application/diablo.h"
-#include "network/transport/leaveinfo.hpp"
 #include "network/protocol/multi.h"
 #include "network/storm/storm_net.hpp"
+#include "network/transport/leaveinfo.hpp"
 #include "utils/language.h"
 #include "utils/sdl/sdl_thread.h"
 #include "utils/string/str_cat.hpp"

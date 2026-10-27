@@ -4,7 +4,6 @@
  * Implementation of axis-to-direction mapping.
  */
 
-
 #include "axis_direction.h"
 
 #ifdef USE_SDL3

@@ -5,12 +5,12 @@
  */
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
-#include "engine/gfx/surface.hpp"
 #include "game/levels/dungeon_common.h"
 #include "utils/attributes.h"
 

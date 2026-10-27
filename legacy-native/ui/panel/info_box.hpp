@@ -4,7 +4,6 @@
  * Interface for information box.
  */
 
-
 #pragma once
 
 #include "engine/gfx/clx_sprite.hpp"

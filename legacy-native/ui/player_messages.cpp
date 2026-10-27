@@ -17,12 +17,12 @@
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
 #include "game/players/inventory.hpp"
 #include "qol/chatlog.h"
 #include "qol/stash.h"
+#include "ui/panel/control.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/language.h"
 #include "utils/string/utf8.hpp"

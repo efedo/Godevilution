@@ -6,7 +6,6 @@
  * Deterministic replay primitives.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>

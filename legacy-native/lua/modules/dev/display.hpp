@@ -5,7 +5,6 @@
  * Interface for display and window management.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

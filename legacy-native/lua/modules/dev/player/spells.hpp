@@ -5,7 +5,6 @@
  * Interface for spells.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

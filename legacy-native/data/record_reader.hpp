@@ -4,7 +4,6 @@
  * Interface for record reading from data files.
  */
 
-
 #pragma once
 
 #include <array>
@@ -14,8 +13,8 @@
 #include <expected.hpp>
 #include <function_ref.hpp>
 
-#include "data/mpq_file.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 
 namespace devilution {
 

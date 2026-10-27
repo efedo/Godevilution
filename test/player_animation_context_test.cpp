@@ -1,5 +1,5 @@
-#include <array>
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
@@ -108,7 +108,8 @@ protected:
 		// The source fallback supplies text resources only, never MPQ discovery.
 		const auto source = std::filesystem::path(GODEVILUTION_CONTEXT_SOURCE_ROOT);
 		const auto assets = std::filesystem::is_regular_file(std::filesystem::path(previousAssets_) / "txtdata/classes/classdat.tsv")
-			? std::filesystem::path(previousAssets_) : source / "assets";
+		    ? std::filesystem::path(previousAssets_)
+		    : source / "assets";
 		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/classes/classdat.tsv"));
 		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/spells/spelldat.tsv"));
 		paths::SetAssetsPath(assets.string() + "/");
@@ -196,8 +197,8 @@ TEST_F(NativePlayerAnimationContext, SpellGraphicsUseRawMagicTypeIncludingNull)
 		for (size_t spell = 0; spell < SpellsData.size(); ++spell) {
 			player.executedSpell.spellId = static_cast<SpellID>(spell);
 			const auto type = SpellsData[spell].type();
-			EXPECT_EQ(player.getGraphic(), type == MagicType::Fire ? player_graphic::Fire
-				: type == MagicType::Lightning ? player_graphic::Lightning : player_graphic::Magic);
+			EXPECT_EQ(player.getGraphic(), type == MagicType::Fire ? player_graphic::Fire : type == MagicType::Lightning ? player_graphic::Lightning
+			                                                                                                             : player_graphic::Magic);
 		}
 	}
 }
@@ -224,7 +225,7 @@ TEST_F(NativePlayerAnimationContext, CaptureContextOracle)
 		// Explicit native caller-policy inputs, frozen before any expected result.
 		const bool overrides = playerClass == static_cast<int>(HeroClass::Warrior) || playerClass == static_cast<int>(HeroClass::Barbarian);
 		inputs << ",\"DungeonBowIdleFrames\":" << (overrides ? 8 : 0)
-			<< ",\"ArmoredDeathFrames\":" << (overrides ? 15 : 0) << '}';
+		       << ",\"ArmoredDeathFrames\":" << (overrides ? 15 : 0) << '}';
 	}
 	inputs << "],\"Scenarios\":[";
 	for (size_t index = 0; index < scenarios.size(); ++index) {
@@ -232,7 +233,7 @@ TEST_F(NativePlayerAnimationContext, CaptureContextOracle)
 			inputs << ',';
 		const auto &scenario = scenarios[index];
 		inputs << "{\"Class\":" << scenario.playerClass << ",\"WeaponGraphic\":" << scenario.weapon
-			<< ",\"ArmorGraphic\":" << scenario.armor << ",\"Before\":";
+		       << ",\"ArmorGraphic\":" << scenario.armor << ",\"Before\":";
 		WriteArray(inputs, scenario.before);
 		inputs << ",\"TownSequence\":[";
 		for (size_t step = 0; step < 3; ++step) {
@@ -256,7 +257,7 @@ TEST_F(NativePlayerAnimationContext, CaptureContextOracle)
 	auto inputFingerprint = picosha2::hash256_hex_string(inputs.str());
 	std::transform(inputFingerprint.begin(), inputFingerprint.end(), inputFingerprint.begin(), [](unsigned char value) { return static_cast<char>(std::toupper(value)); });
 	output << "{\"FormatVersion\":1,\"InputFingerprint\":\"" << inputFingerprint
-		<< "\",\"Inputs\":" << inputs.str() << ",\"Expected\":{\"Scenarios\":[";
+	       << "\",\"Inputs\":" << inputs.str() << ",\"Expected\":{\"Scenarios\":[";
 	const auto randomBefore = GetLCGEngineState();
 	for (size_t index = 0; index < scenarios.size(); ++index) {
 		if (index != 0)

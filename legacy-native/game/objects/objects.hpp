@@ -123,11 +123,11 @@ struct Object {
 	void InitializeLoadedObject(WorldTileRectangle mapRange, int leverID);
 
 	[[nodiscard]] bool IsBreakable() const; // Is breakable (i.e. is an intact barrel or crux)?
-	[[nodiscard]] bool IsBroken() const; // Is broken?
-	[[nodiscard]] bool IsDisabled() const; // Returns true if the object is a harmful shrine and
-										   // the player has disabled permanent shrine effects.
+	[[nodiscard]] bool IsBroken() const;    // Is broken?
+	[[nodiscard]] bool IsDisabled() const;  // Returns true if the object is a harmful shrine and
+	                                        // the player has disabled permanent shrine effects.
 	[[nodiscard]] bool canInteractWith() const;
-	[[nodiscard]] bool IsBarrel() const; // Is barrel (or explosive barrel)?
+	[[nodiscard]] bool IsBarrel() const;    // Is barrel (or explosive barrel)?
 	[[nodiscard]] bool isExplosive() const; // Contains explosives or caustic material?
 
 	// Check if this object is any of the chest (or trapped chest) types (see _object_id).
@@ -136,12 +136,12 @@ struct Object {
 	// trap flag to differentiate between chests that are currently trapped and chests which have never been trapped.
 	[[nodiscard]] bool IsChest() const;
 
-	[[nodiscard]] bool IsTrappedChest() const; // Is a trapped chest (i.e. has an active trap)?
+	[[nodiscard]] bool IsTrappedChest() const;   // Is a trapped chest (i.e. has an active trap)?
 	[[nodiscard]] bool IsUntrappedChest() const; // Is an untrapped chest (i.e. has no active trap)?
-	[[nodiscard]] bool IsCrux() const; // Is a crucifix?
-	[[nodiscard]] bool isDoor() const; // Is a door?
-	[[nodiscard]] bool IsShrine() const; // Is a shrine?
-	[[nodiscard]] bool IsTrap() const; // Is a trap?
+	[[nodiscard]] bool IsCrux() const;           // Is a crucifix?
+	[[nodiscard]] bool isDoor() const;           // Is a door?
+	[[nodiscard]] bool IsShrine() const;         // Is a shrine?
+	[[nodiscard]] bool IsTrap() const;           // Is a trap?
 
 	[[nodiscard]] StringOrView name() const; // Name of the object as shown in the info box
 
@@ -155,7 +155,7 @@ extern DVL_API_FOR_TEST int *AvailableObjects;
 extern DVL_API_FOR_TEST int *ActiveObjects;
 extern DVL_API_FOR_TEST int &ActiveObjectCount;
 extern DVL_API_FOR_TEST bool LoadingMapObjects; // Indicates that objects are being loaded during gameplay and pre-calculated data should be updated
-extern int NaKrulTomeSequence; // Tracks progress through the tome sequence that spawns Na-Krul (see OperateNakrulBook())
+extern int NaKrulTomeSequence;                  // Tracks progress through the tome sequence that spawns Na-Krul (see OperateNakrulBook())
 
 // Find an object given a point in map coordinates
 // considerLargeObjects: Default behavior will return a pointer to a large object that covers this tile; set

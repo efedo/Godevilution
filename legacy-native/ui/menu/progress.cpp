@@ -4,7 +4,6 @@
  * Implementation of progress indicator.
  */
 
-
 #include <memory>
 #include <optional>
 #include <vector>
@@ -17,17 +16,17 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/button.h"
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_item.h"
 #include "controls/input.h"
 #include "controls/menu_controls.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/gfx/graphics_pipeline.h"
+#include "engine/gfx/surface.hpp"
 #include "engine/load/load_pcx.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/clx_render.hpp"
-#include "engine/gfx/surface.hpp"
+#include "ui/menu/button.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_item.h"
 #include "utils/display.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"

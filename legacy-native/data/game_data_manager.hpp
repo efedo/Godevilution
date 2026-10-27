@@ -6,7 +6,6 @@
  * Ordered game-data loading.
  */
 
-
 namespace devilution {
 
 /**

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "engine/math/point.hpp"
-#include "engine/rectangle.hpp"
+#include "engine/math/rectangle.hpp"
 
 namespace devilution {
 namespace {

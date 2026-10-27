@@ -4,7 +4,6 @@
  * Implementation of base network transport.
  */
 
-
 #include "network/transport/base.h"
 
 #include <algorithm>

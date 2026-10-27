@@ -6,7 +6,6 @@
  * Interface for control mode management.
  */
 
-
 #include <cstdint>
 
 #include "controls/controller_buttons.h"

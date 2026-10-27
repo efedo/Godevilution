@@ -14,9 +14,9 @@
 #include <gtest/gtest.h>
 
 #include "devilution.pb.h"
-#include "network/authoritative/server_backed_clock.hpp"
-#include "network/authoritative/server_backed_client.hpp"
 #include "network/authoritative/envelope_codec.hpp"
+#include "network/authoritative/server_backed_client.hpp"
+#include "network/authoritative/server_backed_clock.hpp"
 
 namespace devilution::authoritative {
 namespace {
@@ -61,21 +61,20 @@ bool ReadEnvelopeWithin(tcp::socket &socket, protocol::Envelope &envelope, Stead
 bool WriteEnvelopeWithin(tcp::socket &socket, const protocol::Envelope &envelope, SteadyClock::time_point deadline)
 {
 	const std::string payload = envelope.SerializeAsString();
-	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(
-	                                reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
-		.has_value();
+	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
+	    .has_value();
 }
 
 class PeerThread {
 public:
 	explicit PeerThread(std::function<void()> function)
-		: thread_([this, function = std::move(function)]() mutable {
-			try {
-				function();
-			} catch (...) {
-				error_ = std::current_exception();
-			}
-		})
+	    : thread_([this, function = std::move(function)]() mutable {
+		    try {
+			    function();
+		    } catch (...) {
+			    error_ = std::current_exception();
+		    }
+	    })
 	{
 	}
 
@@ -106,8 +105,7 @@ private:
 void WriteEnvelope(tcp::socket &socket, const protocol::Envelope &envelope)
 {
 	const std::string payload = envelope.SerializeAsString();
-	(void)EnvelopeCodec::Write(socket, std::span<const uint8_t>(
-	                                reinterpret_cast<const uint8_t *>(payload.data()), payload.size()));
+	(void)EnvelopeCodec::Write(socket, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()));
 }
 
 TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
@@ -845,7 +843,7 @@ TEST(ServerBackedClock, DelayedSnapshotsRetainTheProjectedTick)
 		clock.ObserveMonotonic(snapshotTick, 20, start + std::chrono::milliseconds(350));
 
 		EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(350)), 107U)
-			<< "delayed snapshot tick " << snapshotTick << " rewound the projection";
+		    << "delayed snapshot tick " << snapshotTick << " rewound the projection";
 	}
 }
 
@@ -927,8 +925,8 @@ TEST(ServerBackedClock, SaturatesAdditionAndElapsedTickMultiplication)
 	clock.ObserveMonotonic(0, std::numeric_limits<uint32_t>::max(), start);
 	const auto multiplicationOverflowTime = start + std::chrono::milliseconds(5'000'000'000LL);
 	EXPECT_EQ(
-		clock.CurrentTick(std::numeric_limits<uint32_t>::max(), multiplicationOverflowTime),
-		std::numeric_limits<uint64_t>::max());
+	    clock.CurrentTick(std::numeric_limits<uint32_t>::max(), multiplicationOverflowTime),
+	    std::numeric_limits<uint64_t>::max());
 }
 
 TEST(ServerBackedClock, TruncatesSubMillisecondAgeAndUsesMinimumRate)

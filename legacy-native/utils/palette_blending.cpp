@@ -4,7 +4,6 @@
  * Implementation of palette blending operations.
  */
 
-
 #include "utils/palette_blending.hpp"
 
 #include <array>

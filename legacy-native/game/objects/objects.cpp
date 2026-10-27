@@ -21,44 +21,44 @@
 #include <expected.hpp>
 #include <fmt/core.h>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/automap.h"
 #include "engine/cursor.h"
+#include "ui/automap.h"
+#include "ui/menu/ui_flags.hpp"
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
-#include "ui/diablo_msg.hpp"
+#include "application/headless_mode.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
+#include "engine/lighting.h"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/math/points_in_rectangle_range.hpp"
 #include "engine/random.hpp"
-#include "application/headless_mode.hpp"
-#include "game/players/inventory.hpp"
-#include "game/players/inv_iterators.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/crypt.h"
 #include "game/levels/level_l4.h"
 #include "game/levels/setmaps.h"
 #include "game/levels/themes.h"
 #include "game/levels/tile_properties.hpp"
-#include "engine/lighting.h"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
-#include "game/items/item_pool.hpp"
+#include "game/players/inv_iterators.hpp"
+#include "game/players/inventory.hpp"
+#include "game/stores/stores.hpp"
+#include "game/towners/towners.hpp"
 #include "persistence/options.h"
 #include "qol/stash.h"
-#include "game/stores/stores.hpp"
 #include "tables/leveldat.h"
 #include "tables/objdat.h"
-#include "game/towners/towners.hpp"
+#include "ui/diablo_msg.hpp"
+#include "ui/minitext.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_runtime.hpp"
 #endif
-#include "network/protocol/legacy_world_state_policy.hpp"
-#include "network/protocol/legacy_player_state_policy.hpp"
 #include "engine/track.h"
+#include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/is_of.hpp"
@@ -1583,9 +1583,9 @@ void ObjectStopAnim(Object &object)
 inline bool IsDoorClear(const Object &door)
 {
 	return tileAt(door.position).corpse() == 0
-		&& tileAt(door.position).monster() == 0
-		&& tileAt(door.position).item() == 0
-		&& tileAt(door.position).player() == 0;
+	    && tileAt(door.position).monster() == 0
+	    && tileAt(door.position).item() == 0
+	    && tileAt(door.position).player() == 0;
 }
 
 void UpdateDoor(Object &door)
@@ -1820,8 +1820,8 @@ bool AreAllLeversActivated(int leverId)
 {
 	for (const Object &lever : ObjectPoolAdapter::ActiveObjectsRange()) {
 		if (lever._otype == OBJ_SWITCHSKL
-			&& lever._oVar8 == leverId
-			&& lever.canInteractWith()) {
+		    && lever._oVar8 == leverId
+		    && lever.canInteractWith()) {
 			return false;
 		}
 	}
@@ -2565,9 +2565,9 @@ void OperateShrineCostOfWisdom(Player &player, SpellID spellId, diablo_message m
 	const int penalty = maxBase / 10; // 10% of max base mana (>= 0)
 
 	player.mana.maximumBase -= penalty; // will remain >= 0
-	player.mana.base -= penalty;    // may go negative, allowed
+	player.mana.base -= penalty;        // may go negative, allowed
 	player.mana.maximum -= penalty;     // may go negative, allowed
-	player.mana.current -= penalty;        // may go negative, allowed
+	player.mana.current -= penalty;     // may go negative, allowed
 
 	RedrawEverything();
 	InitDiabloMsg(message);

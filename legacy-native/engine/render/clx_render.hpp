@@ -13,9 +13,9 @@
 #endif
 
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/light_render.hpp"
-#include "engine/gfx/surface.hpp"
 
 namespace devilution {
 

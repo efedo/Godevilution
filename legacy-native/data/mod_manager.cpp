@@ -4,13 +4,12 @@
  * Active mod archive management.
  */
 
-
 #include "data/mod_manager.hpp"
 
 #include "application/game_mode.hpp"
 #include "data/game_data_manager.hpp"
-#include "engine/audio/effects.h"
 #include "engine/assets.hpp"
+#include "engine/audio/effects.h"
 #include "game/stores/stores.hpp"
 #include "persistence/options.h"
 

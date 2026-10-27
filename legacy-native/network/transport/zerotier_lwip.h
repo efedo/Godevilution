@@ -6,7 +6,6 @@
  * Interface for ZeroTier lwIP integration.
  */
 
-
 namespace devilution {
 namespace net {
 

@@ -4,7 +4,6 @@
  * Interface for integer formatting.
  */
 
-
 #pragma once
 
 #include <cstdint>

@@ -4,7 +4,6 @@
  * Implementation of dungeon_common.
  */
 
-
 #include "game/levels/dungeon_common.h"
 
 #include <cstddef>
@@ -19,11 +18,12 @@
 #include <expected.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-#include "engine/gfx/clx_sprite.hpp"
-#include "engine/load/load_file.hpp"
-#include "engine/random.hpp"
-#include "engine/math/world_tile.hpp"
 #include "application/game_mode.hpp"
+#include "engine/gfx/clx_sprite.hpp"
+#include "engine/lighting.h"
+#include "engine/load/load_file.hpp"
+#include "engine/math/world_tile.hpp"
+#include "engine/random.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/level_l1.h"
 #include "game/levels/level_l2.h"
@@ -31,7 +31,6 @@
 #include "game/levels/level_l4.h"
 #include "game/levels/reencode_dun_cels.hpp"
 #include "game/levels/town.h"
-#include "engine/lighting.h"
 #include "game/monsters/monsters.hpp"
 #include "game/objects/objects.hpp"
 #include "utils/algorithm/container.hpp"

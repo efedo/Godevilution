@@ -6,7 +6,6 @@
  * Interface for file utility operations.
  */
 
-
 #include <cstdint>
 #include <cstdio>
 #include <memory>

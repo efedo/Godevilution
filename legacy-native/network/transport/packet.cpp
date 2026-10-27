@@ -4,7 +4,6 @@
  * Implementation of network packet encoding and decoding.
  */
 
-
 #include "network/transport/packet.h"
 
 #include <cassert>

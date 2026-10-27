@@ -4,7 +4,6 @@
  * Implementation of title screen.
  */
 
-
 #include <memory>
 #include <optional>
 #include <vector>
@@ -17,11 +16,11 @@
 #include <SDL.h>
 #endif
 
+#include "controls/input.h"
+#include "controls/menu_controls.h"
 #include "ui/menu/diabloui.h"
 #include "ui/menu/ui_flags.hpp"
 #include "ui/menu/ui_item.h"
-#include "controls/input.h"
-#include "controls/menu_controls.h"
 
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_clx.hpp"

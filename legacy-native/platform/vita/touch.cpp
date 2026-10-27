@@ -4,7 +4,6 @@
  * Implementation of touch.
  */
 
-
 #include "platform/vita/touch.h"
 
 #include <cmath>

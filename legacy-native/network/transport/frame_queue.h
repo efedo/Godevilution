@@ -6,7 +6,6 @@
  * Interface for network frame queuing.
  */
 
-
 #include <cstdint>
 #include <deque>
 #include <exception>

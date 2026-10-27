@@ -4,7 +4,6 @@
  * Implementation of OK selection dialog.
  */
 
-
 #include "ui/menu/ok_dialog.h"
 
 #include <cstddef>
@@ -18,15 +17,15 @@
 #include <SDL.h>
 #endif
 
+#include "application/game_mode.hpp"
+#include "engine/math/point.hpp"
+#include "engine/render/text_render.hpp"
 #include "ui/menu/diabloui.h"
 #include "ui/menu/ui_flags.hpp"
 #include "ui/menu/ui_item.h"
-#include "engine/math/point.hpp"
-#include "engine/render/text_render.hpp"
-#include "application/game_mode.hpp"
 #include "utils/language.h"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 

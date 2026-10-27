@@ -6,7 +6,6 @@
  * Interface for audio.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

@@ -4,7 +4,6 @@
  * Implementation of TCP server transport.
  */
 
-
 #include "network/transport/tcp_server.h"
 
 #include <chrono>
@@ -14,8 +13,8 @@
 
 #include <expected.hpp>
 
-#include "network/transport/base.h"
 #include "game/players/players.hpp"
+#include "network/transport/base.h"
 #include "utils/log.hpp"
 
 namespace devilution::net {

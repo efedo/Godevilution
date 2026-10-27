@@ -4,7 +4,6 @@
  * Implementation of key mapping configuration.
  */
 
-
 #include "controls/keymapper.hpp"
 
 #include <cstdint>
@@ -19,8 +18,8 @@
 #endif
 #endif
 
-#include "ui/panel/control.hpp"
 #include "persistence/options.h"
+#include "ui/panel/control.hpp"
 #include "utils/is_of.hpp"
 
 namespace devilution {

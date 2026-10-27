@@ -4,7 +4,6 @@
  * Implementation of controller motion input.
  */
 
-
 #include "controls/controller_motion.h"
 
 #include <cmath>
@@ -16,9 +15,9 @@
 #include <SDL.h>
 #endif
 
-#include "ui/panel/control.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/controller.h"
+#include "ui/panel/control.hpp"
 #ifndef USE_SDL1
 #include "controls/devices/game_controller.h"
 #endif

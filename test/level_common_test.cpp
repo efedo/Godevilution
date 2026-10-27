@@ -4,7 +4,7 @@
 #include <array>
 
 #include "engine/math/points_in_rectangle_range.hpp"
-#include "engine/world_tile.hpp"
+#include "engine/math/world_tile.hpp"
 #include "game/levels/dungeon_common.h"
 
 namespace devilution {

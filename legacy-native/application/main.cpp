@@ -4,7 +4,6 @@
  * Implementation of application entry point.
  */
 
-
 #ifdef USE_SDL3
 #include <SDL3/SDL.h>
 #else

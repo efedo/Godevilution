@@ -4,16 +4,15 @@
  * Implementation of primitive rendering.
  */
 
-
 #include "engine/render/primitive_render.hpp"
 
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/math/size.hpp"
-#include "engine/gfx/surface.hpp"
 #include "utils/palette_blending.hpp"
 
 namespace devilution {

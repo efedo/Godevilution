@@ -15,14 +15,14 @@
 
 #include "ui_test.hpp"
 
-#include "ui/panel/control.hpp"
 #include "game/players/inventory.hpp"
-#include "persistence/options.h"
-#include "panels/spell_list.hpp"
-#include "qol/stash.h"
-#include "qol/visual_store.h"
 #include "game/quests/quests.hpp"
 #include "game/stores/stores.hpp"
+#include "persistence/options.h"
+#include "qol/stash.h"
+#include "qol/visual_store.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/spell_list.hpp"
 
 namespace devilution {
 namespace {

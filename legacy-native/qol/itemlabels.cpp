@@ -4,7 +4,6 @@
  * Implementation of item label rendering.
  */
 
-
 #include "itemlabels.h"
 
 #include <algorithm>
@@ -16,19 +15,19 @@
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
 #include "engine/cursor.h"
 #include "engine/math/point.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "ui/menu_framework.h"
 #include "game/players/inventory.hpp"
+#include "game/stores/stores.hpp"
 #include "persistence/options.h"
 #include "qol/stash.h"
-#include "game/stores/stores.hpp"
+#include "ui/menu_framework.h"
+#include "ui/panel/control.hpp"
 #include "utils/algorithm/container.hpp"
-#include "utils/string/format_int.hpp"
 #include "utils/language.h"
+#include "utils/string/format_int.hpp"
 
 namespace devilution {
 

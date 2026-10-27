@@ -6,7 +6,6 @@
  * Interface for container algorithms.
  */
 
-
 #include <algorithm>
 #include <iterator>
 #include <type_traits>

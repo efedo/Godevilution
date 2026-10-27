@@ -6,12 +6,11 @@
  * Interface for spell list.
  */
 
-
 #include <cstddef>
 #include <vector>
 
-#include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 #include "tables/spelldat.h"
 
 namespace devilution {

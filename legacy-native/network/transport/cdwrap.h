@@ -6,7 +6,6 @@
  * Interface for CD wrapper network transport.
  */
 
-
 #include <cstdint>
 #include <exception>
 #include <memory>
@@ -17,8 +16,8 @@
 #include <ankerl/unordered_dense.h>
 #include <function_ref.hpp>
 
-#include "network/transport/abstract_net.h"
 #include "network/storm/storm_net.hpp"
+#include "network/transport/abstract_net.h"
 
 namespace devilution::net {
 

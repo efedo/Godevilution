@@ -5,7 +5,6 @@
  * Interface for monsters.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

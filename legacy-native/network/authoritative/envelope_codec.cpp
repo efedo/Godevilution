@@ -185,15 +185,15 @@ EnvelopeCodec::ReadResult EnvelopeCodec::Read(asio::ip::tcp::socket &socket, std
 			return std::optional<Payload> {};
 		return tl::make_unexpected(error == asio::error::timed_out
 		        ? std::string("Timed out reading envelope.")
-		        : error == asio::error::eof ? std::string("The envelope header was truncated.") : SocketError("Reading envelope", error));
+		        : error == asio::error::eof ? std::string("The envelope header was truncated.")
+		                                    : SocketError("Reading envelope", error));
 	}
 
 	const uint32_t length = static_cast<uint32_t>(header[0])
 	    | (static_cast<uint32_t>(header[1]) << 8)
 	    | (static_cast<uint32_t>(header[2]) << 16)
 	    | (static_cast<uint32_t>(header[3]) << 24);
-	if (!IsValidLength(length))
-	{
+	if (!IsValidLength(length)) {
 		socket.non_blocking(wasNonBlocking, modeError);
 		if (modeError)
 			return tl::make_unexpected(SocketError("Restoring envelope socket", modeError));
@@ -209,7 +209,8 @@ EnvelopeCodec::ReadResult EnvelopeCodec::Read(asio::ip::tcp::socket &socket, std
 	if (payloadRead != payload.size())
 		return tl::make_unexpected(error == asio::error::timed_out
 		        ? std::string("Timed out reading envelope.")
-		        : error == asio::error::eof ? std::string("The envelope payload was truncated.") : SocketError("Reading envelope payload", error));
+		        : error == asio::error::eof ? std::string("The envelope payload was truncated.")
+		                                    : SocketError("Reading envelope payload", error));
 	return std::optional<Payload> { std::move(payload) };
 }
 

@@ -41,10 +41,6 @@ jobs:
         key: ${{ github.workflow }}-v4-${{ github.sha }}
         restore-keys: ${{ github.workflow }}-v4-
 
-    - name: Clean previous DMG
-      working-directory: ${{github.workspace}}
-      run: rm -f build/*.dmg
-
     - name: Build
       working-directory: ${{github.workspace}}
       shell: bash
@@ -52,16 +48,5 @@ jobs:
         CMAKE_BUILD_TYPE: ${{github.event_name == 'release' && 'Release' || 'RelWithDebInfo'}}
       run: |
         cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DBUILD_TESTING=OFF \
-          -DMACOSX_STANDALONE_APP_BUNDLE=ON -DDISCORD_INTEGRATION=ON && \
-        cmake --build build -j $(sysctl -n hw.physicalcpu) --target package && \
-        mv build/devilutionx.dmg build/devilutionx-x86_64-macOS.dmg
-
-    - name: Upload-Package
-      if: ${{ !env.ACT }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: devilutionx-x86_64-macOS.dmg
-        path: build/devilutionx-x86_64-macOS.dmg
-
-    - name: Clean up artifacts
-      run: rm -rf build/_CPack_Packages build/*.dmg
+          -DDISCORD_INTEGRATION=ON && \
+        cmake --build build -j $(sysctl -n hw.physicalcpu)

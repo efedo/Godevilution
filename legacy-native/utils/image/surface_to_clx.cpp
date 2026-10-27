@@ -4,16 +4,15 @@
  * Implementation of surface to CLX conversion.
  */
 
-
 #include "utils/image/surface_to_clx.hpp"
 
 #include <cstdint>
 #include <cstring>
 #include <vector>
 
-#include "utils/image/clx_encode.hpp"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_write.hpp"
+#include "utils/image/clx_encode.hpp"
 
 #ifdef DEBUG_SURFACE_TO_CLX_SIZE
 #include <iomanip>

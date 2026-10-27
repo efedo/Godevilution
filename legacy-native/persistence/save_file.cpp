@@ -19,16 +19,16 @@
 #include <SDL.h>
 #endif
 
-#include "utils/crypto/codec.h"
+#include "application/game_mode.hpp"
+#include "data/mpq/mpq_common.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "application/game_mode.hpp"
 #include "persistence/loadsave.h"
-#include "ui/menu.h"
-#include "data/mpq/mpq_common.hpp"
 #include "persistence/pack.h"
 #include "qol/stash.h"
 #include "tables/playerdat.hpp"
+#include "ui/menu.h"
+#include "utils/crypto/codec.h"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/file/file_util.h"

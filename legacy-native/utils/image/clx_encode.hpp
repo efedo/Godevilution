@@ -4,7 +4,6 @@
  * Interface for CLX format encoding.
  */
 
-
 #pragma once
 
 #include <cstddef>

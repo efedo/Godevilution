@@ -4,7 +4,6 @@
  * Implementation of PCX to CLX format conversion.
  */
 
-
 #include "utils/image/pcx_to_clx.hpp"
 
 #include <cstddef>
@@ -23,10 +22,10 @@
 #endif
 
 #include "application/fatal_error.h"
-#include "utils/image/clx_encode.hpp"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/endian/endian_write.hpp"
+#include "utils/image/clx_encode.hpp"
 #include "utils/image/pcx.hpp"
 
 #ifdef DEBUG_PCX_TO_CL2_SIZE

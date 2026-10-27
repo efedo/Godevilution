@@ -67,12 +67,12 @@ enum class ServerBackedSpellTargetResolution : uint8_t {
  * absent. Tile-targeted spells intentionally ignore creature cursors.
  */
 [[nodiscard]] constexpr ServerBackedSpellTargetResolution ResolveServerBackedSpellTarget(
-	bool allowsPlayerTarget,
-	bool allowsCombatEntityTarget,
-	bool playerUnderCursor,
-	bool monsterUnderCursor,
-	bool hasPlayerEntity,
-	bool hasMonsterEntity) noexcept
+    bool allowsPlayerTarget,
+    bool allowsCombatEntityTarget,
+    bool playerUnderCursor,
+    bool monsterUnderCursor,
+    bool hasPlayerEntity,
+    bool hasMonsterEntity) noexcept
 {
 	if (allowsPlayerTarget && playerUnderCursor)
 		return hasPlayerEntity
@@ -461,8 +461,8 @@ struct ProjectedPlayerSnapshot {
 
 /** Finds the server-projected targeting role for one authoritative spell source. */
 [[nodiscard]] std::optional<ProjectedSpellTargetingKind> ProjectedSpellTargetingKindForSpell(
-	const ProjectedPlayerSnapshot &snapshot,
-	uint32_t spellId) noexcept;
+    const ProjectedPlayerSnapshot &snapshot,
+    uint32_t spellId) noexcept;
 
 /** Projects exactly one entity's player state from a server snapshot. */
 [[nodiscard]] tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(
@@ -495,7 +495,7 @@ struct ProjectedPlayerSnapshot {
     const ::devilution::protocol::v1::Snapshot &snapshot);
 /** Projects server-owned native quest state for compatibility presentation. */
 [[nodiscard]] tl::expected<std::vector<ProjectedQuestSnapshot>, std::string> ProjectQuestSnapshots(
-	const ::devilution::protocol::v1::Snapshot &snapshot);
+    const ::devilution::protocol::v1::Snapshot &snapshot);
 /** Applies projected quest state without emitting legacy quest network messages. */
 void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &quests) noexcept;
 /** Projects server-owned effective level geometry in stable level-ID order. */
@@ -508,11 +508,11 @@ void ApplyServerBackedQuestSnapshots(const std::vector<ProjectedQuestSnapshot> &
 
 /** Validates authored quest/towner interaction records before native routing consumes them. */
 [[nodiscard]] tl::expected<void, std::string> ValidateQuestTownerInteractions(
-	const ::devilution::protocol::v1::Snapshot &snapshot);
+    const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Validates server-authored towner greeting records before native session use. */
 [[nodiscard]] tl::expected<void, std::string> ValidateTownerGreetingSnapshots(
-	const ::devilution::protocol::v1::Snapshot &snapshot);
+    const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Validates authoritative level geometry and warp-trigger metadata before projection use. */
 [[nodiscard]] tl::expected<void, std::string> ValidateLevelGeometrySnapshots(

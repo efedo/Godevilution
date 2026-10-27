@@ -15,33 +15,33 @@
 #include <ankerl/unordered_dense.h>
 #include <expected.hpp>
 
-#include "ui/automap.h"
-#include "utils/crypto/codec.h"
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
+#include "data/mpq/mpq_common.hpp"
 #include "engine/cursor.h"
-#include "game/monsters/monster_corpses.hpp"
-#include "game/quests/quest_stars.hpp"
+#include "engine/lighting.h"
 #include "engine/math/point.hpp"
 #include "engine/random.hpp"
 #include "engine/world.hpp"
-#include "application/game_mode.hpp"
-#include "game/players/inventory.hpp"
 #include "game/items/item_pool.hpp"
 #include "game/levels/dun_tile.hpp"
-#include "engine/lighting.h"
-#include "ui/menu.h"
 #include "game/missiles/missiles.hpp"
-#include "game/monsters/monsters.hpp"
+#include "game/monsters/monster_corpses.hpp"
 #include "game/monsters/monster_pool.hpp"
-#include "game/objects/object_pool.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/monsters/validation.hpp"
-#include "data/mpq/mpq_common.hpp"
-#include "persistence/save_file.h"
-#include "ui/player_messages.h"
-#include "qol/stash.h"
+#include "game/objects/object_pool.hpp"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
 #include "game/stores/stores.hpp"
+#include "persistence/save_file.h"
+#include "qol/stash.h"
 #include "tables/playerdat.hpp"
+#include "ui/automap.h"
+#include "ui/menu.h"
+#include "ui/panel/control.hpp"
+#include "ui/player_messages.h"
 #include "utils/algorithm/container.hpp"
+#include "utils/crypto/codec.h"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_swap.hpp"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -799,7 +799,7 @@ void LoadMonsters(LoadHelper &file, ankerl::unordered_dense::set<unsigned> &remo
 			monsterConversionData = &levelConversionData->monsterConversionData[ActiveMonsters[i]];
 		const bool valid = LoadMonster(&file, monster, monsterConversionData);
 		if (!valid) {
-			Monsters[ActiveMonsters[i]] = Monster{};
+			Monsters[ActiveMonsters[i]] = Monster {};
 			removedMonsterIds.insert(ActiveMonsters[i]);
 			for (size_t j = i + 1; j < ActiveMonsterCount; j++) {
 				ActiveMonsters[j - 1] = ActiveMonsters[j];

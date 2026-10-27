@@ -6,7 +6,6 @@
  * Interface for MPQ SDL RWOps integration.
  */
 
-
 #include <string_view>
 
 #include "data/mpq/mpq_reader.hpp"

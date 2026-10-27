@@ -6,7 +6,6 @@
  * Interface for game options and configuration.
  */
 
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -34,8 +33,8 @@
 
 #include "application/fatal_error.h"
 #include "controls/controller_buttons.h"
-#include "engine/math/size.hpp"
 #include "engine/audio/sound_defs.hpp"
+#include "engine/math/size.hpp"
 #include "persistence/pack.h"
 #include "ui/quick_messages.hpp"
 #include "utils/enum_traits.h"

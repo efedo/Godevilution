@@ -25,83 +25,83 @@
 
 #include <config.h>
 
-#include "ui/menu/startup_selection.h"
-#include "application/fatal_error.h"
-#include "ui/automap.h"
 #include "application/capture.h"
-#include "ui/panel/control.hpp"
+#include "application/fatal_error.h"
 #include "engine/cursor.h"
 #include "game/monsters/monster_corpses.hpp"
+#include "ui/automap.h"
+#include "ui/menu/startup_selection.h"
+#include "ui/panel/control.hpp"
 #ifdef _DEBUG
 #include "application/debug.h"
 #include "ui/debug_overlay/imgui_overlay.hpp"
 #endif
-#include "ui/menu/diabloui.h"
+#include "application/diablo.h"
 #include "controls/control_mode.hpp"
 #include "controls/keymapper.hpp"
 #include "controls/player_controls.h"
 #include "controls/remap_keyboard.h"
-#include "application/diablo.h"
 #include "ui/diablo_msg.hpp"
+#include "ui/menu/diabloui.h"
 
-#include "game/quests/quest_stars.hpp"
-#include "utils/crypto/encrypt.h"
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
+#include "application/init.hpp"
+#include "data/mod_manager.hpp"
+#include "engine/audio/sound.h"
+#include "engine/demomode.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
-#include "engine/demomode.h"
 #include "engine/gfx/graphics_pipeline.h"
-#include "engine/sdl_events.hpp"
+#include "engine/hwcursor.hpp"
+#include "engine/lighting.h"
 #include "engine/load/load_cel.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
-#include "engine/audio/sound.h"
-#include "application/game_mode.hpp"
-#include "ui/gamemenu.h"
-#include "ui/menu_framework.h"
-#include "application/headless_mode.hpp"
-#include "ui/help.h"
-#include "engine/hwcursor.hpp"
-#include "application/init.hpp"
-#include "data/mod_manager.hpp"
-#include "game/players/inventory.hpp"
+#include "engine/sdl_events.hpp"
+#include "game/events/event_bus.hpp"
+#include "game/levels/dungeon_common.h"
 #include "game/levels/level_l1.h"
 #include "game/levels/level_l2.h"
 #include "game/levels/level_l3.h"
 #include "game/levels/level_l4.h"
-#include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
 #include "game/levels/themes.h"
 #include "game/levels/town.h"
 #include "game/levels/triggers.h"
-#include "engine/lighting.h"
-#include "persistence/loadsave.h"
-#include "game/events/event_bus.hpp"
-#include "lua/lua_global.hpp"
-#include "ui/menu.h"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monster_pool.hpp"
-#include "ui/movie.h"
-#include "network/protocol/multi.h"
+#include "game/players/inventory.hpp"
+#include "game/quests/quest_stars.hpp"
+#include "lua/lua_global.hpp"
 #include "network/protocol/legacy_lua_policy.hpp"
-#include "network/protocol/network_ticks.h"
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/multi.h"
+#include "network/protocol/network_ticks.h"
+#include "persistence/loadsave.h"
+#include "ui/gamemenu.h"
+#include "ui/help.h"
+#include "ui/menu.h"
+#include "ui/menu_framework.h"
+#include "ui/minitext.h"
+#include "ui/movie.h"
+#include "utils/crypto/encrypt.h"
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/server_backed_runtime.hpp"
 #include "utils/ui_fwd.h"
 #endif
-#include "game/objects/objects.hpp"
+#include "application/restrict.h"
+#include "engine/track.h"
 #include "game/objects/object_pool.hpp"
+#include "game/objects/objects.hpp"
+#include "game/stores/stores.hpp"
+#include "game/towners/towners.hpp"
+#include "network/storm/storm_net.hpp"
+#include "network/storm/storm_svid.h"
 #include "persistence/options.h"
-#include "ui/panel/console.hpp"
-#include "ui/panel/info_box.hpp"
-#include "ui/panel/partypanel.hpp"
-#include "ui/panel/spell_book.hpp"
-#include "ui/panel/spell_list.hpp"
 #include "persistence/save_file.h"
-#include "ui/player_messages.h"
 #include "qol/chatlog.h"
 #include "qol/floatingnumbers.h"
 #include "qol/itemlabels.h"
@@ -109,17 +109,17 @@
 #include "qol/stash.h"
 #include "qol/visual_store.h"
 #include "qol/xpbar.h"
-#include "ui/quick_messages.hpp"
-#include "application/restrict.h"
-#include "game/stores/stores.hpp"
-#include "network/storm/storm_net.hpp"
-#include "network/storm/storm_svid.h"
 #include "tables/leveldat.h"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
 #include "tables/playerdat.hpp"
-#include "game/towners/towners.hpp"
-#include "engine/track.h"
+#include "ui/panel/console.hpp"
+#include "ui/panel/info_box.hpp"
+#include "ui/panel/partypanel.hpp"
+#include "ui/panel/spell_book.hpp"
+#include "ui/panel/spell_list.hpp"
+#include "ui/player_messages.h"
+#include "ui/quick_messages.hpp"
 #include "utils/console.h"
 #include "utils/display.h"
 #include "utils/is_of.hpp"
@@ -293,7 +293,7 @@ void LeftMouseCmd(bool bShift)
 		CloseStash();
 		CloseVisualStore();
 		if (pcursitem != -1 && pcurs == CURSOR_HAND) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()
 			    && MyPlayer->position.tile.WalkingDistance(cursPosition) < 2) {
 				const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
@@ -304,27 +304,27 @@ void LeftMouseCmd(bool bShift)
 				}
 				return;
 			}
-		#endif
+#endif
 			NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
 		}
 		if (pcursmonst != -1) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				TalkToTowner(*MyPlayer, pcursmonst);
 				return;
 			}
-	#endif
+#endif
 			NetSendCmdLocParam1(true, CMD_TALKXY, cursPosition, pcursmonst);
 		}
 		if (pcursitem == -1 && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
 			LastPlayerAction = PlayerActionType::Walk;
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed town walk-to-target failed: {}", result.error());
 				return;
 			}
-	#endif
+#endif
 			NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 		}
 		return;
@@ -333,7 +333,7 @@ void LeftMouseCmd(bool bShift)
 	const Player &myPlayer = *MyPlayer;
 	bNear = myPlayer.position.tile.WalkingDistance(cursPosition) < 2;
 	if (pcursitem != -1 && pcurs == CURSOR_HAND && !bShift) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected() && bNear) {
 			const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
@@ -343,10 +343,10 @@ void LeftMouseCmd(bool bShift)
 			}
 			return;
 		}
-	#endif
+#endif
 		NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
 	} else if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled() && (!bShift || (bNear && ObjectUnderCursor->_oBreak == 1))) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().AuthoritativeObjectEntityIdAt(cursPosition.x, cursPosition.y);
 			if (!entityId.has_value()) {
@@ -360,32 +360,32 @@ void LeftMouseCmd(bool bShift)
 			LastPlayerAction = PlayerActionType::OperateObject;
 			return;
 		}
-	#endif
+#endif
 		LastPlayerAction = PlayerActionType::OperateObject;
 		NetSendCmdLoc(MyPlayerId, true, pcurs == CURSOR_DISARM ? CMD_DISARMXY : CMD_OPOBJXY, cursPosition);
 	} else if (myPlayer.UsesRangedWeapon()) {
 		if (bShift) {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 					LogError("Server-backed ranged cell attack failed: {}", result.error());
 				LastPlayerAction = PlayerActionType::Attack;
 				return;
 			}
-		#endif
+#endif
 			LastPlayerAction = PlayerActionType::Attack;
 			NetSendCmdLoc(MyPlayerId, true, CMD_RATTACKXY, cursPosition);
 		} else if (pcursmonst != -1) {
 			if (Monsters[pcursmonst].canTalk()) {
-			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 				if (authoritative::GetServerBackedRuntime().IsConnected()) {
 					TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
 					return;
 				}
-			#endif
+#endif
 				NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 			} else {
-			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 				if (authoritative::GetServerBackedRuntime().IsConnected()) {
 					const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 					if (!entityId.has_value()) {
@@ -396,12 +396,12 @@ void LeftMouseCmd(bool bShift)
 					LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 					return;
 				}
-			#endif
+#endif
 				LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 				NetSendCmdParam1(true, CMD_RATTACKID, pcursmonst);
 			}
 		} else if (PlayerUnderCursor != nullptr && !PlayerUnderCursor->hasNoLife() && !myPlayer.friendlyMode) {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
@@ -412,7 +412,7 @@ void LeftMouseCmd(bool bShift)
 				LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 				return;
 			}
-		#endif
+#endif
 			LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 			NetSendCmdParam1(true, CMD_RATTACKPID, PlayerUnderCursor->getId());
 		}
@@ -420,43 +420,43 @@ void LeftMouseCmd(bool bShift)
 		if (bShift) {
 			if (pcursmonst != -1) {
 				if (Monsters[pcursmonst].canTalk()) {
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
 						TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
 						return;
 					}
-				#endif
+#endif
 					NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 				} else {
 					LastPlayerAction = PlayerActionType::Attack;
-				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 					if (authoritative::GetServerBackedRuntime().IsConnected()) {
 						if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 							LogError("Server-backed melee cell attack failed: {}", result.error());
 						return;
 					}
-				#endif
+#endif
 					NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, cursPosition);
 				}
 			} else {
 				LastPlayerAction = PlayerActionType::Attack;
-			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 				if (authoritative::GetServerBackedRuntime().IsConnected()) {
 					if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 						LogError("Server-backed melee cell attack failed: {}", result.error());
 					return;
 				}
-			#endif
+#endif
 				NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, cursPosition);
 			}
 		} else if (pcursmonst != -1) {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (Monsters[pcursmonst].canTalk() && authoritative::GetServerBackedRuntime().IsConnected()) {
 				TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
 				return;
 			}
-		#endif
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#endif
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (!Monsters[pcursmonst].canTalk() && authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
@@ -467,11 +467,11 @@ void LeftMouseCmd(bool bShift)
 				LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 				return;
 			}
-		#endif
+#endif
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 		} else if (PlayerUnderCursor != nullptr && !PlayerUnderCursor->hasNoLife() && !myPlayer.friendlyMode) {
-		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
 				if (!entityId.has_value()) {
@@ -482,20 +482,20 @@ void LeftMouseCmd(bool bShift)
 				LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 				return;
 			}
-		#endif
+#endif
 			LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 			NetSendCmdParam1(true, CMD_ATTACKPID, PlayerUnderCursor->getId());
 		}
 	}
 	if (!bShift && pcursitem == -1 && ObjectUnderCursor == nullptr && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
 		LastPlayerAction = PlayerActionType::Walk;
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			if (auto result = authoritative::GetServerBackedRuntime().MoveTo(cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 				LogError("Server-backed walk-to-target failed: {}", result.error());
 			return;
 		}
-	#endif
+#endif
 		NetSendCmdLoc(MyPlayerId, true, CMD_WALKXY, cursPosition);
 	}
 }
@@ -608,14 +608,14 @@ void LeftMouseDown(uint16_t modState)
 					const Point currentPosition = MyPlayer->position.tile;
 					std::optional<Point> itemTile = FindAdjacentPositionForItem(currentPosition, GetDirection(currentPosition, cursPosition));
 					if (itemTile) {
-					#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 						if (authoritative::GetServerBackedRuntime().IsConnected()) {
 							if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, GetMillisecondsSinceStartup()); !result.has_value())
 								LogError("Server-backed held-item drop failed: {}", result.error());
 							else
 								NewCursor(CURSOR_HAND);
 						} else
-					#endif
+#endif
 						{
 							NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, MyPlayer->HoldItem);
 							NewCursor(CURSOR_HAND);
@@ -746,7 +746,7 @@ void PressKey(SDL_Keycode vkey, uint16_t modState)
 						LogError("Server-backed restart-in-town failed: {}", result.error());
 				} else
 #endif
-				NetSendCmd(true, CMD_RETOWN);
+					NetSendCmd(true, CMD_RETOWN);
 			}
 			return;
 		}
@@ -1112,11 +1112,11 @@ void RunGameLoop(interface_mode uMsg)
 	gbGameLoopStartup = true;
 	nthread_ignore_mutex(false);
 
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (ShouldProcessLegacyLuaEvents(authoritative::GetServerBackedRuntime().IsAuthoritativeMode()))
-	#else
+#else
 	if (ShouldProcessLegacyLuaEvents(false))
-	#endif
+#endif
 		CurrentGameEventBus.GameStart();
 #ifdef GPERF_HEAP_FIRST_GAME_ITERATION
 	unsigned run_game_iteration = 0;
@@ -1148,30 +1148,30 @@ void RunGameLoop(interface_mode uMsg)
 			break;
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				if (auto result = authoritative::GetServerBackedRuntime().Poll(GetMillisecondsSinceStartup()); !result.has_value()) {
-					LogError("Server-backed session polling failed: {}", result.error());
-					authoritative::GetServerBackedRuntime().Stop();
-					if (authoritative::GetServerBackedRuntimeConfiguration().mode == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative) {
-						printInConsole("The authoritative server connection was lost; local simulation will not take over.");
-						printNewlineInConsole();
-						gbRunGameResult = false;
-						gbRunGame = false;
-						break;
-					}
-				}
-				if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad()) {
-					// The server has already chosen and applied the destination.
-					// NEXTLVL loads from the player's identity without decrementing
-					// a legacy level or reading a local save. PrepareNativeLevel()
-					// restores regular/set identity before loading its assets.
-					SDL_Event levelEvent;
-					CustomEventToSdlEvent(levelEvent, WM_DIABNEXTLVL);
-					GameEventHandler(levelEvent, 0);
-					if (!gbRunGame)
-						break;
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().Poll(GetMillisecondsSinceStartup()); !result.has_value()) {
+				LogError("Server-backed session polling failed: {}", result.error());
+				authoritative::GetServerBackedRuntime().Stop();
+				if (authoritative::GetServerBackedRuntimeConfiguration().mode == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative) {
+					printInConsole("The authoritative server connection was lost; local simulation will not take over.");
+					printNewlineInConsole();
+					gbRunGameResult = false;
+					gbRunGame = false;
+					break;
 				}
 			}
+			if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad()) {
+				// The server has already chosen and applied the destination.
+				// NEXTLVL loads from the player's identity without decrementing
+				// a legacy level or reading a local save. PrepareNativeLevel()
+				// restores regular/set identity before loading its assets.
+				SDL_Event levelEvent;
+				CustomEventToSdlEvent(levelEvent, WM_DIABNEXTLVL);
+				GameEventHandler(levelEvent, 0);
+				if (!gbRunGame)
+					break;
+			}
+		}
 #endif
 
 		bool drawGame = true;
@@ -1884,18 +1884,18 @@ void GameLogic()
 	if (!ProcessInput()) {
 		return;
 	}
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	const bool serverBackedGameplay = authoritative::GetServerBackedRuntime().IsConnected();
 	if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad())
 		return;
-	#else
+#else
 	const bool serverBackedGameplay = false;
-	#endif
+#endif
 	if (!serverBackedGameplay && gbProcessPlayers) {
 		gGameLogicStep = GameLogicStep::ProcessPlayers;
 		ProcessPlayers();
 	}
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (serverBackedGameplay) {
 		// The connected server owns all gameplay mutation. The legacy pools remain
 		// presentation data until their authoritative projection is consumed by
@@ -1905,8 +1905,8 @@ void GameLogic()
 		CurrentLightManager.ProcessLightList();
 		CurrentLightManager.ProcessVisionList();
 	} else
-	#endif
-	if (levelType() != DTYPE_TOWN) {
+#endif
+	    if (levelType() != DTYPE_TOWN) {
 		gGameLogicStep = GameLogicStep::ProcessMonsters;
 #ifdef _DEBUG
 		if (!DebugInvisible)
@@ -2500,13 +2500,13 @@ void InitKeymapActions()
 	    N_("Sorts the inventory."),
 	    'R',
 	    [] {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		    if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			    if (auto result = authoritative::GetServerBackedRuntime().SortInventory(0, GetMillisecondsSinceStartup()); !result.has_value())
 				    LogError("Failed to submit authoritative inventory sort: {}", result.error());
 			    return;
 		    }
-	#endif
+#endif
 		    ReorganizeInventory(*MyPlayer);
 	    });
 #ifdef _DEBUG
@@ -2515,12 +2515,12 @@ void InitKeymapActions()
 	// keep the legacy Lua REPL and compatibility callbacks out of that path.
 	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative) {
 #endif
-	options.Keymapper.AddAction(
-	    "OpenConsole",
-	    N_("Console"),
-	    N_("Opens Lua console."),
-	    SDLK_GRAVE,
-	    OpenConsole);
+		options.Keymapper.AddAction(
+		    "OpenConsole",
+		    N_("Console"),
+		    N_("Opens Lua console."),
+		    SDLK_GRAVE,
+		    OpenConsole);
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	}
 #endif
@@ -3019,13 +3019,13 @@ void InitPadmapActions()
 	    N_("Sorts the inventory."),
 	    ControllerButton_NONE,
 	    [] {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		    if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			    if (auto result = authoritative::GetServerBackedRuntime().SortInventory(0, GetMillisecondsSinceStartup()); !result.has_value())
 				    LogError("Failed to submit authoritative inventory sort: {}", result.error());
 			    return;
 		    }
-	#endif
+#endif
 		    ReorganizeInventory(*MyPlayer);
 	    });
 	options.Padmapper.AddAction(
@@ -3308,16 +3308,16 @@ std::optional<authoritative::ServerBackedCastSource> ServerBackedSourceForSpellC
 	switch (player._pRSplType) {
 	case SpellType::Spell:
 		return authoritative::ServerBackedCastSource {
-		    authoritative::ServerBackedCastSourceKind::MemorizedSpell,
-		    std::nullopt,
+			authoritative::ServerBackedCastSourceKind::MemorizedSpell,
+			std::nullopt,
 		};
 	case SpellType::Scroll: {
 		const auto reference = ServerBackedReferenceForSpellCursor(player, spellId);
 		if (!reference.has_value())
 			return std::nullopt;
 		return authoritative::ServerBackedCastSource {
-		    authoritative::ServerBackedCastSourceKind::ConsumableItem,
-		    *reference,
+			authoritative::ServerBackedCastSourceKind::ConsumableItem,
+			*reference,
 		};
 	}
 	default:
@@ -3341,7 +3341,8 @@ bool TryIconCurs()
 					LogError("Server-backed Resurrection cursor has no authoritative spell source.");
 				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 				               static_cast<uint32_t>(spellId), *targetEntityId,
-			               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+				               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup());
+				           !result.has_value()) {
 					LogError("Server-backed Resurrection cast failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3369,7 +3370,8 @@ bool TryIconCurs()
 					LogError("Server-backed Heal Other cursor has no authoritative spell source.");
 				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 				               static_cast<uint32_t>(spellId), *targetEntityId,
-			               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+				               cursPosition.x, cursPosition.y, *source, 0, GetMillisecondsSinceStartup());
+				           !result.has_value()) {
 					LogError("Server-backed Heal Other cast failed: {}", result.error());
 				}
 				NewCursor(CURSOR_HAND);
@@ -3385,7 +3387,7 @@ bool TryIconCurs()
 	}
 
 	if (pcurs == CURSOR_TELEKINESIS) {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			uint32_t targetEntityId = 0;
 			if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled()) {
@@ -3405,13 +3407,14 @@ bool TryIconCurs()
 				LogError("Server-backed Telekinesis target is not an authoritative entity.");
 			} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
 			               static_cast<uint32_t>(SpellID::Telekinesis), targetEntityId,
-			               cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup()); !result.has_value()) {
+			               cursPosition.x, cursPosition.y, 0, GetMillisecondsSinceStartup());
+			           !result.has_value()) {
 				LogError("Server-backed Telekinesis cast failed: {}", result.error());
 			}
 			NewCursor(CURSOR_HAND);
 			return true;
 		}
-	#endif
+#endif
 		DoTelekinesis();
 		return true;
 	}
@@ -3433,8 +3436,7 @@ bool TryIconCurs()
 			}
 #endif
 			CheckIdentify(myPlayer, pcursinvitem);
-		}
-		else if (pcursstashitem != StashStruct::EmptyCell) {
+		} else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto reference = ServerBackedReferenceForStashCursor(pcursstashitem);
@@ -3549,7 +3551,7 @@ bool TryIconCurs()
 					return true;
 			} else
 #endif
-			changeCursor = DoOil(myPlayer, pcursinvitem);
+				changeCursor = DoOil(myPlayer, pcursinvitem);
 		} else if (pcursstashitem != StashStruct::EmptyCell) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
@@ -3566,10 +3568,10 @@ bool TryIconCurs()
 					return true;
 			} else
 #endif
-		{
-			Item &item = Stash.stashList[pcursstashitem];
-			changeCursor = ApplyOilToItem(item, myPlayer);
-		}
+			{
+				Item &item = Stash.stashList[pcursstashitem];
+				changeCursor = ApplyOilToItem(item, myPlayer);
+			}
 		}
 		if (changeCursor)
 			NewCursor(CURSOR_HAND);
@@ -3598,7 +3600,8 @@ bool TryIconCurs()
 			               static_cast<uint32_t>(spellID), targetEntityId,
 			               cursPosition.x, cursPosition.y,
 			               { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceItem },
-			               0, GetMillisecondsSinceStartup()); !result.has_value()) {
+			               0, GetMillisecondsSinceStartup());
+			           !result.has_value()) {
 				LogError("Server-backed spell cursor cast failed: {}", result.error());
 			}
 			NewCursor(CURSOR_HAND);

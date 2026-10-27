@@ -4,7 +4,6 @@
  * Implementation of ZeroTier protocol implementation.
  */
 
-
 #include "network/transport/protocol_zt.h"
 
 #include <optional>

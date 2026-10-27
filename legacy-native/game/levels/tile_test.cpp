@@ -10,7 +10,8 @@
 
 using namespace devilution;
 
-int main() {
+int main()
+{
 	// Size check
 	printf("sizeof(Tile) = %zu bytes\n", sizeof(Tile));
 	printf("Expected to be <= 16 bytes for cache efficiency\n\n");

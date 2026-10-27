@@ -5,7 +5,6 @@
  * Interface for quests.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

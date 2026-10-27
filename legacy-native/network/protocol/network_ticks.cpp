@@ -15,11 +15,11 @@
 #endif
 
 #include "application/diablo.h"
+#include "application/game_mode.hpp"
 #include "engine/animationinfo.h"
 #include "engine/demomode.h"
-#include "application/game_mode.hpp"
-#include "ui/menu_framework.h"
 #include "network/storm/storm_net.hpp"
+#include "ui/menu_framework.h"
 #include "utils/sdl/sdl_mutex.h"
 #include "utils/sdl/sdl_thread.h"
 

@@ -39,13 +39,13 @@ void RefreshProjectedPlayerGraphics(Player &player, const ProjectedPlayerSnapsho
 
 /** Applies an authoritative player action to native animation state only. */
 void ApplyProjectedPlayerAnimation(
-	Player &player,
-	const ProjectedPlayerSnapshot &snapshot,
-	player_graphic graphic,
-	bool reset,
-	bool hasPreviousTick,
-	uint64_t previousTick,
-	uint64_t presentationTicksSincePreviousSnapshot = 0);
+    Player &player,
+    const ProjectedPlayerSnapshot &snapshot,
+    player_graphic graphic,
+    bool reset,
+    bool hasPreviousTick,
+    uint64_t previousTick,
+    uint64_t presentationTicksSincePreviousSnapshot = 0);
 
 /** Advances projected player animation state without running gameplay logic. */
 void AdvanceProjectedPlayerAnimation(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop);
@@ -76,20 +76,20 @@ enum class AuthoritativeMonsterDialoguePresentationState : int32_t {
 class ServerBackedWorldPresentation {
 public:
 	[[nodiscard]] tl::expected<void, std::string> Apply(
-		const ServerBackedWorldProjection &projection,
-		uint32_t levelId,
-		const std::vector<ProjectedPlayerSnapshot> &players = {},
-		uint32_t localEntityId = 0);
+	    const ServerBackedWorldProjection &projection,
+	    uint32_t levelId,
+	    const std::vector<ProjectedPlayerSnapshot> &players = {},
+	    uint32_t localEntityId = 0);
 
 	/** Advances presentation animation state without running authoritative simulation. */
 	[[nodiscard]] std::size_t AdvanceAnimations() noexcept;
 
 	/** Draws projected remote players without adding them to native simulation pools. */
 	void DrawRemotePlayers(
-		const Surface &out,
-		Point tilePosition,
-		Point targetBufferPosition,
-		int lightTableIndex) const;
+	    const Surface &out,
+	    Point tilePosition,
+	    Point targetBufferPosition,
+	    int lightTableIndex) const;
 
 	/** Visits projected remote players for presentation consumers only. */
 	template <typename Callback>

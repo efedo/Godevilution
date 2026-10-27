@@ -4,7 +4,6 @@
  * Implementation of data encoding and decoding.
  */
 
-
 #include "utils/crypto/codec.h"
 #include <algorithm>
 #include <cstddef>

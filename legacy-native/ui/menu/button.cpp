@@ -4,7 +4,6 @@
  * Implementation of menu button widget.
  */
 
-
 #include "ui/menu/button.h"
 
 #include <optional>
@@ -16,16 +15,16 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/gfx/surface.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/load/load_pcx.hpp"
 #include "engine/math/rectangle.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/gfx/surface.hpp"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
 #include "utils/sdl/sdl_compat.h"
 
 namespace devilution {

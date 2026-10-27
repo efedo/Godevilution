@@ -4,7 +4,6 @@
  * Interface for CL2 to CLX format conversion.
  */
 
-
 #pragma once
 
 #include <cstddef>

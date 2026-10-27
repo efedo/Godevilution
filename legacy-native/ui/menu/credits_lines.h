@@ -4,7 +4,6 @@
  * Interface for credits text data.
  */
 
-
 #include <cstddef>
 
 namespace devilution {

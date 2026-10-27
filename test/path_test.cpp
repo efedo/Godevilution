@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <span>
+#include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -185,7 +186,7 @@ TEST(PathTest, CapturedWalkRetainsBlockedEndpoint)
 	    },
 	    [&](Point next) { return next != destination; },
 	    { 8, 8 }, destination, path, std::size(path));
-	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 3, 3 }));
+	EXPECT_THAT(std::vector<int8_t>(path, path + length), ElementsAreArray(std::array<int8_t, 2> { 3, 3 }));
 }
 
 TEST(PathTest, CapturedWalkObstacleUsesUpperCoordinateTieBreak)
@@ -195,7 +196,7 @@ TEST(PathTest, CapturedWalkObstacleUsesUpperCoordinateTieBreak)
 	    [](Point, Point) { return true; },
 	    [](Point next) { return next != Point { 9, 8 }; },
 	    { 8, 8 }, { 10, 8 }, path, std::size(path));
-	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 6, 7 }));
+	EXPECT_THAT(std::vector<int8_t>(path, path + length), ElementsAreArray(std::array<int8_t, 2> { 6, 7 }));
 }
 
 TEST(PathTest, CapturedWalkCallerPreventsDiagonalCornerCrossing)
@@ -208,7 +209,7 @@ TEST(PathTest, CapturedWalkCallerPreventsDiagonalCornerCrossing)
 		        || (open({ to.x, from.y }) && open({ from.x, to.y }));
 	    },
 	    open, { 8, 8 }, { 9, 9 }, path, std::size(path));
-	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 4, 3 }));
+	EXPECT_THAT(std::vector<int8_t>(path, path + length), ElementsAreArray(std::array<int8_t, 2> { 4, 3 }));
 }
 
 TEST(PathTest, FindClosest)

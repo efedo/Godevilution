@@ -4,7 +4,6 @@
  * Implementation of translation table handling.
  */
 
-
 #include "engine/gfx/translation_table.hpp"
 
 #include <cstdint>
@@ -14,8 +13,8 @@
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
-#include "engine/load/load_file.hpp"
 #include "engine/lighting.h"
+#include "engine/load/load_file.hpp"
 #include "utils/string/str_cat.hpp"
 
 namespace devilution {

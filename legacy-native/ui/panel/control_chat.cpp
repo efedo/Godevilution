@@ -4,16 +4,15 @@
  * Implementation of chat control.
  */
 
-
 #include "control_chat.hpp"
 #include "control.hpp"
 #include "control_panel.hpp"
 
-#include "ui/panel/control_chat_commands.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/render/clx_render.hpp"
 #include "persistence/options.h"
 #include "ui/panel/console.hpp"
+#include "ui/panel/control_chat_commands.hpp"
 #include "ui/panel/mainpanel.hpp"
 #include "ui/quick_messages.hpp"
 #include "utils/display.h"

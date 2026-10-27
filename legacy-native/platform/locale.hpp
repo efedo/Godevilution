@@ -4,7 +4,6 @@
  * Interface for locale.
  */
 
-
 #pragma once
 
 #include <string>

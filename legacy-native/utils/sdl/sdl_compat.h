@@ -4,7 +4,6 @@
  * Interface for sdl compat.
  */
 
-
 // Compatibility wrappers for SDL 1 & 2.
 #pragma once
 

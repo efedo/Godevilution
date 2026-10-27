@@ -6,7 +6,6 @@
  * Interface for modifier key hints.
  */
 
-
 #include "engine/gfx/surface.hpp"
 
 namespace devilution {

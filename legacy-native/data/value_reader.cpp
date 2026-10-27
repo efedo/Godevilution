@@ -4,7 +4,6 @@
  * Implementation of value reading from data files.
  */
 
-
 #include "data/value_reader.hpp"
 
 #include <fmt/core.h>

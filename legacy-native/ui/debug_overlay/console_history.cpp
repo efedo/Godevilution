@@ -4,7 +4,6 @@
  * Implementation of console command history.
  */
 
-
 #include "ui/debug_overlay/console_history.hpp"
 
 #include "utils/algorithm/container.hpp"

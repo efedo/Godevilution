@@ -4,7 +4,6 @@
  * Implementation of monsters.
  */
 
-
 #include "lua/modules/monsters.hpp"
 
 #include <string_view>
@@ -14,8 +13,8 @@
 
 #include "data/mpq_file.hpp"
 #include "engine/math/point.hpp"
-#include "lua/metadoc.hpp"
 #include "game/monsters/monsters.hpp"
+#include "lua/metadoc.hpp"
 #include "tables/monstdat.h"
 #include "utils/language.h"
 #include "utils/string/str_split.hpp"

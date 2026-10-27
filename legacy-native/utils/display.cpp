@@ -4,7 +4,6 @@
  * Implementation of display and window management.
  */
 
-
 #include "utils/display.h"
 
 #include <algorithm>
@@ -40,20 +39,20 @@
 #include <hal/video.h>
 #endif
 
-#include "ui/menu/diabloui.h"
 #include "config.h"
-#include "ui/panel/control.hpp"
 #include "controls/controller.h"
+#include "ui/menu/diabloui.h"
+#include "ui/panel/control.hpp"
 #ifndef USE_SDL1
 #include "controls/devices/game_controller.h"
 #endif
+#include "application/headless_mode.hpp"
 #include "controls/devices/joystick.h"
 #include "controls/devices/kbcontroller.h"
 #include "controls/game_controls.h"
 #include "controls/touch/gamepad.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/graphics_pipeline.h"
-#include "application/headless_mode.hpp"
 #include "persistence/options.h"
 #include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"

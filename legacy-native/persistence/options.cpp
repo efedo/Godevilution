@@ -42,10 +42,10 @@
 #include "ui/quick_messages.hpp"
 #include "utils/algorithm/container.hpp"
 #include "utils/file/file_util.h"
+#include "utils/file/logged_fstream.hpp"
 #include "utils/ini.hpp"
 #include "utils/language.h"
 #include "utils/log.hpp"
-#include "utils/file/logged_fstream.hpp"
 #include "utils/paths.h"
 #include "utils/sdl/sdl_ptrs.h"
 #include "utils/string/str_cat.hpp"
@@ -76,7 +76,7 @@ bool IsAuthoritativeServerBackedMode()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	return authoritative::GetServerBackedRuntimeConfiguration().mode
-		== authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
+	    == authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative;
 #else
 	return false;
 #endif

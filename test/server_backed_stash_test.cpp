@@ -8,8 +8,8 @@
 
 #include <gtest/gtest.h>
 
-#include "devilution.pb.h"
 #include "application/diablo.h"
+#include "devilution.pb.h"
 #include "game/levels/dungeon_common.h"
 #include "network/authoritative/envelope_codec.hpp"
 #include "network/authoritative/server_backed_configuration.hpp"
@@ -27,8 +27,7 @@ using SteadyClock = std::chrono::steady_clock;
 bool WriteEnvelope(tcp::socket &socket, const protocol::Envelope &envelope, SteadyClock::time_point deadline)
 {
 	const std::string payload = envelope.SerializeAsString();
-	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(
-	                                    reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
+	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
 	    .has_value();
 }
 
@@ -59,7 +58,6 @@ public:
 	{
 		return observed_.load();
 	}
-
 
 private:
 	void Run()
@@ -211,7 +209,7 @@ protected:
 TEST_F(ServerBackedStashTest, UsesAuthoritativeReferenceForSpellBook)
 {
 	StashItemServer server;
-	Item book { };
+	Item book {};
 	InitializeItem(book, IDI_BOOK1);
 	book._iSeed = 42;
 	book._iSpell = SpellID::Firebolt;

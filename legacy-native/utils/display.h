@@ -6,7 +6,6 @@
  * Interface for display and window management.
  */
 
-
 #include <cstdint>
 #include <type_traits>
 

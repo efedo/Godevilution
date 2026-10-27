@@ -6,7 +6,6 @@
  * Interface for network packet encoding and decoding.
  */
 
-
 #include <array>
 #include <cstdint>
 #include <cstring>

@@ -37,10 +37,10 @@ constexpr LevelIndex LevelIndexNone = -1; // Sentinel: "no level / not loaded".
 
 // Immutable identity of a dungeon level.
 struct LevelId {
-	uint8_t      levelNum   = 0;          // Number of the regular dungeon level.
-	dungeon_type type       = DTYPE_TOWN; // Dungeon environment used by the level.
-	bool         isSetLevel = false;      // Whether this identifies a quest set level.
-	_setlevels   setLevelId = SL_NONE;    // Quest set-level identifier.
+	uint8_t levelNum = 0;            // Number of the regular dungeon level.
+	dungeon_type type = DTYPE_TOWN;  // Dungeon environment used by the level.
+	bool isSetLevel = false;         // Whether this identifies a quest set level.
+	_setlevels setLevelId = SL_NONE; // Quest set-level identifier.
 
 	bool operator==(const LevelId &) const = default;
 };
@@ -83,11 +83,11 @@ public:
 	// -------------------------------------------------------------------------
 	// Identity
 	// -------------------------------------------------------------------------
-	[[nodiscard]] const LevelId &id()         const { return id_; }
-	[[nodiscard]] uint8_t        levelNum()   const { return id_.levelNum; }
-	[[nodiscard]] dungeon_type   type()       const { return id_.type; }
-	[[nodiscard]] bool           isSetLevel() const { return id_.isSetLevel; }
-	[[nodiscard]] _setlevels     setLevelId() const { return id_.setLevelId; }
+	[[nodiscard]] const LevelId &id() const { return id_; }
+	[[nodiscard]] uint8_t levelNum() const { return id_.levelNum; }
+	[[nodiscard]] dungeon_type type() const { return id_.type; }
+	[[nodiscard]] bool isSetLevel() const { return id_.isSetLevel; }
+	[[nodiscard]] _setlevels setLevelId() const { return id_.setLevelId; }
 
 	// brief Updates the level identity without recreating the level data.
 	void setId(const LevelId &newId) { id_ = newId; }
@@ -96,11 +96,11 @@ public:
 	// Tile access (NEW - Phase 2 migration)
 	// -------------------------------------------------------------------------
 
-	//brief Access a tile at the given coordinates
+	// brief Access a tile at the given coordinates
 	[[nodiscard]] Tile &tileAt(int x, int y) { return tiles_[x][y]; }
 	[[nodiscard]] const Tile &tileAt(int x, int y) const { return tiles_[x][y]; }
 
-	//Access a tile at the given Point.
+	// Access a tile at the given Point.
 	[[nodiscard]] Tile &tileAt(Point position) { return tiles_[position.x][position.y]; }
 	[[nodiscard]] const Tile &tileAt(Point position) const { return tiles_[position.x][position.y]; }
 
@@ -126,17 +126,17 @@ public:
 	// -------------------------------------------------------------------------
 
 	// EF todo: further cleanup and consolidation
-	Bitset2d<DMAXX, DMAXY> DungeonMask_;            // Megatiles occupied during procedural generation.
-	DungeonMegaTile megaTiles_[DMAXX][DMAXY] = {};  // Active and replacement IDs for each dungeon megatile.
-	Bitset2d<DMAXX, DMAXY> Protected_;              // Megatiles that the level generator may not overwrite.
-	WorldTileRectangle SetPieceRoom_ = {};          // Room reserved for the generated set piece.
-	WorldTileRectangle SetPiece_ = {};              // Active set-piece area in world-tile coordinates.
-	OptionalOwnedClxSpriteList pSpecialCels_;       // Special dungeon sprites used by the current level.
-	std::unique_ptr<MegaTile[]> pMegaTiles_;        // Megatile definitions for the current dungeon type.
-	std::unique_ptr<std::byte[]> pDungeonCels_;     // Raw dungeon CEL data for the current dungeon type.
-	TileProperties SOLData_[MAXTILES] = {};         // Properties indexed by dungeon piece ID.
-	WorldTilePosition dminPosition_ = {};           // Minimum populated world-tile coordinates.
-	WorldTilePosition dmaxPosition_ = {};           // Maximum populated world-tile coordinates.
+	Bitset2d<DMAXX, DMAXY> DungeonMask_;           // Megatiles occupied during procedural generation.
+	DungeonMegaTile megaTiles_[DMAXX][DMAXY] = {}; // Active and replacement IDs for each dungeon megatile.
+	Bitset2d<DMAXX, DMAXY> Protected_;             // Megatiles that the level generator may not overwrite.
+	WorldTileRectangle SetPieceRoom_ = {};         // Room reserved for the generated set piece.
+	WorldTileRectangle SetPiece_ = {};             // Active set-piece area in world-tile coordinates.
+	OptionalOwnedClxSpriteList pSpecialCels_;      // Special dungeon sprites used by the current level.
+	std::unique_ptr<MegaTile[]> pMegaTiles_;       // Megatile definitions for the current dungeon type.
+	std::unique_ptr<std::byte[]> pDungeonCels_;    // Raw dungeon CEL data for the current dungeon type.
+	TileProperties SOLData_[MAXTILES] = {};        // Properties indexed by dungeon piece ID.
+	WorldTilePosition dminPosition_ = {};          // Minimum populated world-tile coordinates.
+	WorldTilePosition dmaxPosition_ = {};          // Maximum populated world-tile coordinates.
 
 	// -------------------------------------------------------------------------
 	// Mutable accessors for identity fields (for gendung backward compat)
@@ -153,10 +153,10 @@ public:
 	// -------------------------------------------------------------------------
 	// View / rendering
 	// -------------------------------------------------------------------------
-	Point ViewPosition_ = {};                   // Player viewpoint in world-tile coordinates.
-	uint_fast8_t MicroTileLen_ = 0;             // Number of microtiles in each dungeon-piece definition.
-	int8_t TransVal_ = 0;                       // Next transparency-region identifier.
-	std::array<bool, 256> TransList_ = {};      // Transparency regions currently visible to the player.
+	Point ViewPosition_ = {};              // Player viewpoint in world-tile coordinates.
+	uint_fast8_t MicroTileLen_ = 0;        // Number of microtiles in each dungeon-piece definition.
+	int8_t TransVal_ = 0;                  // Next transparency-region identifier.
+	std::array<bool, 256> TransList_ = {}; // Transparency regions currently visible to the player.
 
 	// -------------------------------------------------------------------------
 	// Per-tile maps  (MAXDUNX × MAXDUNY)
@@ -169,28 +169,28 @@ public:
 	// -------------------------------------------------------------------------
 	// Theme rooms
 	// -------------------------------------------------------------------------
-	int themeCount_ = 0;                    // Number of generated theme rooms.
-	THEME_LOC themeLoc_[MAXTHEMES] = {};    // Generated theme-room locations.
-	int numThemes_ = 0;                     // Number of placed theme instances.
-	bool armorFlag_ = false;                // Armor theme flag.
-	bool weaponFlag_ = false;               // Weapon theme flag.
-	int zharlib_ = 0;                       // Zhar library theme index.
+	int themeCount_ = 0;                 // Number of generated theme rooms.
+	THEME_LOC themeLoc_[MAXTHEMES] = {}; // Generated theme-room locations.
+	int numThemes_ = 0;                  // Number of placed theme instances.
+	bool armorFlag_ = false;             // Armor theme flag.
+	bool weaponFlag_ = false;            // Weapon theme flag.
+	int zharlib_ = 0;                    // Zhar library theme index.
 
 	// -------------------------------------------------------------------------
 	// Triggers
 	// -------------------------------------------------------------------------
-	bool trigFlag_ = false;                 // Whether a trigger is active.
-	int numTriggers_ = 0;                   // Number of active triggers.
-	int tWarpFrom_ = 0;                     // Town warp origin level.
+	bool trigFlag_ = false; // Whether a trigger is active.
+	int numTriggers_ = 0;   // Number of active triggers.
+	int tWarpFrom_ = 0;     // Town warp origin level.
 
 	// -------------------------------------------------------------------------
 	// Crypt (Uber room)
 	// -------------------------------------------------------------------------
-	int uberRow_ = 0;                       // Uber room row.
-	int uberCol_ = 0;                       // Uber room column.
-	bool isUberRoomOpened_ = false;         // Whether the uber room has been opened.
-	bool isUberLeverActivated_ = false;     // Whether the uber lever has been activated.
-	int uberDiabloMonsterIndex_ = 0;        // Index of the Uber Diablo monster.
+	int uberRow_ = 0;                   // Uber room row.
+	int uberCol_ = 0;                   // Uber room column.
+	bool isUberRoomOpened_ = false;     // Whether the uber room has been opened.
+	bool isUberLeverActivated_ = false; // Whether the uber lever has been activated.
+	int uberDiabloMonsterIndex_ = 0;    // Index of the Uber Diablo monster.
 
 	// -------------------------------------------------------------------------
 	// Factory

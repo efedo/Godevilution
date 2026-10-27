@@ -6,7 +6,6 @@
  * Interface for debug overlay state.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 #include <optional>

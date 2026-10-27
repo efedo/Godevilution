@@ -4,7 +4,6 @@
  * Interface for static (fixed-capacity) vector.
  */
 
-
 #pragma once
 
 #include <cstddef>

@@ -6,7 +6,6 @@
  * Interface for tile properties.
  */
 
-
 #include "engine/math/point.hpp"
 
 namespace devilution {

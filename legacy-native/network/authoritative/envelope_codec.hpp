@@ -6,8 +6,8 @@
  * Length-prefixed framing for the authoritative Protobuf transport.
  */
 
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <string>

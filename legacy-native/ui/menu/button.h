@@ -6,9 +6,8 @@
  * Interface for menu button widget.
  */
 
-
-#include "ui/menu/ui_item.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "ui/menu/ui_item.h"
 
 namespace devilution {
 

@@ -6,7 +6,6 @@
  * Interface for CEL sprite loading.
  */
 
-
 #include <cstdint>
 #include <string>
 

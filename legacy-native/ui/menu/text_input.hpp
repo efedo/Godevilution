@@ -6,7 +6,6 @@
  * Interface for text input field.
  */
 
-
 #include <algorithm>
 #include <cstddef>
 #include <cstring>

@@ -4,7 +4,6 @@
  * Ordered game-data loading.
  */
 
-
 #include "data/game_data_manager.hpp"
 
 #include "game/events/event_bus.hpp"

@@ -6,7 +6,6 @@
  * Interface for gamepad.
  */
 
-
 #include <functional>
 
 #include "controls/controller_buttons.h"

@@ -6,7 +6,6 @@
  * Interface for main game panel.
  */
 
-
 #include <string>
 
 #include <expected.hpp>

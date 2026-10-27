@@ -24,24 +24,24 @@ namespace devilution::authoritative {
 class ServerBackedWorldProjection {
 public:
 	[[nodiscard]] tl::expected<void, std::string> Apply(
-		std::vector<ProjectedMonsterSnapshot> monsters,
-		std::vector<ProjectedWorldItemSnapshot> worldItems,
-		std::vector<ProjectedObjectSnapshot> objects,
-		uint32_t levelId);
+	    std::vector<ProjectedMonsterSnapshot> monsters,
+	    std::vector<ProjectedWorldItemSnapshot> worldItems,
+	    std::vector<ProjectedObjectSnapshot> objects,
+	    uint32_t levelId);
 	[[nodiscard]] tl::expected<void, std::string> Apply(
-		std::vector<ProjectedMonsterSnapshot> monsters,
-		std::vector<ProjectedWorldItemSnapshot> worldItems,
-		std::vector<ProjectedObjectSnapshot> objects,
-		std::vector<ProjectedProjectileSnapshot> projectiles,
-		uint32_t levelId);
+	    std::vector<ProjectedMonsterSnapshot> monsters,
+	    std::vector<ProjectedWorldItemSnapshot> worldItems,
+	    std::vector<ProjectedObjectSnapshot> objects,
+	    std::vector<ProjectedProjectileSnapshot> projectiles,
+	    uint32_t levelId);
 	[[nodiscard]] tl::expected<void, std::string> Apply(
-		std::vector<ProjectedMonsterSnapshot> monsters,
-		std::vector<ProjectedWorldItemSnapshot> worldItems,
-		std::vector<ProjectedObjectSnapshot> objects,
-		std::vector<ProjectedProjectileSnapshot> projectiles,
-		std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
-		uint32_t levelId,
-		std::optional<uint64_t> serverTick = std::nullopt);
+	    std::vector<ProjectedMonsterSnapshot> monsters,
+	    std::vector<ProjectedWorldItemSnapshot> worldItems,
+	    std::vector<ProjectedObjectSnapshot> objects,
+	    std::vector<ProjectedProjectileSnapshot> projectiles,
+	    std::vector<ProjectedLevelGeometrySnapshot> levelGeometry,
+	    uint32_t levelId,
+	    std::optional<uint64_t> serverTick = std::nullopt);
 
 	void Clear() noexcept;
 

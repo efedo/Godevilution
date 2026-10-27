@@ -4,7 +4,6 @@
  * Implementation of setmaps.
  */
 
-
 #include "game/levels/setmaps.h"
 
 #include <cstdint>
@@ -12,18 +11,18 @@
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
-#include "engine/load/load_file.hpp"
 #include "engine/gfx/palette.h"
+#include "engine/load/load_file.hpp"
+#include "game/levels/dungeon_common.h"
 #include "game/levels/level_l1.h"
 #include "game/levels/level_l2.h"
 #include "game/levels/level_l3.h"
 #include "game/levels/level_l4.h"
-#include "game/levels/dungeon_common.h"
 #include "game/levels/triggers.h"
-#include "network/protocol/msg.h"
 #include "game/objects/objects.hpp"
 #include "game/quests/quests.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/msg.h"
 #include "tables/objdat.h"
 #include "utils/language.h"
 

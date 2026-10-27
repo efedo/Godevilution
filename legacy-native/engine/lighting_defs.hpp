@@ -4,7 +4,6 @@
  * Interface for lighting defs.
  */
 
-
 #pragma once
 
 #include <cstddef>

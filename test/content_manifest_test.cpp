@@ -1,5 +1,5 @@
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -13,21 +13,21 @@ namespace {
 ContentManifest MakeBaselineManifest()
 {
 	return {
-	    .id = "baseline",
-	    .version = "1",
-	    .packs = {
-	        { .id = "core", .version = "1", .tables = {
-	              { .sourcePath = "items.tsv", .columns = { "id", "name" }, .rows = {
-	                    { .lineNumber = 2, .cells = { "short-sword", "Short Sword" } },
-	                    { .lineNumber = 3, .cells = { "buckler", "Buckler" } },
-	                } },
-	          } },
-	        { .id = "expansion", .version = "2", .tables = {
-	              { .sourcePath = "monsters.tsv", .columns = { "id", "name" }, .rows = {
-	                    { .lineNumber = 2, .cells = { "goat", "Goatman" } },
-	                } },
-	          } },
-	    },
+		.id = "baseline",
+		.version = "1",
+		.packs = {
+		    { .id = "core", .version = "1", .tables = {
+		                                        { .sourcePath = "items.tsv", .columns = { "id", "name" }, .rows = {
+		                                                                                                      { .lineNumber = 2, .cells = { "short-sword", "Short Sword" } },
+		                                                                                                      { .lineNumber = 3, .cells = { "buckler", "Buckler" } },
+		                                                                                                  } },
+		                                    } },
+		    { .id = "expansion", .version = "2", .tables = {
+		                                             { .sourcePath = "monsters.tsv", .columns = { "id", "name" }, .rows = {
+		                                                                                                              { .lineNumber = 2, .cells = { "goat", "Goatman" } },
+		                                                                                                          } },
+		                                         } },
+		},
 	};
 }
 

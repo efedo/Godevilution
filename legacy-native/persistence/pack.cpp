@@ -7,13 +7,13 @@
 
 #include <cstdint>
 
-#include "engine/random.hpp"
 #include "application/game_mode.hpp"
+#include "engine/random.hpp"
 #include "game/items/validation.h"
-#include "persistence/loadsave.h"
-#include "ui/player_messages.h"
 #include "game/stores/stores.hpp"
+#include "persistence/loadsave.h"
 #include "tables/playerdat.hpp"
+#include "ui/player_messages.h"
 #include "utils/endian/endian_read.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/is_of.hpp"

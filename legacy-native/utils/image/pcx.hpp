@@ -6,7 +6,6 @@
  * Interface for PCX image format.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 

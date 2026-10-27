@@ -13,16 +13,15 @@
 #include <string_view>
 
 #include "application/diablo.h"
+#include "application/game_mode.hpp"
 #include "engine/actor.hpp"
+#include "engine/actor_position.hpp"
 #include "engine/attributes.hpp"
 #include "engine/combat_actor.hpp"
-#include "engine/actor_position.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/math/displacement.hpp"
-#include "engine/path.h"
 #include "engine/math/point.hpp"
-#include "application/game_mode.hpp"
-#include "ui/load_screens.h"
+#include "engine/path.h"
 #include "game/items/items.hpp"
 #include "game/items/validation.h"
 #include "game/levels/dun_tile.hpp"
@@ -30,6 +29,7 @@
 #include "network/protocol/multi.h"
 #include "tables/playerdat.hpp"
 #include "tables/spelldat.h"
+#include "ui/load_screens.h"
 #include "utils/attributes.h"
 #include "utils/enum_traits.h"
 #include "utils/is_of.hpp"
@@ -192,7 +192,7 @@ struct SpellCastInfo {
 	SpellID spellId;
 	SpellType spellType;
 	int8_t spellFrom; // Inventory location for scrolls
-	int spellLevel; // Used for spell level
+	int spellLevel;   // Used for spell level
 };
 
 struct Player : CombatActor {
@@ -228,9 +228,9 @@ struct Player : CombatActor {
 	int destParam4;
 	int _pGold;
 
-	OptionalClxSprite previewCelSprite; // Contains a optional preview ClxSprite
+	OptionalClxSprite previewCelSprite;             // Contains a optional preview ClxSprite
 	int8_t progressToNextGameTickWhenPreviewWasSet; // Contains the progress to next game tick when previewCelSprite was set
-	ItemSpecialEffect _pIFlags; // Bitmask using item_special_effect
+	ItemSpecialEffect _pIFlags;                     // Bitmask using item_special_effect
 
 	// Contains Data (Sprites) for the different Animations
 	std::array<PlayerAnimationData, enum_size<player_graphic>::value> AnimationData;
@@ -257,18 +257,18 @@ private:
 public:
 	uint8_t _pgfxnum; // Bitmask indicating what variant of the sprite the player is using. The 3 lower bits define weapon (PlayerWeaponGraphic) and the higher bits define armour (starting with PlayerArmorGraphic)
 	int8_t _pISplLvlAdd;
-	bool friendlyMode = true; // Specifies whether players are in non-PvP mode
-	SpellCastInfo queuedSpell; // The next queued spell
+	bool friendlyMode = true;    // Specifies whether players are in non-PvP mode
+	SpellCastInfo queuedSpell;   // The next queued spell
 	SpellCastInfo executedSpell; // The spell that is currently being cast
-	SpellID inventorySpell; // Which spell should be executed with CURSOR_TELEPORT
-	int8_t spellFrom; // Inventory location for scrolls with CURSOR_TELEPORT
+	SpellID inventorySpell;      // Which spell should be executed with CURSOR_TELEPORT
+	int8_t spellFrom;            // Inventory location for scrolls with CURSOR_TELEPORT
 	SpellID _pRSpell;
 	SpellType _pRSplType;
 	SpellID _pSBkSpell;
 	uint8_t _pSplLvl[64];
-	uint64_t _pISpells; // Bitmask of staff spell
-	uint64_t _pMemSpells; // Bitmask of learned spells
-	uint64_t _pAblSpells; // Bitmask of abilities
+	uint64_t _pISpells;    // Bitmask of staff spell
+	uint64_t _pMemSpells;  // Bitmask of learned spells
+	uint64_t _pAblSpells;  // Bitmask of abilities
 	uint64_t _pScrlSpells; // Bitmask of spells available via scrolls
 	SpellFlag _pSpellFlags;
 	SpellID _pSplHotKey[NumHotkeys];
@@ -385,13 +385,13 @@ public:
 	// opening a chest, picking an item up, etc) this action will also be cancelled.
 	void Stop();
 
-	[[nodiscard]] bool isWalking() const override; // Is the player currently walking?
+	[[nodiscard]] bool isWalking() const override;           // Is the player currently walking?
 	item_equip_type GetItemLocation(const Item &item) const; // Returns item location taking into consideration barbarian's
-															 // ability to hold two-handed maces and clubs in one hand.
-	int GetArmor() const; // Return player's armor value
-	int GetMeleeToHit() const; // Return player's melee to hit value
-	int GetMeleePiercingToHit() const; // Return player's melee to hit value, including armor piercing
-	int GetRangedToHit() const; // Return player's ranged to hit value
+	                                                         // ability to hold two-handed maces and clubs in one hand.
+	int GetArmor() const;                                    // Return player's armor value
+	int GetMeleeToHit() const;                               // Return player's melee to hit value
+	int GetMeleePiercingToHit() const;                       // Return player's melee to hit value, including armor piercing
+	int GetRangedToHit() const;                              // Return player's ranged to hit value
 	int GetRangedPiercingToHit() const;
 	int GetMagicToHit() const; // Return magic hit chance
 
@@ -446,7 +446,7 @@ public:
 	[[nodiscard]] player_graphic getGraphic() const;
 	[[nodiscard]] uint16_t getSpriteWidth() const;
 	void getAnimationFramesAndTicksPerFrame(player_graphic graphics, int8_t &numberOfFrames, int8_t &ticksPerFrame) const;
-	[[nodiscard]] ClxSprite currentSprite() const {	return previewCelSprite ? *previewCelSprite : animInfo.currentSprite(); }
+	[[nodiscard]] ClxSprite currentSprite() const { return previewCelSprite ? *previewCelSprite : animInfo.currentSprite(); }
 
 	// Updates previewCelSprite according to new requested command
 	// cmdId: What command is requested
@@ -459,7 +459,7 @@ public:
 
 	[[nodiscard]] uint8_t getCharacterLevel() const { return _pLevel; }
 	void setCharacterLevel(uint8_t level); // Sets the character level to the target level or nearest valid
-										   // value (clamped to allowed range)
+	                                       // value (clamped to allowed range)
 	[[nodiscard]] uint8_t getMaxCharacterLevel() const;
 	[[nodiscard]] bool isMaxCharacterLevel() const { return getCharacterLevel() >= getMaxCharacterLevel(); }
 
@@ -479,10 +479,10 @@ public:
 
 	[[nodiscard]] uint32_t getNextExperienceThreshold() const;
 
-	bool isOnActiveLevel() const; // Checks if the player is on the same level as the local player (MyPlayer)
-	bool isOnLevel(uint8_t level) const; // Checks if the player is on the corresponding level
+	bool isOnActiveLevel() const;           // Checks if the player is on the same level as the local player (MyPlayer)
+	bool isOnLevel(uint8_t level) const;    // Checks if the player is on the corresponding level
 	bool isOnLevel(_setlevels level) const; // Checks if the player is on the corresponding level
-	bool isOnArenaLevel() const; // Checks if the player is on a arena level
+	bool isOnArenaLevel() const;            // Checks if the player is on a arena level
 	void setLevel(uint8_t level);
 	void setLevel(_setlevels level);
 

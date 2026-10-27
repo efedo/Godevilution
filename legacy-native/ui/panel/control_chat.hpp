@@ -6,14 +6,13 @@
  * Interface for chat control.
  */
 
-
 #include <optional>
 #include <string_view>
 
-#include "ui/menu/text_input.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#include "ui/menu/text_input.hpp"
 
 #ifdef USE_SDL3
 #include <SDL3/SDL_events.h>

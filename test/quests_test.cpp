@@ -61,7 +61,7 @@ struct QuestPoolSeedCase {
 	size_t unavailableCount;
 };
 
-constexpr std::array<QuestPoolSeedCase, 8> LoadedPoolSeedCases {{
+constexpr std::array<QuestPoolSeedCase, 8> LoadedPoolSeedCases { {
 	// Literal outputs were derived independently from DiabloGenerator's 32-bit Borland LCG arithmetic.
 	{ 1457187811U, { Q_SKELKING, Q_LTBANNER, Q_BLIND, Q_ZHAR, Q_VEIL }, 5 },
 	// The loaded-table compatibility path skips pool 1, then selects pools 2-5.
@@ -72,7 +72,7 @@ constexpr std::array<QuestPoolSeedCase, 8> LoadedPoolSeedCases {{
 	{ 509604U, { Q_PWATER, Q_GARBUD, Q_ROCK, Q_ZHAR, Q_VEIL }, 5 },
 	{ 0U, { Q_SKELKING, Q_LTBANNER, Q_BLIND, Q_ANVIL, Q_VEIL }, 5 },
 	{ 1U, { Q_SKELKING, Q_BUTCHER, Q_BLOOD, Q_ZHAR, Q_WARLORD }, 5 },
-}};
+} };
 
 bool ConfigureBuildQuestPoolOverride(std::string &error)
 {
@@ -94,7 +94,7 @@ bool ConfigureBuildQuestPoolOverride(std::string &error)
 		return false;
 	}
 
-	constexpr std::array<std::string_view, 14> expectedLines {{
+	constexpr std::array<std::string_view, 14> expectedLines { {
 		"poolId\tquestId",
 		"1\tQ_SKELKING",
 		"1\tQ_PWATER",
@@ -109,7 +109,7 @@ bool ConfigureBuildQuestPoolOverride(std::string &error)
 		"4\tQ_ANVIL",
 		"5\tQ_VEIL",
 		"5\tQ_WARLORD",
-	}};
+	} };
 	std::vector<std::string> actualLines;
 	std::string line;
 	while (std::getline(input, line)) {

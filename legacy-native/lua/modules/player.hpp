@@ -6,7 +6,6 @@
  * Interface for player.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

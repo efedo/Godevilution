@@ -5,8 +5,8 @@
  */
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 #include "game/levels/dungeon_common.h"
 #include "tables/objdat.h"

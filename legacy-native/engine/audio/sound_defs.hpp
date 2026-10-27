@@ -6,7 +6,6 @@
  * Interface for sound effect definitions.
  */
 
-
 #ifdef USE_SDL3
 #include <SDL3/SDL_version.h>
 #else

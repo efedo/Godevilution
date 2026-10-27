@@ -18,56 +18,56 @@
 #include <type_traits>
 #include <utility>
 
+#include "application/diablo.h"
 #include "application/fatal_error.h"
-#include "ui/panel/control.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/player_controls.h"
+#include "engine/audio/effects.h"
+#include "engine/audio/sound_effect_enums.h"
 #include "engine/crawl.hpp"
 #include "engine/cursor.h"
-#include "game/monsters/monster_corpses.hpp"
-#include "application/diablo.h"
-#include "engine/audio/effects.h"
 #include "engine/gfx/clx_sprite.hpp"
+#include "engine/lighting_defs.hpp"
 #include "engine/math/direction.hpp"
 #include "engine/math/displacement.hpp"
-#include "engine/lighting_defs.hpp"
-#include "engine/path.h"
 #include "engine/math/point.hpp"
-#include "engine/render/world_renderer.h"
-#include "ui/automap.h"
 #include "engine/math/world_tile.hpp"
+#include "engine/path.h"
+#include "engine/render/world_renderer.h"
 #include "function_ref.hpp"
-#include "ui/load_screens.h"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/dungeon_common_defs.hpp"
-#include "network/protocol/msg.h"
-#include "network/protocol/multi.h"
-#include "network/protocol/legacy_player_state_policy.hpp"
-#include "network/protocol/legacy_world_state_policy.hpp"
+#include "game/monsters/monster_corpses.hpp"
 #include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
-#include "engine/audio/sound_effect_enums.h"
+#include "network/protocol/legacy_player_state_policy.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
+#include "network/protocol/msg.h"
+#include "network/protocol/multi.h"
 #include "tables/itemdat.h"
 #include "tables/misdat.h"
 #include "tables/monstdat.h"
 #include "tables/playerdat.hpp"
 #include "tables/spelldat.h"
+#include "ui/automap.h"
+#include "ui/load_screens.h"
+#include "ui/panel/control.hpp"
 #include "utils/enum_traits.h"
 #ifdef _DEBUG
 #include "application/debug.h"
 #endif
-#include "engine/gfx/backbuffer_state.hpp"
-#include "engine/math/points_in_rectangle_range.hpp"
-#include "engine/random.hpp"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
-#include "game/players/inventory.hpp"
+#include "engine/gfx/backbuffer_state.hpp"
+#include "engine/lighting.h"
+#include "engine/math/points_in_rectangle_range.hpp"
+#include "engine/random.hpp"
 #include "game/levels/dun_tile.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/triggers.h"
-#include "engine/lighting.h"
 #include "game/monsters/monsters.hpp"
+#include "game/players/inventory.hpp"
 #include "utils/is_of.hpp"
 #include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
@@ -163,11 +163,11 @@ bool CheckBlock(Point from, Point to)
 Monster *FindClosest(Point source, int rad)
 {
 	std::optional<Point> monsterPosition = FindClosestValidPosition(
-		[&source](Point target) {
-			// search for a monster with clear line of sight
-			return InDungeonBounds(target) && tileAt(target).monster() > 0 && !CheckBlock(source, target);
-		},
-		source, 1, rad);
+	    [&source](Point target) {
+		    // search for a monster with clear line of sight
+		    return InDungeonBounds(target) && tileAt(target).monster() > 0 && !CheckBlock(source, target);
+	    },
+	    source, 1, rad);
 
 	if (monsterPosition) {
 		const int mid = tileAt(*monsterPosition).monster();
@@ -1320,9 +1320,9 @@ void AddBerserk(Missile &missile, AddMissileParameter &parameter)
 			    return false;
 		    }
 
-			const int monsterId = std::abs(tileAt(target).monster()) - 1;
-			if (monsterId < 0)
-				return false;
+		    const int monsterId = std::abs(tileAt(target).monster()) - 1;
+		    if (monsterId < 0)
+			    return false;
 
 		    const Monster &monster = Monsters[monsterId];
 		    if (monster.isPlayerMinion())
@@ -1472,10 +1472,10 @@ void AddStealPotions(Missile &missile, AddMissileParameter & /*parameter*/)
 void AddStealMana(Missile &missile, AddMissileParameter & /*parameter*/)
 {
 	std::optional<Point> trappedPlayerPosition = FindClosestValidPosition(
-		[](Point target) {
-			return InDungeonBounds(target) && tileAt(target).hasPlayer();
-		},
-		missile.position.start, 0, 2);
+	    [](Point target) {
+		    return InDungeonBounds(target) && tileAt(target).hasPlayer();
+	    },
+	    missile.position.start, 0, 2);
 
 	if (trappedPlayerPosition) {
 		Player &player = Players[std::abs(tileAt(*trappedPlayerPosition).player()) - 1];
@@ -2084,12 +2084,12 @@ void AddTownPortal(Missile &missile, AddMissileParameter &parameter)
 			    if (!InDungeonBounds(target)) {
 				    return false;
 			    }
-				if (IsObjectAtPosition(target)) {
-					return false;
-				}
-				if (tileAt(target).hasPlayer()) {
-					return false;
-				}
+			    if (IsObjectAtPosition(target)) {
+				    return false;
+			    }
+			    if (tileAt(target).hasPlayer()) {
+				    return false;
+			    }
 			    if (TileContainsMissile(target)) {
 				    return false;
 			    }
@@ -2202,9 +2202,9 @@ void AddGuardian(Missile &missile, AddMissileParameter &parameter)
 		    if (!InDungeonBounds(target)) {
 			    return false;
 		    }
-			if (tileAt(target).hasMonster()) {
-				return false;
-			}
+		    if (tileAt(target).hasMonster()) {
+			    return false;
+		    }
 		    if (IsObjectAtPosition(target)) {
 			    return false;
 		    }
@@ -2376,12 +2376,12 @@ void AddStoneCurse(Missile &missile, AddMissileParameter &parameter)
 			    return false;
 		    }
 
-			const int monsterId = std::abs(tileAt(target).monster()) - 1;
-			if (monsterId < 0) {
-				return false;
-			}
+		    const int monsterId = std::abs(tileAt(target).monster()) - 1;
+		    if (monsterId < 0) {
+			    return false;
+		    }
 
-			const Monster &monster = Monsters[monsterId];
+		    const Monster &monster = Monsters[monsterId];
 
 		    if (IsAnyOf(monster.type().type, MT_GOLEM, MT_DIABLO, MT_NAKRUL)) {
 			    return false;

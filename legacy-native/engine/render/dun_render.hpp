@@ -8,9 +8,9 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/light_render.hpp"
-#include "engine/gfx/surface.hpp"
 #include "game/levels/dun_tile.hpp"
 #include "utils/attributes.h"
 #include "utils/endian/endian_swap.hpp"

@@ -18,20 +18,20 @@
 #include <expected.hpp>
 #include <function_ref.hpp>
 
+#include "engine/gfx/palette.h"
+#include "engine/gfx/surface.hpp"
 #include "engine/load/load_file.hpp"
-#include "engine/palette.h"
 #include "engine/math/point.hpp"
-#include "engine/rectangle.hpp"
+#include "engine/math/rectangle.hpp"
+#include "engine/math/size.hpp"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/size.hpp"
-#include "engine/gfx/surface.hpp"
+#include "utils/image/png.h"
+#include "utils/image/surface_to_png.hpp"
 #include "utils/paths.h"
-#include "utils/png.h"
-#include "utils/sdl_compat.h"
-#include "utils/sdl_wrap.h"
+#include "utils/sdl/sdl_compat.h"
+#include "utils/sdl/sdl_wrap.h"
 #include "utils/string/str_cat.hpp"
-#include "utils/surface_to_png.hpp"
 
 // Invoke with --update_expected to update the expected files with actual results.
 static bool UpdateExpected;

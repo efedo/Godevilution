@@ -84,8 +84,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    && (snapshot.combatMode == static_cast<uint32_t>(PM_WALK_NORTHWARDS)
 		        || snapshot.combatMode == static_cast<uint32_t>(PM_WALK_SOUTHWARDS)
 		        || snapshot.combatMode == static_cast<uint32_t>(PM_WALK_SIDEWAYS))
-	    && action.directionX >= MinimumNativeDirection && action.directionX <= MaximumNativeDirection
-	    && action.directionY >= MinimumNativeDirection && action.directionY <= MaximumNativeDirection
+		    && action.directionX >= MinimumNativeDirection && action.directionX <= MaximumNativeDirection
+		    && action.directionY >= MinimumNativeDirection && action.directionY <= MaximumNativeDirection
 		    && (action.directionX != 0 || action.directionY != 0)
 		    && action.targetEntityId == 0 && !action.hasCast;
 		const bool attackIsValid = action.kind == 2
@@ -189,7 +189,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed inventory does not fit the native inventory layout.");
 	if (snapshot.heldItem.has_value()
 	    && ((snapshot.heldItem->itemSeed == 0
-            && snapshot.heldItem->item._iMiscId != IMISC_EAR)
+	            && snapshot.heldItem->item._iMiscId != IMISC_EAR)
 	        || !HasValidProjectedItemIdentity(snapshot.heldItem->itemSeed, snapshot.heldItem->item)
 	        || snapshot.heldItem->price > static_cast<uint32_t>(INT_MAX)
 	        || snapshot.heldItem->item.isEmpty())) {
@@ -204,7 +204,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    || !equipmentSlots.insert(equipment.slot).second)
 			return tl::make_unexpected("Server-backed equipment contains a duplicate or invalid slot.");
 	}
-	std::array<bool, NativeStashPageCount * NativeStashCellCount> occupied { };
+	std::array<bool, NativeStashPageCount * NativeStashCellCount> occupied {};
 	for (const auto &stashItem : snapshot.stash) {
 		if (stashItem.page >= NativeStashPageCount || stashItem.cell >= NativeStashCellCount
 		    || stashItem.width == 0 || stashItem.height == 0
@@ -232,7 +232,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		if (cell < -1 || (cell >= 0 && static_cast<std::size_t>(cell) >= snapshot.inventory.size()))
 			return tl::make_unexpected("Server-backed inventory grid references an invalid item.");
 	}
-	return { };
+	return {};
 }
 
 void ApplyResource(VitalResource &destination, int32_t current)
@@ -288,10 +288,10 @@ void ClearDeadPlayerFlagIfUnoccupied(Point position, const Player &player)
 }
 
 void SynchronizeNativePlayerPresentation(
-	Player &player,
-	const ProjectedPlayerSnapshot &snapshot,
-	Point previousPosition,
-	bool wasOnActiveLevel)
+    Player &player,
+    const ProjectedPlayerSnapshot &snapshot,
+    Point previousPosition,
+    bool wasOnActiveLevel)
 {
 	const auto marker = RegisteredNativePlayerMarker(player);
 	if (!marker.has_value())
@@ -374,7 +374,7 @@ tl::expected<void, std::string> ApplyServerBackedStashProjection(const Projected
 	IsStashOpen = snapshot.stashOpen;
 	if (!IsStashOpen)
 		CloseGoldWithdraw();
-	return { };
+	return {};
 }
 
 tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
@@ -419,8 +419,8 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	});
 	player._pSpellFlags &= ~SpellFlag::Etherealize;
 	if (std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
-			return effect.behavior == 3;
-		})) {
+		    return effect.behavior == 3;
+	    })) {
 		player._pSpellFlags |= SpellFlag::Etherealize;
 	}
 	CurrentAutomapManager.SetAutoMapShowItems(std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
@@ -532,7 +532,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.UpdateHitPointPercentage();
 	player.UpdateManaPercentage();
 	SynchronizeNativePlayerPresentation(player, snapshot, previousPosition, wasOnActiveLevel);
-	return { };
+	return {};
 }
 
 } // namespace devilution::authoritative

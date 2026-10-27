@@ -6,7 +6,6 @@
  * Active mod archive management.
  */
 
-
 #include <string_view>
 #include <vector>
 

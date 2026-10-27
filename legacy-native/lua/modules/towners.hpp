@@ -6,7 +6,6 @@
  * Interface for towners.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

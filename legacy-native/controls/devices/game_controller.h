@@ -6,7 +6,6 @@
  * Interface for game controller device.
  */
 
-
 #include <vector>
 
 #ifdef USE_SDL3

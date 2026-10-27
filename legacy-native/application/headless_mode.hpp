@@ -4,7 +4,6 @@
  * Interface for headless mode support.
  */
 
-
 #pragma once
 
 #include "utils/attributes.h"

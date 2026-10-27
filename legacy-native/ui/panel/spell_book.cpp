@@ -4,7 +4,6 @@
  * Implementation of spell book.
  */
 
-
 #include "ui/panel/spell_book.hpp"
 
 #include <cstdint>
@@ -14,7 +13,7 @@
 #include <expected.hpp>
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_cel.hpp"
@@ -22,12 +21,12 @@
 #include "engine/math/rectangle.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "application/game_mode.hpp"
 #include "game/missiles/missiles.hpp"
-#include "ui/panel/spell_icons.hpp"
-#include "ui/panel/ui_panels.hpp"
 #include "game/players/players.hpp"
 #include "tables/spelldat.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/spell_icons.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/language.h"
 #include "utils/status_macros.hpp"
 

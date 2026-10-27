@@ -5,8 +5,8 @@
  */
 #pragma once
 
-#include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "engine/math/point.hpp"
 
 namespace devilution {
 

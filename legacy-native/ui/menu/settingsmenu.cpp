@@ -4,7 +4,6 @@
  * Implementation of settings menu.
  */
 
-
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -24,31 +23,31 @@
 
 #include <function_ref.hpp>
 
-#include "ui/menu/diabloui.h"
-#include "ui/menu/scrollbar.h"
-#include "ui/menu/ui_flags.hpp"
-#include "ui/menu/ui_item.h"
+#include "application/game_mode.hpp"
 #include "controls/controller.h"
 #include "controls/controller_buttons.h"
 #include "controls/controller_motion.h"
 #include "controls/player_controls.h"
 #include "controls/remap_keyboard.h"
 #include "engine/assets.hpp"
+#include "engine/hwcursor.hpp"
 #include "engine/math/rectangle.hpp"
 #include "engine/render/text_render.hpp"
-#include "application/game_mode.hpp"
-#include "engine/hwcursor.hpp"
 #include "game/items/items.hpp"
 #include "persistence/options.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/scrollbar.h"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/menu/ui_item.h"
+#include "utils/container/static_vector.hpp"
 #include "utils/enum_traits.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/sdl/sdl_compat.h"
 #include "utils/sdl/sdl_geometry.h"
-#include "utils/container/static_vector.hpp"
 #include "utils/string/str_cat.hpp"
-#include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
+#include "utils/ui_fwd.h"
 
 namespace devilution {
 namespace {

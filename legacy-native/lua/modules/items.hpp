@@ -6,7 +6,6 @@
  * Interface for items.
  */
 
-
 #include <sol/sol.hpp>
 
 namespace devilution {

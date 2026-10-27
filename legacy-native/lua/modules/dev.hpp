@@ -5,7 +5,6 @@
  * Interface for dev.
  */
 
-
 #ifdef _DEBUG
 #include <sol/sol.hpp>
 

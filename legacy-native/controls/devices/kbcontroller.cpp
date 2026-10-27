@@ -4,7 +4,6 @@
  * Implementation of keyboard controller device.
  */
 
-
 #include "controls/devices/kbcontroller.h"
 
 #if HAS_KBCTRL == 1

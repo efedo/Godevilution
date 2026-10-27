@@ -46,10 +46,10 @@ TEST(DebugCommandRegistry, FormatsNativeHelpFromRegisteredCommands)
 	ASSERT_TRUE(registry.Register("alpha", "A command.", [](std::string_view) { return std::string {}; }));
 
 	EXPECT_EQ(
-		registry.HelpText(),
-		"Native debug commands:\n"
-		"  alpha - A command.\n"
-		"  zeta - Z command.");
+	    registry.HelpText(),
+	    "Native debug commands:\n"
+	    "  alpha - A command.\n"
+	    "  zeta - Z command.");
 }
 
 } // namespace

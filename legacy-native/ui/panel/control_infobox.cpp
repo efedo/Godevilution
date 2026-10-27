@@ -4,22 +4,21 @@
  * Implementation of information box control.
  */
 
-
 #include "control.hpp"
 #include "control_panel.hpp"
 
 #include "engine/render/primitive_render.hpp"
-#include "game/players/inventory.hpp"
 #include "game/levels/triggers.h"
-#include "ui/panel/partypanel.hpp"
+#include "game/players/inventory.hpp"
+#include "game/towners/towners.hpp"
 #include "qol/stash.h"
 #include "qol/visual_store.h"
 #include "qol/xpbar.h"
-#include "game/towners/towners.hpp"
+#include "ui/panel/partypanel.hpp"
 #include "utils/algorithm/container.hpp"
-#include "utils/string/format_int.hpp"
 #include "utils/log.hpp"
 #include "utils/screen_reader.hpp"
+#include "utils/string/format_int.hpp"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/str_split.hpp"
 

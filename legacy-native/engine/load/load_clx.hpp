@@ -6,7 +6,6 @@
  * Interface for CLX sprite loading.
  */
 
-
 #include <string>
 
 #include <expected.hpp>

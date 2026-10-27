@@ -115,14 +115,54 @@ constexpr int32_t LightningDamageType = 2;
 constexpr int32_t MagicDamageType = 3;
 constexpr int32_t AcidDamageType = 4;
 constexpr std::pair<int32_t, int32_t> GuardianArc[] = {
-	{ 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },
-	{ 6, 1 }, { 5, 1 }, { 4, 1 }, { 3, 1 }, { 6, 2 }, { 2, 1 },
-	{ 5, 2 }, { 6, 3 }, { 4, 2 }, { 5, 3 }, { 3, 2 }, { 1, 1 },
-	{ 6, 4 }, { 6, 5 }, { 5, 4 }, { 4, 3 }, { 2, 2 }, { 5, 5 },
-	{ 4, 4 }, { 3, 3 }, { 6, 6 }, { 5, 6 }, { 4, 5 }, { 3, 4 },
-	{ 2, 3 }, { 4, 6 }, { 3, 5 }, { 2, 4 }, { 1, 2 }, { 3, 6 },
-	{ 2, 5 }, { 1, 3 }, { 0, 1 }, { 2, 6 }, { 1, 4 }, { 1, 5 },
-	{ 1, 6 }, { 0, 2 }, { 0, 3 }, { 0, 6 }, { 0, 5 }, { 0, 4 },
+	{ 6, 0 },
+	{ 5, 0 },
+	{ 4, 0 },
+	{ 3, 0 },
+	{ 2, 0 },
+	{ 1, 0 },
+	{ 6, 1 },
+	{ 5, 1 },
+	{ 4, 1 },
+	{ 3, 1 },
+	{ 6, 2 },
+	{ 2, 1 },
+	{ 5, 2 },
+	{ 6, 3 },
+	{ 4, 2 },
+	{ 5, 3 },
+	{ 3, 2 },
+	{ 1, 1 },
+	{ 6, 4 },
+	{ 6, 5 },
+	{ 5, 4 },
+	{ 4, 3 },
+	{ 2, 2 },
+	{ 5, 5 },
+	{ 4, 4 },
+	{ 3, 3 },
+	{ 6, 6 },
+	{ 5, 6 },
+	{ 4, 5 },
+	{ 3, 4 },
+	{ 2, 3 },
+	{ 4, 6 },
+	{ 3, 5 },
+	{ 2, 4 },
+	{ 1, 2 },
+	{ 3, 6 },
+	{ 2, 5 },
+	{ 1, 3 },
+	{ 0, 1 },
+	{ 2, 6 },
+	{ 1, 4 },
+	{ 1, 5 },
+	{ 1, 6 },
+	{ 0, 2 },
+	{ 0, 3 },
+	{ 0, 6 },
+	{ 0, 5 },
+	{ 0, 4 },
 };
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
@@ -140,8 +180,8 @@ int FindReplayInventoryPlacement(const ReplayFixtureExecutionState &state, const
 void FillReplayInventoryGrid(ReplayFixtureExecutionState &state, int cell, size_t itemIndex, const ReplayFixtureItemState &item);
 
 std::optional<std::pair<int32_t, int32_t>> FindReplaySecondaryDeathDropPosition(
-	const ReplayFixtureExecutionState &state,
-	std::optional<int32_t> preferredDirection = std::nullopt);
+    const ReplayFixtureExecutionState &state,
+    std::optional<int32_t> preferredDirection = std::nullopt);
 
 bool IsValidReplayCharacterName(std::string_view name)
 {
@@ -156,7 +196,14 @@ bool IsValidReplayCharacterName(std::string_view name)
 	for (char &character : shifted)
 		++character;
 	constexpr std::string_view ForbiddenNames[] = {
-		"gvdl", "dvou", "tiju", "cjudi", "bttipmf", "ojhhfs", "cmj{{bse", "benjo",
+		"gvdl",
+		"dvou",
+		"tiju",
+		"cjudi",
+		"bttipmf",
+		"ojhhfs",
+		"cmj{{bse",
+		"benjo",
 	};
 	return std::none_of(std::begin(ForbiddenNames), std::end(ForbiddenNames), [&](std::string_view forbidden) {
 		return shifted.find(forbidden) != std::string::npos;
@@ -164,13 +211,13 @@ bool IsValidReplayCharacterName(std::string_view name)
 }
 
 void StartReplaySecondaryPlayerDeath(
-	ReplayFixtureExecutionState &state,
-	bool monsterOrTrapDeath = false);
+    ReplayFixtureExecutionState &state,
+    bool monsterOrTrapDeath = false);
 void StartReplayPlayerDeath(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixturePlayerActionTiming &timing,
-	uint32_t sourceEntityId,
-	uint64_t tick);
+    ReplayFixtureExecutionState &state,
+    const ReplayFixturePlayerActionTiming &timing,
+    uint32_t sourceEntityId,
+    uint64_t tick);
 void StartReplayPrimaryPlayerPvpDeath(ReplayFixtureExecutionState &state);
 
 void AppendItemState(ReplayStateHasher &hasher, const ReplayFixtureItemState &state)
@@ -195,8 +242,8 @@ void AppendItemState(ReplayStateHasher &hasher, const ReplayFixtureItemState &st
 	const int32_t spellSourceKind = state.miscId == 21 || state.miscId == 22
 	    ? 2
 	    : state.miscId == 23 || state.miscId == 27 || (state.miscId >= 47 && state.miscId <= 51)
-	        ? 1
-	        : 0;
+	    ? 1
+	    : 0;
 	if (spellSourceKind != 0) {
 		hasher.AppendString("godevilution-item-spell-source-kind-v1");
 		hasher.AppendInt32(spellSourceKind);
@@ -587,265 +634,265 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		hasher.AppendUint64(
 		    (state.combatTargetEntityId != 0 ? 1ULL : 0ULL)
 		    + (state.combatTargetCompanionEntityId != 0 ? 1ULL : 0ULL));
-	if (state.combatTargetEntityId != 0) {
-		hasher.AppendUint32(state.combatTargetEntityId);
-		hasher.AppendUint32(state.combatTargetMonsterId);
-		hasher.AppendUint32(state.combatTargetLevelId);
-		hasher.AppendInt32(state.combatTargetPositionX);
-		hasher.AppendInt32(state.combatTargetPositionY);
-		hasher.AppendInt32(state.combatTargetHitPoints);
-		hasher.AppendInt32(state.combatTargetMaxHitPoints);
-		hasher.AppendInt32(state.combatTargetArmorClass);
-		hasher.AppendBool(state.combatTargetHitPoints > 0);
-		if (state.combatTargetAttackDamage != 0 || state.combatTargetAggroRange != 0 || state.combatTargetFireResistance != 0
-		    || state.combatTargetLightningResistance != 0 || state.combatTargetMagicResistance != 0
-		    || state.combatTargetAcidResistance != 0) {
-			hasher.AppendInt32(state.combatTargetAttackDamage);
-			hasher.AppendInt32(state.combatTargetAggroRange);
-			hasher.AppendInt32(state.combatTargetFireResistance);
-			hasher.AppendInt32(state.combatTargetLightningResistance);
-			hasher.AppendInt32(state.combatTargetMagicResistance);
-			if (state.combatTargetAcidResistance != 0) {
-				hasher.AppendString("godevilution-monster-acid-resistance-v1");
-				hasher.AppendInt32(state.combatTargetAcidResistance);
+		if (state.combatTargetEntityId != 0) {
+			hasher.AppendUint32(state.combatTargetEntityId);
+			hasher.AppendUint32(state.combatTargetMonsterId);
+			hasher.AppendUint32(state.combatTargetLevelId);
+			hasher.AppendInt32(state.combatTargetPositionX);
+			hasher.AppendInt32(state.combatTargetPositionY);
+			hasher.AppendInt32(state.combatTargetHitPoints);
+			hasher.AppendInt32(state.combatTargetMaxHitPoints);
+			hasher.AppendInt32(state.combatTargetArmorClass);
+			hasher.AppendBool(state.combatTargetHitPoints > 0);
+			if (state.combatTargetAttackDamage != 0 || state.combatTargetAggroRange != 0 || state.combatTargetFireResistance != 0
+			    || state.combatTargetLightningResistance != 0 || state.combatTargetMagicResistance != 0
+			    || state.combatTargetAcidResistance != 0) {
+				hasher.AppendInt32(state.combatTargetAttackDamage);
+				hasher.AppendInt32(state.combatTargetAggroRange);
+				hasher.AppendInt32(state.combatTargetFireResistance);
+				hasher.AppendInt32(state.combatTargetLightningResistance);
+				hasher.AppendInt32(state.combatTargetMagicResistance);
+				if (state.combatTargetAcidResistance != 0) {
+					hasher.AppendString("godevilution-monster-acid-resistance-v1");
+					hasher.AppendInt32(state.combatTargetAcidResistance);
+				}
+			}
+			if (state.combatTargetMonsterLevel != 0) {
+				hasher.AppendString("godevilution-monster-level-v1");
+				hasher.AppendInt32(state.combatTargetMonsterLevel);
+			}
+			const int32_t hitPointsQ6 = state.combatTargetHitPointsQ6 == 0 && state.combatTargetHitPoints != 0
+			    ? static_cast<int32_t>(static_cast<int64_t>(state.combatTargetHitPoints) * 64)
+			    : state.combatTargetHitPointsQ6;
+			const int32_t maxHitPointsQ6 = state.combatTargetMaxHitPointsQ6 == 0 && state.combatTargetMaxHitPoints != 0
+			    ? static_cast<int32_t>(static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64)
+			    : state.combatTargetMaxHitPointsQ6;
+			if (hitPointsQ6 != static_cast<int64_t>(state.combatTargetHitPoints) * 64
+			    || maxHitPointsQ6 != static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64) {
+				hasher.AppendString("godevilution-monster-hit-points-q6-v1");
+				hasher.AppendInt32(hitPointsQ6);
+				hasher.AppendInt32(maxHitPointsQ6);
+			}
+			if (state.combatTargetMoving || state.combatTargetPetrified) {
+				hasher.AppendString("godevilution-monster-occupancy-v1");
+				hasher.AppendBool(state.combatTargetMoving);
+				hasher.AppendInt32(state.combatTargetFuturePositionX);
+				hasher.AppendInt32(state.combatTargetFuturePositionY);
+				hasher.AppendBool(state.combatTargetPetrified);
+			}
+			if (state.combatTargetDirection != 0) {
+				hasher.AppendString("godevilution-monster-direction-v1");
+				hasher.AppendInt32(state.combatTargetDirection);
+			}
+			if (state.combatTargetMonsterAiSeed != 0) {
+				hasher.AppendString("godevilution-monster-runtime-seeds-v1");
+				hasher.AppendUint32(state.combatTargetMonsterItemSeed);
+				hasher.AppendUint32(state.combatTargetMonsterAiSeed);
+			}
+			if (state.combatTargetActiveForTicks != 0) {
+				hasher.AppendString("godevilution-monster-group-unity-v1");
+				hasher.AppendUint32(0);
+				hasher.AppendInt32(0);
+				hasher.AppendInt32(0);
+				hasher.AppendInt32(state.combatTargetActiveForTicks);
+			}
+			if (state.combatTargetStoneCurseImmune) {
+				hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
+				hasher.AppendBool(true);
+			}
+			if (state.combatTargetUndead) {
+				hasher.AppendString("godevilution-monster-undead-v1");
+				hasher.AppendBool(true);
+			}
+			if (state.combatTargetDemon) {
+				hasher.AppendString("godevilution-monster-demon-v1");
+				hasher.AppendBool(true);
+			}
+			if (state.combatTargetAnimal) {
+				hasher.AppendString("godevilution-monster-animal-v1");
+				hasher.AppendBool(true);
+			}
+			if (state.combatTargetPlayerMinion) {
+				hasher.AppendString("godevilution-monster-player-minion-v1");
+				hasher.AppendBool(true);
+				hasher.AppendString("godevilution-monster-owner-v1");
+				hasher.AppendUint32(state.combatTargetOwnerPlayerId);
+			}
+			const int32_t targetMinDamage = state.combatTargetMinDamage == 0
+			        && state.combatTargetMaxDamage == 0
+			        && state.combatTargetAttackDamage != 0
+			    ? state.combatTargetAttackDamage
+			    : state.combatTargetMinDamage;
+			const int32_t targetMaxDamage = state.combatTargetMinDamage == 0
+			        && state.combatTargetMaxDamage == 0
+			        && state.combatTargetAttackDamage != 0
+			    ? state.combatTargetAttackDamage
+			    : state.combatTargetMaxDamage;
+			const int32_t targetMinDamageSpecial = state.combatTargetMinDamageSpecial != 0
+			    ? state.combatTargetMinDamageSpecial
+			    : targetMinDamage;
+			const int32_t targetMaxDamageSpecial = state.combatTargetMaxDamageSpecial != 0
+			    ? state.combatTargetMaxDamageSpecial
+			    : targetMaxDamage;
+			if (state.combatTargetUnique
+			    || state.combatTargetDiablo
+			    || state.combatTargetBerserked
+			    || targetMinDamage != state.combatTargetAttackDamage
+			    || targetMaxDamage != state.combatTargetAttackDamage
+			    || targetMinDamageSpecial != state.combatTargetAttackDamage
+			    || targetMaxDamageSpecial != state.combatTargetAttackDamage) {
+				hasher.AppendString("godevilution-monster-berserk-v1");
+				hasher.AppendBool(state.combatTargetUnique);
+				hasher.AppendBool(state.combatTargetDiablo);
+				hasher.AppendBool(false);
+				hasher.AppendInt32(targetMinDamage);
+				hasher.AppendInt32(targetMaxDamage);
+				hasher.AppendInt32(targetMinDamageSpecial);
+				hasher.AppendInt32(targetMaxDamageSpecial);
+				hasher.AppendBool(state.combatTargetBerserked);
+			}
+			if (state.combatTargetDeathAnimationTicks != 0 || state.combatTargetDeathTicksRemaining != 0) {
+				hasher.AppendString("godevilution-monster-death-animation-v1");
+				hasher.AppendInt32(state.combatTargetDeathAnimationTicks);
+				hasher.AppendInt32(state.combatTargetDeathTicksRemaining);
+			}
+			if (state.combatTargetToHit != 0 || state.combatTargetToHitSpecial != 0) {
+				hasher.AppendString("godevilution-monster-accuracy-v1");
+				hasher.AppendInt32(state.combatTargetToHit);
+				hasher.AppendInt32(state.combatTargetToHitSpecial);
+			}
+			if (!state.combatTargetNativeAi.empty()) {
+				hasher.AppendString("godevilution-monster-native-ai-v1");
+				hasher.AppendString(state.combatTargetNativeAi);
+			}
+			if (state.combatTargetIntelligence != 0) {
+				hasher.AppendString("godevilution-monster-intelligence-v1");
+				hasher.AppendInt32(state.combatTargetIntelligence);
+			}
+			if (state.combatTargetGargoyleSpecialActive) {
+				hasher.AppendString("godevilution-monster-gargoyle-special-v1");
+				hasher.AppendBool(true);
+			}
+			if (state.combatTargetFallenFearTicks != 0
+			    || state.combatTargetFallenFearDirection != 0) {
+				hasher.AppendString("godevilution-monster-fallen-fear-v1");
+				hasher.AppendInt32(state.combatTargetFallenFearTicks);
+				hasher.AppendInt32(state.combatTargetFallenFearDirection);
+			}
+			if (state.combatTargetFallenStandAnimationFrame != 0
+			    || state.combatTargetFallenStandAnimationTick != 0
+			    || state.combatTargetFallenRallyTicks != 0) {
+				hasher.AppendString("godevilution-monster-fallen-rally-v1");
+				hasher.AppendInt32(state.combatTargetFallenStandAnimationFrame);
+				hasher.AppendInt32(state.combatTargetFallenStandAnimationTick);
+				hasher.AppendInt32(state.combatTargetFallenRallyTicks);
+			}
+			if (state.combatTargetSneakHidden || state.combatTargetSneakRetreatTicks != 0) {
+				hasher.AppendString("godevilution-monster-sneak-v1");
+				hasher.AppendBool(state.combatTargetSneakHidden);
+				hasher.AppendInt32(state.combatTargetSneakRetreatTicks);
+			}
+			if (state.combatTargetBatRetreatTicks != 0 || state.combatTargetBatRetreatDirection != 0) {
+				hasher.AppendString("godevilution-monster-bat-retreat-v1");
+				hasher.AppendInt32(state.combatTargetBatRetreatTicks);
+				hasher.AppendInt32(state.combatTargetBatRetreatDirection);
+			}
+			if (state.combatTargetBatMovementIdleTicks != -1
+			    || state.combatTargetBatMovementMode != 0) {
+				hasher.AppendString("godevilution-monster-bat-movement-v1");
+				hasher.AppendInt32(state.combatTargetBatMovementIdleTicks);
+				hasher.AppendInt32(state.combatTargetBatMovementMode);
+			}
+			if (state.combatTargetScavengerHealingTicks != 0
+			    || state.combatTargetScavengerCorpseEntityId != 0) {
+				hasher.AppendString("godevilution-monster-scavenger-v1");
+				hasher.AppendInt32(state.combatTargetScavengerHealingTicks);
+				hasher.AppendUint32(state.combatTargetScavengerCorpseEntityId);
+			}
+			if (state.combatTargetAvoidanceMovementTicks != -1
+			    || state.combatTargetAvoidanceMovementTurn != 0) {
+				hasher.AppendString("godevilution-monster-avoidance-movement-v1");
+				hasher.AppendInt32(state.combatTargetAvoidanceMovementTicks);
+				hasher.AppendInt32(state.combatTargetAvoidanceMovementTurn);
+			}
+			if (state.combatTargetAvoidanceMovementIdleTicks != -1
+			    || state.combatTargetAvoidanceMovementMode != 0) {
+				hasher.AppendString("godevilution-monster-avoidance-counter-v1");
+				hasher.AppendInt32(state.combatTargetAvoidanceMovementIdleTicks);
+				hasher.AppendInt32(state.combatTargetAvoidanceMovementMode);
+			}
+			if (state.combatTargetSkeletonMeleeDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-skeleton-delay-v1");
+				hasher.AppendInt32(state.combatTargetSkeletonMeleeDelayTicks);
+			}
+			if (state.combatTargetSkeletonRangedMovementIdleTicks != -1
+			    || state.combatTargetSkeletonRangedMovementMode != 0) {
+				hasher.AppendString("godevilution-monster-skeleton-ranged-counter-v1");
+				hasher.AppendInt32(state.combatTargetSkeletonRangedMovementIdleTicks);
+				hasher.AppendInt32(state.combatTargetSkeletonRangedMovementMode);
+			}
+			if (state.combatTargetFatMovementIdleTicks != -1
+			    || state.combatTargetFatMovementMode != 0) {
+				hasher.AppendString("godevilution-monster-fat-counter-v1");
+				hasher.AppendInt32(state.combatTargetFatMovementIdleTicks);
+				hasher.AppendInt32(state.combatTargetFatMovementMode);
+			}
+			if (state.combatTargetHorkDemonDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
+				hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
+			}
+			if (state.combatTargetSkeletonKingDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-skeleton-king-delay-v1");
+				hasher.AppendInt32(state.combatTargetSkeletonKingDelayTicks);
+			}
+			if (state.combatTargetSnakeDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-snake-delay-v1");
+				hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
+			}
+			if (state.combatTargetCounselorDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-counselor-delay-v1");
+				hasher.AppendInt32(state.combatTargetCounselorDelayTicks);
+			}
+			if (state.combatTargetRangedDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-ranged-delay-v1");
+				hasher.AppendInt32(state.combatTargetRangedDelayTicks);
+			}
+			if (state.combatTargetMegaDelayTicks != 0) {
+				hasher.AppendString("godevilution-monster-mega-delay-v1");
+				hasher.AppendInt32(state.combatTargetMegaDelayTicks);
+			}
+			if (state.combatTargetCounselorRetreatTicks != 0) {
+				hasher.AppendString("godevilution-monster-counselor-retreat-v1");
+				hasher.AppendInt32(state.combatTargetCounselorRetreatTicks);
 			}
 		}
-		if (state.combatTargetMonsterLevel != 0) {
-			hasher.AppendString("godevilution-monster-level-v1");
-			hasher.AppendInt32(state.combatTargetMonsterLevel);
-		}
-		const int32_t hitPointsQ6 = state.combatTargetHitPointsQ6 == 0 && state.combatTargetHitPoints != 0
-		    ? static_cast<int32_t>(static_cast<int64_t>(state.combatTargetHitPoints) * 64)
-		    : state.combatTargetHitPointsQ6;
-		const int32_t maxHitPointsQ6 = state.combatTargetMaxHitPointsQ6 == 0 && state.combatTargetMaxHitPoints != 0
-		    ? static_cast<int32_t>(static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64)
-		    : state.combatTargetMaxHitPointsQ6;
-		if (hitPointsQ6 != static_cast<int64_t>(state.combatTargetHitPoints) * 64
-		    || maxHitPointsQ6 != static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64) {
-			hasher.AppendString("godevilution-monster-hit-points-q6-v1");
-			hasher.AppendInt32(hitPointsQ6);
-			hasher.AppendInt32(maxHitPointsQ6);
-		}
-		if (state.combatTargetMoving || state.combatTargetPetrified) {
-			hasher.AppendString("godevilution-monster-occupancy-v1");
-			hasher.AppendBool(state.combatTargetMoving);
-			hasher.AppendInt32(state.combatTargetFuturePositionX);
-			hasher.AppendInt32(state.combatTargetFuturePositionY);
-			hasher.AppendBool(state.combatTargetPetrified);
-		}
-		if (state.combatTargetDirection != 0) {
-			hasher.AppendString("godevilution-monster-direction-v1");
-			hasher.AppendInt32(state.combatTargetDirection);
-		}
-		if (state.combatTargetMonsterAiSeed != 0) {
-			hasher.AppendString("godevilution-monster-runtime-seeds-v1");
-			hasher.AppendUint32(state.combatTargetMonsterItemSeed);
-			hasher.AppendUint32(state.combatTargetMonsterAiSeed);
-		}
-		if (state.combatTargetActiveForTicks != 0) {
-			hasher.AppendString("godevilution-monster-group-unity-v1");
-			hasher.AppendUint32(0);
+		if (state.combatTargetCompanionEntityId != 0) {
+			hasher.AppendUint32(state.combatTargetCompanionEntityId);
+			hasher.AppendUint32(state.combatTargetCompanionMonsterId);
+			hasher.AppendUint32(state.combatTargetCompanionLevelId);
+			hasher.AppendInt32(state.combatTargetCompanionPositionX);
+			hasher.AppendInt32(state.combatTargetCompanionPositionY);
+			hasher.AppendInt32(state.combatTargetCompanionHitPoints);
+			hasher.AppendInt32(state.combatTargetCompanionMaxHitPoints);
 			hasher.AppendInt32(0);
-			hasher.AppendInt32(0);
-			hasher.AppendInt32(state.combatTargetActiveForTicks);
+			hasher.AppendBool(state.combatTargetCompanionHitPoints > 0);
+			if (!state.combatTargetCompanionNativeAi.empty()) {
+				hasher.AppendString("godevilution-monster-native-ai-v1");
+				hasher.AppendString(state.combatTargetCompanionNativeAi);
+			}
+			if (state.combatTargetCompanionIntelligence != 0) {
+				hasher.AppendString("godevilution-monster-intelligence-v1");
+				hasher.AppendInt32(state.combatTargetCompanionIntelligence);
+			}
+			if (state.combatTargetCompanionFallenStandAnimationFrame != 0
+			    || state.combatTargetCompanionFallenStandAnimationTick != 0
+			    || state.combatTargetCompanionFallenRallyTicks != 0) {
+				hasher.AppendString("godevilution-monster-fallen-rally-v1");
+				hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationFrame);
+				hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationTick);
+				hasher.AppendInt32(state.combatTargetCompanionFallenRallyTicks);
+			}
 		}
-		if (state.combatTargetStoneCurseImmune) {
-			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
-			hasher.AppendBool(true);
-		}
-		if (state.combatTargetUndead) {
-			hasher.AppendString("godevilution-monster-undead-v1");
-			hasher.AppendBool(true);
-		}
-		if (state.combatTargetDemon) {
-			hasher.AppendString("godevilution-monster-demon-v1");
-			hasher.AppendBool(true);
-		}
-		if (state.combatTargetAnimal) {
-			hasher.AppendString("godevilution-monster-animal-v1");
-			hasher.AppendBool(true);
-		}
-		if (state.combatTargetPlayerMinion) {
-			hasher.AppendString("godevilution-monster-player-minion-v1");
-			hasher.AppendBool(true);
-			hasher.AppendString("godevilution-monster-owner-v1");
-			hasher.AppendUint32(state.combatTargetOwnerPlayerId);
-		}
-		const int32_t targetMinDamage = state.combatTargetMinDamage == 0
-		        && state.combatTargetMaxDamage == 0
-		        && state.combatTargetAttackDamage != 0
-		    ? state.combatTargetAttackDamage
-		    : state.combatTargetMinDamage;
-		const int32_t targetMaxDamage = state.combatTargetMinDamage == 0
-		        && state.combatTargetMaxDamage == 0
-		        && state.combatTargetAttackDamage != 0
-		    ? state.combatTargetAttackDamage
-		    : state.combatTargetMaxDamage;
-		const int32_t targetMinDamageSpecial = state.combatTargetMinDamageSpecial != 0
-		    ? state.combatTargetMinDamageSpecial
-		    : targetMinDamage;
-		const int32_t targetMaxDamageSpecial = state.combatTargetMaxDamageSpecial != 0
-		    ? state.combatTargetMaxDamageSpecial
-		    : targetMaxDamage;
-		if (state.combatTargetUnique
-		    || state.combatTargetDiablo
-		    || state.combatTargetBerserked
-		    || targetMinDamage != state.combatTargetAttackDamage
-		    || targetMaxDamage != state.combatTargetAttackDamage
-		    || targetMinDamageSpecial != state.combatTargetAttackDamage
-		    || targetMaxDamageSpecial != state.combatTargetAttackDamage) {
-			hasher.AppendString("godevilution-monster-berserk-v1");
-			hasher.AppendBool(state.combatTargetUnique);
-			hasher.AppendBool(state.combatTargetDiablo);
-			hasher.AppendBool(false);
-			hasher.AppendInt32(targetMinDamage);
-			hasher.AppendInt32(targetMaxDamage);
-			hasher.AppendInt32(targetMinDamageSpecial);
-			hasher.AppendInt32(targetMaxDamageSpecial);
-			hasher.AppendBool(state.combatTargetBerserked);
-		}
-		if (state.combatTargetDeathAnimationTicks != 0 || state.combatTargetDeathTicksRemaining != 0) {
-			hasher.AppendString("godevilution-monster-death-animation-v1");
-			hasher.AppendInt32(state.combatTargetDeathAnimationTicks);
-			hasher.AppendInt32(state.combatTargetDeathTicksRemaining);
-		}
-		if (state.combatTargetToHit != 0 || state.combatTargetToHitSpecial != 0) {
-			hasher.AppendString("godevilution-monster-accuracy-v1");
-			hasher.AppendInt32(state.combatTargetToHit);
-			hasher.AppendInt32(state.combatTargetToHitSpecial);
-		}
-		if (!state.combatTargetNativeAi.empty()) {
-			hasher.AppendString("godevilution-monster-native-ai-v1");
-			hasher.AppendString(state.combatTargetNativeAi);
-		}
-		if (state.combatTargetIntelligence != 0) {
-			hasher.AppendString("godevilution-monster-intelligence-v1");
-			hasher.AppendInt32(state.combatTargetIntelligence);
-		}
-		if (state.combatTargetGargoyleSpecialActive) {
-			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
-			hasher.AppendBool(true);
-		}
-		if (state.combatTargetFallenFearTicks != 0
-		    || state.combatTargetFallenFearDirection != 0) {
-			hasher.AppendString("godevilution-monster-fallen-fear-v1");
-			hasher.AppendInt32(state.combatTargetFallenFearTicks);
-			hasher.AppendInt32(state.combatTargetFallenFearDirection);
-		}
-		if (state.combatTargetFallenStandAnimationFrame != 0
-		    || state.combatTargetFallenStandAnimationTick != 0
-		    || state.combatTargetFallenRallyTicks != 0) {
-			hasher.AppendString("godevilution-monster-fallen-rally-v1");
-			hasher.AppendInt32(state.combatTargetFallenStandAnimationFrame);
-			hasher.AppendInt32(state.combatTargetFallenStandAnimationTick);
-			hasher.AppendInt32(state.combatTargetFallenRallyTicks);
-		}
-		if (state.combatTargetSneakHidden || state.combatTargetSneakRetreatTicks != 0) {
-			hasher.AppendString("godevilution-monster-sneak-v1");
-			hasher.AppendBool(state.combatTargetSneakHidden);
-			hasher.AppendInt32(state.combatTargetSneakRetreatTicks);
-		}
-		if (state.combatTargetBatRetreatTicks != 0 || state.combatTargetBatRetreatDirection != 0) {
-			hasher.AppendString("godevilution-monster-bat-retreat-v1");
-			hasher.AppendInt32(state.combatTargetBatRetreatTicks);
-			hasher.AppendInt32(state.combatTargetBatRetreatDirection);
-		}
-		if (state.combatTargetBatMovementIdleTicks != -1
-		    || state.combatTargetBatMovementMode != 0) {
-			hasher.AppendString("godevilution-monster-bat-movement-v1");
-			hasher.AppendInt32(state.combatTargetBatMovementIdleTicks);
-			hasher.AppendInt32(state.combatTargetBatMovementMode);
-		}
-		if (state.combatTargetScavengerHealingTicks != 0
-		    || state.combatTargetScavengerCorpseEntityId != 0) {
-			hasher.AppendString("godevilution-monster-scavenger-v1");
-			hasher.AppendInt32(state.combatTargetScavengerHealingTicks);
-			hasher.AppendUint32(state.combatTargetScavengerCorpseEntityId);
-		}
-		if (state.combatTargetAvoidanceMovementTicks != -1
-		    || state.combatTargetAvoidanceMovementTurn != 0) {
-			hasher.AppendString("godevilution-monster-avoidance-movement-v1");
-			hasher.AppendInt32(state.combatTargetAvoidanceMovementTicks);
-			hasher.AppendInt32(state.combatTargetAvoidanceMovementTurn);
-		}
-		if (state.combatTargetAvoidanceMovementIdleTicks != -1
-		    || state.combatTargetAvoidanceMovementMode != 0) {
-			hasher.AppendString("godevilution-monster-avoidance-counter-v1");
-			hasher.AppendInt32(state.combatTargetAvoidanceMovementIdleTicks);
-			hasher.AppendInt32(state.combatTargetAvoidanceMovementMode);
-		}
-		if (state.combatTargetSkeletonMeleeDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-skeleton-delay-v1");
-			hasher.AppendInt32(state.combatTargetSkeletonMeleeDelayTicks);
-		}
-		if (state.combatTargetSkeletonRangedMovementIdleTicks != -1
-		    || state.combatTargetSkeletonRangedMovementMode != 0) {
-			hasher.AppendString("godevilution-monster-skeleton-ranged-counter-v1");
-			hasher.AppendInt32(state.combatTargetSkeletonRangedMovementIdleTicks);
-			hasher.AppendInt32(state.combatTargetSkeletonRangedMovementMode);
-		}
-		if (state.combatTargetFatMovementIdleTicks != -1
-		    || state.combatTargetFatMovementMode != 0) {
-			hasher.AppendString("godevilution-monster-fat-counter-v1");
-			hasher.AppendInt32(state.combatTargetFatMovementIdleTicks);
-			hasher.AppendInt32(state.combatTargetFatMovementMode);
-		}
-		if (state.combatTargetHorkDemonDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
-			hasher.AppendInt32(state.combatTargetHorkDemonDelayTicks);
-		}
-		if (state.combatTargetSkeletonKingDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-skeleton-king-delay-v1");
-			hasher.AppendInt32(state.combatTargetSkeletonKingDelayTicks);
-		}
-		if (state.combatTargetSnakeDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-snake-delay-v1");
-			hasher.AppendInt32(state.combatTargetSnakeDelayTicks);
-		}
-		if (state.combatTargetCounselorDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-counselor-delay-v1");
-			hasher.AppendInt32(state.combatTargetCounselorDelayTicks);
-		}
-		if (state.combatTargetRangedDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-ranged-delay-v1");
-			hasher.AppendInt32(state.combatTargetRangedDelayTicks);
-		}
-		if (state.combatTargetMegaDelayTicks != 0) {
-			hasher.AppendString("godevilution-monster-mega-delay-v1");
-			hasher.AppendInt32(state.combatTargetMegaDelayTicks);
-		}
-		if (state.combatTargetCounselorRetreatTicks != 0) {
-			hasher.AppendString("godevilution-monster-counselor-retreat-v1");
-			hasher.AppendInt32(state.combatTargetCounselorRetreatTicks);
-		}
-	}
-	if (state.combatTargetCompanionEntityId != 0) {
-		hasher.AppendUint32(state.combatTargetCompanionEntityId);
-		hasher.AppendUint32(state.combatTargetCompanionMonsterId);
-		hasher.AppendUint32(state.combatTargetCompanionLevelId);
-		hasher.AppendInt32(state.combatTargetCompanionPositionX);
-		hasher.AppendInt32(state.combatTargetCompanionPositionY);
-		hasher.AppendInt32(state.combatTargetCompanionHitPoints);
-		hasher.AppendInt32(state.combatTargetCompanionMaxHitPoints);
-		hasher.AppendInt32(0);
-		hasher.AppendBool(state.combatTargetCompanionHitPoints > 0);
-		if (!state.combatTargetCompanionNativeAi.empty()) {
-			hasher.AppendString("godevilution-monster-native-ai-v1");
-			hasher.AppendString(state.combatTargetCompanionNativeAi);
-		}
-		if (state.combatTargetCompanionIntelligence != 0) {
-			hasher.AppendString("godevilution-monster-intelligence-v1");
-			hasher.AppendInt32(state.combatTargetCompanionIntelligence);
-		}
-		if (state.combatTargetCompanionFallenStandAnimationFrame != 0
-		    || state.combatTargetCompanionFallenStandAnimationTick != 0
-		    || state.combatTargetCompanionFallenRallyTicks != 0) {
-			hasher.AppendString("godevilution-monster-fallen-rally-v1");
-			hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationFrame);
-			hasher.AppendInt32(state.combatTargetCompanionFallenStandAnimationTick);
-			hasher.AppendInt32(state.combatTargetCompanionFallenRallyTicks);
-		}
-	}
 	}
 
 	if (!state.corpses.empty()) {
@@ -919,7 +966,9 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		// at the boundary for shrine, quest, breakable, and trap objects.
 		if (state.objectIsShrine || state.objectQuestId != 0 || state.objectBreakable || state.objectTrapArmed) {
 			hasher.AppendString("godevilution-object-presentation-family-v1");
-			hasher.AppendInt32(state.objectIsShrine ? 2 : state.objectQuestId != 0 ? 3 : state.objectBreakable ? 4 : 5);
+			hasher.AppendInt32(state.objectIsShrine ? 2 : state.objectQuestId != 0 ? 3
+			        : state.objectBreakable                                        ? 4
+			                                                                       : 5);
 		}
 		if (state.objectQuestId != 0) {
 			hasher.AppendString("godevilution-object-quest-v1");
@@ -1348,8 +1397,8 @@ int32_t GetReplayFireballManaCost(
 }
 
 int32_t GetReplayInfernoManaCost(
-	const ReplayFixtureExecutionState &state,
-	int32_t spellLevel)
+    const ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
 {
 	int32_t wholeCost = std::max(11 - std::max(spellLevel - 1, 0), 0);
 	if (state.hellfire && state.characterClassId == 2) {
@@ -1363,8 +1412,8 @@ int32_t GetReplayInfernoManaCost(
 }
 
 int32_t GetReplayApocalypseManaCost(
-	const ReplayFixtureExecutionState &state,
-	int32_t spellLevel)
+    const ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
 {
 	int32_t wholeCost = std::max(150 - std::max(spellLevel - 1, 0) * 6, 0);
 	if (state.hellfire && state.characterClassId == 2) {
@@ -1543,10 +1592,7 @@ void CreateFireball(
 	    velocityTargetX,
 	    velocityTargetY,
 	    speed);
-	int32_t damage = 2 * (
-	    static_cast<int32_t>(state.characterLevel)
-	    + GenerateRnd(state, 10)
-	    + GenerateRnd(state, 10))
+	int32_t damage = 2 * (static_cast<int32_t>(state.characterLevel) + GenerateRnd(state, 10) + GenerateRnd(state, 10))
 	    + 4;
 	for (int32_t level = 0; level < spellLevel; ++level)
 		damage += damage / 8;
@@ -2297,10 +2343,10 @@ std::vector<ReplayVisitedProjectileTile> MoveReplayNativeProjectile(
 	    || result.back().x != finalTile.first
 	    || result.back().y != finalTile.second) {
 		result.push_back({
-			finalTile.first,
-			finalTile.second,
-			projectile.traveledX,
-			projectile.traveledY,
+		    finalTile.first,
+		    finalTile.second,
+		    projectile.traveledX,
+		    projectile.traveledY,
 		});
 	}
 	return result;
@@ -2331,17 +2377,17 @@ int32_t GetReplayHeavyHitThreshold(uint32_t characterClassId, uint32_t character
 }
 
 bool IsReplayPlayerProtectedByFlash(
-	const ReplayFixtureExecutionState &state,
-	uint32_t playerEntityId)
+    const ReplayFixtureExecutionState &state,
+    uint32_t playerEntityId)
 {
 	return std::any_of(
-		state.projectiles.begin(),
-		state.projectiles.end(),
-		[playerEntityId](const ReplayFixtureProjectileState &projectile) {
-			return (projectile.behavior == 6 || projectile.behavior == 7)
-				&& projectile.sourceEntityId == playerEntityId
-				&& projectile.remainingTicks < 19;
-		});
+	    state.projectiles.begin(),
+	    state.projectiles.end(),
+	    [playerEntityId](const ReplayFixtureProjectileState &projectile) {
+		    return (projectile.behavior == 6 || projectile.behavior == 7)
+		        && projectile.sourceEntityId == playerEntityId
+		        && projectile.remainingTicks < 19;
+	    });
 }
 
 void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
@@ -2409,7 +2455,7 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				if (state.combatTargetPetrified || hitRoll < hitChance) {
 					int32_t damageQ6 = projectile.damage * 64;
 					if (!holyBolt)
-					static_cast<void>(GenerateRnd(state, 1));
+						static_cast<void>(GenerateRnd(state, 1));
 					if (!holyBolt && state.combatTargetFireResistance > 0)
 						damageQ6 /= projectile.resistantDamageDivisor;
 					state.combatTargetHitPointsQ6 = std::max(
@@ -2430,11 +2476,11 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			    && state.positionY == y;
 			if (!holyBolt && primaryPlayerAtTile) {
 				const int32_t hitChance = std::clamp(
-					state.secondaryPlayerMagic
-					    + GetReplayBaseMagicToHit(state.secondaryPlayerCharacterClassId)
-					    - static_cast<int32_t>(state.characterLevel) * 2,
-					5,
-					95);
+				    state.secondaryPlayerMagic
+				        + GetReplayBaseMagicToHit(state.secondaryPlayerCharacterClassId)
+				        - static_cast<int32_t>(state.characterLevel) * 2,
+				    5,
+				    95);
 				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 				if (hitRoll < hitChance) {
 					bool blocked = false;
@@ -2446,12 +2492,12 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					    ? std::max(GenerateRnd(state, 100), 0)
 					    : 100;
 					const int32_t blockChance = std::clamp(
-						state.attributes[2]
-						    + GetReplayBaseBlockChance(state.characterClassId)
-						    + static_cast<int32_t>(state.characterLevel) * 2
-						    - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
-						0,
-						100);
+					    state.attributes[2]
+					        + GetReplayBaseBlockChance(state.characterClassId)
+					        + static_cast<int32_t>(state.characterLevel) * 2
+					        - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
+					    0,
+					    100);
 					blocked = blockRoll < blockChance;
 					if (blocked) {
 						state.combatMode = 6;
@@ -2536,11 +2582,12 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			const bool outsideWorld = x < 0 || x >= 40 || y < 0 || y >= 40;
 			return std::pair<bool, uint32_t> {
 				hitTarget || blockingObject || outsideWorld,
-				 targetAtTile
-				     ? state.combatTargetEntityId
-				     : primaryPlayerAtTile
-				         ? (state.entityId == 0 ? 1U : state.entityId)
-				         : playerAtTile ? state.secondaryPlayerEntityId : 0,
+				targetAtTile
+				    ? state.combatTargetEntityId
+				    : primaryPlayerAtTile
+				    ? (state.entityId == 0 ? 1U : state.entityId)
+				    : playerAtTile ? state.secondaryPlayerEntityId
+				                   : 0,
 			};
 		};
 
@@ -2581,9 +2628,9 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 }
 
 void AdvanceFireballsOneTick(
-	ReplayFixtureExecutionState &state,
-	uint64_t tick,
-	const std::vector<uint32_t> *onlyEntityIds = nullptr)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick,
+    const std::vector<uint32_t> *onlyEntityIds = nullptr)
 {
 	constexpr std::pair<int32_t, int32_t> ExplosionOffsets[] = {
 		{ 0, 0 },
@@ -2653,11 +2700,11 @@ void AdvanceFireballsOneTick(
 			bool hitTarget = false;
 			if (targetAtTile && state.combatTargetFireResistance < 100) {
 				const int32_t hitChance = std::clamp(
-					state.attributes[3]
-					    + GetReplayBaseMagicToHit(state.characterClassId)
-					    - state.combatTargetMonsterLevel * 2,
-					5,
-					95);
+				    state.attributes[3]
+				        + GetReplayBaseMagicToHit(state.characterClassId)
+				        - state.combatTargetMonsterLevel * 2,
+				    5,
+				    95);
 				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 				if (state.combatTargetPetrified || hitRoll < hitChance) {
 					int32_t damageQ6 = shifted
@@ -2667,10 +2714,10 @@ void AdvanceFireballsOneTick(
 					if (state.combatTargetFireResistance > 0)
 						damageQ6 /= projectile.resistantDamageDivisor;
 					state.combatTargetHitPointsQ6 = std::max(
-						0,
-						state.combatTargetHitPointsQ6 - damageQ6);
+					    0,
+					    state.combatTargetHitPointsQ6 - damageQ6);
 					state.combatTargetHitPoints = ToWholeCeilingQ6(
-						state.combatTargetHitPointsQ6);
+					    state.combatTargetHitPointsQ6);
 					if (state.combatTargetHitPointsQ6 == 0)
 						DefeatReplayCombatTarget(state);
 					hitTarget = true;
@@ -2700,31 +2747,33 @@ void AdvanceFireballsOneTick(
 				int32_t hitChance;
 				if (torchantMonsterProjectile) {
 					const int32_t distance = std::max(
-						std::abs(playerPositionX - state.combatTargetPositionX),
-						std::abs(playerPositionY - state.combatTargetPositionY));
+					    std::abs(playerPositionX - state.combatTargetPositionX),
+					    std::abs(playerPositionY - state.combatTargetPositionY));
 					hitChance = std::clamp(
-						40
-						    + state.combatTargetMonsterLevel * 2
-						    - static_cast<int32_t>(playerCharacterLevel) * 2
-						    - distance * 2,
-						10,
-						100);
+					    40
+					        + state.combatTargetMonsterLevel * 2
+					        - static_cast<int32_t>(playerCharacterLevel) * 2
+					        - distance * 2,
+					    10,
+					    100);
 				} else {
 					hitChance = std::clamp(
-						casterMagic
-						    + GetReplayBaseMagicToHit(casterClassId)
-						    - static_cast<int32_t>(primaryPlayer
-						        ? state.characterLevel
-						        : state.secondaryPlayerCharacterLevel) * 2,
-						5,
-						95);
+					    casterMagic
+					        + GetReplayBaseMagicToHit(casterClassId)
+					        - static_cast<int32_t>(primaryPlayer
+					                  ? state.characterLevel
+					                  : state.secondaryPlayerCharacterLevel)
+					            * 2,
+					    5,
+					    95);
 				}
 				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 				if (hitRoll < hitChance) {
 					bool blocked = false;
 					const int32_t damageQ6 = torchantMonsterProjectile
 					    ? projectile.damage * 64
-					    : shifted ? projectile.damage / 2 : projectile.damage * 32;
+					    : shifted ? projectile.damage / 2
+					              : projectile.damage * 32;
 					if (!torchantMonsterProjectile)
 						static_cast<void>(GenerateRnd(state, 1));
 					if (!shifted) {
@@ -2734,21 +2783,21 @@ void AdvanceFireballsOneTick(
 						        || IsReplaySecondaryPlayerBlockCapable(state);
 						const bool canBlock = blockCapable
 						    && (primaryPlayer
-						        ? state.combatMode == 0 || state.combatMode == 4
-						        : state.secondaryPlayerCombatMode == 0
-						            || state.secondaryPlayerCombatMode == 4);
+						            ? state.combatMode == 0 || state.combatMode == 4
+						            : state.secondaryPlayerCombatMode == 0
+						                || state.secondaryPlayerCombatMode == 4);
 						const int32_t blockRoll = canBlock
 						    ? std::max(GenerateRnd(state, 100), 0)
 						    : 100;
 						const int32_t blockChance = std::clamp(
-							(primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
-							    + GetReplayBaseBlockChance(primaryPlayer
-							        ? state.characterClassId
-							        : state.secondaryPlayerCharacterClassId)
-							    + static_cast<int32_t>(playerCharacterLevel) * 2
-							    - static_cast<int32_t>(casterCharacterLevel) * 2,
-							0,
-							100);
+						    (primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
+						        + GetReplayBaseBlockChance(primaryPlayer
+						                ? state.characterClassId
+						                : state.secondaryPlayerCharacterClassId)
+						        + static_cast<int32_t>(playerCharacterLevel) * 2
+						        - static_cast<int32_t>(casterCharacterLevel) * 2,
+						    0,
+						    100);
 						blocked = blockRoll < blockChance;
 						if (blocked) {
 							if (primaryPlayer) {
@@ -2774,8 +2823,8 @@ void AdvanceFireballsOneTick(
 							}
 						} else {
 							state.secondaryPlayerLife = std::max(
-								0,
-								state.secondaryPlayerLife - damageQ6);
+							    0,
+							    state.secondaryPlayerLife - damageQ6);
 							if (state.secondaryPlayerLife == 0) {
 								StartReplaySecondaryPlayerDeath(state);
 							} else if ((damageQ6 >> 6)
@@ -2814,10 +2863,11 @@ void AdvanceFireballsOneTick(
 			return std::pair<bool, uint32_t> {
 				hitTarget || blockingObject || outsideWorld,
 				targetAtTile
-			    ? state.combatTargetEntityId
-			    : playerTarget == 1
-			        ? state.entityId
-			        : playerTarget == 2 ? state.secondaryPlayerEntityId : 0,
+				    ? state.combatTargetEntityId
+				    : playerTarget == 1
+				    ? state.entityId
+				    : playerTarget == 2 ? state.secondaryPlayerEntityId
+				                        : 0,
 			};
 		};
 		const auto enterImpact = [&]() {
@@ -2860,8 +2910,9 @@ void AdvanceFireballsOneTick(
 			const uint32_t collisionTargetEntityId = targetAtTile
 			    ? state.combatTargetEntityId
 			    : primaryPlayerAtTile
-			        ? (state.entityId == 0 ? 1U : state.entityId)
-			        : playerAtTile ? state.secondaryPlayerEntityId : 0;
+			    ? (state.entityId == 0 ? 1U : state.entityId)
+			    : playerAtTile ? state.secondaryPlayerEntityId
+			                   : 0;
 			const auto collision = projectile.lastCollisionTargetEntityId == collisionTargetEntityId
 			    ? std::pair<bool, uint32_t> { false, collisionTargetEntityId }
 			    : resolveCollision(projectile.positionX, projectile.positionY);
@@ -2892,9 +2943,9 @@ void AdvanceFireballsOneTick(
 }
 
 void AdvanceBoneSpiritsOneTick(
-	ReplayFixtureExecutionState &state,
-	uint64_t tick,
-	const std::vector<uint32_t> *onlyEntityIds = nullptr)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick,
+    const std::vector<uint32_t> *onlyEntityIds = nullptr)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
@@ -2989,17 +3040,17 @@ void AdvanceBoneSpiritsOneTick(
 					        || IsReplaySecondaryPlayerBlockCapable(state);
 					const bool canBlock = blockCapable
 					    && (primaryPlayer
-					        ? state.combatMode == 0 || state.combatMode == 4
-					        : state.secondaryPlayerCombatMode == 0
-					            || state.secondaryPlayerCombatMode == 4);
+					            ? state.combatMode == 0 || state.combatMode == 4
+					            : state.secondaryPlayerCombatMode == 0
+					                || state.secondaryPlayerCombatMode == 4);
 					const int32_t blockRoll = canBlock
 					    ? std::max(GenerateRnd(state, 100), 0)
 					    : 100;
 					const int32_t blockChance = std::clamp(
 					    (primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
 					        + GetReplayBaseBlockChance(primaryPlayer
-					            ? state.characterClassId
-					            : state.secondaryPlayerCharacterClassId)
+					                ? state.characterClassId
+					                : state.secondaryPlayerCharacterClassId)
 					        + static_cast<int32_t>(targetCharacterLevel) * 2
 					        - static_cast<int32_t>(casterCharacterLevel) * 2,
 					    0,
@@ -3076,8 +3127,9 @@ void AdvanceBoneSpiritsOneTick(
 				targetAtTile
 				    ? state.combatTargetEntityId
 				    : primaryPlayerAtTile
-				        ? (state.entityId == 0 ? 1U : state.entityId)
-				        : secondaryPlayerAtTile ? state.secondaryPlayerEntityId : 0,
+				    ? (state.entityId == 0 ? 1U : state.entityId)
+				    : secondaryPlayerAtTile ? state.secondaryPlayerEntityId
+				                            : 0,
 			};
 		};
 		const auto retarget = [&]() {
@@ -3231,10 +3283,10 @@ void AdvanceStoneCursesOneTick(ReplayFixtureExecutionState &state)
 }
 
 void AdvanceLightningProjectilesOneTick(
-	ReplayFixtureExecutionState &state,
-	uint64_t tick,
-	bool chainLightningPhase,
-	const std::vector<uint32_t> *onlyEntityIds = nullptr)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick,
+    bool chainLightningPhase,
+    const std::vector<uint32_t> *onlyEntityIds = nullptr)
 {
 	const auto belongsToPhase = [chainLightningPhase](const ReplayFixtureProjectileState &projectile) {
 		if (chainLightningPhase) {
@@ -3291,13 +3343,11 @@ void AdvanceLightningProjectilesOneTick(
 			    : secondaryOwner && bolt.levelId == state.secondaryPlayerLevelId;
 			if (bolt.spellId != 16 || (!primaryOwner && !secondaryOwner) || !ownerLevelMatches) {
 				state.projectiles.erase(
-					state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+				    state.projectiles.begin() + static_cast<ptrdiff_t>(index));
 				continue;
 			}
 		}
-		if (state.projectiles[index].behavior == (chainLightningPhase
-		        ? ChainLightningBoltBehavior
-		        : LightningBehavior)) {
+		if (state.projectiles[index].behavior == (chainLightningPhase ? ChainLightningBoltBehavior : LightningBehavior)) {
 			auto &controller = state.projectiles[index];
 			const bool monsterOwned = controller.targetEntityId != 0
 			    && controller.sourceEntityId == state.combatTargetEntityId
@@ -3309,10 +3359,7 @@ void AdvanceLightningProjectilesOneTick(
 			int32_t segmentDamage = 0;
 			int32_t damageQ6 = 0;
 			if (monsterOwned) {
-				segmentDamage = 2 * (state.combatTargetMinDamage
-				    + GenerateRnd(state, std::max(
-				          state.combatTargetMaxDamage - state.combatTargetMinDamage + 1,
-				          1)));
+				segmentDamage = 2 * (state.combatTargetMinDamage + GenerateRnd(state, std::max(state.combatTargetMaxDamage - state.combatTargetMinDamage + 1, 1)));
 			} else {
 				const int32_t characterLevelDamage = GenerateRnd(
 				    state,
@@ -3412,7 +3459,7 @@ void AdvanceLightningProjectilesOneTick(
 			    || (!primaryOwner && !secondaryOwner)
 			    || !ownerLevelMatches) {
 				state.projectiles.erase(
-					state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+				    state.projectiles.begin() + static_cast<ptrdiff_t>(index));
 				continue;
 			}
 		}
@@ -3437,18 +3484,14 @@ void AdvanceLightningProjectilesOneTick(
 			if (targetAtTile && state.combatTargetLightningResistance < 100) {
 				const int32_t hitChance = monsterOwned
 				    ? std::clamp(
-				          std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-				              - 2 * static_cast<int32_t>(state.characterLevel)
-				              - 2 * std::max(
-				                    std::abs(segment.positionX - state.combatTargetPositionX),
-				                    std::abs(segment.positionY - state.combatTargetPositionY))),
+				          std::max(10, 40 + 2 * state.combatTargetMonsterLevel - 2 * static_cast<int32_t>(state.characterLevel) - 2 * std::max(std::abs(segment.positionX - state.combatTargetPositionX), std::abs(segment.positionY - state.combatTargetPositionY))),
 				          0,
 				          100)
 				    : std::clamp(
 				          (secondaryPlayerOwned ? state.secondaryPlayerMagic : state.attributes[3])
 				              + GetReplayBaseMagicToHit(secondaryPlayerOwned
-				                  ? state.secondaryPlayerCharacterClassId
-				                  : state.characterClassId)
+				                      ? state.secondaryPlayerCharacterClassId
+				                      : state.characterClassId)
 				              - state.combatTargetMonsterLevel * 2,
 				          5,
 				          95);
@@ -3495,18 +3538,14 @@ void AdvanceLightningProjectilesOneTick(
 					    : state.secondaryPlayerCharacterLevel;
 					const int32_t hitChance = monsterOwned
 					    ? std::clamp(
-					          std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-					              - 2 * static_cast<int32_t>(playerCharacterLevel)
-					              - 2 * std::max(
-					                    std::abs(playerPositionX - state.combatTargetPositionX),
-					                    std::abs(playerPositionY - state.combatTargetPositionY))),
+					          std::max(10, 40 + 2 * state.combatTargetMonsterLevel - 2 * static_cast<int32_t>(playerCharacterLevel) - 2 * std::max(std::abs(playerPositionX - state.combatTargetPositionX), std::abs(playerPositionY - state.combatTargetPositionY))),
 					          0,
 					          100)
 					    : std::clamp(
 					          (secondaryPlayerOwned ? state.secondaryPlayerMagic : state.attributes[3])
 					              + GetReplayBaseMagicToHit(secondaryPlayerOwned
-					                  ? state.secondaryPlayerCharacterClassId
-					                  : state.characterClassId)
+					                      ? state.secondaryPlayerCharacterClassId
+					                      : state.characterClassId)
 					              - static_cast<int32_t>(playerCharacterLevel) * 2,
 					          5,
 					          95);
@@ -3522,14 +3561,14 @@ void AdvanceLightningProjectilesOneTick(
 							        || IsReplaySecondaryPlayerBlockCapable(state);
 							const bool canBlock = blockCapable
 							    && (primaryPlayer
-							        ? state.combatMode == 0 || state.combatMode == 4
-							        : state.secondaryPlayerCombatMode == 0
-							            || state.secondaryPlayerCombatMode == 4);
+							            ? state.combatMode == 0 || state.combatMode == 4
+							            : state.secondaryPlayerCombatMode == 0
+							                || state.secondaryPlayerCombatMode == 4);
 							const int32_t blockChance = std::clamp(
 							    (primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
 							        + GetReplayBaseBlockChance(primaryPlayer
-							            ? state.characterClassId
-							            : state.secondaryPlayerCharacterClassId)
+							                ? state.characterClassId
+							                : state.secondaryPlayerCharacterClassId)
 							        + static_cast<int32_t>(playerCharacterLevel) * 2
 							        - static_cast<int32_t>(state.combatTargetMonsterLevel) * 2,
 							    0,
@@ -3598,8 +3637,8 @@ void AdvanceLightningProjectilesOneTick(
 }
 
 void AdvanceScheduledMissileFamiliesOneTick(
-	ReplayFixtureExecutionState &state,
-	uint64_t tick)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	const auto isScheduledMissile = [](const ReplayFixtureProjectileState &projectile) {
 		return projectile.behavior == FireballBehavior
@@ -3625,11 +3664,11 @@ void AdvanceScheduledMissileFamiliesOneTick(
 		processedEntityIds.insert(*nextEntityId);
 		const std::vector<uint32_t> onlyEntityId { *nextEntityId };
 		const auto projectile = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[nextEntityId](const auto &candidate) {
-				return candidate.entityId == *nextEntityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [nextEntityId](const auto &candidate) {
+			    return candidate.entityId == *nextEntityId;
+		    });
 		if (projectile == state.projectiles.end())
 			continue;
 		switch (projectile->behavior) {
@@ -3642,24 +3681,24 @@ void AdvanceScheduledMissileFamiliesOneTick(
 		case ChainLightningControllerBehavior:
 		case ChainLightningBoltBehavior:
 			AdvanceLightningProjectilesOneTick(
-				state,
-				tick,
-				true,
-				&onlyEntityId);
+			    state,
+			    tick,
+			    true,
+			    &onlyEntityId);
 			break;
 		case LightningBehavior:
 			AdvanceLightningProjectilesOneTick(
-				state,
-				tick,
-				false,
-				&onlyEntityId);
+			    state,
+			    tick,
+			    false,
+			    &onlyEntityId);
 			break;
 		case LightningSegmentBehavior:
 			AdvanceLightningProjectilesOneTick(
-				state,
-				tick,
-				projectile->spellId == 16,
-				&onlyEntityId);
+			    state,
+			    tick,
+			    projectile->spellId == 16,
+			    &onlyEntityId);
 			break;
 		default:
 			break;
@@ -3918,8 +3957,9 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 		const uint32_t collisionTargetEntityId = targetAtTile
 		    ? state.combatTargetEntityId
 		    : primaryPlayerAtTile
-		        ? (state.entityId == 0 ? 1U : state.entityId)
-		        : secondaryPlayerAtTile ? state.secondaryPlayerEntityId : 0;
+		    ? (state.entityId == 0 ? 1U : state.entityId)
+		    : secondaryPlayerAtTile ? state.secondaryPlayerEntityId
+		                            : 0;
 		if (!tileChanged && projectile.lastCollisionTargetEntityId == collisionTargetEntityId) {
 			++iterator;
 			continue;
@@ -3971,9 +4011,9 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 				        || IsReplaySecondaryPlayerBlockCapable(state);
 				const bool canBlock = blockCapable
 				    && (primaryPlayer
-				        ? state.combatMode == 0 || state.combatMode == 4
-				        : state.secondaryPlayerCombatMode == 0
-				            || state.secondaryPlayerCombatMode == 4);
+				            ? state.combatMode == 0 || state.combatMode == 4
+				            : state.secondaryPlayerCombatMode == 0
+				                || state.secondaryPlayerCombatMode == 4);
 				const int32_t blockRoll = canBlock
 				    ? std::max(GenerateRnd(state, 100), 0)
 				    : 100;
@@ -3982,8 +4022,8 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 				const int32_t blockChance = std::clamp(
 				    (primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
 				        + GetReplayBaseBlockChance(primaryPlayer
-				            ? state.characterClassId
-				            : state.secondaryPlayerCharacterClassId)
+				                ? state.characterClassId
+				                : state.secondaryPlayerCharacterClassId)
 				        + static_cast<int32_t>(playerCharacterLevel) * 2
 				        - static_cast<int32_t>(casterCharacterLevel) * 2,
 				    0,
@@ -4051,10 +4091,10 @@ bool IsReplayEquipmentUsable(const ReplayFixtureItemState &item)
 }
 
 int32_t ResolveReplayElementalDamage(
-	ReplayFixtureExecutionState &state,
-	uint32_t flag,
-	int32_t ReplayFixtureItemState::*minimum,
-	int32_t ReplayFixtureItemState::*maximum)
+    ReplayFixtureExecutionState &state,
+    uint32_t flag,
+    int32_t ReplayFixtureItemState::*minimum,
+    int32_t ReplayFixtureItemState::*maximum)
 {
 	int32_t minimumDamage = 0;
 	int32_t maximumDamage = 0;
@@ -4139,8 +4179,8 @@ bool IsReplayAttackTargetValid(
 }
 
 bool HasReplayEquipmentFlag(
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	uint32_t flag)
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    uint32_t flag)
 {
 	return std::any_of(
 	    equipment.begin(),
@@ -4152,8 +4192,8 @@ bool HasReplayEquipmentFlag(
 }
 
 bool HasReplayEquipmentFlag(
-	const ReplayFixtureExecutionState &state,
-	uint32_t flag)
+    const ReplayFixtureExecutionState &state,
+    uint32_t flag)
 {
 	return HasReplayEquipmentFlag(state.equipment, flag);
 }
@@ -4187,8 +4227,8 @@ uint32_t GetReplayRecoveryFrames(uint32_t characterClassId)
 }
 
 uint64_t GetReplayBlockDuration(
-	const ReplayFixtureExecutionState &state,
-	bool secondary)
+    const ReplayFixtureExecutionState &state,
+    bool secondary)
 {
 	const uint32_t characterClassId = secondary
 	    ? state.secondaryPlayerCharacterClassId
@@ -4203,8 +4243,8 @@ uint64_t GetReplayBlockDuration(
 }
 
 uint64_t GetReplayHitRecoveryDuration(
-	const ReplayFixtureExecutionState &state,
-	bool secondary)
+    const ReplayFixtureExecutionState &state,
+    bool secondary)
 {
 	const uint32_t characterClassId = secondary
 	    ? state.secondaryPlayerCharacterClassId
@@ -4222,8 +4262,8 @@ uint64_t GetReplayHitRecoveryDuration(
 }
 
 int32_t ApplyReplayGetHitBonus(
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	int32_t damage)
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    int32_t damage)
 {
 	if (damage <= 0)
 		return 0;
@@ -4237,8 +4277,8 @@ int32_t ApplyReplayGetHitBonus(
 }
 
 int32_t ApplyReplayGetHitBonusQ6(
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	int32_t damageQ6)
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    int32_t damageQ6)
 {
 	if (damageQ6 <= 0)
 		return 0;
@@ -4252,9 +4292,9 @@ int32_t ApplyReplayGetHitBonusQ6(
 }
 
 void ApplyReplayThorns(
-	ReplayFixtureExecutionState &state,
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	int32_t damage)
+    ReplayFixtureExecutionState &state,
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    int32_t damage)
 {
 	if (damage <= 0
 	    || state.combatTargetHitPointsQ6 <= 0
@@ -4270,9 +4310,9 @@ void ApplyReplayThorns(
 }
 
 int32_t ApplyReplayGetHitBonus(
-	const ReplayFixtureExecutionState &state,
-	int32_t damage,
-	bool secondary)
+    const ReplayFixtureExecutionState &state,
+    int32_t damage,
+    bool secondary)
 {
 	return ApplyReplayGetHitBonus(
 	    secondary ? state.secondaryEquipment : state.equipment,
@@ -4280,8 +4320,8 @@ int32_t ApplyReplayGetHitBonus(
 }
 
 int32_t ResolveReplayEquipmentResistance(
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	int32_t damageType)
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    int32_t damageType)
 {
 	int32_t resistance = 0;
 	bool zeroResistance = false;
@@ -4308,9 +4348,9 @@ int32_t ResolveReplayEquipmentResistance(
 }
 
 int32_t ResolveReplayEquipmentResistance(
-	const ReplayFixtureExecutionState &state,
-	bool secondary,
-	int32_t damageType)
+    const ReplayFixtureExecutionState &state,
+    bool secondary,
+    int32_t damageType)
 {
 	const auto &equipment = secondary ? state.secondaryEquipment : state.equipment;
 	int32_t resistance = ResolveReplayEquipmentResistance(equipment, damageType);
@@ -4328,18 +4368,18 @@ int32_t ResolveReplayEquipmentResistance(
 }
 
 bool IsReplayFlexibleBlockCapable(
-	const std::vector<ReplayFixtureSlottedItem> &equipment,
-	uint32_t characterClassId,
-	bool hellfire)
+    const std::vector<ReplayFixtureSlottedItem> &equipment,
+    uint32_t characterClassId,
+    bool hellfire)
 {
 	if (std::any_of(
-		    equipment.begin(),
-		    equipment.end(),
-		    [](const ReplayFixtureSlottedItem &item) {
-			    return IsReplayEquipmentUsable(item.state)
-			        && (item.slot == 4 || item.slot == 5)
-			        && item.state.itemType == 5;
-		    }))
+	        equipment.begin(),
+	        equipment.end(),
+	        [](const ReplayFixtureSlottedItem &item) {
+		        return IsReplayEquipmentUsable(item.state)
+		            && (item.slot == 4 || item.slot == 5)
+		            && item.state.itemType == 5;
+	        }))
 		return true;
 
 	// Hellfire Monk's FlexibleBlock permits unarmed, staff, and one-handed
@@ -4347,47 +4387,47 @@ bool IsReplayFlexibleBlockCapable(
 	if (!hellfire || characterClassId != 3)
 		return false;
 	const auto usableHands = std::count_if(
-		equipment.begin(),
-		equipment.end(),
-		[](const ReplayFixtureSlottedItem &item) {
-			return IsReplayEquipmentUsable(item.state)
-			    && (item.slot == 4 || item.slot == 5);
-		});
+	    equipment.begin(),
+	    equipment.end(),
+	    [](const ReplayFixtureSlottedItem &item) {
+		    return IsReplayEquipmentUsable(item.state)
+		        && (item.slot == 4 || item.slot == 5);
+	    });
 	return usableHands == 0
 	    || std::any_of(
-		   equipment.begin(),
-		   equipment.end(),
-		   [](const ReplayFixtureSlottedItem &item) {
-			   return IsReplayEquipmentUsable(item.state)
-			       && (item.slot == 4 || item.slot == 5)
-			       && item.state.itemType == 10;
-		   })
+	        equipment.begin(),
+	        equipment.end(),
+	        [](const ReplayFixtureSlottedItem &item) {
+		        return IsReplayEquipmentUsable(item.state)
+		            && (item.slot == 4 || item.slot == 5)
+		            && item.state.itemType == 10;
+	        })
 	    || (usableHands == 1
 	        && std::any_of(
-		       equipment.begin(),
-		       equipment.end(),
-		       [](const ReplayFixtureSlottedItem &item) {
-			       return IsReplayEquipmentUsable(item.state)
-			           && (item.slot == 4 || item.slot == 5)
-			           && item.state.itemClass == 1
-			           && item.state.equipLocation != 2;
-		       }));
+	            equipment.begin(),
+	            equipment.end(),
+	            [](const ReplayFixtureSlottedItem &item) {
+		            return IsReplayEquipmentUsable(item.state)
+		                && (item.slot == 4 || item.slot == 5)
+		                && item.state.itemClass == 1
+		                && item.state.equipLocation != 2;
+	            }));
 }
 
 bool IsReplayPrimaryPlayerBlockCapable(const ReplayFixtureExecutionState &state)
 {
 	return IsReplayFlexibleBlockCapable(
-		state.equipment,
-		state.characterClassId,
-		state.hellfire);
+	    state.equipment,
+	    state.characterClassId,
+	    state.hellfire);
 }
 
 bool IsReplaySecondaryPlayerBlockCapable(const ReplayFixtureExecutionState &state)
 {
 	return IsReplayFlexibleBlockCapable(
-		state.secondaryEquipment,
-		state.secondaryPlayerCharacterClassId,
-		state.hellfire);
+	    state.secondaryEquipment,
+	    state.secondaryPlayerCharacterClassId,
+	    state.hellfire);
 }
 
 int32_t GetReplayBaseBlockChance(uint32_t characterClassId)
@@ -4412,9 +4452,9 @@ int32_t GetReplayBaseBlockChance(uint32_t characterClassId)
 }
 
 int32_t ApplyReplayManaShield(
-	ReplayFixtureExecutionState &state,
-	int32_t damageQ6,
-	bool secondary = false)
+    ReplayFixtureExecutionState &state,
+    int32_t damageQ6,
+    bool secondary = false)
 {
 	int32_t lifeDamageQ6 = damageQ6;
 	const auto &equipment = secondary ? state.secondaryEquipment : state.equipment;
@@ -4426,24 +4466,24 @@ int32_t ApplyReplayManaShield(
 	    ? state.secondaryPlayerMemorizedSpells
 	    : state.memorizedSpells;
 	const bool hasNoManaItem = std::any_of(
-		equipment.begin(),
-		equipment.end(),
-		[](const ReplayFixtureSlottedItem &item) {
-			return IsReplayEquipmentUsable(item.state)
-			    && (item.state.flags & NoManaFlag) != 0;
-		});
+	    equipment.begin(),
+	    equipment.end(),
+	    [](const ReplayFixtureSlottedItem &item) {
+		    return IsReplayEquipmentUsable(item.state)
+		        && (item.state.flags & NoManaFlag) != 0;
+	    });
 	if (!manaShieldActive || hasNoManaItem)
 		return lifeDamageQ6;
 
 	const auto spell = std::find_if(
-		memorizedSpells.begin(),
-		memorizedSpells.end(),
-		[](const ReplayFixtureMemorizedSpell &candidate) {
-			return candidate.spellId == 11;
-		});
+	    memorizedSpells.begin(),
+	    memorizedSpells.end(),
+	    [](const ReplayFixtureMemorizedSpell &candidate) {
+		    return candidate.spellId == 11;
+	    });
 	const int32_t level = spell == memorizedSpells.end()
-		? 0
-		: static_cast<int32_t>(spell->level);
+	    ? 0
+	    : static_cast<int32_t>(spell->level);
 	int32_t divisor = 24;
 	int32_t manaDamageQ6 = lifeDamageQ6;
 	if (level > 0) {
@@ -4677,27 +4717,27 @@ void CreateReplayWeaponArrow(
 		const int32_t strengthModifier = level * strength;
 		const int32_t strengthDexterityModifier = level * (strength + dexterity);
 		const int32_t damageModifier = state.characterClassId == 1
-		        ? strengthDexterityModifier / 200
+		    ? strengthDexterityModifier / 200
 		    : state.characterClassId == 3
-		        ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
-		                ? strengthDexterityModifier / 150
-		                : strengthDexterityModifier / 300)
+		    ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
+		              ? strengthDexterityModifier / 150
+		              : strengthDexterityModifier / 300)
 		    : state.characterClassId == 4
-		        ? (hasSword
-		                ? strengthDexterityModifier / 150
-		                : hasBow
-		                    ? strengthDexterityModifier / 250
-		                    : strengthModifier / 100)
+		    ? (hasSword
+		              ? strengthDexterityModifier / 150
+		              : hasBow
+		              ? strengthDexterityModifier / 250
+		              : strengthModifier / 100)
 		    : state.characterClassId == 5
-		        ? (hasAxe || hasMace
-		                ? strengthModifier / 75
-		                : hasBow
-		                    ? strengthModifier / 300
-		                    : strengthModifier / 100)
-		            + (!hasShield && !hasStaff && !hasBow
+		    ? (hasAxe || hasMace
+		              ? strengthModifier / 75
+		              : hasBow
+		              ? strengthModifier / 300
+		              : strengthModifier / 100)
+		        + (!hasShield && !hasStaff && !hasBow
 		                ? level * vitality / 100
 		                : 0)
-		        : strengthModifier / 100;
+		    : strengthModifier / 100;
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t damageBeforeFlat = rolledBaseDamage
@@ -4707,13 +4747,14 @@ void CreateReplayWeaponArrow(
 			perilSelfDamageQ6 = std::max(0, damageBeforeFlat + getHitBonus) * 64;
 		damage = damageBeforeFlat + damageFlat + damageModifier;
 		const int32_t baseRangedToHit = state.characterClassId == 0
-		        ? 60
+		    ? 60
 		    : state.characterClassId == 1
-		        ? 70
+		    ? 70
 		    : state.characterClassId == 4
-		        ? 60
+		    ? 60
 		    : 50;
-		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
+		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80
+		                                                                                        : 0;
 		const int32_t targetArmorClass = std::max(
 		    0,
 		    state.combatTargetArmorClass + difficultyArmorBonus);
@@ -4828,12 +4869,11 @@ void CreateReplayWeaponArrow(
 	projectile.targetX = state.combatTargetPositionX;
 	projectile.targetY = state.combatTargetPositionY;
 	if (arrowCount == 3 && arrowIndex != 0) {
-		const auto direction = DirectionDisplacements[
-		    GetDirection(
-		        state.positionX,
-		        state.positionY,
-		        state.combatTargetPositionX,
-		        state.combatTargetPositionY)];
+		const auto direction = DirectionDisplacements[GetDirection(
+		    state.positionX,
+		    state.positionY,
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY)];
 		const int32_t spreadX = -direction.second * (arrowIndex == 1 ? -1 : 1);
 		const int32_t spreadY = direction.first * (arrowIndex == 1 ? -1 : 1);
 		const int32_t candidateX = state.positionX + spreadX;
@@ -4930,10 +4970,10 @@ void AdvanceReplayWeaponArrowsOneTick(ReplayFixtureExecutionState &state)
 			for (int32_t step = 0; step < travelSteps; ++step) {
 				const int32_t nextX = projectile.positionX
 				    + (projectile.targetX > projectile.positionX)
-				        - (projectile.targetX < projectile.positionX);
+				    - (projectile.targetX < projectile.positionX);
 				const int32_t nextY = projectile.positionY
 				    + (projectile.targetY > projectile.positionY)
-				        - (projectile.targetY < projectile.positionY);
+				    - (projectile.targetY < projectile.positionY);
 				const bool outsideWorld = nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40;
 				const bool blockingObject = state.objectEntityId != 0
 				    && !state.objectActivated
@@ -4990,10 +5030,10 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state, uint6
 		for (int32_t step = 0; step < travelSteps; ++step) {
 			const int32_t nextX = projectile.positionX
 			    + (projectile.targetX > projectile.positionX)
-			        - (projectile.targetX < projectile.positionX);
+			    - (projectile.targetX < projectile.positionX);
 			const int32_t nextY = projectile.positionY
 			    + (projectile.targetY > projectile.positionY)
-			        - (projectile.targetY < projectile.positionY);
+			    - (projectile.targetY < projectile.positionY);
 			if (nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40) {
 				iterator = state.projectiles.erase(iterator);
 				removed = true;
@@ -5017,17 +5057,17 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state, uint6
 			if (hitLife != nullptr) {
 				const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
 				const bool protectedByFlash = std::any_of(
-					state.projectiles.begin(),
-					state.projectiles.end(),
-					[&](const auto &candidate) {
-						return (candidate.behavior == 6 || candidate.behavior == 7)
-						    && candidate.sourceEntityId == playerEntityId
-						    && candidate.remainingTicks < 19;
-					});
+				    state.projectiles.begin(),
+				    state.projectiles.end(),
+				    [&](const auto &candidate) {
+					    return (candidate.behavior == 6 || candidate.behavior == 7)
+					        && candidate.sourceEntityId == playerEntityId
+					        && candidate.remainingTicks < 19;
+				    });
 				const bool protectedByEtherealize = std::any_of(
-					state.statusEffects.begin(),
-					state.statusEffects.end(),
-					[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
+				    state.statusEffects.begin(),
+				    state.statusEffects.end(),
+				    [](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
 				if (!protectedByFlash && !protectedByEtherealize) {
 					const bool secondaryHit = hitLife == &state.secondaryPlayerLife;
 					int32_t damage = projectile.damage;
@@ -5040,8 +5080,8 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state, uint6
 					    ? state.secondaryEquipment
 					    : state.equipment;
 					const int32_t damageWithGetHit = ApplyReplayGetHitBonus(
-						targetEquipment,
-						std::max(1, damage));
+					    targetEquipment,
+					    std::max(1, damage));
 					const int32_t damageQ6 = damageWithGetHit * 64;
 					const int32_t targetLevel = secondaryHit
 					    ? static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
@@ -5058,29 +5098,29 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state, uint6
 					const int32_t blockChance = std::clamp(
 					    (secondaryHit ? state.secondaryPlayerDexterity : state.attributes[5])
 					        + (secondaryHit
-					            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-					            : GetReplayBaseBlockChance(state.characterClassId))
+					                ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+					                : GetReplayBaseBlockChance(state.characterClassId))
 					        + 2 * targetLevel
 					        - 2 * state.combatTargetMonsterLevel,
 					    0,
 					    100);
 					const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 					if (canBlock && blockRoll < blockChance) {
-					    if (secondaryHit) {
-						    state.secondaryPlayerCombatMode = 6;
-						    state.secondaryPlayerCombatModeEndTick = tick + 4;
-					    } else {
-						    state.combatMode = 6;
-						    state.combatModeEndTick = tick + 4;
-					    }
-					    if (projectile.impactLifetime > 0) {
-						projectile.phase = 1;
-						projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
-					    } else {
-						iterator = state.projectiles.erase(iterator);
-						removed = true;
-					    }
-					    break;
+						if (secondaryHit) {
+							state.secondaryPlayerCombatMode = 6;
+							state.secondaryPlayerCombatModeEndTick = tick + 4;
+						} else {
+							state.combatMode = 6;
+							state.combatModeEndTick = tick + 4;
+						}
+						if (projectile.impactLifetime > 0) {
+							projectile.phase = 1;
+							projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
+						} else {
+							iterator = state.projectiles.erase(iterator);
+							removed = true;
+						}
+						break;
 					}
 					const int32_t lifeMaximum = secondaryHit
 					    ? state.secondaryPlayerLifeMaximum
@@ -5141,8 +5181,8 @@ bool AdvanceReplayFallenStandAnimation(ReplayFixtureExecutionState &state)
 		return true;
 	const int32_t healing = 2 * state.combatTargetIntelligence + 2;
 	state.combatTargetHitPointsQ6 = std::min(
-		state.combatTargetMaxHitPointsQ6,
-		state.combatTargetHitPointsQ6 + healing * 64);
+	    state.combatTargetMaxHitPointsQ6,
+	    state.combatTargetHitPointsQ6 + healing * 64);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	state.combatTargetFallenRallyTicks = 30 * state.combatTargetIntelligence + 105;
 	return true;
@@ -5317,17 +5357,17 @@ int32_t RotateReplayDirection(int32_t direction, int32_t offset)
 }
 
 void CreateReplayFireWallController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel,
-	uint32_t spellId,
-	int32_t behavior)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel,
+    uint32_t spellId,
+    int32_t behavior)
 {
 	const int32_t direction = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
 	for (const auto &projectile : state.projectiles)
@@ -5357,9 +5397,9 @@ void CreateReplayFireWallController(
 }
 
 void CreateReplayFlameWaveController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5384,8 +5424,8 @@ void CreateReplayFlameWaveController(
 }
 
 void CreateReplayRingOfFireController(
-	ReplayFixtureExecutionState &state,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5409,8 +5449,8 @@ void CreateReplayRingOfFireController(
 }
 
 std::vector<std::pair<int32_t, int32_t>> CreateReplayRadialProjectileOffsets(
-	int32_t radius,
-	int32_t projectileCount)
+    int32_t radius,
+    int32_t projectileCount)
 {
 	std::vector<std::pair<int32_t, int32_t>> offsets;
 	for (int32_t y = 0; y <= radius && static_cast<int32_t>(offsets.size()) < projectileCount; ++y) {
@@ -5445,9 +5485,9 @@ std::vector<std::pair<int32_t, int32_t>> CreateReplayRadialProjectileOffsets(
 }
 
 ReplayFixtureProjectileState CreateReplayNovaController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5474,19 +5514,19 @@ ReplayFixtureProjectileState CreateReplayNovaController(
 	controller.remainingTicks = 1;
 	controller.behavior = NovaControllerBehavior;
 	controller.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	controller.resistantDamageDivisor = 4;
 	controller.effectiveSpellLevel = spellLevel;
 	return controller;
 }
 
 ReplayFixtureProjectileState CreateReplayImmolationController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5513,10 +5553,10 @@ ReplayFixtureProjectileState CreateReplayImmolationController(
 	controller.startX = state.positionX;
 	controller.startY = state.positionY;
 	controller.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	int32_t velocityTargetX = command.targetX;
 	int32_t velocityTargetY = command.targetY;
 	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
@@ -5525,11 +5565,11 @@ ReplayFixtureProjectileState CreateReplayImmolationController(
 	}
 	const int32_t speed = 16 + std::min(spellLevel, 34);
 	const auto velocity = CalculateVelocity(
-		state.positionX,
-		state.positionY,
-		velocityTargetX,
-		velocityTargetY,
-		speed);
+	    state.positionX,
+	    state.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    speed);
 	controller.velocityX = velocity.first;
 	controller.velocityY = velocity.second;
 	controller.speed = speed;
@@ -5538,9 +5578,9 @@ ReplayFixtureProjectileState CreateReplayImmolationController(
 }
 
 ReplayFixtureProjectileState CreateReplayImmolationBall(
-	const ReplayFixtureProjectileState &controller,
-	int32_t targetX,
-	int32_t targetY)
+    const ReplayFixtureProjectileState &controller,
+    int32_t targetX,
+    int32_t targetY)
 {
 	ReplayFixtureProjectileState ball;
 	ball.sourceEntityId = controller.sourceEntityId;
@@ -5557,16 +5597,16 @@ ReplayFixtureProjectileState CreateReplayImmolationBall(
 	ball.startX = controller.positionX;
 	ball.startY = controller.positionY;
 	ball.originalDirection = GetDirection(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY);
 	const auto velocity = CalculateVelocity(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY,
-		16);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY,
+	    16);
 	ball.velocityX = velocity.first;
 	ball.velocityY = velocity.second;
 	ball.speed = 16;
@@ -5609,10 +5649,10 @@ ReplayFixtureProjectileState CreateReplayElemental(
 	projectile.resistantDamageDivisor = 4;
 	projectile.effectiveSpellLevel = spellLevel;
 	projectile.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	int32_t velocityTargetX = command.targetX;
 	int32_t velocityTargetY = command.targetY;
 	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
@@ -5620,11 +5660,11 @@ ReplayFixtureProjectileState CreateReplayElemental(
 		velocityTargetY += DirectionDisplacements[projectile.originalDirection].second;
 	}
 	const auto velocity = CalculateVelocity(
-		state.positionX,
-		state.positionY,
-		velocityTargetX,
-		velocityTargetY,
-		16);
+	    state.positionX,
+	    state.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    16);
 	projectile.velocityX = velocity.first;
 	projectile.velocityY = velocity.second;
 	projectile.speed = 16;
@@ -5634,9 +5674,9 @@ ReplayFixtureProjectileState CreateReplayElemental(
 }
 
 ReplayFixtureProjectileState CreateReplayInfernoController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5652,10 +5692,10 @@ ReplayFixtureProjectileState CreateReplayInfernoController(
 	controller.startX = state.positionX;
 	controller.startY = state.positionY;
 	controller.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	int32_t velocityTargetX = command.targetX;
 	int32_t velocityTargetY = command.targetY;
 	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
@@ -5663,11 +5703,11 @@ ReplayFixtureProjectileState CreateReplayInfernoController(
 		velocityTargetY += DirectionDisplacements[controller.originalDirection].second;
 	}
 	const auto velocity = CalculateVelocity(
-		state.positionX,
-		state.positionY,
-		velocityTargetX,
-		velocityTargetY,
-		32);
+	    state.positionX,
+	    state.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    32);
 	controller.velocityX = velocity.first;
 	controller.velocityY = velocity.second;
 	controller.speed = 32;
@@ -5681,8 +5721,8 @@ ReplayFixtureProjectileState CreateReplayInfernoController(
 }
 
 ReplayFixtureProjectileState CreateReplayApocalypseController(
-	ReplayFixtureExecutionState &state,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -5713,10 +5753,10 @@ ReplayFixtureProjectileState CreateReplayApocalypseController(
 }
 
 ReplayFixtureProjectileState CreateReplayApocalypseBoom(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &controller,
-	int32_t positionX,
-	int32_t positionY)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &controller,
+    int32_t positionX,
+    int32_t positionY)
 {
 	ReplayFixtureProjectileState boom;
 	boom.entityId = controller.entityId + 1U;
@@ -5740,9 +5780,9 @@ ReplayFixtureProjectileState CreateReplayApocalypseBoom(
 }
 
 bool ReplayApocalypseTileIsSolid(
-	const ReplayFixtureExecutionState &state,
-	int32_t x,
-	int32_t y)
+    const ReplayFixtureExecutionState &state,
+    int32_t x,
+    int32_t y)
 {
 	if (x < 0 || x >= state.levelWidth || y < 0 || y >= state.levelHeight)
 		return true;
@@ -5752,10 +5792,10 @@ bool ReplayApocalypseTileIsSolid(
 }
 
 bool ReplayApocalypseTileBlocksMissiles(
-	const ReplayFixtureExecutionState &state,
-	uint32_t levelId,
-	int32_t x,
-	int32_t y)
+    const ReplayFixtureExecutionState &state,
+    uint32_t levelId,
+    int32_t x,
+    int32_t y)
 {
 	if (x < 0 || x >= state.levelWidth || y < 0 || y >= state.levelHeight)
 		return true;
@@ -5774,11 +5814,11 @@ bool ReplayApocalypseTileBlocksMissiles(
 }
 
 bool ReplayApocalypseLineClearMissile(
-	const ReplayFixtureExecutionState &state,
-	int32_t startX,
-	int32_t startY,
-	int32_t endX,
-	int32_t endY)
+    const ReplayFixtureExecutionState &state,
+    int32_t startX,
+    int32_t startY,
+    int32_t endX,
+    int32_t endY)
 {
 	if (startX < 0 || startX >= state.levelWidth || startY < 0 || startY >= state.levelHeight
 	    || endX < 0 || endX >= state.levelWidth || endY < 0 || endY >= state.levelHeight) {
@@ -5844,8 +5884,8 @@ bool ReplayApocalypseLineClearMissile(
 }
 
 bool ReplayApocalypseOwnerExists(
-	const ReplayFixtureExecutionState &state,
-	uint32_t sourceEntityId)
+    const ReplayFixtureExecutionState &state,
+    uint32_t sourceEntityId)
 {
 	return sourceEntityId == (state.entityId == 0 ? 1U : state.entityId)
 	    || (state.secondaryPlayerEntityId != 0
@@ -5853,8 +5893,8 @@ bool ReplayApocalypseOwnerExists(
 }
 
 bool ReplayApocalypseMonsterHit(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &projectile)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &projectile)
 {
 	const bool counselor = state.combatTargetNativeAi == "Counselor"
 	    || state.combatTargetNativeAi == "Zhar"
@@ -5995,19 +6035,19 @@ ReplayFixtureProjectileState CreateReplayGuardianBolt(
 	bolt.targetX = targetX;
 	bolt.targetY = targetY;
 	bolt.damage = GenerateRnd(state, 10)
-		+ ownerMagic / 8
-		+ effectiveSpellLevel
-		+ 1;
+	    + ownerMagic / 8
+	    + effectiveSpellLevel
+	    + 1;
 	bolt.damageType = 1;
 	bolt.remainingTicks = 256;
 	bolt.behavior = 2;
 	bolt.startX = controller.positionX;
 	bolt.startY = controller.positionY;
 	bolt.originalDirection = GetDirection(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY);
 	int32_t velocityTargetX = targetX;
 	int32_t velocityTargetY = targetY;
 	if (velocityTargetX == controller.positionX && velocityTargetY == controller.positionY) {
@@ -6015,11 +6055,11 @@ ReplayFixtureProjectileState CreateReplayGuardianBolt(
 		velocityTargetY += DirectionDisplacements[bolt.originalDirection].second;
 	}
 	const auto velocity = CalculateVelocity(
-		controller.positionX,
-		controller.positionY,
-		velocityTargetX,
-		velocityTargetY,
-		speed);
+	    controller.positionX,
+	    controller.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    speed);
 	bolt.velocityX = velocity.first;
 	bolt.velocityY = velocity.second;
 	bolt.speed = speed;
@@ -6030,9 +6070,9 @@ ReplayFixtureProjectileState CreateReplayGuardianBolt(
 }
 
 ReplayFixtureProjectileState CreateReplayChainLightningController(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command,
-	int32_t spellLevel)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command,
+    int32_t spellLevel)
 {
 	ReplayFixtureProjectileState controller;
 	controller.entityId = 0x80000000U;
@@ -6051,20 +6091,20 @@ ReplayFixtureProjectileState CreateReplayChainLightningController(
 	controller.startX = state.positionX;
 	controller.startY = state.positionY;
 	controller.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
-		command.targetX,
-		command.targetY);
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
 	controller.effectiveSpellLevel = spellLevel;
 	state.projectiles.push_back(controller);
 	return controller;
 }
 
 ReplayFixtureProjectileState CreateReplayChainLightningBolt(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &controller,
-	int32_t targetX,
-	int32_t targetY)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &controller,
+    int32_t targetX,
+    int32_t targetY)
 {
 	ReplayFixtureProjectileState bolt;
 	bolt.sourceEntityId = controller.sourceEntityId;
@@ -6080,10 +6120,10 @@ ReplayFixtureProjectileState CreateReplayChainLightningBolt(
 	bolt.startX = controller.positionX;
 	bolt.startY = controller.positionY;
 	bolt.originalDirection = GetDirection(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY);
 	int32_t velocityTargetX = targetX;
 	int32_t velocityTargetY = targetY;
 	if (velocityTargetX == controller.positionX && velocityTargetY == controller.positionY) {
@@ -6091,11 +6131,11 @@ ReplayFixtureProjectileState CreateReplayChainLightningBolt(
 		velocityTargetY += DirectionDisplacements[bolt.originalDirection].second;
 	}
 	const auto velocity = CalculateVelocity(
-		controller.positionX,
-		controller.positionY,
-		velocityTargetX,
-		velocityTargetY,
-		32);
+	    controller.positionX,
+	    controller.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    32);
 	bolt.velocityX = velocity.first;
 	bolt.velocityY = velocity.second;
 	bolt.speed = 32;
@@ -6106,9 +6146,9 @@ ReplayFixtureProjectileState CreateReplayChainLightningBolt(
 }
 
 ReplayFixtureProjectileState CreateReplayNovaBall(
-	const ReplayFixtureProjectileState &controller,
-	int32_t targetX,
-	int32_t targetY)
+    const ReplayFixtureProjectileState &controller,
+    int32_t targetX,
+    int32_t targetY)
 {
 	ReplayFixtureProjectileState ball;
 	ball.sourceEntityId = controller.sourceEntityId;
@@ -6125,16 +6165,16 @@ ReplayFixtureProjectileState CreateReplayNovaBall(
 	ball.startX = controller.positionX;
 	ball.startY = controller.positionY;
 	ball.originalDirection = GetDirection(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY);
 	const auto velocity = CalculateVelocity(
-		controller.positionX,
-		controller.positionY,
-		targetX,
-		targetY,
-		16);
+	    controller.positionX,
+	    controller.positionY,
+	    targetX,
+	    targetY,
+	    16);
 	ball.velocityX = velocity.first;
 	ball.velocityY = velocity.second;
 	ball.speed = 16;
@@ -6144,10 +6184,10 @@ ReplayFixtureProjectileState CreateReplayNovaBall(
 }
 
 ReplayFixtureProjectileState CreateReplayFlameWaveSegment(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &controller,
-	int32_t positionX,
-	int32_t positionY)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &controller,
+    int32_t positionX,
+    int32_t positionY)
 {
 	ReplayFixtureProjectileState segment;
 	segment.sourceEntityId = controller.sourceEntityId;
@@ -6158,10 +6198,10 @@ ReplayFixtureProjectileState CreateReplayFlameWaveSegment(
 	segment.targetX = positionX + DirectionDisplacements[controller.originalDirection].first;
 	segment.targetY = positionY + DirectionDisplacements[controller.originalDirection].second;
 	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-		&& controller.sourceEntityId == state.secondaryPlayerEntityId;
+	    && controller.sourceEntityId == state.secondaryPlayerEntityId;
 	const uint32_t ownerCharacterLevel = secondaryOwner
-		? state.secondaryPlayerCharacterLevel
-		: state.characterLevel;
+	    ? state.secondaryPlayerCharacterLevel
+	    : state.characterLevel;
 	segment.damage = GenerateRnd(state, 10) + static_cast<int32_t>(ownerCharacterLevel) + 1;
 	segment.damageType = 1;
 	segment.remainingTicks = 255;
@@ -6170,11 +6210,11 @@ ReplayFixtureProjectileState CreateReplayFlameWaveSegment(
 	segment.startY = positionY;
 	segment.originalDirection = controller.originalDirection;
 	const auto velocity = CalculateVelocity(
-		positionX,
-		positionY,
-		segment.targetX,
-		segment.targetY,
-		16);
+	    positionX,
+	    positionY,
+	    segment.targetX,
+	    segment.targetY,
+	    16);
 	segment.velocityX = velocity.first;
 	segment.velocityY = velocity.second;
 	segment.speed = 16;
@@ -6184,12 +6224,12 @@ ReplayFixtureProjectileState CreateReplayFlameWaveSegment(
 }
 
 ReplayFixtureProjectileState CreateReplayFireWallSegment(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &controller,
-	int32_t positionX,
-	int32_t positionY,
-	int32_t wallHitDirection,
-	bool lightningWall)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &controller,
+    int32_t positionX,
+    int32_t positionY,
+    int32_t wallHitDirection,
+    bool lightningWall)
 {
 	ReplayFixtureProjectileState segment;
 	segment.entityId = 0x80000000U;
@@ -6203,20 +6243,20 @@ ReplayFixtureProjectileState CreateReplayFireWallSegment(
 	segment.targetX = positionX;
 	segment.targetY = positionY;
 	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-		&& controller.sourceEntityId == state.secondaryPlayerEntityId;
+	    && controller.sourceEntityId == state.secondaryPlayerEntityId;
 	const uint32_t ownerCharacterLevel = secondaryOwner
-		? state.secondaryPlayerCharacterLevel
-		: state.characterLevel;
+	    ? state.secondaryPlayerCharacterLevel
+	    : state.characterLevel;
 	segment.damage = (GenerateRnd(state, 10) + GenerateRnd(state, 10) + 2
-		+ static_cast<int32_t>(ownerCharacterLevel))
-		* (lightningWall ? 16 : 8);
+	                     + static_cast<int32_t>(ownerCharacterLevel))
+	    * (lightningWall ? 16 : 8);
 	segment.damageType = lightningWall ? 2 : 1;
 	segment.remainingTicks = static_cast<uint32_t>(
-		(lightningWall
-			? 255 + controller.effectiveSpellLevel * 255
-			: 10 + controller.effectiveSpellLevel * 10
-				+ static_cast<int32_t>(ownerCharacterLevel))
-		* (lightningWall ? 1 : 16));
+	    (lightningWall
+	            ? 255 + controller.effectiveSpellLevel * 255
+	            : 10 + controller.effectiveSpellLevel * 10
+	                + static_cast<int32_t>(ownerCharacterLevel))
+	    * (lightningWall ? 1 : 16));
 	segment.behavior = FireWallSegmentBehavior;
 	segment.startX = positionX;
 	segment.startY = positionY;
@@ -6228,36 +6268,36 @@ ReplayFixtureProjectileState CreateReplayFireWallSegment(
 }
 
 bool ReplayWallPositionIsValid(
-	const ReplayFixtureExecutionState &state,
-	int32_t positionX,
-	int32_t positionY,
-	uint32_t levelId = std::numeric_limits<uint32_t>::max())
+    const ReplayFixtureExecutionState &state,
+    int32_t positionX,
+    int32_t positionY,
+    uint32_t levelId = std::numeric_limits<uint32_t>::max())
 {
 	const uint32_t effectiveLevelId = levelId == std::numeric_limits<uint32_t>::max()
-		? state.levelId
-		: levelId;
+	    ? state.levelId
+	    : levelId;
 	return positionX >= 0 && positionX < 40 && positionY >= 0 && positionY < 40
-		&& !(state.objectEntityId != 0
-			&& !state.objectDestroyed
-			&& !state.objectMissilePassable
-			&& state.objectLevelId == effectiveLevelId
-			&& state.objectPositionX == positionX
-			&& state.objectPositionY == positionY);
+	    && !(state.objectEntityId != 0
+	        && !state.objectDestroyed
+	        && !state.objectMissilePassable
+	        && state.objectLevelId == effectiveLevelId
+	        && state.objectPositionX == positionX
+	        && state.objectPositionY == positionY);
 }
 
 void ResolveReplayFireWallSegmentCollision(
-	ReplayFixtureExecutionState &state,
-	ReplayFixtureProjectileState &projectile,
-	uint64_t tick)
+    ReplayFixtureExecutionState &state,
+    ReplayFixtureProjectileState &projectile,
+    uint64_t tick)
 {
 	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-		&& projectile.sourceEntityId == state.secondaryPlayerEntityId;
+	    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
 	const bool primaryOwner = projectile.sourceEntityId == primaryEntityId;
 	const int32_t ownerMagic = secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3];
 	const uint32_t ownerClassId = secondaryOwner
-		? state.secondaryPlayerCharacterClassId
-		: state.characterClassId;
+	    ? state.secondaryPlayerCharacterClassId
+	    : state.characterClassId;
 	const auto occupiesWall = [&](int32_t currentX, int32_t currentY, bool moving, int32_t futureX, int32_t futureY) {
 		if (projectile.wallHitDirection < 0)
 			return currentX == projectile.positionX && currentY == projectile.positionY;
@@ -6265,34 +6305,34 @@ void ResolveReplayFireWallSegmentCollision(
 			return false;
 		const auto displacement = DirectionDisplacements[projectile.wallHitDirection];
 		return (currentX == projectile.positionX
-				&& currentY == projectile.positionY
-				&& futureX == projectile.positionX + displacement.first
-				&& futureY == projectile.positionY + displacement.second)
-			|| (currentX == projectile.positionX + displacement.first
-				&& currentY == projectile.positionY + displacement.second
-				&& futureX == projectile.positionX
-				&& futureY == projectile.positionY);
+		           && currentY == projectile.positionY
+		           && futureX == projectile.positionX + displacement.first
+		           && futureY == projectile.positionY + displacement.second)
+		    || (currentX == projectile.positionX + displacement.first
+		        && currentY == projectile.positionY + displacement.second
+		        && futureX == projectile.positionX
+		        && futureY == projectile.positionY);
 	};
 	const bool monsterAtWall = state.combatTargetEntityId != 0
-		&& state.combatTargetHitPointsQ6 > 0
-		&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
-		&& occupiesWall(
-			state.combatTargetPositionX,
-			state.combatTargetPositionY,
-			state.combatTargetMoving,
-			state.combatTargetFuturePositionX,
-			state.combatTargetFuturePositionY);
+	    && state.combatTargetHitPointsQ6 > 0
+	    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+	    && occupiesWall(
+	        state.combatTargetPositionX,
+	        state.combatTargetPositionY,
+	        state.combatTargetMoving,
+	        state.combatTargetFuturePositionX,
+	        state.combatTargetFuturePositionY);
 	const int32_t monsterResistance = projectile.damageType == LightningDamageType
-		? state.combatTargetLightningResistance
-		: state.combatTargetFireResistance;
+	    ? state.combatTargetLightningResistance
+	    : state.combatTargetFireResistance;
 	if (monsterAtWall && (primaryOwner || secondaryOwner)
-		&& monsterResistance < 100) {
+	    && monsterResistance < 100) {
 		const int32_t hitChance = std::clamp(
-			ownerMagic
-				+ GetReplayBaseMagicToHit(ownerClassId)
-				- state.combatTargetMonsterLevel * 2,
-			5,
-			95);
+		    ownerMagic
+		        + GetReplayBaseMagicToHit(ownerClassId)
+		        - state.combatTargetMonsterLevel * 2,
+		    5,
+		    95);
 		if (state.combatTargetPetrified || GenerateRnd(state, 100) < hitChance) {
 			// Persistent monster damage also consumes the fixed-width roll.
 			static_cast<void>(GenerateRnd(state, 1));
@@ -6300,10 +6340,10 @@ void ResolveReplayFireWallSegmentCollision(
 			if (monsterResistance > 0)
 				damageQ6 /= projectile.resistantDamageDivisor;
 			state.combatTargetHitPointsQ6 = std::max(
-				0,
-				state.combatTargetHitPointsQ6 - damageQ6);
+			    0,
+			    state.combatTargetHitPointsQ6 - damageQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
-				state.combatTargetHitPointsQ6);
+			    state.combatTargetHitPointsQ6);
 			if (state.combatTargetHitPointsQ6 == 0)
 				DefeatReplayCombatTarget(state);
 		}
@@ -6324,70 +6364,70 @@ void ResolveReplayFireWallSegmentCollision(
 	const bool primaryPlayerAtWall = canHitPlayer(true);
 	const bool secondaryPlayerAtWall = canHitPlayer(false);
 	const bool hitPrimary = primaryPlayerAtWall
-		&& (!secondaryPlayerAtWall || primaryEntityId < state.secondaryPlayerEntityId);
+	    && (!secondaryPlayerAtWall || primaryEntityId < state.secondaryPlayerEntityId);
 	const bool hitSecondary = secondaryPlayerAtWall && !hitPrimary;
 	const uint32_t targetEntityId = hitPrimary
-		? primaryEntityId
-		: state.secondaryPlayerEntityId;
+	    ? primaryEntityId
+	    : state.secondaryPlayerEntityId;
 	const bool targetProtectedByFlash = (hitPrimary || hitSecondary)
-		&& std::any_of(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[&](const ReplayFixtureProjectileState &candidate) {
-				return (candidate.behavior == 6 || candidate.behavior == 7)
-					&& candidate.sourceEntityId == targetEntityId
-					&& candidate.remainingTicks < 19;
-			});
+	    && std::any_of(
+	        state.projectiles.begin(),
+	        state.projectiles.end(),
+	        [&](const ReplayFixtureProjectileState &candidate) {
+		        return (candidate.behavior == 6 || candidate.behavior == 7)
+		            && candidate.sourceEntityId == targetEntityId
+		            && candidate.remainingTicks < 19;
+	        });
 	const bool ownerFriendly = primaryOwner
-		? state.friendlyMode
-		: state.secondaryPlayerFriendlyMode;
+	    ? state.friendlyMode
+	    : state.secondaryPlayerFriendlyMode;
 	const bool blockedByFriendlyFireRules = !state.friendlyFire && ownerFriendly;
 	if ((hitPrimary || hitSecondary) && (primaryOwner || secondaryOwner)
-		&& !targetProtectedByFlash && !blockedByFriendlyFireRules) {
+	    && !targetProtectedByFlash && !blockedByFriendlyFireRules) {
 		const uint32_t targetLevel = hitPrimary
-			? state.characterLevel
-			: state.secondaryPlayerCharacterLevel;
+		    ? state.characterLevel
+		    : state.secondaryPlayerCharacterLevel;
 		const int32_t hitChance = std::clamp(
-			ownerMagic
-				+ GetReplayBaseMagicToHit(ownerClassId)
-				- static_cast<int32_t>(targetLevel) * 2,
-			5,
-			95);
+		    ownerMagic
+		        + GetReplayBaseMagicToHit(ownerClassId)
+		        - static_cast<int32_t>(targetLevel) * 2,
+		    5,
+		    95);
 		if (GenerateRnd(state, 100) < hitChance) {
 			// RandomIntBetween(damage, damage) still advances the native RNG.
 			const int32_t rawDamageQ6 = projectile.damage / 2;
 			static_cast<void>(GenerateRnd(state, 1));
 			const int32_t resistance = ResolveReplayEquipmentResistance(
-				state,
-				hitSecondary,
-				projectile.damageType);
+			    state,
+			    hitSecondary,
+			    projectile.damageType);
 			int32_t damageQ6 = rawDamageQ6;
 			if (resistance > 0)
 				damageQ6 -= damageQ6 * resistance / 100;
 			const int32_t lifeDamageQ6 = hitSecondary
-				? ApplyReplayManaShield(state, damageQ6, true)
-				: ApplyReplayManaShield(state, damageQ6);
+			    ? ApplyReplayManaShield(state, damageQ6, true)
+			    : ApplyReplayManaShield(state, damageQ6);
 			if (hitSecondary) {
 				state.secondaryPlayerLife = std::max(
-					0,
-					state.secondaryPlayerLife - lifeDamageQ6);
+				    0,
+				    state.secondaryPlayerLife - lifeDamageQ6);
 				if (state.secondaryPlayerLife == 0)
 					StartReplaySecondaryPlayerDeath(state);
 				else if (resistance == 0
-					&& (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-						state.secondaryPlayerCharacterClassId,
-						state.secondaryPlayerCharacterLevel)) {
+				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+				           state.secondaryPlayerCharacterClassId,
+				           state.secondaryPlayerCharacterLevel)) {
 					state.secondaryPlayerCombatMode = 7;
 					state.secondaryPlayerCombatModeEndTick = tick + 6;
 				}
 			} else {
 				state.life = std::max(0, state.life - lifeDamageQ6);
 				if (state.life == 0)
-					StartReplayPlayerDeath(state, { }, projectile.sourceEntityId, tick);
+					StartReplayPlayerDeath(state, {}, projectile.sourceEntityId, tick);
 				else if (resistance == 0
-					&& (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-						state.characterClassId,
-						state.characterLevel)) {
+				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+				           state.characterClassId,
+				           state.characterLevel)) {
 					state.combatMode = 7;
 					state.combatModeEndTick = tick + 6;
 				}
@@ -6407,11 +6447,11 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 	for (size_t projectileIndex = 0; projectileIndex < projectileEntityIds.size(); ++projectileIndex) {
 		const uint32_t entityId = projectileEntityIds[projectileIndex];
 		auto iterator = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[entityId](const ReplayFixtureProjectileState &candidate) {
-				return candidate.entityId == entityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [entityId](const ReplayFixtureProjectileState &candidate) {
+			    return candidate.entityId == entityId;
+		    });
 		if (iterator == state.projectiles.end())
 			continue;
 
@@ -6425,28 +6465,28 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 			}
 			ResolveReplayFireWallSegmentCollision(state, projectile, tick);
 			const bool blockingObject = state.objectEntityId != 0
-				&& !state.objectDestroyed
-				&& !state.objectMissilePassable
-				&& state.objectLevelId == projectile.levelId
-				&& state.objectPositionX == projectile.positionX
-				&& state.objectPositionY == projectile.positionY;
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == projectile.positionX
+			    && state.objectPositionY == projectile.positionY;
 			if (blockingObject && state.objectBreakable)
 				state.objectDestroyed = true;
 			continue;
 		}
 		if (projectile.behavior != FireWallControllerBehavior
-			&& projectile.behavior != LightningWallControllerBehavior) {
+		    && projectile.behavior != LightningWallControllerBehavior) {
 			continue;
 		}
 
 		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 		const bool validOwner = projectile.sourceEntityId == primaryEntityId
-			|| (state.secondaryPlayerEntityId != 0
-				&& projectile.sourceEntityId == state.secondaryPlayerEntityId);
+		    || (state.secondaryPlayerEntityId != 0
+		        && projectile.sourceEntityId == state.secondaryPlayerEntityId);
 		const bool lightningWall = projectile.behavior == LightningWallControllerBehavior;
 		const bool validSpell = lightningWall
-			? projectile.spellId == 50
-			: projectile.spellId == 6;
+		    ? projectile.spellId == 50
+		    : projectile.spellId == 6;
 		if (!validOwner || !validSpell) {
 			state.projectiles.erase(iterator);
 			continue;
@@ -6462,12 +6502,12 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 		const auto place = [&](int32_t x, int32_t y, int32_t hitDirection) {
 			if (ReplayWallPositionIsValid(state, x, y, projectile.levelId)) {
 				created.push_back(CreateReplayFireWallSegment(
-					state,
-					projectile,
-					x,
-					y,
-					hitDirection,
-					lightningWall));
+				    state,
+				    projectile,
+				    x,
+				    y,
+				    hitDirection,
+				    lightningWall));
 			}
 		};
 		const auto grow = [&](int32_t &x, int32_t &y, int32_t direction, bool &stopped) {
@@ -6485,12 +6525,12 @@ void AdvanceReplayFireWallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 			y += DirectionDisplacements[direction].second;
 		};
 		if (projectile.wallLeftX == projectile.wallRightX
-			&& projectile.wallLeftY == projectile.wallRightY) {
+		    && projectile.wallLeftY == projectile.wallRightY) {
 			if (!ReplayWallPositionIsValid(
-					state,
-					projectile.wallLeftX,
-					projectile.wallLeftY,
-					projectile.levelId)) {
+			        state,
+			        projectile.wallLeftX,
+			        projectile.wallLeftY,
+			        projectile.levelId)) {
 				state.projectiles.erase(iterator);
 				continue;
 			}
@@ -6533,12 +6573,12 @@ void AdvanceReplayRingOfFireOneTick(ReplayFixtureExecutionState &state)
 				const int32_t targetY = controllerState.startY + displacement.deltaY;
 				if (ReplayWallPositionIsValid(state, targetX, targetY)) {
 					state.projectiles.push_back(CreateReplayFireWallSegment(
-						state,
-						controllerState,
-						targetX,
-						targetY,
-						-1,
-						false));
+					    state,
+					    controllerState,
+					    targetX,
+					    targetY,
+					    -1,
+					    false));
 				}
 				return true;
 			});
@@ -6558,18 +6598,18 @@ void AdvanceReplayNovaOneTick(ReplayFixtureExecutionState &state)
 	std::sort(controllers.begin(), controllers.end());
 	for (const uint32_t controllerEntityId : controllers) {
 		auto controllerIterator = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[controllerEntityId](const auto &projectile) {
-				return projectile.entityId == controllerEntityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [controllerEntityId](const auto &projectile) {
+			    return projectile.entityId == controllerEntityId;
+		    });
 		if (controllerIterator == state.projectiles.end())
 			continue;
 
 		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 		const bool primaryOwner = controllerIterator->sourceEntityId == primaryEntityId;
 		const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-			&& controllerIterator->sourceEntityId == state.secondaryPlayerEntityId;
+		    && controllerIterator->sourceEntityId == state.secondaryPlayerEntityId;
 		if (!primaryOwner && !secondaryOwner) {
 			state.projectiles.erase(controllerIterator);
 			continue;
@@ -6583,9 +6623,9 @@ void AdvanceReplayNovaOneTick(ReplayFixtureExecutionState &state)
 		created.reserve(offsets.size());
 		for (const auto offset : offsets) {
 			created.push_back(CreateReplayNovaBall(
-				controllerState,
-				controllerState.positionX + offset.first,
-				controllerState.positionY + offset.second));
+			    controllerState,
+			    controllerState.positionX + offset.first,
+			    controllerState.positionY + offset.second));
 			static_cast<void>(GenerateRnd(state, 8));
 		}
 		uint32_t nextEntityId = 0x80000000U;
@@ -6594,11 +6634,11 @@ void AdvanceReplayNovaOneTick(ReplayFixtureExecutionState &state)
 		for (auto &spawned : created)
 			spawned.entityId = nextEntityId++;
 		controllerIterator = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[controllerEntityId](const auto &projectile) {
-				return projectile.entityId == controllerEntityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [controllerEntityId](const auto &projectile) {
+			    return projectile.entityId == controllerEntityId;
+		    });
 		if (controllerIterator != state.projectiles.end()) {
 			state.projectiles.erase(controllerIterator);
 			state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
@@ -6616,21 +6656,21 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 	std::sort(balls.begin(), balls.end());
 	for (const uint32_t ballEntityId : balls) {
 		auto iterator = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[ballEntityId](const auto &projectile) {
-				return projectile.entityId == ballEntityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [ballEntityId](const auto &projectile) {
+			    return projectile.entityId == ballEntityId;
+		    });
 		if (iterator == state.projectiles.end())
 			continue;
 		auto &projectile = *iterator;
 		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 		const bool primaryOwner = projectile.sourceEntityId == primaryEntityId;
 		const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-			&& projectile.sourceEntityId == state.secondaryPlayerEntityId;
+		    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
 		const bool ownerLevelMatches = primaryOwner
-			? projectile.levelId == state.levelId
-			: secondaryOwner && projectile.levelId == state.secondaryPlayerLevelId;
+		    ? projectile.levelId == state.levelId
+		    : secondaryOwner && projectile.levelId == state.secondaryPlayerLevelId;
 		if ((!primaryOwner && !secondaryOwner)
 		    || projectile.effectiveSpellLevel < 0
 		    || projectile.effectiveSpellLevel > UINT8_MAX
@@ -6648,14 +6688,14 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
 		const auto resolveMonsterAt = [&](int32_t x, int32_t y) {
 			const bool monsterAtTile = state.combatTargetEntityId != 0
-				&& state.combatTargetHitPointsQ6 > 0
-				&& !state.combatTargetSneakHidden
-				&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
-				&& ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
-				    || (state.combatTargetMoving
-				        && state.combatTargetPetrified
-				        && state.combatTargetFuturePositionX == x
-				        && state.combatTargetFuturePositionY == y));
+			    && state.combatTargetHitPointsQ6 > 0
+			    && !state.combatTargetSneakHidden
+			    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+			    && ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
+			        || (state.combatTargetMoving
+			            && state.combatTargetPetrified
+			            && state.combatTargetFuturePositionX == x
+			            && state.combatTargetFuturePositionY == y));
 			if (!monsterAtTile
 			    || projectile.lastCollisionTargetEntityId == state.combatTargetEntityId)
 				return false;
@@ -6664,16 +6704,16 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 				return false;
 
 			const int32_t ownerMagic = secondaryOwner
-				? state.secondaryPlayerMagic
-				: state.attributes[3];
+			    ? state.secondaryPlayerMagic
+			    : state.attributes[3];
 			const uint32_t ownerClass = secondaryOwner
-				? state.secondaryPlayerCharacterClassId
-				: state.characterClassId;
+			    ? state.secondaryPlayerCharacterClassId
+			    : state.characterClassId;
 			const int32_t hitChance = std::clamp(
-				ownerMagic + GetReplayBaseMagicToHit(ownerClass)
-				    - state.combatTargetMonsterLevel * 2,
-				5,
-				95);
+			    ownerMagic + GetReplayBaseMagicToHit(ownerClass)
+			        - state.combatTargetMonsterLevel * 2,
+			    5,
+			    95);
 			const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 			if (!state.combatTargetPetrified && hitRoll >= hitChance)
 				return false;
@@ -6685,38 +6725,38 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 			if (state.combatTargetLightningResistance > 0)
 				damageQ6 /= std::max(projectile.resistantDamageDivisor, 1);
 			state.combatTargetHitPointsQ6 = std::max(
-				0,
-				state.combatTargetHitPointsQ6 - damageQ6);
+			    0,
+			    state.combatTargetHitPointsQ6 - damageQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
-				state.combatTargetHitPointsQ6);
+			    state.combatTargetHitPointsQ6);
 			if (state.combatTargetHitPointsQ6 == 0)
 				DefeatReplayCombatTarget(state);
 			return true;
 		};
 		const auto resolvePlayerAt = [&](int32_t x, int32_t y) {
 			const bool primaryAtTile = !primaryOwner
-				&& state.life > 0
-				&& state.combatMode != 10
-				&& state.combatMode != 11
-				&& state.levelId == projectile.levelId
-				&& state.positionX == x
-				&& state.positionY == y;
+			    && state.life > 0
+			    && state.combatMode != 10
+			    && state.combatMode != 11
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
 			const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
-				&& !secondaryOwner
-				&& state.secondaryPlayerLife > 0
-				&& state.secondaryPlayerCombatMode != 10
-				&& state.secondaryPlayerCombatMode != 11
-				&& state.secondaryPlayerLevelId == projectile.levelId
-				&& state.secondaryPlayerPositionX == x
-				&& state.secondaryPlayerPositionY == y;
+			    && !secondaryOwner
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerCombatMode != 10
+			    && state.secondaryPlayerCombatMode != 11
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
 			if (!primaryAtTile && !secondaryAtTile)
 				return false;
 
 			const bool primaryTarget = primaryAtTile
-				&& (!secondaryAtTile || primaryEntityId < state.secondaryPlayerEntityId);
+			    && (!secondaryAtTile || primaryEntityId < state.secondaryPlayerEntityId);
 			const uint32_t targetEntityId = primaryTarget
-				? primaryEntityId
-				: state.secondaryPlayerEntityId;
+			    ? primaryEntityId
+			    : state.secondaryPlayerEntityId;
 			if (targetEntityId == projectile.lastCollisionTargetEntityId)
 				return false;
 			projectile.lastCollisionTargetEntityId = targetEntityId;
@@ -6728,54 +6768,54 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 
 			const bool secondaryTarget = !primaryTarget;
 			const uint32_t ownerLevel = secondaryOwner
-				? state.secondaryPlayerCharacterLevel
-				: state.characterLevel;
+			    ? state.secondaryPlayerCharacterLevel
+			    : state.characterLevel;
 			const uint32_t targetLevel = primaryTarget
-				? state.characterLevel
-				: state.secondaryPlayerCharacterLevel;
+			    ? state.characterLevel
+			    : state.secondaryPlayerCharacterLevel;
 			const uint32_t ownerClass = secondaryOwner
-				? state.secondaryPlayerCharacterClassId
-				: state.characterClassId;
+			    ? state.secondaryPlayerCharacterClassId
+			    : state.characterClassId;
 			const uint32_t targetClass = primaryTarget
-				? state.characterClassId
-				: state.secondaryPlayerCharacterClassId;
+			    ? state.characterClassId
+			    : state.secondaryPlayerCharacterClassId;
 			const int32_t ownerMagic = secondaryOwner
-				? state.secondaryPlayerMagic
-				: state.attributes[3];
+			    ? state.secondaryPlayerMagic
+			    : state.attributes[3];
 			const int32_t hitChance = std::clamp(
-				ownerMagic + GetReplayBaseMagicToHit(ownerClass)
-				    - static_cast<int32_t>(targetLevel) * 2,
-				5,
-				95);
+			    ownerMagic + GetReplayBaseMagicToHit(ownerClass)
+			        - static_cast<int32_t>(targetLevel) * 2,
+			    5,
+			    95);
 			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 				return false;
 
 			const uint32_t targetCombatMode = primaryTarget
-				? state.combatMode
-				: state.secondaryPlayerCombatMode;
+			    ? state.combatMode
+			    : state.secondaryPlayerCombatMode;
 			const bool targetCanBlock = primaryTarget
-				? IsReplayPrimaryPlayerBlockCapable(state)
-				: state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
+			    ? IsReplayPrimaryPlayerBlockCapable(state)
+			    : state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
 			const int32_t blockRoll = targetCanBlock
 			        && (targetCombatMode == 0 || targetCombatMode == 4)
-				? std::max(GenerateRnd(state, 100), 0)
-				: 100;
+			    ? std::max(GenerateRnd(state, 100), 0)
+			    : 100;
 			// Native Plr2PlrMHit rolls block before fixed-width damage.
 			const int32_t damageWhole = projectile.damage / 64
-				+ std::max(GenerateRnd(state, 1), 0);
+			    + std::max(GenerateRnd(state, 1), 0);
 			const int32_t targetDexterity = primaryTarget
-				? state.attributes[5]
-				: state.secondaryPlayerDexterity;
+			    ? state.attributes[5]
+			    : state.secondaryPlayerDexterity;
 			const int32_t blockChance = std::clamp(
-				targetDexterity + GetReplayBaseBlockChance(targetClass)
-				    + static_cast<int32_t>(targetLevel) * 2
-				    - static_cast<int32_t>(ownerLevel) * 2,
-				0,
-				100);
+			    targetDexterity + GetReplayBaseBlockChance(targetClass)
+			        + static_cast<int32_t>(targetLevel) * 2
+			        - static_cast<int32_t>(ownerLevel) * 2,
+			    0,
+			    100);
 			const int32_t resistance = ResolveReplayEquipmentResistance(
-				state,
-				secondaryTarget,
-				projectile.damageType);
+			    state,
+			    secondaryTarget,
+			    projectile.damageType);
 			int32_t damageQ6 = damageWhole * 32;
 			if (resistance > 0) {
 				damageQ6 -= damageQ6 * resistance / 100;
@@ -6793,16 +6833,16 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 			}
 
 			const int32_t lifeDamageQ6 = primaryTarget
-				? ApplyReplayManaShield(state, damageQ6)
-				: ApplyReplayManaShield(state, damageQ6, true);
+			    ? ApplyReplayManaShield(state, damageQ6)
+			    : ApplyReplayManaShield(state, damageQ6, true);
 			if (primaryTarget) {
 				state.life = std::max(0, state.life - lifeDamageQ6);
 				if (state.life == 0)
 					StartReplayPrimaryPlayerPvpDeath(state);
 				else if (resistance == 0
 				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-					    state.characterClassId,
-					    state.characterLevel)) {
+				           state.characterClassId,
+				           state.characterLevel)) {
 					state.combatMode = 7;
 					state.combatModeEndTick = tick + GetReplayHitRecoveryDuration(state, false);
 				}
@@ -6812,8 +6852,8 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 					StartReplaySecondaryPlayerDeath(state);
 				else if (resistance == 0
 				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-					    state.secondaryPlayerCharacterClassId,
-					    state.secondaryPlayerCharacterLevel)) {
+				           state.secondaryPlayerCharacterClassId,
+				           state.secondaryPlayerCharacterLevel)) {
 					state.secondaryPlayerCombatMode = 7;
 					state.secondaryPlayerCombatModeEndTick = tick
 					    + GetReplayHitRecoveryDuration(state, true);
@@ -6828,43 +6868,43 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 				return true;
 			}
 			const bool monsterAtTile = state.combatTargetEntityId != 0
-				&& state.combatTargetHitPointsQ6 > 0
-				&& !state.combatTargetSneakHidden
-				&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
-				&& ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
-				    || (state.combatTargetMoving
-				        && state.combatTargetPetrified
-				        && state.combatTargetFuturePositionX == x
-				        && state.combatTargetFuturePositionY == y));
+			    && state.combatTargetHitPointsQ6 > 0
+			    && !state.combatTargetSneakHidden
+			    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+			    && ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
+			        || (state.combatTargetMoving
+			            && state.combatTargetPetrified
+			            && state.combatTargetFuturePositionX == x
+			            && state.combatTargetFuturePositionY == y));
 			const bool primaryAtTile = !primaryOwner
-				&& state.life > 0
-				&& state.combatMode != 10
-				&& state.combatMode != 11
-				&& state.levelId == projectile.levelId
-				&& state.positionX == x
-				&& state.positionY == y;
+			    && state.life > 0
+			    && state.combatMode != 10
+			    && state.combatMode != 11
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
 			const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
-				&& !secondaryOwner
-				&& state.secondaryPlayerLife > 0
-				&& state.secondaryPlayerCombatMode != 10
-				&& state.secondaryPlayerCombatMode != 11
-				&& state.secondaryPlayerLevelId == projectile.levelId
-				&& state.secondaryPlayerPositionX == x
-				&& state.secondaryPlayerPositionY == y;
+			    && !secondaryOwner
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerCombatMode != 10
+			    && state.secondaryPlayerCombatMode != 11
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
 			if (!monsterAtTile && !primaryAtTile && !secondaryAtTile)
 				projectile.lastCollisionTargetEntityId = 0;
 			static_cast<void>(resolveMonsterAt(x, y));
 			static_cast<void>(resolvePlayerAt(x, y));
 			const bool blockingObject = state.objectEntityId != 0
-				&& !state.objectDestroyed
-				&& !state.objectMissilePassable
-				&& state.objectLevelId == projectile.levelId
-				&& state.objectPositionX == x
-				&& state.objectPositionY == y;
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == x
+			    && state.objectPositionY == y;
 			const bool targetShrine = blockingObject
-				&& x == projectile.startX
-				&& y == projectile.startY
-				&& state.objectIsShrine;
+			    && x == projectile.startX
+			    && y == projectile.startY
+			    && state.objectIsShrine;
 			if (blockingObject) {
 				if (!targetShrine) {
 					if (state.objectBreakable)
@@ -6889,51 +6929,51 @@ void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t 
 		}
 		if (projectile.remainingTicks == 0)
 			state.projectiles.erase(std::find_if(
-				state.projectiles.begin(),
-				state.projectiles.end(),
-				[ballEntityId](const auto &candidate) {
-					return candidate.entityId == ballEntityId;
-				}));
+			    state.projectiles.begin(),
+			    state.projectiles.end(),
+			    [ballEntityId](const auto &candidate) {
+				    return candidate.entityId == ballEntityId;
+			    }));
 	}
 }
 
 uint32_t FindReplayFlameWaveCollisionTarget(
-	const ReplayFixtureExecutionState &state,
-	const ReplayFixtureProjectileState &projectile,
-	bool includeMonster = true)
+    const ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &projectile,
+    bool includeMonster = true)
 {
 	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 	const bool primaryOwner = projectile.sourceEntityId == primaryEntityId;
 	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-		&& projectile.sourceEntityId == state.secondaryPlayerEntityId;
+	    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
 	const bool monsterAtTile = state.combatTargetEntityId != 0
-		&& state.combatTargetHitPointsQ6 > 0
-		&& !state.combatTargetSneakHidden
-		&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
-		&& ((state.combatTargetPositionX == projectile.positionX
-		        && state.combatTargetPositionY == projectile.positionY)
-		    || (state.combatTargetMoving
-		        && state.combatTargetPetrified
-		        && state.combatTargetFuturePositionX == projectile.positionX
-		        && state.combatTargetFuturePositionY == projectile.positionY));
+	    && state.combatTargetHitPointsQ6 > 0
+	    && !state.combatTargetSneakHidden
+	    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+	    && ((state.combatTargetPositionX == projectile.positionX
+	            && state.combatTargetPositionY == projectile.positionY)
+	        || (state.combatTargetMoving
+	            && state.combatTargetPetrified
+	            && state.combatTargetFuturePositionX == projectile.positionX
+	            && state.combatTargetFuturePositionY == projectile.positionY));
 	if (includeMonster && monsterAtTile)
 		return state.combatTargetEntityId;
 
 	const bool primaryAtTile = !primaryOwner
-		&& state.life > 0
-		&& state.combatMode != 10
-		&& state.combatMode != 11
-		&& state.levelId == projectile.levelId
-		&& state.positionX == projectile.positionX
-		&& state.positionY == projectile.positionY;
+	    && state.life > 0
+	    && state.combatMode != 10
+	    && state.combatMode != 11
+	    && state.levelId == projectile.levelId
+	    && state.positionX == projectile.positionX
+	    && state.positionY == projectile.positionY;
 	const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
-		&& !secondaryOwner
-		&& state.secondaryPlayerLife > 0
-		&& state.secondaryPlayerCombatMode != 10
-		&& state.secondaryPlayerCombatMode != 11
-		&& state.secondaryPlayerLevelId == projectile.levelId
-		&& state.secondaryPlayerPositionX == projectile.positionX
-		&& state.secondaryPlayerPositionY == projectile.positionY;
+	    && !secondaryOwner
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerCombatMode != 10
+	    && state.secondaryPlayerCombatMode != 11
+	    && state.secondaryPlayerLevelId == projectile.levelId
+	    && state.secondaryPlayerPositionX == projectile.positionX
+	    && state.secondaryPlayerPositionY == projectile.positionY;
 	if (primaryAtTile && (!secondaryAtTile || primaryEntityId < state.secondaryPlayerEntityId))
 		return primaryEntityId;
 	if (secondaryAtTile)
@@ -6942,37 +6982,37 @@ uint32_t FindReplayFlameWaveCollisionTarget(
 }
 
 void ResolveReplayFlameWaveSegmentCollision(
-	ReplayFixtureExecutionState &state,
-	ReplayFixtureProjectileState &projectile,
-	uint64_t tick)
+    ReplayFixtureExecutionState &state,
+    ReplayFixtureProjectileState &projectile,
+    uint64_t tick)
 {
 	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 	const bool primaryOwner = projectile.sourceEntityId == primaryEntityId;
 	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
-		&& projectile.sourceEntityId == state.secondaryPlayerEntityId;
+	    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
 	if (!primaryOwner && !secondaryOwner)
 		return;
 
 	bool hitMonster = false;
 	const bool monsterAtTile = state.combatTargetEntityId != 0
-		&& state.combatTargetHitPointsQ6 > 0
-		&& !state.combatTargetSneakHidden
-		&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
-		&& ((state.combatTargetPositionX == projectile.positionX
-		        && state.combatTargetPositionY == projectile.positionY)
-		    || (state.combatTargetMoving
-		        && state.combatTargetPetrified
-		        && state.combatTargetFuturePositionX == projectile.positionX
-		        && state.combatTargetFuturePositionY == projectile.positionY));
+	    && state.combatTargetHitPointsQ6 > 0
+	    && !state.combatTargetSneakHidden
+	    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+	    && ((state.combatTargetPositionX == projectile.positionX
+	            && state.combatTargetPositionY == projectile.positionY)
+	        || (state.combatTargetMoving
+	            && state.combatTargetPetrified
+	            && state.combatTargetFuturePositionX == projectile.positionX
+	            && state.combatTargetFuturePositionY == projectile.positionY));
 	if (monsterAtTile && state.combatTargetFireResistance < 100) {
 		const int32_t hitChance = std::clamp(
-			(secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3])
-				+ GetReplayBaseMagicToHit(secondaryOwner
-				    ? state.secondaryPlayerCharacterClassId
-				    : state.characterClassId)
-				- state.combatTargetMonsterLevel * 2,
-			5,
-			95);
+		    (secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3])
+		        + GetReplayBaseMagicToHit(secondaryOwner
+		                ? state.secondaryPlayerCharacterClassId
+		                : state.characterClassId)
+		        - state.combatTargetMonsterLevel * 2,
+		    5,
+		    95);
 		if (state.combatTargetPetrified || GenerateRnd(state, 100) < hitChance) {
 			// Firebolt's fixed-width damage roll is retained even though a
 			// Flame Wave segment has a single damage value.
@@ -6981,10 +7021,10 @@ void ResolveReplayFlameWaveSegmentCollision(
 			if (state.combatTargetFireResistance > 0)
 				damageQ6 /= std::max(projectile.resistantDamageDivisor, 1);
 			state.combatTargetHitPointsQ6 = std::max(
-				0,
-				state.combatTargetHitPointsQ6 - damageQ6);
+			    0,
+			    state.combatTargetHitPointsQ6 - damageQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
-				state.combatTargetHitPointsQ6);
+			    state.combatTargetHitPointsQ6);
 			if (state.combatTargetHitPointsQ6 == 0)
 				DefeatReplayCombatTarget(state);
 			hitMonster = true;
@@ -6994,58 +7034,58 @@ void ResolveReplayFlameWaveSegmentCollision(
 		return;
 
 	const uint32_t targetEntityId = FindReplayFlameWaveCollisionTarget(
-		state,
-		projectile,
-		false);
+	    state,
+	    projectile,
+	    false);
 	if (targetEntityId == 0
-		|| IsReplayPlayerProtectedByFlash(state, targetEntityId)
-		|| (!state.friendlyFire
-		    && (primaryOwner ? state.friendlyMode : state.secondaryPlayerFriendlyMode)))
+	    || IsReplayPlayerProtectedByFlash(state, targetEntityId)
+	    || (!state.friendlyFire
+	        && (primaryOwner ? state.friendlyMode : state.secondaryPlayerFriendlyMode)))
 		return;
 	const bool primaryTarget = targetEntityId == primaryEntityId;
 	const uint32_t targetLevel = primaryTarget
-		? state.characterLevel
-		: state.secondaryPlayerCharacterLevel;
+	    ? state.characterLevel
+	    : state.secondaryPlayerCharacterLevel;
 	const uint32_t ownerLevel = secondaryOwner
-		? state.secondaryPlayerCharacterLevel
-		: state.characterLevel;
+	    ? state.secondaryPlayerCharacterLevel
+	    : state.characterLevel;
 	const int32_t hitChance = std::clamp(
-		(secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3])
-			+ GetReplayBaseMagicToHit(secondaryOwner
-			    ? state.secondaryPlayerCharacterClassId
-			    : state.characterClassId)
-			- static_cast<int32_t>(targetLevel) * 2,
-		5,
-		95);
+	    (secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3])
+	        + GetReplayBaseMagicToHit(secondaryOwner
+	                ? state.secondaryPlayerCharacterClassId
+	                : state.characterClassId)
+	        - static_cast<int32_t>(targetLevel) * 2,
+	    5,
+	    95);
 	if (GenerateRnd(state, 100) >= hitChance)
 		return;
 
 	const int32_t rawDamageQ6 = projectile.damage * 32;
 	static_cast<void>(GenerateRnd(state, 1));
 	const bool targetCanBlock = primaryTarget
-		? IsReplayPrimaryPlayerBlockCapable(state)
-		: state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
+	    ? IsReplayPrimaryPlayerBlockCapable(state)
+	    : state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
 	const uint32_t targetCombatMode = primaryTarget
-		? state.combatMode
-		: state.secondaryPlayerCombatMode;
+	    ? state.combatMode
+	    : state.secondaryPlayerCombatMode;
 	const int32_t blockRoll = targetCanBlock && (targetCombatMode == 0 || targetCombatMode == 4)
-		? std::max(GenerateRnd(state, 100), 0)
-		: 100;
+	    ? std::max(GenerateRnd(state, 100), 0)
+	    : 100;
 	const int32_t targetDexterity = primaryTarget ? state.attributes[2] : state.secondaryPlayerDexterity;
 	const uint32_t targetClass = primaryTarget
-		? state.characterClassId
-		: state.secondaryPlayerCharacterClassId;
+	    ? state.characterClassId
+	    : state.secondaryPlayerCharacterClassId;
 	const int32_t blockChance = std::clamp(
-		targetDexterity
-			+ GetReplayBaseBlockChance(targetClass)
-			+ static_cast<int32_t>(targetLevel) * 2
-			- static_cast<int32_t>(ownerLevel) * 2,
-		0,
-		100);
+	    targetDexterity
+	        + GetReplayBaseBlockChance(targetClass)
+	        + static_cast<int32_t>(targetLevel) * 2
+	        - static_cast<int32_t>(ownerLevel) * 2,
+	    0,
+	    100);
 	const int32_t resistance = ResolveReplayEquipmentResistance(
-		state,
-		!primaryTarget,
-		FireDamageType);
+	    state,
+	    !primaryTarget,
+	    FireDamageType);
 	int32_t damageQ6 = rawDamageQ6;
 	if (resistance > 0) {
 		damageQ6 -= damageQ6 * resistance / 100;
@@ -7063,29 +7103,29 @@ void ResolveReplayFlameWaveSegmentCollision(
 	}
 
 	const int32_t lifeDamageQ6 = primaryTarget
-		? ApplyReplayManaShield(state, damageQ6)
-		: ApplyReplayManaShield(state, damageQ6, true);
+	    ? ApplyReplayManaShield(state, damageQ6)
+	    : ApplyReplayManaShield(state, damageQ6, true);
 	if (primaryTarget) {
 		state.life = std::max(0, state.life - lifeDamageQ6);
 		if (state.life == 0)
 			StartReplayPrimaryPlayerPvpDeath(state);
 		else if (resistance == 0
 		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-			state.characterClassId,
-			state.characterLevel)) {
+		           state.characterClassId,
+		           state.characterLevel)) {
 			state.combatMode = 7;
 			state.combatModeEndTick = tick + GetReplayHitRecoveryDuration(state, false);
 		}
 	} else {
 		state.secondaryPlayerLife = std::max(
-			0,
-			state.secondaryPlayerLife - lifeDamageQ6);
+		    0,
+		    state.secondaryPlayerLife - lifeDamageQ6);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state);
 		else if (resistance == 0
 		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-			state.secondaryPlayerCharacterClassId,
-			state.secondaryPlayerCharacterLevel)) {
+		           state.secondaryPlayerCharacterClassId,
+		           state.secondaryPlayerCharacterLevel)) {
 			state.secondaryPlayerCombatMode = 7;
 			state.secondaryPlayerCombatModeEndTick = tick + GetReplayHitRecoveryDuration(state, true);
 		}
@@ -7093,9 +7133,9 @@ void ResolveReplayFlameWaveSegmentCollision(
 }
 
 bool AdvanceReplayFlameWaveSegmentOneTick(
-	ReplayFixtureExecutionState &state,
-	ReplayFixtureProjectileState &projectile,
-	uint64_t tick)
+    ReplayFixtureExecutionState &state,
+    ReplayFixtureProjectileState &projectile,
+    uint64_t tick)
 {
 	if (projectile.remainingTicks > 0)
 		--projectile.remainingTicks;
@@ -7105,10 +7145,10 @@ bool AdvanceReplayFlameWaveSegmentOneTick(
 	auto visitedTiles = MoveReplayNativeProjectile(projectile);
 	if (visitedTiles.empty()) {
 		visitedTiles.push_back({
-			projectile.positionX,
-			projectile.positionY,
-			projectile.traveledX,
-			projectile.traveledY,
+		    projectile.positionX,
+		    projectile.positionY,
+		    projectile.traveledX,
+		    projectile.traveledY,
 		});
 	}
 	for (const auto &tile : visitedTiles) {
@@ -7123,13 +7163,13 @@ bool AdvanceReplayFlameWaveSegmentOneTick(
 		projectile.lastCollisionTargetEntityId = targetEntityId;
 
 		const bool blockingObject = state.objectEntityId != 0
-			&& !state.objectDestroyed
-			&& !state.objectMissilePassable
-			&& state.objectLevelId == projectile.levelId
-			&& state.objectPositionX == projectile.positionX
-			&& state.objectPositionY == projectile.positionY;
+		    && !state.objectDestroyed
+		    && !state.objectMissilePassable
+		    && state.objectLevelId == projectile.levelId
+		    && state.objectPositionX == projectile.positionX
+		    && state.objectPositionY == projectile.positionY;
 		const bool outsideWorld = projectile.positionX < 0 || projectile.positionX >= 40
-			|| projectile.positionY < 0 || projectile.positionY >= 40;
+		    || projectile.positionY < 0 || projectile.positionY >= 40;
 		if (!blockingObject && !outsideWorld)
 			continue;
 		if (blockingObject && state.objectBreakable)
@@ -7150,11 +7190,11 @@ void AdvanceReplayFlameWaveOneTick(ReplayFixtureExecutionState &state, uint64_t 
 	for (size_t projectileIndex = 0; projectileIndex < projectileEntityIds.size(); ++projectileIndex) {
 		const uint32_t entityId = projectileEntityIds[projectileIndex];
 		auto iterator = std::find_if(
-			state.projectiles.begin(),
-			state.projectiles.end(),
-			[entityId](const ReplayFixtureProjectileState &candidate) {
-				return candidate.entityId == entityId;
-			});
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [entityId](const ReplayFixtureProjectileState &candidate) {
+			    return candidate.entityId == entityId;
+		    });
 		if (iterator == state.projectiles.end())
 			continue;
 		if (iterator->behavior == FlameWaveSegmentBehavior) {
@@ -7168,18 +7208,18 @@ void AdvanceReplayFlameWaveOneTick(ReplayFixtureExecutionState &state, uint64_t 
 		const auto controllerState = *iterator;
 		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 		const bool validOwner = controllerState.sourceEntityId == primaryEntityId
-			|| (state.secondaryPlayerEntityId != 0
-			    && controllerState.sourceEntityId == state.secondaryPlayerEntityId);
+		    || (state.secondaryPlayerEntityId != 0
+		        && controllerState.sourceEntityId == state.secondaryPlayerEntityId);
 		if (!validOwner || controllerState.spellId != 15) {
 			state.projectiles.erase(iterator);
 			continue;
 		}
 
 		const int32_t spreadDirection = GetDirection(
-			controllerState.positionX,
-			controllerState.positionY,
-			controllerState.targetX,
-			controllerState.targetY);
+		    controllerState.positionX,
+		    controllerState.positionY,
+		    controllerState.targetX,
+		    controllerState.targetY);
 		const auto start = std::pair<int32_t, int32_t> {
 			controllerState.positionX + DirectionDisplacements[spreadDirection].first,
 			controllerState.positionY + DirectionDisplacements[spreadDirection].second,
@@ -7260,9 +7300,9 @@ void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
 		created.reserve(offsets.size());
 		for (const auto offset : offsets)
 			created.push_back(CreateReplayImmolationBall(
-				controllerState,
-				controllerState.positionX + offset.first,
-				controllerState.positionY + offset.second));
+			    controllerState,
+			    controllerState.positionX + offset.first,
+			    controllerState.positionY + offset.second));
 		uint32_t nextEntityId = 0x80000000U;
 		for (const auto &existing : state.projectiles)
 			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
@@ -7600,8 +7640,8 @@ bool ResolveReplayElementalPlayerHit(
 			StartReplaySecondaryPlayerDeath(state);
 		} else if (resistance == 0
 		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-			state.secondaryPlayerCharacterClassId,
-			state.secondaryPlayerCharacterLevel)) {
+		           state.secondaryPlayerCharacterClassId,
+		           state.secondaryPlayerCharacterLevel)) {
 			state.secondaryPlayerCombatMode = 7;
 			state.secondaryPlayerCombatModeEndTick = tick
 			    + GetReplayHitRecoveryDuration(state, true);
@@ -7612,8 +7652,8 @@ bool ResolveReplayElementalPlayerHit(
 			StartReplayPrimaryPlayerPvpDeath(state);
 		} else if (resistance == 0
 		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
-			state.characterClassId,
-			state.characterLevel)) {
+		           state.characterClassId,
+		           state.characterLevel)) {
 			state.combatMode = 7;
 			state.combatModeEndTick = tick + GetReplayHitRecoveryDuration(state, false);
 		}
@@ -7658,7 +7698,8 @@ void AdvanceReplayElementalOneTick(
 		}
 		const uint32_t ownerEntityId = secondaryOwner
 		    ? state.secondaryPlayerEntityId
-		    : state.entityId == 0 ? 1U : state.entityId;
+		    : state.entityId == 0 ? 1U
+		                          : state.entityId;
 		const uint32_t ownerClassId = secondaryOwner
 		    ? state.secondaryPlayerCharacterClassId
 		    : state.characterClassId;
@@ -7685,11 +7726,11 @@ void AdvanceReplayElementalOneTick(
 					continue;
 				}
 				const bool combatTargetAtTile = IsReplayElementalCombatTargetAtTile(
-				        state,
-				        ownerEntityId,
-				        projectile.levelId,
-				        targetX,
-				        targetY);
+				    state,
+				    ownerEntityId,
+				    projectile.levelId,
+				    targetX,
+				    targetY);
 				if (combatTargetAtTile) {
 					if (state.combatTargetFireResistance < 100) {
 						const int32_t hitChance = std::clamp(
@@ -7752,10 +7793,10 @@ void AdvanceReplayElementalOneTick(
 			    || state.combatTargetFireResistance >= 100)
 				return false;
 			const int32_t hitChance = std::clamp(
-				ownerMagic + GetReplayBaseMagicToHit(ownerClassId)
-				    - state.combatTargetMonsterLevel * 2,
-				5,
-				95);
+			    ownerMagic + GetReplayBaseMagicToHit(ownerClassId)
+			        - state.combatTargetMonsterLevel * 2,
+			    5,
+			    95);
 			const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
 			if (!state.combatTargetPetrified && hitRoll >= hitChance)
 				return false;
@@ -7764,10 +7805,10 @@ void AdvanceReplayElementalOneTick(
 			if (state.combatTargetFireResistance > 0)
 				damageQ6 /= projectile.resistantDamageDivisor;
 			state.combatTargetHitPointsQ6 = std::max(
-				0,
-				state.combatTargetHitPointsQ6 - damageQ6);
+			    0,
+			    state.combatTargetHitPointsQ6 - damageQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
-				state.combatTargetHitPointsQ6);
+			    state.combatTargetHitPointsQ6);
 			if (state.combatTargetHitPointsQ6 == 0)
 				DefeatReplayCombatTarget(state);
 			return true;
@@ -7804,10 +7845,10 @@ void AdvanceReplayElementalOneTick(
 			    && state.objectPositionY == y;
 			if (blockingObject && state.objectBreakable)
 				state.objectDestroyed = true;
-		return std::pair<bool, uint32_t> {
-			hitTarget || blockingObject || IsReplayElementalMissileBlocked(state, x, y),
-			collisionTargetEntityId,
-		};
+			return std::pair<bool, uint32_t> {
+				hitTarget || blockingObject || IsReplayElementalMissileBlocked(state, x, y),
+				collisionTargetEntityId,
+			};
 		};
 		const auto findCollisionTargetEntityId = [&](int32_t x, int32_t y) {
 			const bool targetAtTile = IsReplayElementalCombatTargetAtTile(
@@ -7864,8 +7905,9 @@ void AdvanceReplayElementalOneTick(
 			    && state.combatTargetHitPointsQ6 > 0
 			    && state.combatTargetLevelId == projectile.levelId
 			    && std::max(
-				       std::abs(state.combatTargetPositionX - projectile.positionX),
-				       std::abs(state.combatTargetPositionY - projectile.positionY)) <= 19) {
+			           std::abs(state.combatTargetPositionX - projectile.positionX),
+			           std::abs(state.combatTargetPositionY - projectile.positionY))
+			        <= 19) {
 				targetX = state.combatTargetPositionX;
 				targetY = state.combatTargetPositionY;
 			} else {
@@ -7876,20 +7918,20 @@ void AdvanceReplayElementalOneTick(
 				targetY += DirectionDisplacements[ownerFacingDirection % 8].second;
 			}
 			const int32_t direction = GetDirection(
-				projectile.positionX,
-				projectile.positionY,
-				targetX,
-				targetY);
+			    projectile.positionX,
+			    projectile.positionY,
+			    targetX,
+			    targetY);
 			if (targetX == projectile.positionX && targetY == projectile.positionY) {
 				targetX += DirectionDisplacements[direction].first;
 				targetY += DirectionDisplacements[direction].second;
 			}
 			const auto velocity = CalculateVelocity(
-				projectile.positionX,
-				projectile.positionY,
-				targetX,
-				targetY,
-				projectile.speed);
+			    projectile.positionX,
+			    projectile.positionY,
+			    targetX,
+			    targetY,
+			    projectile.speed);
 			projectile.targetX = targetX;
 			projectile.targetY = targetY;
 			projectile.originalDirection = direction;
@@ -7968,15 +8010,16 @@ void AdvanceReplayGuardianOneTick(
 				    || state.combatTargetPositionX != targetX
 				    || state.combatTargetPositionY != targetY
 				    || !HasReplayGuardianTargetLineOfSight(
-					       state,
-					       controllerIterator->levelId,
-					       controllerIterator->positionX,
-					       controllerIterator->positionY,
-					       targetX,
-					       targetY)
+				        state,
+				        controllerIterator->levelId,
+				        controllerIterator->positionX,
+				        controllerIterator->positionY,
+				        targetX,
+				        targetY)
 				    || std::max(
-					       std::abs(targetX - controllerIterator->positionX),
-					       std::abs(targetY - controllerIterator->positionY)) > 6)
+				           std::abs(targetX - controllerIterator->positionX),
+				           std::abs(targetY - controllerIterator->positionY))
+				        > 6)
 					continue;
 				// Native GuardianTryFireAt checks line of sight and consumes one
 				// discarded damage roll before AddFirebolt's payload roll.
@@ -7984,10 +8027,10 @@ void AdvanceReplayGuardianOneTick(
 				const auto controllerState = *controllerIterator;
 				controllerIterator->guardianState = 3;
 				state.projectiles.push_back(CreateReplayGuardianBolt(
-					state,
-					controllerState,
-					targetX,
-					targetY));
+				    state,
+				    controllerState,
+				    targetX,
+				    targetY));
 				fired = true;
 				break;
 			}
@@ -8039,7 +8082,7 @@ void AdvanceReplayChainLightningControllerOneTick(
 	    : secondaryOwner && controller.levelId == state.secondaryPlayerLevelId;
 	if (controller.spellId != 16 || (!primaryOwner && !secondaryOwner) || !ownerLevelMatches) {
 		state.projectiles.erase(
-			state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
+		    state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
 		return;
 	}
 	if (controller.remainingTicks > 0)
@@ -8048,8 +8091,8 @@ void AdvanceReplayChainLightningControllerOneTick(
 	std::vector<std::pair<int32_t, int32_t>> targets;
 	targets.emplace_back(controllerState.targetX, controllerState.targetY);
 	const int32_t radius = std::min(
-		controllerState.effectiveSpellLevel + 3,
-		ChainLightningMaximumRadius);
+	    controllerState.effectiveSpellLevel + 3,
+	    ChainLightningMaximumRadius);
 	DoCrawl(1, radius, [&](Displacement displacement) {
 		const int32_t targetX = controllerState.positionX + displacement.deltaX;
 		const int32_t targetY = controllerState.positionY + displacement.deltaY;
@@ -8064,21 +8107,21 @@ void AdvanceReplayChainLightningControllerOneTick(
 	created.reserve(targets.size());
 	for (const auto target : targets)
 		created.push_back(CreateReplayChainLightningBolt(
-			state,
-			controllerState,
-			target.first,
-			target.second));
+		    state,
+		    controllerState,
+		    target.first,
+		    target.second));
 	uint32_t nextEntityId = 0x80000000U;
 	for (const auto &existing : state.projectiles)
 		nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
 	for (auto &spawned : created)
 		spawned.entityId = nextEntityId++;
 	state.projectiles.erase(
-		state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
+	    state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
 	state.projectiles.insert(
-		state.projectiles.end(),
-		created.begin(),
-		created.end());
+	    state.projectiles.end(),
+	    created.begin(),
+	    created.end());
 }
 
 /** Advances the compact SnakeCharge controller through travel and impact. */
@@ -8249,31 +8292,32 @@ bool ApplyReplayAttack(
 		const int32_t strengthModifier = level * strength;
 		const int32_t strengthDexterityModifier = level * (strength + dexterity);
 		const int32_t damageModifier = state.characterClassId == 1
-		        ? strengthDexterityModifier / 200
+		    ? strengthDexterityModifier / 200
 		    : state.characterClassId == 3
-		        ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
-		                ? strengthDexterityModifier / 150
-		                : strengthDexterityModifier / 300)
+		    ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
+		              ? strengthDexterityModifier / 150
+		              : strengthDexterityModifier / 300)
 		    : state.characterClassId == 4
-		        ? (hasSword
-		                ? strengthDexterityModifier / 150
-		                : hasBow
-		                    ? strengthDexterityModifier / 250
-		                    : strengthModifier / 100)
+		    ? (hasSword
+		              ? strengthDexterityModifier / 150
+		              : hasBow
+		              ? strengthDexterityModifier / 250
+		              : strengthModifier / 100)
 		    : state.characterClassId == 5
-		        ? (hasAxe || hasMace
-		                ? strengthModifier / 75
-		                : hasBow
-		                    ? strengthModifier / 300
-		                    : strengthModifier / 100)
-		            + (!hasShield && !hasStaff && !hasBow
+		    ? (hasAxe || hasMace
+		              ? strengthModifier / 75
+		              : hasBow
+		              ? strengthModifier / 300
+		              : strengthModifier / 100)
+		        + (!hasShield && !hasStaff && !hasBow
 		                ? level * vitality / 100
 		                : 0)
-		        : strengthModifier / 100;
+		    : strengthModifier / 100;
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t baseMeleeToHit = state.characterClassId == 0 ? 70 : 50;
-		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
+		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80
+		                                                                                        : 0;
 		const int32_t damageArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
 		int32_t hitArmorClass = damageArmorClass;
 		int32_t hitArmorPiercing = armorPiercingBonus;
@@ -8421,10 +8465,10 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		if (applyEffects) {
 			const ReplayFixtureItemState pickedItemState = state.worldItemState;
 			const int targetCell = CanPlaceReplayInventoryItem(
-			    state.inventoryGrid,
-			    0,
-			    pickedItemState.inventoryWidth,
-			    pickedItemState.inventoryHeight)
+			                           state.inventoryGrid,
+			                           0,
+			                           pickedItemState.inventoryWidth,
+			                           pickedItemState.inventoryHeight)
 			    ? 0
 			    : FindReplayInventoryPlacement(state, pickedItemState);
 			if (targetCell >= 0 && state.inventory.size() < 40) {
@@ -8441,12 +8485,12 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			} else {
 				state.heldItemDefined = true;
 				state.heldItem = {
-				    0,
-				    0,
-				    state.worldItemSeed,
-				    state.worldItemPrice,
-				    command.order.targetTick,
-				    pickedItemState,
+					0,
+					0,
+					state.worldItemSeed,
+					state.worldItemPrice,
+					command.order.targetTick,
+					pickedItemState,
 				};
 			}
 			state.worldItemEntityId = 0;
@@ -8575,9 +8619,9 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
 		if (applyEffects) {
 			state.statusEffects.erase(std::remove_if(
-			    state.statusEffects.begin(),
-			    state.statusEffects.end(),
-			    [](const auto &effect) { return effect.effectId == 53; }),
+			                              state.statusEffects.begin(),
+			                              state.statusEffects.end(),
+			                              [](const auto &effect) { return effect.effectId == 53; }),
 			    state.statusEffects.end());
 			state.statusEffects.push_back({ 53, std::numeric_limits<uint32_t>::max(), 0, EtherealizeStatusBehavior });
 			if (!isAbility)
@@ -8606,7 +8650,7 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			return false;
 		if (state.combatTargetMagicResistance >= 100
 		    || (state.combatTargetMagicResistance > 0
-	        && GenerateRnd(state, 2) != 0))
+		        && GenerateRnd(state, 2) != 0))
 			return true;
 		if (applyEffects) {
 			const int32_t spellLevel = GetReplayEffectiveSpellLevel(
@@ -8730,8 +8774,8 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		    state,
 		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-		    15,
-		    20 - std::max(spellLevel - 1, 0) * 3)
+		                             15,
+		                             20 - std::max(spellLevel - 1, 0) * 3)
 		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
@@ -8758,8 +8802,8 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		    state,
 		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-		    18,
-		    35 - std::max(spellLevel - 1, 0) * 3)
+		                             18,
+		                             35 - std::max(spellLevel - 1, 0) * 3)
 		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
@@ -8945,21 +8989,21 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			8,
-			28 - std::max(spellLevel - 1, 0) * 2)
-			* 64;
+		                             8,
+		                             28 - std::max(spellLevel - 1, 0) * 2)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
 			CreateReplayFireWallController(
-				state,
-				command,
-				spellLevel,
-				6,
-				FireWallControllerBehavior);
+			    state,
+			    command,
+			    spellLevel,
+			    6,
+			    FireWallControllerBehavior);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -8973,21 +9017,21 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			18,
-			35 - std::max(spellLevel - 1, 0) * 3)
-			* 64;
+		                             18,
+		                             35 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
 			CreateReplayFireWallController(
-				state,
-				command,
-				spellLevel,
-				50,
-				LightningWallControllerBehavior);
+			    state,
+			    command,
+			    spellLevel,
+			    50,
+			    LightningWallControllerBehavior);
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -9001,21 +9045,21 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			20,
-			35 - std::max(spellLevel - 1, 0) * 3)
-			* 64;
+		                             20,
+		                             35 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
 			if (command.targetX != state.positionX || command.targetY != state.positionY)
 				state.facingDirection = static_cast<uint32_t>(GetDirection(
-					state.positionX,
-					state.positionY,
-					command.targetX,
-					command.targetY));
+				    state.positionX,
+				    state.positionY,
+				    command.targetX,
+				    command.targetY));
 			CreateReplayFlameWaveController(state, command, spellLevel);
 			if (!isAbility)
 				state.mana -= manaCost;
@@ -9030,12 +9074,12 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			18,
-			30 - std::max(spellLevel - 1, 0))
-			* 64;
+		                             18,
+		                             30 - std::max(spellLevel - 1, 0))
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -9053,12 +9097,12 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			35,
-			60 - std::max(spellLevel - 1, 0) * 3)
-			* 64;
+		                             35,
+		                             60 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -9079,9 +9123,9 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		    state,
 		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			20,
-			35 - std::max(spellLevel - 1, 0) * 2)
-			* 64;
+		                             20,
+		                             35 - std::max(spellLevel - 1, 0) * 2)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -9099,19 +9143,19 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			30,
-			50 - std::max(spellLevel - 1, 0) * 2)
-			* 64;
+		                             30,
+		                             50 - std::max(spellLevel - 1, 0) * 2)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
 			state.projectiles.push_back(CreateReplayGuardianController(
-				state,
-				command,
-				spellLevel));
+			    state,
+			    command,
+			    spellLevel));
 			if (!isAbility)
 				state.mana -= manaCost;
 		}
@@ -9122,13 +9166,13 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && (isAbility || isMemorized)
 	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		if (applyEffects
 		    && state.life > static_cast<int32_t>(state.characterLevel) * 64
 		    && !std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
-				return projectile.behavior == RageControllerBehavior;
-			})) {
+			       return projectile.behavior == RageControllerBehavior;
+		       })) {
 			state.projectiles.push_back(CreateReplayRageController(state, spellLevel));
 		}
 		return true;
@@ -9141,8 +9185,8 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = GetReplayInfernoManaCost(state, spellLevel);
 		if (!isAbility && state.mana < manaCost)
 			return false;
@@ -9158,8 +9202,8 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && (isAbility || isMemorized)
 	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = GetReplayApocalypseManaCost(state, spellLevel);
 		if (!isAbility && state.mana < manaCost)
 			return false;
@@ -9175,12 +9219,12 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && (isAbility || isMemorized)
 	    && (command.targetEntityId == 0 || command.targetEntityId == state.entityId)) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			8,
-			28 - std::max(spellLevel - 1, 0) * 2)
-			* 64;
+		                             8,
+		                             28 - std::max(spellLevel - 1, 0) * 2)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -9198,12 +9242,12 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
-			35,
-			60 - std::max(spellLevel - 1, 0) * 3)
-			* 64;
+		                             35,
+		                             60 - std::max(spellLevel - 1, 0) * 3)
+		    * 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -9576,7 +9620,7 @@ void DropReplayDeathGold(ReplayFixtureExecutionState &state)
 	state.worldItemPositionY = position->second;
 	state.worldItemSeed = itemSeed;
 	state.worldItemPrice = stackValue;
-	state.worldItemState = { };
+	state.worldItemState = {};
 	state.worldItemState.itemType = GoldItemType;
 	state.worldItemState.value = static_cast<int32_t>(stackValue);
 	state.worldItemState.identifiedValue = static_cast<int32_t>(stackValue);
@@ -9720,8 +9764,8 @@ bool IsReplaySecondaryDeathDropPositionAvailable(
 }
 
 std::optional<std::pair<int32_t, int32_t>> FindReplaySecondaryDeathDropPosition(
-	const ReplayFixtureExecutionState &state,
-	std::optional<int32_t> preferredDirection)
+    const ReplayFixtureExecutionState &state,
+    std::optional<int32_t> preferredDirection)
 {
 	if (preferredDirection.has_value()) {
 		const auto displacement = DirectionDisplacements[*preferredDirection % 8];
@@ -9745,7 +9789,7 @@ void DropReplayPrimaryPvpEar(ReplayFixtureExecutionState &state)
 	    || (state.multiplayer && state.suppressMultiplayerDeathDrops)) {
 		return;
 	}
-	uint8_t nameBytes[6] = { };
+	uint8_t nameBytes[6] = {};
 	for (size_t index = 0; index < std::min<size_t>(6, state.characterName.size()); ++index)
 		nameBytes[index] = static_cast<uint8_t>(state.characterName[index]);
 	const uint32_t createInfo = static_cast<uint32_t>(nameBytes[0]) << 8 | nameBytes[1];
@@ -9796,7 +9840,7 @@ void DropReplayPrimaryPvpEar(ReplayFixtureExecutionState &state)
 
 void StartReplayPrimaryPlayerPvpDeath(ReplayFixtureExecutionState &state)
 {
-	state.currentAction = { };
+	state.currentAction = {};
 	if (!(state.multiplayer && state.suppressMultiplayerDeathDrops))
 		DropReplayPrimaryPvpEar(state);
 	state.combatMode = 8;
@@ -9809,7 +9853,7 @@ void DropReplaySecondaryPvpEar(ReplayFixtureExecutionState &state)
 	    || (state.multiplayer && state.suppressMultiplayerDeathDrops)) {
 		return;
 	}
-	uint8_t nameBytes[6] = { };
+	uint8_t nameBytes[6] = {};
 	for (size_t index = 0; index < std::min<size_t>(6, state.secondaryPlayerCharacterName.size()); ++index)
 		nameBytes[index] = static_cast<uint8_t>(state.secondaryPlayerCharacterName[index]);
 	const uint32_t createInfo = static_cast<uint32_t>(nameBytes[0]) << 8 | nameBytes[1];
@@ -9846,7 +9890,7 @@ void DropReplaySecondaryPvpEar(ReplayFixtureExecutionState &state)
 	ear.nativeCursorGraphic = state.secondaryPlayerCharacterClassId == 2
 	    ? 19
 	    : state.secondaryPlayerCharacterClassId == 0 ? 20
-	                                                : 21;
+	                                                 : 21;
 	state.worldItems.push_back({
 	    AllocateReplayWorldItemEntityId(state),
 	    state.secondaryPlayerLevelId,
@@ -9859,8 +9903,8 @@ void DropReplaySecondaryPvpEar(ReplayFixtureExecutionState &state)
 }
 
 void StartReplaySecondaryPlayerDeath(
-	ReplayFixtureExecutionState &state,
-	bool monsterOrTrapDeath)
+    ReplayFixtureExecutionState &state,
+    bool monsterOrTrapDeath)
 {
 	if (!(state.multiplayer && state.suppressMultiplayerDeathDrops)) {
 		if (monsterOrTrapDeath) {
@@ -9902,9 +9946,9 @@ bool HasReplayGoldTopology(const ReplayFixtureExecutionState &state)
 }
 
 void RemoveReplayInventoryItem(
-	std::vector<ReplayFixtureInventoryItem> &inventory,
-	std::vector<int32_t> &inventoryGrid,
-	size_t index);
+    std::vector<ReplayFixtureInventoryItem> &inventory,
+    std::vector<int32_t> &inventoryGrid,
+    size_t index);
 
 void RemoveReplayInventoryItem(ReplayFixtureExecutionState &state, size_t index)
 {
@@ -9912,9 +9956,9 @@ void RemoveReplayInventoryItem(ReplayFixtureExecutionState &state, size_t index)
 }
 
 void RemoveReplayInventoryItem(
-	std::vector<ReplayFixtureInventoryItem> &inventory,
-	std::vector<int32_t> &inventoryGrid,
-	size_t index)
+    std::vector<ReplayFixtureInventoryItem> &inventory,
+    std::vector<int32_t> &inventoryGrid,
+    size_t index)
 {
 	inventory.erase(inventory.begin() + static_cast<std::ptrdiff_t>(index));
 	for (int32_t &cell : inventoryGrid) {
@@ -10041,10 +10085,10 @@ int FindReplayInventoryFirstFit(const std::vector<int32_t> &grid, const ReplayFi
 }
 
 void FillReplayInventoryGrid(
-	std::vector<int32_t> &grid,
-	int cell,
-	size_t itemIndex,
-	const ReplayFixtureItemState &item)
+    std::vector<int32_t> &grid,
+    int cell,
+    size_t itemIndex,
+    const ReplayFixtureItemState &item)
 {
 	const uint32_t width = std::max(item.inventoryWidth, 1U);
 	const uint32_t height = std::max(item.inventoryHeight, 1U);
@@ -10173,9 +10217,9 @@ void StartReplayPlayerDeath(
     ReplayFixtureExecutionState &state,
     const ReplayFixturePlayerActionTiming &timing,
     uint32_t sourceEntityId,
-	uint64_t tick)
+    uint64_t tick)
 {
-	state.currentAction = { };
+	state.currentAction = {};
 	if (!(state.multiplayer && state.suppressMultiplayerDeathDrops)) {
 		DropReplayDeathGold(state);
 		DropReplayEquipment(state);
@@ -10252,17 +10296,16 @@ bool AdvanceReplayAutonomousGargoyleHealing(
 	    state.combatTargetMaxHitPointsQ6,
 	    state.combatTargetHitPointsQ6 + healingQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
-	state.combatTargetGargoyleSpecialActive =
-	    state.combatTargetHitPointsQ6 < state.combatTargetMaxHitPointsQ6;
+	state.combatTargetGargoyleSpecialActive = state.combatTargetHitPointsQ6 < state.combatTargetMaxHitPointsQ6;
 	return true;
 }
 
 /** Emits the Familiar's short-lived Lightning bolt after a successful melee hit. */
 void AdmitReplayFamiliarLightning(
-	ReplayFixtureExecutionState &state,
-	uint32_t targetEntityId,
-	int32_t targetX,
-	int32_t targetY)
+    ReplayFixtureExecutionState &state,
+    uint32_t targetEntityId,
+    int32_t targetX,
+    int32_t targetY)
 {
 	if (state.combatTargetNativeAi != "Bat"
 	    || state.combatTargetMonsterId != 43
@@ -10272,11 +10315,11 @@ void AdmitReplayFamiliarLightning(
 	for (const auto &projectile : state.projectiles)
 		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
 	const auto velocity = CalculateVelocity(
-		state.combatTargetPositionX,
-		state.combatTargetPositionY,
-		targetX,
-		targetY,
-		16);
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    targetX,
+	    targetY,
+	    16);
 	ReplayFixtureProjectileState projectile;
 	projectile.entityId = nextEntityId;
 	projectile.sourceEntityId = state.combatTargetEntityId;
@@ -10294,10 +10337,10 @@ void AdmitReplayFamiliarLightning(
 	projectile.remainingTicks = 2;
 	projectile.behavior = MonsterMagicBehavior;
 	projectile.originalDirection = GetDirection(
-		projectile.positionX,
-		projectile.positionY,
-		projectile.targetX,
-		projectile.targetY);
+	    projectile.positionX,
+	    projectile.positionY,
+	    projectile.targetX,
+	    projectile.targetY);
 	projectile.velocityX = velocity.first;
 	projectile.velocityY = velocity.second;
 	projectile.speed = 16;
@@ -10308,28 +10351,28 @@ void AdmitReplayFamiliarLightning(
 
 /** Advances Familiar's validated Bat movement admission at range. */
 bool AdvanceReplayFamiliarBatMovement(
-	ReplayFixtureExecutionState &state,
-	uint64_t tick,
-	uint32_t victimEntityId,
-	int32_t victimX,
-	int32_t victimY,
-	int32_t distance)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick,
+    uint32_t victimEntityId,
+    int32_t victimX,
+    int32_t victimY,
+    int32_t distance)
 {
 	if (state.combatTargetNativeAi != "Bat"
 	    || state.combatTargetMonsterId != 43
 	    || distance < 2)
 		return false;
 	const int movementChance = std::min(
-		100,
-		state.combatTargetBatMovementIdleTicks == -1
-		    ? 13 + state.combatTargetIntelligence + 50
-		    : state.combatTargetBatMovementIdleTicks > 20
-		    ? 13 + state.combatTargetIntelligence
-		    : state.combatTargetBatMovementIdleTicks == 0
-		          && state.combatTargetBatMovementMode >= 1
-		          && state.combatTargetBatMovementMode <= 3
-		    ? 13 + state.combatTargetIntelligence + 50
-		    : 0);
+	    100,
+	    state.combatTargetBatMovementIdleTicks == -1
+	        ? 13 + state.combatTargetIntelligence + 50
+	        : state.combatTargetBatMovementIdleTicks > 20
+	        ? 13 + state.combatTargetIntelligence
+	        : state.combatTargetBatMovementIdleTicks == 0
+	            && state.combatTargetBatMovementMode >= 1
+	            && state.combatTargetBatMovementMode <= 3
+	        ? 13 + state.combatTargetIntelligence + 50
+	        : 0);
 	const uint32_t actionSeed = static_cast<uint32_t>(tick)
 	    ^ state.combatTargetEntityId
 	    ^ victimEntityId;
@@ -10343,10 +10386,10 @@ bool AdvanceReplayFamiliarBatMovement(
 		return true;
 	}
 	const int direction = GetDirection(
-		state.combatTargetPositionX,
-		state.combatTargetPositionY,
-		victimX,
-		victimY);
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    victimX,
+	    victimY);
 	const int firstTurn = usesNativeAiStream
 	    ? (std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1)
 	    : ((actionSeed / 100U) % 2U == 0 ? 1 : -1);
@@ -10522,8 +10565,8 @@ void AdvanceReplayMonsterAttack(
 				    0,
 				    10 - 2 * state.combatTargetIntelligence
 				        + (usesNativeAiStream
-				            ? std::max(GenerateRnd(state, 10), 0)
-				            : static_cast<int>((adjacentAttackSeed / 200U) % 10U)));
+				                ? std::max(GenerateRnd(state, 10), 0)
+				                : static_cast<int>((adjacentAttackSeed / 200U) % 10U)));
 			}
 			return;
 		}
@@ -10575,7 +10618,7 @@ void AdvanceReplayMonsterAttack(
 					    state.corpses.end(),
 					    [&](auto &candidate) {
 						    return (candidate.levelId == 0
-						            || candidate.levelId == state.combatTargetLevelId)
+						               || candidate.levelId == state.combatTargetLevelId)
 						        && candidate.positionX == candidateX
 						        && candidate.positionY == candidateY;
 					    });
@@ -10641,7 +10684,8 @@ void AdvanceReplayMonsterAttack(
 		const int candidateY = state.combatTargetPositionY + deltaY;
 		if (std::max(
 		        std::abs(candidateX - state.combatTargetPositionX),
-		        std::abs(candidateY - state.combatTargetPositionY)) == 1) {
+		        std::abs(candidateY - state.combatTargetPositionY))
+		    == 1) {
 			state.combatTargetMoving = true;
 			state.combatTargetFuturePositionX = candidateX;
 			state.combatTargetFuturePositionY = candidateY;
@@ -10678,8 +10722,8 @@ void AdvanceReplayMonsterAttack(
 			return;
 		const auto victimDistance = [&](const Victim &victim) {
 			return std::max(
-				std::abs(victim.positionX - state.combatTargetPositionX),
-				std::abs(victim.positionY - state.combatTargetPositionY));
+			    std::abs(victim.positionX - state.combatTargetPositionX),
+			    std::abs(victim.positionY - state.combatTargetPositionY));
 		};
 		std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
 			const int leftDistance = victimDistance(left);
@@ -10704,8 +10748,8 @@ void AdvanceReplayMonsterAttack(
 			    ^ state.combatTargetEntityId
 			    ^ victim.entityId;
 			const int retreatChance = std::min(
-				100,
-				retreatChanceBase + retreatChanceIntelligenceScale * state.combatTargetIntelligence);
+			    100,
+			    retreatChanceBase + retreatChanceIntelligenceScale * state.combatTargetIntelligence);
 			const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
 			const int retreatRoll = usesNativeAiStream
 			    ? std::max(GenerateRnd(state, 100), 0)
@@ -10713,10 +10757,10 @@ void AdvanceReplayMonsterAttack(
 			if (retreatRoll < retreatChance) {
 				if (usesNativeAiStream) {
 					const int towardDirection = GetDirection(
-						state.combatTargetPositionX,
-						state.combatTargetPositionY,
-						victim.positionX,
-						victim.positionY);
+					    state.combatTargetPositionX,
+					    state.combatTargetPositionY,
+					    victim.positionX,
+					    victim.positionY);
 					const int awayDirection = (towardDirection + 4) % 8;
 					const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
 					const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
@@ -10774,34 +10818,34 @@ void AdvanceReplayMonsterAttack(
 							        && candidateY == state.objectPositionY))
 								continue;
 							const int candidateDistance = std::max(
-								std::abs(candidateX - victim.positionX),
-								std::abs(candidateY - victim.positionY));
+							    std::abs(candidateX - victim.positionX),
+							    std::abs(candidateY - victim.positionY));
 							if (candidateDistance >= distance)
 								destinations.emplace_back(candidateX, candidateY);
 						}
 					}
 					std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
 						const int leftDistance = std::max(
-							std::abs(left.first - victim.positionX),
-							std::abs(left.second - victim.positionY));
+						    std::abs(left.first - victim.positionX),
+						    std::abs(left.second - victim.positionY));
 						const int rightDistance = std::max(
-							std::abs(right.first - victim.positionX),
-							std::abs(right.second - victim.positionY));
+						    std::abs(right.first - victim.positionX),
+						    std::abs(right.second - victim.positionY));
 						return leftDistance != rightDistance
 						    ? leftDistance > rightDistance
 						    : left.second != right.second
-						        ? left.second < right.second
-						        : left.first < right.first;
+						    ? left.second < right.second
+						    : left.first < right.first;
 					});
 					if (!destinations.empty()) {
 						state.combatTargetMoving = true;
 						state.combatTargetFuturePositionX = destinations.front().first;
 						state.combatTargetFuturePositionY = destinations.front().second;
 						state.combatTargetDirection = GetDirection(
-							state.combatTargetPositionX,
-							state.combatTargetPositionY,
-							state.combatTargetFuturePositionX,
-							state.combatTargetFuturePositionY);
+						    state.combatTargetPositionX,
+						    state.combatTargetPositionY,
+						    state.combatTargetFuturePositionX,
+						    state.combatTargetFuturePositionY);
 					}
 				}
 			}
@@ -10823,8 +10867,8 @@ void AdvanceReplayMonsterAttack(
 			return;
 		const auto victimDistance = [&](const Victim &victim) {
 			return std::max(
-				std::abs(victim.positionX - state.combatTargetPositionX),
-				std::abs(victim.positionY - state.combatTargetPositionY));
+			    std::abs(victim.positionX - state.combatTargetPositionX),
+			    std::abs(victim.positionY - state.combatTargetPositionY));
 		};
 		std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
 			const int leftDistance = victimDistance(left);
@@ -10840,16 +10884,16 @@ void AdvanceReplayMonsterAttack(
 			    ^ state.combatTargetEntityId
 			    ^ victim.entityId;
 			const int movementChance = std::min(
-				100,
-				(state.combatTargetSkeletonRangedMovementIdleTicks == -1
-				        || state.combatTargetSkeletonRangedMovementIdleTicks > 20
-				    ? 13
-				    : state.combatTargetSkeletonRangedMovementIdleTicks == 0
-				        && state.combatTargetSkeletonRangedMovementMode >= 1
-				        && state.combatTargetSkeletonRangedMovementMode <= 3
-				        ? 63
-				        : 0)
-				    + 2 * state.combatTargetIntelligence);
+			    100,
+			    (state.combatTargetSkeletonRangedMovementIdleTicks == -1
+			                || state.combatTargetSkeletonRangedMovementIdleTicks > 20
+			            ? 13
+			            : state.combatTargetSkeletonRangedMovementIdleTicks == 0
+			                && state.combatTargetSkeletonRangedMovementMode >= 1
+			                && state.combatTargetSkeletonRangedMovementMode <= 3
+			            ? 63
+			            : 0)
+			        + 2 * state.combatTargetIntelligence);
 			const int movementRoll = state.combatTargetMonsterAiSeed != 0
 			    ? std::max(GenerateRnd(state, 100), 0)
 			    : static_cast<int>((actionSeed / 100U) % 100U);
@@ -10876,38 +10920,36 @@ void AdvanceReplayMonsterAttack(
 						        && candidateY == state.objectPositionY))
 							continue;
 						const int candidateDistance = std::max(
-							std::abs(candidateX - victim.positionX),
-							std::abs(candidateY - victim.positionY));
+						    std::abs(candidateX - victim.positionX),
+						    std::abs(candidateY - victim.positionY));
 						if (candidateDistance >= distance)
 							destinations.emplace_back(candidateX, candidateY);
 					}
 				}
 				std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
 					const int leftDistance = std::max(
-						std::abs(left.first - victim.positionX),
-						std::abs(left.second - victim.positionY));
+					    std::abs(left.first - victim.positionX),
+					    std::abs(left.second - victim.positionY));
 					const int rightDistance = std::max(
-						std::abs(right.first - victim.positionX),
-						std::abs(right.second - victim.positionY));
+					    std::abs(right.first - victim.positionX),
+					    std::abs(right.second - victim.positionY));
 					return leftDistance != rightDistance
 					    ? leftDistance > rightDistance
 					    : left.second != right.second
-					        ? left.second < right.second
-					        : left.first < right.first;
+					    ? left.second < right.second
+					    : left.first < right.first;
 				});
 				if (!destinations.empty()) {
 					state.combatTargetMoving = true;
 					state.combatTargetFuturePositionX = destinations.front().first;
 					state.combatTargetFuturePositionY = destinations.front().second;
 					state.combatTargetDirection = GetDirection(
-						state.combatTargetPositionX,
-						state.combatTargetPositionY,
-						state.combatTargetFuturePositionX,
-						state.combatTargetFuturePositionY);
-					state.combatTargetSkeletonRangedMovementMode =
-						state.combatTargetFuturePositionX - state.combatTargetPositionX;
-					state.combatTargetSkeletonRangedMovementIdleTicks =
-						state.combatTargetFuturePositionY - state.combatTargetPositionY;
+					    state.combatTargetPositionX,
+					    state.combatTargetPositionY,
+					    state.combatTargetFuturePositionX,
+					    state.combatTargetFuturePositionY);
+					state.combatTargetSkeletonRangedMovementMode = state.combatTargetFuturePositionX - state.combatTargetPositionX;
+					state.combatTargetSkeletonRangedMovementIdleTicks = state.combatTargetFuturePositionY - state.combatTargetPositionY;
 					return;
 				}
 			}
@@ -10952,8 +10994,8 @@ void AdvanceReplayMonsterAttack(
 		victims.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY, true });
 	const auto victimDistance = [&](const Victim &victim) {
 		return std::max(
-			std::abs(victim.positionX - state.combatTargetPositionX),
-			std::abs(victim.positionY - state.combatTargetPositionY));
+		    std::abs(victim.positionX - state.combatTargetPositionX),
+		    std::abs(victim.positionY - state.combatTargetPositionY));
 	};
 	std::sort(victims.begin(), victims.end(), [&](const Victim &left, const Victim &right) {
 		const int leftDistance = victimDistance(left);
@@ -10992,9 +11034,10 @@ void AdvanceReplayMonsterAttack(
 		const int direction = state.combatTargetBatRetreatTicks == 2
 		    ? (state.combatTargetBatRetreatDirection + 4) % 8
 		    : (state.combatTargetBatRetreatDirection
-		    + ((static_cast<uint32_t>(tick) ^ state.combatTargetEntityId) & 1U
-		        ? 7
-		        : 1)) % 8;
+		          + ((static_cast<uint32_t>(tick) ^ state.combatTargetEntityId) & 1U
+		                  ? 7
+		                  : 1))
+		        % 8;
 		const auto displacement = DirectionDisplacements[direction];
 		const int candidateX = state.combatTargetPositionX + displacement.first;
 		const int candidateY = state.combatTargetPositionY + displacement.second;
@@ -11015,12 +11058,12 @@ void AdvanceReplayMonsterAttack(
 		return;
 	}
 	if (AdvanceReplayFamiliarBatMovement(
-			state,
-			tick,
-			victim.entityId,
-			victim.positionX,
-			victim.positionY,
-			distance))
+	        state,
+	        tick,
+	        victim.entityId,
+	        victim.positionX,
+	        victim.positionY,
+	        distance))
 		return;
 	if ((state.combatTargetNativeAi == "Gargoyle"
 	        || state.combatTargetNativeAi == "GoatMelee"
@@ -11039,9 +11082,9 @@ void AdvanceReplayMonsterAttack(
 		const int actionRoll = state.combatTargetMonsterAiSeed != 0
 		    ? std::max(GenerateRnd(state, 100), 0)
 		    : static_cast<int>((static_cast<uint32_t>(tick)
-		        ^ state.combatTargetEntityId
-		        ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId))
-		        % 100U);
+		                           ^ state.combatTargetEntityId
+		                           ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId))
+		          % 100U);
 		const int movementChance = std::min(
 		    100,
 		    28 + 2 * state.combatTargetIntelligence);
@@ -11051,7 +11094,7 @@ void AdvanceReplayMonsterAttack(
 		    ^ state.combatTargetEntityId
 		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
 		const bool usesCompatibilitySeed = (state.combatTargetNativeAi == "GoatMelee"
-		    || state.combatTargetNativeAi == "Gharbad")
+		                                       || state.combatTargetNativeAi == "Gharbad")
 		    && state.combatTargetMonsterAiSeed == 0;
 		const int direction = GetDirection(
 		    state.combatTargetPositionX,
@@ -11090,8 +11133,8 @@ void AdvanceReplayMonsterAttack(
 		};
 		const bool startsMoveGoal = distance >= 4
 		    && (usesCompatibilitySeed
-		        ? (actionSeed / 100U) % 4U == 0U
-		        : std::max(GenerateRnd(state, 4), 0) == 0);
+		            ? (actionSeed / 100U) % 4U == 0U
+		            : std::max(GenerateRnd(state, 4), 0) == 0);
 		if (state.combatTargetAvoidanceMovementTicks >= 0 || startsMoveGoal) {
 			if (state.combatTargetAvoidanceMovementTicks < 0) {
 				state.combatTargetAvoidanceMovementTicks = 0;
@@ -11120,8 +11163,7 @@ void AdvanceReplayMonsterAttack(
 					if (tryMove(candidateDirection))
 						return;
 				}
-				state.combatTargetAvoidanceMovementTurn =
-				    state.combatTargetAvoidanceMovementTurn == 0 ? 1 : 0;
+				state.combatTargetAvoidanceMovementTurn = state.combatTargetAvoidanceMovementTurn == 0 ? 1 : 0;
 				const int fallbackDirection = (turn90 + 4) % 8;
 				const int firstTurn = usesCompatibilitySeed
 				    ? ((actionSeed / 100U) % 2U == 0U ? 1 : -1)
@@ -11130,11 +11172,11 @@ void AdvanceReplayMonsterAttack(
 				    ? ((actionSeed / 200U) % 2U == 0U ? 2 : -2)
 				    : (std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2);
 				const int fallbackCandidates[] = {
-				    fallbackDirection,
-				    (fallbackDirection + firstTurn + 8) % 8,
-				    (fallbackDirection - firstTurn + 8) % 8,
-				    (fallbackDirection + secondTurn + 8) % 8,
-				    (fallbackDirection - secondTurn + 8) % 8,
+					fallbackDirection,
+					(fallbackDirection + firstTurn + 8) % 8,
+					(fallbackDirection - firstTurn + 8) % 8,
+					(fallbackDirection + secondTurn + 8) % 8,
+					(fallbackDirection - secondTurn + 8) % 8,
 				};
 				for (const int candidateDirection : fallbackCandidates) {
 					if (tryMove(candidateDirection))
@@ -11232,9 +11274,9 @@ void AdvanceReplayMonsterAttack(
 		    state.projectiles.begin(),
 		    state.projectiles.end(),
 		    [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == SnakeChargeBehavior;
-		});
+			    return projectile.sourceEntityId == state.combatTargetEntityId
+			        && projectile.behavior == SnakeChargeBehavior;
+		    });
 		if (hasSnakeCharge) {
 			// Managed autonomous dispatch still consumes the adjacent attack
 			// admission draw while an in-flight charge owns the movement path.
@@ -11247,11 +11289,11 @@ void AdvanceReplayMonsterAttack(
 			for (const auto &projectile : state.projectiles)
 				nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
 			const auto velocity = CalculateVelocity(
-				state.combatTargetPositionX,
-				state.combatTargetPositionY,
-				victim.positionX,
-				victim.positionY,
-				18);
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    victim.positionX,
+			    victim.positionY,
+			    18);
 			ReplayFixtureProjectileState projectile;
 			projectile.entityId = nextEntityId;
 			projectile.sourceEntityId = state.combatTargetEntityId;
@@ -11269,10 +11311,10 @@ void AdvanceReplayMonsterAttack(
 			projectile.remainingTicks = 4;
 			projectile.behavior = SnakeChargeBehavior;
 			projectile.originalDirection = GetDirection(
-				projectile.positionX,
-				projectile.positionY,
-				projectile.targetX,
-				projectile.targetY);
+			    projectile.positionX,
+			    projectile.positionY,
+			    projectile.targetX,
+			    projectile.targetY);
 			projectile.velocityX = velocity.first;
 			projectile.velocityY = velocity.second;
 			projectile.speed = 18;
@@ -11343,43 +11385,43 @@ void AdvanceReplayMonsterAttack(
 			if (distance < 2)
 				return;
 			candidates[candidateCount++] = {
-			    (differenceX > 0) - (differenceX < 0),
-			    (differenceY > 0) - (differenceY < 0),
+				(differenceX > 0) - (differenceX < 0),
+				(differenceY > 0) - (differenceY < 0),
 			};
 			candidates[candidateCount++] = {
-			    (differenceX > 0) - (differenceX < 0),
-			    0,
+				(differenceX > 0) - (differenceX < 0),
+				0,
 			};
 			candidates[candidateCount++] = {
-			    0,
-			    (differenceY > 0) - (differenceY < 0),
+				0,
+				(differenceY > 0) - (differenceY < 0),
 			};
 		} else {
 			const int randomDirection = static_cast<int>((actionSeed / 100U) % 8U);
 			if (actionSeed % 100U < 20U) {
 				const std::array<std::pair<int, int>, 8> zombieDirections {
-				    std::pair<int, int> { 1, 0 },
-				    { 1, 1 },
-				    { 0, 1 },
-				    { -1, 1 },
-				    { -1, 0 },
-				    { -1, -1 },
-				    { 0, -1 },
-				    { 1, -1 },
+					std::pair<int, int> { 1, 0 },
+					{ 1, 1 },
+					{ 0, 1 },
+					{ -1, 1 },
+					{ -1, 0 },
+					{ -1, -1 },
+					{ 0, -1 },
+					{ 1, -1 },
 				};
 				candidates[candidateCount++] = zombieDirections[randomDirection];
 			}
 			candidates[candidateCount++] = {
-			    (differenceX > 0) - (differenceX < 0),
-			    (differenceY > 0) - (differenceY < 0),
+				(differenceX > 0) - (differenceX < 0),
+				(differenceY > 0) - (differenceY < 0),
 			};
 			candidates[candidateCount++] = {
-			    (differenceX > 0) - (differenceX < 0),
-			    0,
+				(differenceX > 0) - (differenceX < 0),
+				0,
 			};
 			candidates[candidateCount++] = {
-			    0,
-			    (differenceY > 0) - (differenceY < 0),
+				0,
+				(differenceY > 0) - (differenceY < 0),
 			};
 		}
 		for (size_t index = 0; index < candidateCount; ++index) {
@@ -11422,8 +11464,8 @@ void AdvanceReplayMonsterAttack(
 		    : state.combatTargetFatMovementIdleTicks > 20
 		    ? longIdleChance
 		    : state.combatTargetFatMovementIdleTicks == 0
-		          && state.combatTargetFatMovementMode >= 1
-		          && state.combatTargetFatMovementMode <= 3
+		        && state.combatTargetFatMovementMode >= 1
+		        && state.combatTargetFatMovementMode <= 3
 		    ? std::min(100, longIdleChance + 50)
 		    : 0;
 		const uint32_t actionSeed = static_cast<uint32_t>(tick)
@@ -11634,9 +11676,9 @@ void AdvanceReplayMonsterAttack(
 			{ 1, -1 },
 		};
 		const int maximumDepth = std::clamp(
-			state.combatTargetAggroRange * 2 + 2,
-			8,
-			256);
+		    state.combatTargetAggroRange * 2 + 2,
+		    8,
+		    256);
 		struct SearchNode {
 			int32_t x;
 			int32_t y;
@@ -11665,11 +11707,11 @@ void AdvanceReplayMonsterAttack(
 		};
 		visited[cellIndex(state.combatTargetPositionX, state.combatTargetPositionY)] = 0;
 		queue.push({
-			state.combatTargetPositionX,
-			state.combatTargetPositionY,
-			0,
-			state.combatTargetPositionX,
-			state.combatTargetPositionY,
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    0,
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
 		});
 		while (!queue.empty()) {
 			const SearchNode current = queue.front();
@@ -11689,15 +11731,16 @@ void AdvanceReplayMonsterAttack(
 				visited[cellIndex(nextX, nextY)] = nextDepth;
 				if (std::max(
 				        std::abs(nextX - victim.positionX),
-				        std::abs(nextY - victim.positionY)) <= 1) {
+				        std::abs(nextY - victim.positionY))
+				    <= 1) {
 					state.combatTargetMoving = true;
 					state.combatTargetFuturePositionX = firstX;
 					state.combatTargetFuturePositionY = firstY;
 					state.combatTargetDirection = GetDirection(
-						state.combatTargetPositionX,
-						state.combatTargetPositionY,
-						state.combatTargetFuturePositionX,
-						state.combatTargetFuturePositionY);
+					    state.combatTargetPositionX,
+					    state.combatTargetPositionY,
+					    state.combatTargetFuturePositionX,
+					    state.combatTargetFuturePositionY);
 					return;
 				}
 				queue.push({ nextX, nextY, nextDepth, firstX, firstY });
@@ -11777,174 +11820,174 @@ void AdvanceReplayMonsterAttack(
 		if (state.combatTargetMonsterAiSeed != 0)
 			static_cast<void>(GenerateRnd(state, 4));
 		const int originalMonsterX = state.combatTargetPositionX;
-			const int originalMonsterY = state.combatTargetPositionY;
-			std::vector<std::pair<int32_t, int32_t>> destinations;
-			for (int offsetY = -1; offsetY <= 1; ++offsetY) {
-				for (int offsetX = -1; offsetX <= 1; ++offsetX) {
-					if (offsetX == 0 && offsetY == 0)
-						continue;
-					const int candidateX = victim.positionX + offsetX;
-					const int candidateY = victim.positionY + offsetY;
-					if (candidateX < 0 || candidateX >= 40
-					    || candidateY < 0 || candidateY >= 40
-					    || (candidateX == state.positionX
-					        && candidateY == state.positionY)
-					    || (state.secondaryPlayerEntityId != 0
-					        && candidateX == state.secondaryPlayerPositionX
-					        && candidateY == state.secondaryPlayerPositionY))
-						continue;
-					destinations.emplace_back(candidateX, candidateY);
-				}
+		const int originalMonsterY = state.combatTargetPositionY;
+		std::vector<std::pair<int32_t, int32_t>> destinations;
+		for (int offsetY = -1; offsetY <= 1; ++offsetY) {
+			for (int offsetX = -1; offsetX <= 1; ++offsetX) {
+				if (offsetX == 0 && offsetY == 0)
+					continue;
+				const int candidateX = victim.positionX + offsetX;
+				const int candidateY = victim.positionY + offsetY;
+				if (candidateX < 0 || candidateX >= 40
+				    || candidateY < 0 || candidateY >= 40
+				    || (candidateX == state.positionX
+				        && candidateY == state.positionY)
+				    || (state.secondaryPlayerEntityId != 0
+				        && candidateX == state.secondaryPlayerPositionX
+				        && candidateY == state.secondaryPlayerPositionY))
+					continue;
+				destinations.emplace_back(candidateX, candidateY);
 			}
-			std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
-				const auto distanceToMonster = [&](const auto &candidate) {
-					return std::max(
-					    std::abs(candidate.first - originalMonsterX),
-					    std::abs(candidate.second - originalMonsterY));
-				};
-				const int leftDistance = distanceToMonster(left);
-				const int rightDistance = distanceToMonster(right);
-				return leftDistance != rightDistance
-				    ? leftDistance < rightDistance
-				    : left.second != right.second
-				        ? left.second < right.second
-				        : left.first < right.first;
-				});
+		}
+		std::sort(destinations.begin(), destinations.end(), [&](const auto &left, const auto &right) {
+			const auto distanceToMonster = [&](const auto &candidate) {
+				return std::max(
+				    std::abs(candidate.first - originalMonsterX),
+				    std::abs(candidate.second - originalMonsterY));
+			};
+			const int leftDistance = distanceToMonster(left);
+			const int rightDistance = distanceToMonster(right);
+			return leftDistance != rightDistance
+			    ? leftDistance < rightDistance
+			    : left.second != right.second
+			    ? left.second < right.second
+			    : left.first < right.first;
+		});
 		if (destinations.empty())
 			return;
-				state.combatTargetPositionX = destinations.front().first;
-				state.combatTargetPositionY = destinations.front().second;
-				state.combatTargetFuturePositionX = state.combatTargetPositionX;
-				state.combatTargetFuturePositionY = state.combatTargetPositionY;
-				state.combatTargetMoving = false;
-				const int minimumDamage = state.combatTargetMinDamage == 0
-				        && state.combatTargetMaxDamage == 0
-				    ? state.combatTargetAttackDamage
-				    : state.combatTargetMinDamage;
-				const int maximumDamage = state.combatTargetMinDamage == 0
-				        && state.combatTargetMaxDamage == 0
-				    ? state.combatTargetAttackDamage
-				    : state.combatTargetMaxDamage;
-				// Rhino's zero-seed compatibility fixtures use the deterministic
-				// attack seed; only initialized native AI owns the global stream.
-				const bool usesNativeCombatStream = state.combatTargetMonsterAiSeed != 0;
-				int32_t damageQ6 = 0;
-				if (maximumDamage >= minimumDamage) {
-					const int32_t minimumDamageQ6 = minimumDamage * 64;
-					const int32_t maximumDamageQ6 = maximumDamage * 64;
-					const int32_t damageRangeQ6 = maximumDamageQ6 - minimumDamageQ6 + 1;
-					const int32_t damageOffsetQ6 = usesNativeCombatStream
-					    ? std::max(GenerateRnd(state, damageRangeQ6), 0)
-					    : static_cast<int32_t>(attackSeed
-					        % static_cast<uint32_t>(damageRangeQ6));
-					damageQ6 = minimumDamageQ6 + damageOffsetQ6;
-					const auto &equipment = victim.secondary
-					    ? state.secondaryEquipment
-					    : state.equipment;
-					damageQ6 = ApplyReplayGetHitBonusQ6(equipment, damageQ6);
+		state.combatTargetPositionX = destinations.front().first;
+		state.combatTargetPositionY = destinations.front().second;
+		state.combatTargetFuturePositionX = state.combatTargetPositionX;
+		state.combatTargetFuturePositionY = state.combatTargetPositionY;
+		state.combatTargetMoving = false;
+		const int minimumDamage = state.combatTargetMinDamage == 0
+		        && state.combatTargetMaxDamage == 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMinDamage;
+		const int maximumDamage = state.combatTargetMinDamage == 0
+		        && state.combatTargetMaxDamage == 0
+		    ? state.combatTargetAttackDamage
+		    : state.combatTargetMaxDamage;
+		// Rhino's zero-seed compatibility fixtures use the deterministic
+		// attack seed; only initialized native AI owns the global stream.
+		const bool usesNativeCombatStream = state.combatTargetMonsterAiSeed != 0;
+		int32_t damageQ6 = 0;
+		if (maximumDamage >= minimumDamage) {
+			const int32_t minimumDamageQ6 = minimumDamage * 64;
+			const int32_t maximumDamageQ6 = maximumDamage * 64;
+			const int32_t damageRangeQ6 = maximumDamageQ6 - minimumDamageQ6 + 1;
+			const int32_t damageOffsetQ6 = usesNativeCombatStream
+			    ? std::max(GenerateRnd(state, damageRangeQ6), 0)
+			    : static_cast<int32_t>(attackSeed
+			          % static_cast<uint32_t>(damageRangeQ6));
+			damageQ6 = minimumDamageQ6 + damageOffsetQ6;
+			const auto &equipment = victim.secondary
+			    ? state.secondaryEquipment
+			    : state.equipment;
+			damageQ6 = ApplyReplayGetHitBonusQ6(equipment, damageQ6);
+		}
+		const int adjustedDamage = damageQ6 / 64;
+		const bool usesSkeletonFamilyEffects = state.combatTargetNativeAi == "SkeletonMelee"
+		    || state.combatTargetNativeAi == "Snotspill"
+		    || state.combatTargetNativeAi == "Warlord";
+		int32_t lifeDamage = adjustedDamage;
+		if (!victim.secondary && usesSkeletonFamilyEffects
+		    && adjustedDamage > 0 && state.reflectCharges > 0) {
+			--state.reflectCharges;
+			const int32_t reflectedDamage = adjustedDamage
+			    * (GenerateRnd(state, 11) + 20) / 100;
+			if (reflectedDamage > 0) {
+				state.combatTargetHitPointsQ6 = std::max(
+				    0,
+				    state.combatTargetHitPointsQ6 - reflectedDamage * 64);
+				state.combatTargetHitPoints = ToWholeCeilingQ6(
+				    state.combatTargetHitPointsQ6);
+				if (state.combatTargetHitPointsQ6 == 0)
+					DefeatReplayCombatTarget(state);
+			}
+			if (!state.multiplayer)
+				AdvanceRandom(state);
+			lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
+		}
+		if (!victim.secondary && usesSkeletonFamilyEffects
+		    && adjustedDamage > 0
+		    && state.manaShieldActive) {
+			const bool hasNoManaItem = std::any_of(
+			    state.equipment.begin(),
+			    state.equipment.end(),
+			    [](const ReplayFixtureSlottedItem &item) {
+				    constexpr uint32_t NoManaItemFlag = 0x08000000U;
+				    return item.state.statFlag
+				        && (item.state.magical == 0 || item.state.identified)
+				        && (item.state.flags & NoManaItemFlag) != 0;
+			    });
+			if (!hasNoManaItem) {
+				const auto spell = std::find_if(
+				    state.memorizedSpells.begin(),
+				    state.memorizedSpells.end(),
+				    [](const ReplayFixtureMemorizedSpell &candidate) {
+					    return candidate.spellId == 11;
+				    });
+				const int32_t level = spell == state.memorizedSpells.end()
+				    ? 0
+				    : static_cast<int32_t>(spell->level);
+				int32_t divisor = 24;
+				int32_t manaDamage = lifeDamage;
+				if (level > 0) {
+					divisor -= std::min(level, 7) * 3;
+					manaDamage += manaDamage / -divisor;
 				}
-				const int adjustedDamage = damageQ6 / 64;
-				const bool usesSkeletonFamilyEffects = state.combatTargetNativeAi == "SkeletonMelee"
-				    || state.combatTargetNativeAi == "Snotspill"
-				    || state.combatTargetNativeAi == "Warlord";
-				int32_t lifeDamage = adjustedDamage;
-				if (!victim.secondary && usesSkeletonFamilyEffects
-				    && adjustedDamage > 0 && state.reflectCharges > 0) {
-					--state.reflectCharges;
-					const int32_t reflectedDamage = adjustedDamage
-					    * (GenerateRnd(state, 11) + 20) / 100;
-					if (reflectedDamage > 0) {
-						state.combatTargetHitPointsQ6 = std::max(
-						    0,
-						    state.combatTargetHitPointsQ6 - reflectedDamage * 64);
-						state.combatTargetHitPoints = ToWholeCeilingQ6(
-						    state.combatTargetHitPointsQ6);
-						if (state.combatTargetHitPointsQ6 == 0)
-							DefeatReplayCombatTarget(state);
-					}
-					if (!state.multiplayer)
-						AdvanceRandom(state);
-					lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
+				if (state.mana >= manaDamage) {
+					state.mana -= manaDamage;
+					lifeDamage = 0;
+					if (state.mana == 0)
+						state.manaShieldActive = false;
+				} else {
+					lifeDamage = manaDamage - state.mana;
+					if (level > 0)
+						lifeDamage += lifeDamage / (divisor - 1);
+					state.mana = 0;
+					state.manaShieldActive = false;
 				}
-				if (!victim.secondary && usesSkeletonFamilyEffects
-				    && adjustedDamage > 0
-				    && state.manaShieldActive) {
-					const bool hasNoManaItem = std::any_of(
-					    state.equipment.begin(),
-					    state.equipment.end(),
-					    [](const ReplayFixtureSlottedItem &item) {
-						    constexpr uint32_t NoManaItemFlag = 0x08000000U;
-						    return item.state.statFlag
-						        && (item.state.magical == 0 || item.state.identified)
-						        && (item.state.flags & NoManaItemFlag) != 0;
-					    });
-					if (!hasNoManaItem) {
-						const auto spell = std::find_if(
-						    state.memorizedSpells.begin(),
-						    state.memorizedSpells.end(),
-						    [](const ReplayFixtureMemorizedSpell &candidate) {
-							    return candidate.spellId == 11;
-						    });
-						const int32_t level = spell == state.memorizedSpells.end()
-						    ? 0
-						    : static_cast<int32_t>(spell->level);
-						int32_t divisor = 24;
-						int32_t manaDamage = lifeDamage;
-						if (level > 0) {
-							divisor -= std::min(level, 7) * 3;
-							manaDamage += manaDamage / -divisor;
-						}
-						if (state.mana >= manaDamage) {
-							state.mana -= manaDamage;
-							lifeDamage = 0;
-							if (state.mana == 0)
-								state.manaShieldActive = false;
-						} else {
-							lifeDamage = manaDamage - state.mana;
-							if (level > 0)
-								lifeDamage += lifeDamage / (divisor - 1);
-							state.mana = 0;
-							state.manaShieldActive = false;
-						}
-					}
+			}
+		}
+		if (usesSkeletonFamilyEffects) {
+			ApplyReplayThorns(
+			    state,
+			    victim.secondary ? state.secondaryEquipment : state.equipment,
+			    adjustedDamage);
+		}
+		if (victim.secondary)
+			state.secondaryPlayerLife = std::max(
+			    0,
+			    state.secondaryPlayerLife - std::max(0, lifeDamage));
+		else
+			state.life = std::max(0, state.life - std::max(0, lifeDamage));
+		if (adjustedDamage > 0
+		    && (victim.secondary
+		            ? state.secondaryPlayerLife > 0
+		            : state.life > 0)) {
+			const int direction = GetDirection(
+			    originalMonsterX,
+			    originalMonsterY,
+			    victim.positionX,
+			    victim.positionY);
+			const auto displacement = DirectionDisplacements[direction];
+			const int knockbackX = victim.positionX + displacement.first;
+			const int knockbackY = victim.positionY + displacement.second;
+			if (knockbackX >= 0 && knockbackX < 40
+			    && knockbackY >= 0 && knockbackY < 40
+			    && !(knockbackX == state.combatTargetPositionX
+			        && knockbackY == state.combatTargetPositionY)) {
+				if (victim.secondary) {
+					state.secondaryPlayerPositionX = knockbackX;
+					state.secondaryPlayerPositionY = knockbackY;
+				} else {
+					state.positionX = knockbackX;
+					state.positionY = knockbackY;
 				}
-				if (usesSkeletonFamilyEffects) {
-					ApplyReplayThorns(
-					    state,
-					    victim.secondary ? state.secondaryEquipment : state.equipment,
-					    adjustedDamage);
-				}
-				if (victim.secondary)
-					state.secondaryPlayerLife = std::max(
-					    0,
-					state.secondaryPlayerLife - std::max(0, lifeDamage));
-				else
-					state.life = std::max(0, state.life - std::max(0, lifeDamage));
-				if (adjustedDamage > 0
-				    && (victim.secondary
-				        ? state.secondaryPlayerLife > 0
-				        : state.life > 0)) {
-					const int direction = GetDirection(
-					    originalMonsterX,
-					    originalMonsterY,
-					    victim.positionX,
-					    victim.positionY);
-					const auto displacement = DirectionDisplacements[direction];
-					const int knockbackX = victim.positionX + displacement.first;
-					const int knockbackY = victim.positionY + displacement.second;
-					if (knockbackX >= 0 && knockbackX < 40
-					    && knockbackY >= 0 && knockbackY < 40
-					    && !(knockbackX == state.combatTargetPositionX
-					        && knockbackY == state.combatTargetPositionY)) {
-						if (victim.secondary) {
-							state.secondaryPlayerPositionX = knockbackX;
-							state.secondaryPlayerPositionY = knockbackY;
-						} else {
-							state.positionX = knockbackX;
-							state.positionY = knockbackY;
-						}
-					}
-				}
+			}
+		}
 		return;
 	}
 	const uint32_t attackSeed = static_cast<uint32_t>(tick)
@@ -11993,7 +12036,7 @@ void AdvanceReplayMonsterAttack(
 		const int32_t hitChance = std::clamp(
 		    std::max(
 		        15,
-				effectiveToHit
+		        effectiveToHit
 		            + 2 * (state.combatTargetMonsterLevel - targetLevel)
 		            + 30),
 		    0,
@@ -12006,15 +12049,15 @@ void AdvanceReplayMonsterAttack(
 		    : IsReplayPrimaryPlayerBlockCapable(state);
 		const bool canBlock = blockCapable
 		    && (victim.secondary
-		        ? state.secondaryPlayerCombatMode == 0
-		            || state.secondaryPlayerCombatMode == 4
-		        : state.combatMode == 0
-		            || state.combatMode == 4);
+		            ? state.secondaryPlayerCombatMode == 0
+		                || state.secondaryPlayerCombatMode == 4
+		            : state.combatMode == 0
+		                || state.combatMode == 4);
 		const int32_t blockChance = std::clamp(
 		    (victim.secondary ? state.secondaryPlayerDexterity : state.attributes[5])
 		        + (victim.secondary
-		            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-		            : GetReplayBaseBlockChance(state.characterClassId))
+		                ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+		                : GetReplayBaseBlockChance(state.characterClassId))
 		        + 2 * targetLevel
 		        - 2 * state.combatTargetMonsterLevel,
 		    0,
@@ -12039,9 +12082,7 @@ void AdvanceReplayMonsterAttack(
 					    : effectiveMaximumDamage;
 					const int32_t minimumDamageQ6 = minimumDamage * 64;
 					const int32_t maximumDamageQ6 = maximumDamage * 64;
-					const int32_t damageQ6 = minimumDamageQ6 + std::max(
-					    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
-					    0);
+					const int32_t damageQ6 = minimumDamageQ6 + std::max(GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1), 0);
 					const int32_t reflectedDamageQ6 = damageQ6
 					    * (GenerateRnd(state, 11) + 20) / 100;
 					if (reflectedDamageQ6 > 0) {
@@ -12064,8 +12105,8 @@ void AdvanceReplayMonsterAttack(
 		if (state.combatTargetMonsterAiSeed != 0
 		    && effectiveToHit == 0
 		    && (state.combatTargetNativeAi == "SkeletonMelee"
-	            || state.combatTargetNativeAi == "Snotspill"
-	            || state.combatTargetNativeAi == "Warlord"))
+		        || state.combatTargetNativeAi == "Snotspill"
+		        || state.combatTargetNativeAi == "Warlord"))
 			static_cast<void>(GenerateRnd(state, 1));
 		int32_t damageQ6 = 0;
 		if (usesNativeCombatStream && effectiveToHit > 0) {
@@ -12079,9 +12120,7 @@ void AdvanceReplayMonsterAttack(
 			    : effectiveMaximumDamage;
 			const int32_t minimumDamageQ6 = minimumDamage * 64;
 			const int32_t maximumDamageQ6 = maximumDamage * 64;
-			damageQ6 = minimumDamageQ6 + std::max(
-			    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
-			    0);
+			damageQ6 = minimumDamageQ6 + std::max(GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1), 0);
 			const auto &equipment = victim.secondary
 			    ? state.secondaryEquipment
 			    : state.equipment;
@@ -12089,16 +12128,15 @@ void AdvanceReplayMonsterAttack(
 		} else {
 			const int32_t damage = usesGoatSpecialAttack
 			    ? (effectiveMaximumDamage >= effectiveMinimumDamage
-			        ? effectiveMinimumDamage + static_cast<int32_t>(attackSeed
-			            % static_cast<uint32_t>(effectiveMaximumDamage - effectiveMinimumDamage + 1))
-			        : 0)
+			              ? effectiveMinimumDamage + static_cast<int32_t>(attackSeed % static_cast<uint32_t>(effectiveMaximumDamage - effectiveMinimumDamage + 1))
+			              : 0)
 			    : (state.combatTargetAttackDamage == 0
-			        ? 0
-			        : std::max(1, state.combatTargetAttackDamage));
+			              ? 0
+			              : std::max(1, state.combatTargetAttackDamage));
 			damageQ6 = ApplyReplayGetHitBonus(
-				state,
-				damage,
-				true)
+			               state,
+			               damage,
+			               true)
 			    * 64;
 		}
 		const int32_t damage = damageQ6 / 64;
@@ -12118,10 +12156,10 @@ void AdvanceReplayMonsterAttack(
 			state.combatTargetBatRetreatTicks = 2;
 		}
 		AdmitReplayFamiliarLightning(
-			state,
-			state.secondaryPlayerEntityId,
-			victim.positionX,
-			victim.positionY);
+		    state,
+		    state.secondaryPlayerEntityId,
+		    victim.positionX,
+		    victim.positionY);
 		return;
 	}
 	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
@@ -12136,9 +12174,9 @@ void AdvanceReplayMonsterAttack(
 	if (protectedByFlash)
 		return;
 	const bool protectedByEtherealize = std::any_of(
-		state.statusEffects.begin(),
-		state.statusEffects.end(),
-		[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
+	    state.statusEffects.begin(),
+	    state.statusEffects.end(),
+	    [](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
 	if (protectedByEtherealize)
 		return;
 	const int32_t minimumDamage = effectiveMinimumDamage == 0
@@ -12154,21 +12192,19 @@ void AdvanceReplayMonsterAttack(
 		if (usesNativeCombatStream && effectiveToHit > 0) {
 			const int32_t minimumDamageQ6 = minimumDamage * 64;
 			const int32_t maximumDamageQ6 = maximumDamage * 64;
-			damageQ6 = minimumDamageQ6 + std::max(
-			    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
-			    0);
+			damageQ6 = minimumDamageQ6 + std::max(GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1), 0);
 			damageQ6 = ApplyReplayGetHitBonusQ6(state.equipment, damageQ6);
 		} else {
 			const int32_t damage = minimumDamage
 			    + (usesNativeCombatStream
-			        ? std::max(
-			              GenerateRnd(
-			                  state,
-			                  maximumDamage - minimumDamage + 1),
-			              0)
-			        : usesGoatSpecialAttack
+			            ? std::max(
+			                  GenerateRnd(
+			                      state,
+			                      maximumDamage - minimumDamage + 1),
+			                  0)
+			            : usesGoatSpecialAttack
 			            ? static_cast<int>(attackSeed
-			                % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
+			                  % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
 			            : 0);
 			damageQ6 = ApplyReplayGetHitBonus(state, damage, false) * 64;
 		}
@@ -12248,10 +12284,10 @@ void AdvanceReplayMonsterAttack(
 		state.combatTargetBatRetreatTicks = 2;
 	}
 	AdmitReplayFamiliarLightning(
-		state,
-		state.entityId == 0 ? 1U : state.entityId,
-		state.positionX,
-		state.positionY);
+	    state,
+	    state.entityId == 0 ? 1U : state.entityId,
+	    state.positionX,
+	    state.positionY);
 }
 
 void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick)
@@ -12282,7 +12318,7 @@ void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick
 	}
 	if (tick >= action.endTick) {
 		const bool death = state.combatMode == 8;
-		state.currentAction = { };
+		state.currentAction = {};
 		if (!death)
 			state.combatMode = 0;
 		state.combatModeEndTick = 0;
@@ -12384,8 +12420,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			    std::abs(x - state.combatTargetPositionX),
 			    std::abs(y - state.combatTargetPositionY));
 			const int32_t hitChance = std::clamp(
-			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-			        - 2 * targetLevel - 2 * distance),
+			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel - 2 * targetLevel - 2 * distance),
 			    0,
 			    100);
 			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
@@ -12401,20 +12436,20 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
 			    || IsReplaySecondaryPlayerBlockCapable(state);
 			const bool canBlock = (secondaryPlayerAtTile
-			        && secondaryPlayerBlockCapable
-			        && (state.secondaryPlayerCombatMode == 0
-			            || state.secondaryPlayerCombatMode == 4)
-			        || primaryPlayerBlockCapable)
+			                              && secondaryPlayerBlockCapable
+			                              && (state.secondaryPlayerCombatMode == 0
+			                                  || state.secondaryPlayerCombatMode == 4)
+			                          || primaryPlayerBlockCapable)
 			    && (resistance == 0 || state.hellfire);
 			const int32_t blockChance = std::clamp(
-				(secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
-				    + (secondaryPlayerAtTile
-				        ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-				        : GetReplayBaseBlockChance(state.characterClassId))
-				    + 2 * targetLevel
-				    - 2 * state.combatTargetMonsterLevel,
-				0,
-				100);
+			    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
+			        + (secondaryPlayerAtTile
+			                ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+			                : GetReplayBaseBlockChance(state.characterClassId))
+			        + 2 * targetLevel
+			        - 2 * state.combatTargetMonsterLevel,
+			    0,
+			    100);
 			const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 			if (canBlock && blockRoll < blockChance) {
 				if (primaryPlayerAtTile) {
@@ -12426,9 +12461,9 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				}
 			} else if (primaryPlayerAtTile) {
 				int32_t damageQ6 = ApplyReplayGetHitBonus(
-				    state,
-				    std::max(1, projectile.damage),
-				    false)
+				                       state,
+				                       std::max(1, projectile.damage),
+				                       false)
 				    * 64;
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
@@ -12442,9 +12477,9 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				}
 			} else {
 				int32_t damageQ6 = ApplyReplayGetHitBonus(
-				    state,
-				    std::max(1, projectile.damage),
-				    true)
+				                       state,
+				                       std::max(1, projectile.damage),
+				                       true)
 				    * 64;
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
@@ -12512,9 +12547,9 @@ void AdmitReplayAutonomousMonsterArrow(
 	            || state.combatTargetNativeAi == "SkeletonRanged")
 	        && state.combatTargetMoving)
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == MonsterArrowBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == MonsterArrowBehavior;
+	       }))
 		return;
 
 	struct Candidate {
@@ -12635,8 +12670,7 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				    std::abs((primaryPlayerAtTile ? state.positionY : state.secondaryPlayerPositionY)
 				        - state.combatTargetPositionY));
 				const int hitChance = std::clamp(
-				    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-				        - 2 * targetLevel - 2 * distance),
+				    std::max(10, 40 + 2 * state.combatTargetMonsterLevel - 2 * targetLevel - 2 * distance),
 				    0,
 				    100);
 				if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
@@ -12648,8 +12682,8 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				    ? state.equipment
 				    : state.secondaryEquipment;
 				int32_t damageQ6 = ApplyReplayGetHitBonus(
-				    targetEquipment,
-				    std::max(1, projectile.damage))
+				                       targetEquipment,
+				                       std::max(1, projectile.damage))
 				    * 64;
 				const int32_t resistance = ResolveReplayEquipmentResistance(
 				    state,
@@ -12785,8 +12819,8 @@ void AdvanceReplayAcidOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					    ? state.equipment
 					    : state.secondaryEquipment;
 					int32_t damageQ6 = ApplyReplayGetHitBonus(
-					    targetEquipment,
-					    std::max(1, projectile.damage))
+					                       targetEquipment,
+					                       std::max(1, projectile.damage))
 					    * 64;
 					const int32_t resistance = ResolveReplayEquipmentResistance(
 					    state,
@@ -12842,9 +12876,9 @@ void AdmitReplayAutonomousHorkSpawn(
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-		    return projectile.sourceEntityId == state.combatTargetEntityId
-		        && projectile.behavior == HorkSpawnBehavior;
-	    }))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == HorkSpawnBehavior;
+	       }))
 		return;
 	if (state.combatTargetHorkDemonDelayTicks > 0) {
 		--state.combatTargetHorkDemonDelayTicks;
@@ -12973,8 +13007,7 @@ void AdvanceReplayHorkSpawnsOneTick(
 			    std::abs((primaryPlayerAtTile ? state.positionY : state.secondaryPlayerPositionY)
 			        - state.combatTargetPositionY));
 			const int hitChance = std::clamp(
-			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-			        - 2 * targetLevel - 2 * distance),
+			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel - 2 * targetLevel - 2 * distance),
 			    0,
 			    100);
 			const bool hit = std::max(GenerateRnd(state, 100), 0) < hitChance;
@@ -12985,16 +13018,16 @@ void AdvanceReplayHorkSpawnsOneTick(
 				const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
 				    || IsReplaySecondaryPlayerBlockCapable(state);
 				const bool canBlock = (secondaryPlayerAtTile
-				        && secondaryPlayerBlockCapable
-				        && (state.secondaryPlayerCombatMode == 0
-				            || state.secondaryPlayerCombatMode == 4))
+				                          && secondaryPlayerBlockCapable
+				                          && (state.secondaryPlayerCombatMode == 0
+				                              || state.secondaryPlayerCombatMode == 4))
 				    || primaryPlayerBlockCapable;
 				const int blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 				const int blockChance = std::clamp(
 				    (secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
 				        + (secondaryPlayerAtTile
-				            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-				            : GetReplayBaseBlockChance(state.characterClassId))
+				                ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+				                : GetReplayBaseBlockChance(state.characterClassId))
 				        + 2 * targetLevel - 2 * state.combatTargetMonsterLevel,
 				    0,
 				    100);
@@ -13070,9 +13103,9 @@ void AdmitReplayAutonomousBloodStar(
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetRangedDelayTicks < 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == BloodStarBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == BloodStarBehavior;
+	       }))
 		return;
 	if (state.combatTargetRangedDelayTicks > 0) {
 		--state.combatTargetRangedDelayTicks;
@@ -13130,11 +13163,11 @@ void AdmitReplayAutonomousBloodStar(
 				const int firstTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1;
 				const int secondTurn = std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2;
 				const int candidateDirections[] = {
-				    awayDirection,
-				    (awayDirection + firstTurn + 8) % 8,
-				    (awayDirection - firstTurn + 8) % 8,
-				    (awayDirection + secondTurn + 8) % 8,
-				    (awayDirection - secondTurn + 8) % 8,
+					awayDirection,
+					(awayDirection + firstTurn + 8) % 8,
+					(awayDirection - firstTurn + 8) % 8,
+					(awayDirection + secondTurn + 8) % 8,
+					(awayDirection - secondTurn + 8) % 8,
 				};
 				for (const int candidateDirection : candidateDirections) {
 					const auto displacement = DirectionDisplacements[candidateDirection];
@@ -13199,8 +13232,8 @@ void AdmitReplayAutonomousBloodStar(
 					return leftDistance != rightDistance
 					    ? leftDistance > rightDistance
 					    : left.second != right.second
-					        ? left.second < right.second
-					        : left.first < right.first;
+					    ? left.second < right.second
+					    : left.first < right.first;
 				});
 				if (!destinations.empty()) {
 					state.combatTargetMoving = true;
@@ -13256,8 +13289,10 @@ void AdmitReplayAutonomousBloodStar(
 	state.combatTargetRangedDelayTicks = state.combatTargetMonsterAiSeed != 0
 	    ? std::max(GenerateRnd(state, 20), 0)
 	    : static_cast<int32_t>(((static_cast<uint32_t>(tick)
-	        ^ state.combatTargetEntityId
-	        ^ target.entityId) / 200U) % 20U);
+	                                ^ state.combatTargetEntityId
+	                                ^ target.entityId)
+	                               / 200U)
+	          % 20U);
 }
 
 /** Admits the compact Lich-family generic MonsterMagic ranged branch. */
@@ -13274,9 +13309,9 @@ void AdmitReplayAutonomousMonsterMagic(
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == MonsterMagicBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == MonsterMagicBehavior;
+	       }))
 		return;
 
 	struct Candidate {
@@ -13366,9 +13401,9 @@ void AdmitReplayAutonomousFirebolt(ReplayFixtureExecutionState &state)
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == FireboltBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == FireboltBehavior;
+	       }))
 		return;
 
 	struct Candidate {
@@ -13447,9 +13482,9 @@ void AdmitReplayAutonomousFireball(ReplayFixtureExecutionState &state)
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == FireballBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == FireballBehavior;
+	       }))
 		return;
 
 	struct Candidate {
@@ -13533,11 +13568,11 @@ void AdmitReplayAutonomousAcid(
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetRangedDelayTicks < 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && (projectile.behavior == AcidBehavior
-			        || projectile.behavior == AcidSplatBehavior
-			        || projectile.behavior == AcidPuddleBehavior);
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && (projectile.behavior == AcidBehavior
+		               || projectile.behavior == AcidSplatBehavior
+		               || projectile.behavior == AcidPuddleBehavior);
+	       }))
 		return;
 	if (state.combatTargetRangedDelayTicks > 0) {
 		--state.combatTargetRangedDelayTicks;
@@ -13638,9 +13673,9 @@ void AdmitReplayAutonomousStorm(ReplayFixtureExecutionState &state)
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-			return projectile.sourceEntityId == state.combatTargetEntityId
-			    && projectile.behavior == LightningBehavior;
-		}))
+		       return projectile.sourceEntityId == state.combatTargetEntityId
+		           && projectile.behavior == LightningBehavior;
+	       }))
 		return;
 
 	struct Candidate {
@@ -13722,7 +13757,7 @@ void AdvanceReplayStateToTick(
 		    && state.combatTargetActiveForTicks > 0
 		    && state.combatTargetHitPointsQ6 > 0) {
 			const auto isVisible = [](int32_t playerLife, uint32_t playerLevelId, int32_t playerX, int32_t playerY,
-			    uint32_t targetLevelId, int32_t targetX, int32_t targetY) {
+			                           uint32_t targetLevelId, int32_t targetX, int32_t targetY) {
 				if (playerLife <= 0 || playerLevelId != targetLevelId)
 					return false;
 				const int64_t deltaX = static_cast<int64_t>(targetX) - playerX;
@@ -13730,22 +13765,22 @@ void AdvanceReplayStateToTick(
 				return deltaX * deltaX + deltaY * deltaY <= 100;
 			};
 			const bool visibleToPrimary = isVisible(
-				state.life,
-				state.levelId,
-				state.positionX,
-				state.positionY,
-				state.combatTargetLevelId,
-				state.combatTargetPositionX,
-				state.combatTargetPositionY);
+			    state.life,
+			    state.levelId,
+			    state.positionX,
+			    state.positionY,
+			    state.combatTargetLevelId,
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY);
 			const bool visibleToSecondary = state.secondaryPlayerEntityId != 0
-				&& isVisible(
-					state.secondaryPlayerLife,
-					state.secondaryPlayerLevelId,
-					state.secondaryPlayerPositionX,
-					state.secondaryPlayerPositionY,
-					state.combatTargetLevelId,
-					state.combatTargetPositionX,
-					state.combatTargetPositionY);
+			    && isVisible(
+			        state.secondaryPlayerLife,
+			        state.secondaryPlayerLevelId,
+			        state.secondaryPlayerPositionX,
+			        state.secondaryPlayerPositionY,
+			        state.combatTargetLevelId,
+			        state.combatTargetPositionX,
+			        state.combatTargetPositionY);
 			if (visibleToPrimary || visibleToSecondary)
 				state.combatTargetActiveForTicks = 255;
 			else if (state.combatTargetActiveForTicks > 0)
@@ -13783,10 +13818,9 @@ void AdvanceReplayStateToTick(
 		if (!AdvanceReplayFallenStandAnimation(state))
 			AdvanceReplayFallenRallyPursuit(state);
 		AdvanceReplayFallenRallyCompanion(
-			state,
-			state.combatTargetFallenRallyTicks > rallyTicksBefore);
-		state.combatTargetAutonomousActionHandled =
-			AdvanceReplayAutonomousGargoyleHealing(state);
+		    state,
+		    state.combatTargetFallenRallyTicks > rallyTicksBefore);
+		state.combatTargetAutonomousActionHandled = AdvanceReplayAutonomousGargoyleHealing(state);
 		AdmitReplayAutonomousHorkSpawn(state, simulationTick);
 		AdmitReplayAutonomousBloodStar(state, simulationTick);
 		AdmitReplayAutonomousMegaInferno(state, simulationTick);
@@ -14016,29 +14050,29 @@ private:
 			while (true) {
 				ReplayFixtureQuestPool pool;
 				if (!ParseObject([this, &pool](std::string_view poolKey) {
-					if (poolKey == "pool_id")
-						return ParseUnsigned(pool.poolId);
-					if (poolKey != "quest_ids")
-						return SkipValue();
-					if (!Consume('['))
-						return Fail("expected quest selection quest id array");
-					SkipWhitespace();
-					if (Consume(']'))
-						return Fail("quest selection pool must define at least two quests");
-					while (true) {
-						uint32_t questId = 0;
-						if (!ParseUnsigned(questId))
-							return false;
-						pool.questIds.push_back(questId);
-						SkipWhitespace();
-						if (Consume(']'))
-							break;
-						if (!Consume(','))
-							return Fail("expected comma or closing bracket");
-						SkipWhitespace();
-					}
-					return true;
-				}))
+					    if (poolKey == "pool_id")
+						    return ParseUnsigned(pool.poolId);
+					    if (poolKey != "quest_ids")
+						    return SkipValue();
+					    if (!Consume('['))
+						    return Fail("expected quest selection quest id array");
+					    SkipWhitespace();
+					    if (Consume(']'))
+						    return Fail("quest selection pool must define at least two quests");
+					    while (true) {
+						    uint32_t questId = 0;
+						    if (!ParseUnsigned(questId))
+							    return false;
+						    pool.questIds.push_back(questId);
+						    SkipWhitespace();
+						    if (Consume(']'))
+							    break;
+						    if (!Consume(','))
+							    return Fail("expected comma or closing bracket");
+						    SkipWhitespace();
+					    }
+					    return true;
+				    }))
 					return false;
 				auto sortedQuestIds = pool.questIds;
 				std::sort(sortedQuestIds.begin(), sortedQuestIds.end());
@@ -14046,8 +14080,8 @@ private:
 				    || std::any_of(pool.questIds.begin(), pool.questIds.end(), [](uint32_t questId) { return questId == 0; })
 				    || std::adjacent_find(sortedQuestIds.begin(), sortedQuestIds.end()) != sortedQuestIds.end()
 				    || std::any_of(fixture_.questSelection.pools.begin(), fixture_.questSelection.pools.end(), [&](const auto &existing) {
-						return existing.poolId == pool.poolId;
-					})) {
+					       return existing.poolId == pool.poolId;
+				       })) {
 					return Fail("quest selection contains duplicate or invalid identities");
 				}
 				std::sort(pool.questIds.begin(), pool.questIds.end());
@@ -14082,16 +14116,16 @@ private:
 		while (true) {
 			ReplayFixtureCorpseState corpse;
 			if (!ParseObject([this, &corpse](std::string_view key) {
-				if (key == "entity_id")
-					return ParseUnsigned(corpse.entityId);
-				if (key == "level_id")
-					return ParseUnsigned(corpse.levelId);
-				if (key == "position_x")
-					return ParseSigned(corpse.positionX);
-				if (key == "position_y")
-					return ParseSigned(corpse.positionY);
-				return SkipValue();
-			}))
+				    if (key == "entity_id")
+					    return ParseUnsigned(corpse.entityId);
+				    if (key == "level_id")
+					    return ParseUnsigned(corpse.levelId);
+				    if (key == "position_x")
+					    return ParseSigned(corpse.positionX);
+				    if (key == "position_y")
+					    return ParseSigned(corpse.positionY);
+				    return SkipValue();
+			    }))
 				return false;
 			if (corpse.entityId == 0)
 				return Fail("corpse entity identity must be non-zero");
@@ -14304,7 +14338,7 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetHorkDemonDelayTicks);
 			if (key == "combat_target_skeleton_king_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonKingDelayTicks);
-		if (key == "combat_target_skeleton_melee_delay_ticks")
+			if (key == "combat_target_skeleton_melee_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSkeletonMeleeDelayTicks);
 			if (key == "combat_target_snake_delay_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetSnakeDelayTicks);
@@ -14417,52 +14451,52 @@ private:
 		while (true) {
 			ReplayFixtureInitialProjectile projectile;
 			if (!ParseObject([this, &projectile](std::string_view key) {
-				if (key == "entity_id")
-					return ParseUnsigned(projectile.entityId);
-				if (key == "source_entity_id")
-					return ParseUnsigned(projectile.sourceEntityId);
-				if (key == "target_entity_id")
-					return ParseUnsigned(projectile.targetEntityId);
-				if (key == "spell_id")
-					return ParseUnsigned(projectile.spellId);
-				if (key == "level_id")
-					return ParseUnsigned(projectile.levelId);
-				if (key == "position_x")
-					return ParseSigned(projectile.positionX);
-				if (key == "position_y")
-					return ParseSigned(projectile.positionY);
-				if (key == "target_x")
-					return ParseSigned(projectile.targetX);
-				if (key == "target_y")
-					return ParseSigned(projectile.targetY);
-				if (key == "damage")
-					return ParseSigned(projectile.damage);
-				if (key == "damage_type")
-					return ParseSigned(projectile.damageType);
-				if (key == "area_radius")
-					return ParseSigned(projectile.areaRadius);
-				if (key == "remaining_ticks")
-					return ParseUnsigned(projectile.remainingTicks);
-				if (key == "behavior")
-					return ParseSigned(projectile.behavior);
-				if (key == "phase")
-					return ParseSigned(projectile.phase);
-				if (key == "speed")
-					return ParseSigned(projectile.speed);
-				if (key == "impact_lifetime")
-					return ParseSigned(projectile.impactLifetime);
-				if (key == "damage_minimum")
-					return ParseSigned(projectile.damageMinimum);
-				if (key == "damage_maximum")
-					return ParseSigned(projectile.damageMaximum);
-				if (key == "apocalypse_scan_x")
-					return ParseSigned(projectile.apocalypseScanX);
-				if (key == "apocalypse_scan_y")
-					return ParseSigned(projectile.apocalypseScanY);
-				if (key == "apocalypse_hit")
-					return ParseBool(projectile.apocalypseHit);
-				return SkipValue();
-			})) {
+				    if (key == "entity_id")
+					    return ParseUnsigned(projectile.entityId);
+				    if (key == "source_entity_id")
+					    return ParseUnsigned(projectile.sourceEntityId);
+				    if (key == "target_entity_id")
+					    return ParseUnsigned(projectile.targetEntityId);
+				    if (key == "spell_id")
+					    return ParseUnsigned(projectile.spellId);
+				    if (key == "level_id")
+					    return ParseUnsigned(projectile.levelId);
+				    if (key == "position_x")
+					    return ParseSigned(projectile.positionX);
+				    if (key == "position_y")
+					    return ParseSigned(projectile.positionY);
+				    if (key == "target_x")
+					    return ParseSigned(projectile.targetX);
+				    if (key == "target_y")
+					    return ParseSigned(projectile.targetY);
+				    if (key == "damage")
+					    return ParseSigned(projectile.damage);
+				    if (key == "damage_type")
+					    return ParseSigned(projectile.damageType);
+				    if (key == "area_radius")
+					    return ParseSigned(projectile.areaRadius);
+				    if (key == "remaining_ticks")
+					    return ParseUnsigned(projectile.remainingTicks);
+				    if (key == "behavior")
+					    return ParseSigned(projectile.behavior);
+				    if (key == "phase")
+					    return ParseSigned(projectile.phase);
+				    if (key == "speed")
+					    return ParseSigned(projectile.speed);
+				    if (key == "impact_lifetime")
+					    return ParseSigned(projectile.impactLifetime);
+				    if (key == "damage_minimum")
+					    return ParseSigned(projectile.damageMinimum);
+				    if (key == "damage_maximum")
+					    return ParseSigned(projectile.damageMaximum);
+				    if (key == "apocalypse_scan_x")
+					    return ParseSigned(projectile.apocalypseScanX);
+				    if (key == "apocalypse_scan_y")
+					    return ParseSigned(projectile.apocalypseScanY);
+				    if (key == "apocalypse_hit")
+					    return ParseBool(projectile.apocalypseHit);
+				    return SkipValue();
+			    })) {
 				return false;
 			}
 			if (projectile.entityId == 0 || projectile.sourceEntityId == 0
@@ -14473,8 +14507,8 @@ private:
 			    || projectile.damageMinimum < 0
 			    || projectile.damageMaximum < projectile.damageMinimum
 			    || std::any_of(fixture_.initialProjectiles.begin(), fixture_.initialProjectiles.end(), [&](const auto &existing) {
-				return existing.entityId == projectile.entityId;
-			    })) {
+				       return existing.entityId == projectile.entityId;
+			       })) {
 				return Fail("initial projectile contains invalid or duplicate state");
 			}
 			fixture_.initialProjectiles.push_back(std::move(projectile));
@@ -14750,8 +14784,8 @@ private:
 			    || item.hellfireDamageArmorFlags < 0
 			    || item.hellfireDamageArmorFlags > 0x7F
 			    || std::any_of(target.begin(), target.end(), [&](const auto &candidate) {
-				    return candidate.slot == item.slot;
-				})) {
+				       return candidate.slot == item.slot;
+			       })) {
 				return Fail(description == "equipment"
 				        ? "invalid or duplicate equipment item"
 				        : "invalid or duplicate secondary equipment item");
@@ -14843,8 +14877,8 @@ private:
 			    || item.spellId < 1
 			    || item.spellId > authoritative::MaximumNativeSpellId
 			    || std::any_of(fixture_.initialState.belt.begin(), fixture_.initialState.belt.end(), [&](const auto &candidate) {
-				    return candidate.slot == item.slot;
-			    })) {
+				       return candidate.slot == item.slot;
+			       })) {
 				return Fail("invalid or duplicate belt consumable");
 			}
 			fixture_.initialState.belt.push_back(item);
@@ -15201,7 +15235,7 @@ private:
 
 bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::string &error)
 {
-	fixture = { };
+	fixture = {};
 	error.clear();
 	if (!JsonReader(json, fixture, error).Parse())
 		return false;
@@ -15310,49 +15344,49 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetHitPoints != 0
 	            || target.combatTargetMaxHitPoints != 0
 	            || target.combatTargetArmorClass != 0
-			|| target.combatTargetAttackDamage != 0
-			|| target.combatTargetAggroRange != 0
-		    || !target.combatTargetNativeAi.empty()
-		    || target.combatTargetMonsterItemSeed != 0
-		    || target.combatTargetMonsterAiSeed != 0
-		    || target.combatTargetMonsterId != 0
-			|| target.combatTargetToHit != 0
-			|| target.combatTargetToHitSpecial != 0
-			|| target.combatTargetMinDamage != 0
-			|| target.combatTargetMaxDamage != 0
-		    || target.combatTargetBerserked
-			|| target.combatTargetIntelligence != 0
-		    || target.combatTargetFallenStandAnimationFrame != 0
-		    || target.combatTargetFallenStandAnimationTick != 0
-		    || target.combatTargetFallenFearTicks != 0
-		    || target.combatTargetFallenFearDirection != 0
-		    || target.combatTargetFallenRallyTicks != 0
-		    || target.combatTargetActiveForTicks != 0
-			|| target.combatTargetGargoyleSpecialActive
-		    || target.combatTargetHorkDemonDelayTicks != 0
-		    || target.combatTargetSkeletonKingDelayTicks != 0
-		    || target.combatTargetSkeletonMeleeDelayTicks != 0
-		    || target.combatTargetSnakeDelayTicks != 0
-		    || target.combatTargetCounselorDelayTicks != 0
-		    || target.combatTargetCounselorRetreatTicks != 0
-		    || target.combatTargetRangedDelayTicks != 0
-		    || target.combatTargetRangedRetreatMinimumDistance != 0
-		    || target.combatTargetRangedRetreatChanceBase != 0
-		    || target.combatTargetRangedRetreatChanceIntelligenceScale != 0
-		    || target.combatTargetMegaDelayTicks != 0
-		    || target.combatTargetSkeletonRangedMovementIdleTicks != -1
-		    || target.combatTargetSkeletonRangedMovementMode != 0
-		    || target.combatTargetSneakHidden
-		    || target.combatTargetSneakRetreatTicks != 0
-		    || target.combatTargetBatRetreatTicks != 0
-		    || target.combatTargetBatRetreatDirection != 0
-		    || target.combatTargetBatMovementIdleTicks != -1
-		    || target.combatTargetBatMovementMode != 0
-		    || target.combatTargetScavengerHealingTicks != 0
-		    || target.combatTargetScavengerCorpseEntityId != 0
-		    || target.combatTargetFatMovementIdleTicks != -1
-		    || target.combatTargetFatMovementMode != 0
-			|| target.combatTargetFireResistance != 0
+	            || target.combatTargetAttackDamage != 0
+	            || target.combatTargetAggroRange != 0
+	            || !target.combatTargetNativeAi.empty()
+	            || target.combatTargetMonsterItemSeed != 0
+	            || target.combatTargetMonsterAiSeed != 0
+	            || target.combatTargetMonsterId != 0
+	            || target.combatTargetToHit != 0
+	            || target.combatTargetToHitSpecial != 0
+	            || target.combatTargetMinDamage != 0
+	            || target.combatTargetMaxDamage != 0
+	            || target.combatTargetBerserked
+	            || target.combatTargetIntelligence != 0
+	            || target.combatTargetFallenStandAnimationFrame != 0
+	            || target.combatTargetFallenStandAnimationTick != 0
+	            || target.combatTargetFallenFearTicks != 0
+	            || target.combatTargetFallenFearDirection != 0
+	            || target.combatTargetFallenRallyTicks != 0
+	            || target.combatTargetActiveForTicks != 0
+	            || target.combatTargetGargoyleSpecialActive
+	            || target.combatTargetHorkDemonDelayTicks != 0
+	            || target.combatTargetSkeletonKingDelayTicks != 0
+	            || target.combatTargetSkeletonMeleeDelayTicks != 0
+	            || target.combatTargetSnakeDelayTicks != 0
+	            || target.combatTargetCounselorDelayTicks != 0
+	            || target.combatTargetCounselorRetreatTicks != 0
+	            || target.combatTargetRangedDelayTicks != 0
+	            || target.combatTargetRangedRetreatMinimumDistance != 0
+	            || target.combatTargetRangedRetreatChanceBase != 0
+	            || target.combatTargetRangedRetreatChanceIntelligenceScale != 0
+	            || target.combatTargetMegaDelayTicks != 0
+	            || target.combatTargetSkeletonRangedMovementIdleTicks != -1
+	            || target.combatTargetSkeletonRangedMovementMode != 0
+	            || target.combatTargetSneakHidden
+	            || target.combatTargetSneakRetreatTicks != 0
+	            || target.combatTargetBatRetreatTicks != 0
+	            || target.combatTargetBatRetreatDirection != 0
+	            || target.combatTargetBatMovementIdleTicks != -1
+	            || target.combatTargetBatMovementMode != 0
+	            || target.combatTargetScavengerHealingTicks != 0
+	            || target.combatTargetScavengerCorpseEntityId != 0
+	            || target.combatTargetFatMovementIdleTicks != -1
+	            || target.combatTargetFatMovementMode != 0
+	            || target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
 	            || target.combatTargetMonsterLevel != 0
@@ -15367,69 +15401,69 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	    || target.combatTargetHitPoints < 0
 	    || target.combatTargetMaxHitPoints < target.combatTargetHitPoints
 	    || target.combatTargetArmorClass < 0
-		|| target.combatTargetAttackDamage < 0
-		|| target.combatTargetAggroRange < 0
-		|| target.combatTargetToHit < 0 || target.combatTargetToHit > 255
-		|| target.combatTargetToHitSpecial < 0 || target.combatTargetToHitSpecial > 255
-		|| target.combatTargetMinDamage < 0
-		|| target.combatTargetMaxDamage < target.combatTargetMinDamage
-		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
-		|| target.combatTargetHorkDemonDelayTicks < 0
-		|| target.combatTargetHorkDemonDelayTicks > 1024
-		|| target.combatTargetSkeletonKingDelayTicks < 0
-		|| target.combatTargetSkeletonKingDelayTicks > 1024
-		|| target.combatTargetSkeletonMeleeDelayTicks < 0
-		|| target.combatTargetSkeletonMeleeDelayTicks > 1024
-		|| target.combatTargetSnakeDelayTicks < 0
-		|| target.combatTargetSnakeDelayTicks > 1024
-		|| target.combatTargetCounselorDelayTicks < 0
-		|| target.combatTargetCounselorDelayTicks > 1024
-		|| target.combatTargetCounselorRetreatTicks < 0
-		|| target.combatTargetCounselorRetreatTicks > 64
-		|| target.combatTargetRangedDelayTicks < 0
-		|| target.combatTargetRangedDelayTicks > 1024
-		|| target.combatTargetRangedRetreatMinimumDistance < 0
-		|| target.combatTargetRangedRetreatMinimumDistance > 64
-		|| target.combatTargetRangedRetreatChanceBase < 0
-		|| target.combatTargetRangedRetreatChanceBase > 100
-		|| target.combatTargetRangedRetreatChanceIntelligenceScale < 0
-		|| target.combatTargetRangedRetreatChanceIntelligenceScale > 100
-		|| (target.combatTargetRangedRetreatMinimumDistance != 0
-		    || target.combatTargetRangedRetreatChanceBase != 0
-		    || target.combatTargetRangedRetreatChanceIntelligenceScale != 0)
-		    && (target.combatTargetRangedRetreatMinimumDistance <= 0
-		        || target.combatTargetRangedRetreatChanceBase <= 0
-		        || target.combatTargetRangedRetreatChanceIntelligenceScale <= 0)
-		|| target.combatTargetMegaDelayTicks < 0
-		|| target.combatTargetMegaDelayTicks > 1024
-		|| target.combatTargetSkeletonRangedMovementIdleTicks < -1
-		|| target.combatTargetSkeletonRangedMovementIdleTicks > 1024
-		|| target.combatTargetSkeletonRangedMovementMode < -1
-		|| target.combatTargetSkeletonRangedMovementMode > 3
-		|| target.combatTargetSneakRetreatTicks < 0
-		|| target.combatTargetSneakRetreatTicks > 1024
-		|| target.combatTargetBatRetreatTicks < 0
-		|| target.combatTargetBatRetreatTicks > 1024
-		|| target.combatTargetBatRetreatDirection < 0
-		|| target.combatTargetBatRetreatDirection > 7
-		|| target.combatTargetBatMovementIdleTicks < -1
-		|| target.combatTargetBatMovementIdleTicks > 1024
-		|| target.combatTargetBatMovementMode < 0
-		|| target.combatTargetBatMovementMode > 3
-		|| target.combatTargetScavengerHealingTicks < 0
-		|| target.combatTargetScavengerHealingTicks > 1024
-		|| target.combatTargetFatMovementIdleTicks < -1
-		|| target.combatTargetFatMovementIdleTicks > 1024
-		|| target.combatTargetFatMovementMode < 0
-		|| target.combatTargetFatMovementMode > 3
-		|| target.combatTargetFallenStandAnimationFrame < 0
-		|| target.combatTargetFallenStandAnimationFrame > 127
-		|| target.combatTargetFallenStandAnimationTick < 0
-		|| target.combatTargetFallenStandAnimationTick > 127
-		|| target.combatTargetFallenFearTicks < 0
-		|| target.combatTargetFallenFearTicks > 1024
-		|| target.combatTargetFallenFearDirection < 0
-		|| target.combatTargetFallenFearDirection > 7
+	    || target.combatTargetAttackDamage < 0
+	    || target.combatTargetAggroRange < 0
+	    || target.combatTargetToHit < 0 || target.combatTargetToHit > 255
+	    || target.combatTargetToHitSpecial < 0 || target.combatTargetToHitSpecial > 255
+	    || target.combatTargetMinDamage < 0
+	    || target.combatTargetMaxDamage < target.combatTargetMinDamage
+	    || target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
+	    || target.combatTargetHorkDemonDelayTicks < 0
+	    || target.combatTargetHorkDemonDelayTicks > 1024
+	    || target.combatTargetSkeletonKingDelayTicks < 0
+	    || target.combatTargetSkeletonKingDelayTicks > 1024
+	    || target.combatTargetSkeletonMeleeDelayTicks < 0
+	    || target.combatTargetSkeletonMeleeDelayTicks > 1024
+	    || target.combatTargetSnakeDelayTicks < 0
+	    || target.combatTargetSnakeDelayTicks > 1024
+	    || target.combatTargetCounselorDelayTicks < 0
+	    || target.combatTargetCounselorDelayTicks > 1024
+	    || target.combatTargetCounselorRetreatTicks < 0
+	    || target.combatTargetCounselorRetreatTicks > 64
+	    || target.combatTargetRangedDelayTicks < 0
+	    || target.combatTargetRangedDelayTicks > 1024
+	    || target.combatTargetRangedRetreatMinimumDistance < 0
+	    || target.combatTargetRangedRetreatMinimumDistance > 64
+	    || target.combatTargetRangedRetreatChanceBase < 0
+	    || target.combatTargetRangedRetreatChanceBase > 100
+	    || target.combatTargetRangedRetreatChanceIntelligenceScale < 0
+	    || target.combatTargetRangedRetreatChanceIntelligenceScale > 100
+	    || (target.combatTargetRangedRetreatMinimumDistance != 0
+	           || target.combatTargetRangedRetreatChanceBase != 0
+	           || target.combatTargetRangedRetreatChanceIntelligenceScale != 0)
+	        && (target.combatTargetRangedRetreatMinimumDistance <= 0
+	            || target.combatTargetRangedRetreatChanceBase <= 0
+	            || target.combatTargetRangedRetreatChanceIntelligenceScale <= 0)
+	    || target.combatTargetMegaDelayTicks < 0
+	    || target.combatTargetMegaDelayTicks > 1024
+	    || target.combatTargetSkeletonRangedMovementIdleTicks < -1
+	    || target.combatTargetSkeletonRangedMovementIdleTicks > 1024
+	    || target.combatTargetSkeletonRangedMovementMode < -1
+	    || target.combatTargetSkeletonRangedMovementMode > 3
+	    || target.combatTargetSneakRetreatTicks < 0
+	    || target.combatTargetSneakRetreatTicks > 1024
+	    || target.combatTargetBatRetreatTicks < 0
+	    || target.combatTargetBatRetreatTicks > 1024
+	    || target.combatTargetBatRetreatDirection < 0
+	    || target.combatTargetBatRetreatDirection > 7
+	    || target.combatTargetBatMovementIdleTicks < -1
+	    || target.combatTargetBatMovementIdleTicks > 1024
+	    || target.combatTargetBatMovementMode < 0
+	    || target.combatTargetBatMovementMode > 3
+	    || target.combatTargetScavengerHealingTicks < 0
+	    || target.combatTargetScavengerHealingTicks > 1024
+	    || target.combatTargetFatMovementIdleTicks < -1
+	    || target.combatTargetFatMovementIdleTicks > 1024
+	    || target.combatTargetFatMovementMode < 0
+	    || target.combatTargetFatMovementMode > 3
+	    || target.combatTargetFallenStandAnimationFrame < 0
+	    || target.combatTargetFallenStandAnimationFrame > 127
+	    || target.combatTargetFallenStandAnimationTick < 0
+	    || target.combatTargetFallenStandAnimationTick > 127
+	    || target.combatTargetFallenFearTicks < 0
+	    || target.combatTargetFallenFearTicks > 1024
+	    || target.combatTargetFallenFearDirection < 0
+	    || target.combatTargetFallenFearDirection > 7
 	    || target.combatTargetFallenRallyTicks < 0
 	    || target.combatTargetFallenRallyTicks > 4096
 	    || target.combatTargetActiveForTicks < 0
@@ -15619,10 +15653,10 @@ void AdmitReplayAutonomousMegaInferno(
 		return;
 	}
 	if (std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
-		return projectile.sourceEntityId == state.combatTargetEntityId
-		    && (projectile.behavior == InfernoControllerBehavior
-		        || projectile.behavior == InfernoSegmentBehavior);
-	}))
+		    return projectile.sourceEntityId == state.combatTargetEntityId
+		        && (projectile.behavior == InfernoControllerBehavior
+		            || projectile.behavior == InfernoSegmentBehavior);
+	    }))
 		return;
 
 	struct Candidate {
@@ -15666,9 +15700,7 @@ void AdmitReplayAutonomousMegaInferno(
 	    100,
 	    5 + 5 * (state.combatTargetIntelligence + (distance >= 3 ? 1 : 0)));
 	const auto resolveMegaDelay = [&]() {
-		return 5 + (usesNativeAiStream
-	        ? std::max(GenerateRnd(state, 20), 0)
-	        : static_cast<int>((attackSeed / 200U) % 20U));
+		return 5 + (usesNativeAiStream ? std::max(GenerateRnd(state, 20), 0) : static_cast<int>((attackSeed / 200U) % 20U));
 	};
 	if (actionRoll >= attackBand) {
 		state.combatTargetMegaDelayTicks = resolveMegaDelay();
@@ -15799,8 +15831,8 @@ void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state)
 				        state,
 				        iterator->startX,
 				        iterator->startY,
-					    x,
-					    y)) {
+				        x,
+				        y)) {
 					continue;
 				}
 				const auto boom = CreateReplayApocalypseBoom(state, *iterator, x, y);
@@ -15871,8 +15903,8 @@ void AdvanceReplayPlayerInfernoOneTick(ReplayFixtureExecutionState &state)
 		segment.targetX = segment.positionX;
 		segment.targetY = segment.positionY;
 		const int32_t characterLevelDamage = GenerateRnd(
-			state,
-			std::max(1, static_cast<int32_t>(state.characterLevel)));
+		    state,
+		    std::max(1, static_cast<int32_t>(state.characterLevel)));
 		const int32_t randomDamage = GenerateRnd(state, 2);
 		segment.damage = (characterLevelDamage + randomDamage) * 12 + 24;
 		segment.damageType = projectile.damageType;
@@ -15959,8 +15991,8 @@ void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
 
 /** Applies the compact secondary-player cast lanes used by multiplayer PvP replays. */
 bool ApplyReplaySecondaryCast(
-	ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command)
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command)
 {
 	if (state.secondaryPlayerEntityId == 0
 	    || (command.spellId != 1
@@ -16018,10 +16050,10 @@ bool ApplyReplaySecondaryCast(
 	castState.combatModeEndTick = state.secondaryPlayerCombatModeEndTick;
 	if (command.spellId == 15) {
 		castState.facingDirection = static_cast<uint32_t>(GetDirection(
-			castState.positionX,
-			castState.positionY,
-			command.targetX,
-			command.targetY));
+		    castState.positionX,
+		    castState.positionY,
+		    command.targetX,
+		    command.targetY));
 	}
 
 	if (!ApplyReplayCast(castState, command))
@@ -16074,24 +16106,24 @@ bool ApplyReplaySecondaryCast(
 }
 
 std::string GetReplayCastRejectReason(
-	const ReplayFixtureExecutionState &state,
-	const ReplayFixtureCommand &command)
+    const ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command)
 {
 	const bool isAbility = state.abilitySpellId == command.spellId;
 	const bool isMemorized = std::any_of(
-		state.memorizedSpells.begin(),
-		state.memorizedSpells.end(),
-		[&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
+	    state.memorizedSpells.begin(),
+	    state.memorizedSpells.end(),
+	    [&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
 	if (!isAbility && !isMemorized)
 		return "NotAllowed";
 	if (command.spellId != 33 || state.spellProjectileBehavior != TelekinesisBehavior)
 		return "InvalidTarget";
 	const bool targetMatches = (command.targetEntityId == state.worldItemEntityId
-	        && state.worldItemEntityId != 0
-	        && state.worldItemSeed != 0
-	        && state.levelId == state.worldItemLevelId
-	        && command.targetX == state.worldItemPositionX
-	        && command.targetY == state.worldItemPositionY)
+	                               && state.worldItemEntityId != 0
+	                               && state.worldItemSeed != 0
+	                               && state.levelId == state.worldItemLevelId
+	                               && command.targetX == state.worldItemPositionX
+	                               && command.targetY == state.worldItemPositionY)
 	    || (command.targetEntityId == state.objectEntityId
 	        && state.objectEntityId != 0
 	        && state.objectId != 0
@@ -16110,9 +16142,9 @@ std::string GetReplayCastRejectReason(
 		return "InvalidTarget";
 	if (!isAbility) {
 		const auto memorizedSpell = std::find_if(
-			state.memorizedSpells.begin(),
-			state.memorizedSpells.end(),
-			[&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
+		    state.memorizedSpells.begin(),
+		    state.memorizedSpells.end(),
+		    [&](const auto &spell) { return spell.spellId == command.spellId && spell.level > 0; });
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(state, &*memorizedSpell);
 		const int32_t manaCost = std::max(8, 15 - std::max(spellLevel - 1, 0) * 2) * 64;
 		if (state.mana < manaCost)
@@ -16127,7 +16159,7 @@ bool ExecuteReplayFixture(
     ReplayFixtureExecutionResult &result,
     std::string &error)
 {
-	result = { };
+	result = {};
 	error.clear();
 	if (fixture.rngSeed > std::numeric_limits<uint32_t>::max()) {
 		error = "Replay fixture RNG seed must fit the native 32-bit stream.";
@@ -16141,7 +16173,8 @@ bool ExecuteReplayFixture(
 	if (state.visitedLevelIds.empty())
 		state.visitedLevelIds.push_back(state.levelId);
 	state.hellfire = fixture.gameVariant == "Hellfire";
-	state.difficulty = fixture.difficulty == "Nightmare" ? 2 : fixture.difficulty == "Hell" ? 3 : 1;
+	state.difficulty = fixture.difficulty == "Nightmare" ? 2 : fixture.difficulty == "Hell" ? 3
+	                                                                                        : 1;
 	state.multiplayer = fixture.gameMode == "Multiplayer";
 	state.suppressMultiplayerDeathDrops = fixture.initialState.suppressMultiplayerDeathDrops;
 	state.facingDirection = fixture.initialState.facingDirection;
@@ -16330,12 +16363,12 @@ bool ExecuteReplayFixture(
 			itemState.statFlag = secondary.heldItemStatFlag;
 			state.secondaryHeldItemDefined = true;
 			state.secondaryHeldItem = {
-			    0,
-			    secondary.heldItemSlot,
-			    secondary.heldItemSeed,
-			    secondary.heldItemPrice,
-			    0,
-			    itemState,
+				0,
+				secondary.heldItemSlot,
+				secondary.heldItemSeed,
+				secondary.heldItemPrice,
+				0,
+				itemState,
 			};
 		}
 		ReplayFixtureItemState fillerState;
@@ -16475,8 +16508,10 @@ bool ExecuteReplayFixture(
 		const int64_t maxHitPointsQ6 = state.combatTargetMaxHitPointsQ6 == 0 && state.combatTargetMaxHitPoints != 0
 		    ? static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64
 		    : state.combatTargetMaxHitPointsQ6;
-		const int64_t difficultyMultiplier = state.difficulty == 2 ? 3 : state.difficulty == 3 ? 4 : 1;
-		const int64_t difficultyHealthBonus = state.difficulty == 2 ? 100 : state.difficulty == 3 ? 200 : 0;
+		const int64_t difficultyMultiplier = state.difficulty == 2 ? 3 : state.difficulty == 3 ? 4
+		                                                                                       : 1;
+		const int64_t difficultyHealthBonus = state.difficulty == 2 ? 100 : state.difficulty == 3 ? 200
+		                                                                                          : 0;
 		const int64_t effectiveMaxHitPointsQ6 = maxHitPointsQ6 * difficultyMultiplier
 		    + difficultyHealthBonus * 64;
 		const int64_t effectiveHitPointsQ6 = maxHitPointsQ6 == 0
@@ -16587,10 +16622,10 @@ bool ExecuteReplayFixture(
 						state.secondaryPlayerLevelId = state.portalDestinationLevelId;
 						if (state.secondaryPlayerLevelId != 0
 						    && std::find(
-							       state.secondaryPlayerVisitedLevelIds.begin(),
-							       state.secondaryPlayerVisitedLevelIds.end(),
-							       state.secondaryPlayerLevelId)
-							        == state.secondaryPlayerVisitedLevelIds.end())
+						           state.secondaryPlayerVisitedLevelIds.begin(),
+						           state.secondaryPlayerVisitedLevelIds.end(),
+						           state.secondaryPlayerLevelId)
+						        == state.secondaryPlayerVisitedLevelIds.end())
 							state.secondaryPlayerVisitedLevelIds.push_back(state.secondaryPlayerLevelId);
 						state.secondaryPlayerPositionX = state.portalDestinationX;
 						state.secondaryPlayerPositionY = state.portalDestinationY;
@@ -16610,30 +16645,15 @@ bool ExecuteReplayFixture(
 					const bool isGold = state.worldItemState.itemType == 11
 					    && state.worldItemState.itemIndex == 0;
 					const bool heldItemDropOccupied = (state.worldItemEntityId != 0
-					        && state.worldItemLevelId == state.secondaryPlayerLevelId
-					        && state.worldItemPositionX == state.secondaryPlayerPositionX
-					        && state.worldItemPositionY == state.secondaryPlayerPositionY)
+					                                      && state.worldItemLevelId == state.secondaryPlayerLevelId
+					                                      && state.worldItemPositionX == state.secondaryPlayerPositionX
+					                                      && state.worldItemPositionY == state.secondaryPlayerPositionY)
 					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
 						       return item.levelId == state.secondaryPlayerLevelId
 						           && item.positionX == state.secondaryPlayerPositionX
 						           && item.positionY == state.secondaryPlayerPositionY;
 					       })
-					    || (state.entityId != 0
-					        && state.life > 0
-					        && state.levelId == state.secondaryPlayerLevelId
-					        && state.positionX == state.secondaryPlayerPositionX
-					        && state.positionY == state.secondaryPlayerPositionY)
-					    || (state.combatTargetEntityId != 0
-					        && state.combatTargetHitPointsQ6 > 0
-					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
-					        && state.combatTargetPositionX == state.secondaryPlayerPositionX
-					        && state.combatTargetPositionY == state.secondaryPlayerPositionY)
-					    || (state.objectEntityId != 0
-					        && !state.objectActivated
-					        && !state.objectDestroyed
-					        && state.objectLevelId == state.secondaryPlayerLevelId
-					        && state.objectPositionX == state.secondaryPlayerPositionX
-					        && state.objectPositionY == state.secondaryPlayerPositionY);
+					    || (state.entityId != 0 && state.life > 0 && state.levelId == state.secondaryPlayerLevelId && state.positionX == state.secondaryPlayerPositionX && state.positionY == state.secondaryPlayerPositionY) || (state.combatTargetEntityId != 0 && state.combatTargetHitPointsQ6 > 0 && state.combatTargetLevelId == state.secondaryPlayerLevelId && state.combatTargetPositionX == state.secondaryPlayerPositionX && state.combatTargetPositionY == state.secondaryPlayerPositionY) || (state.objectEntityId != 0 && !state.objectActivated && !state.objectDestroyed && state.objectLevelId == state.secondaryPlayerLevelId && state.objectPositionX == state.secondaryPlayerPositionX && state.objectPositionY == state.secondaryPlayerPositionY);
 					const auto dropSecondaryHeldItem = [&]() {
 						if (!state.secondaryHeldItemDefined)
 							return;
@@ -16647,7 +16667,7 @@ bool ExecuteReplayFixture(
 						    state.secondaryHeldItem.state,
 						});
 						state.secondaryHeldItemDefined = false;
-						state.secondaryHeldItem = { };
+						state.secondaryHeldItem = {};
 					};
 					if (!validTarget) {
 						rejectReason = "InvalidTarget";
@@ -16696,12 +16716,12 @@ bool ExecuteReplayFixture(
 						dropSecondaryHeldItem();
 						state.secondaryHeldItemDefined = true;
 						state.secondaryHeldItem = {
-						    0,
-						    0,
-						    state.worldItemSeed,
-						    state.worldItemPrice,
-						    command.order.targetTick,
-						    state.worldItemState,
+							0,
+							0,
+							state.worldItemSeed,
+							state.worldItemPrice,
+							command.order.targetTick,
+							state.worldItemState,
 						};
 						state.worldItemEntityId = 0;
 						accepted = true;
@@ -16711,30 +16731,15 @@ bool ExecuteReplayFixture(
 					    std::abs(state.secondaryPlayerPositionX - command.targetX),
 					    std::abs(state.secondaryPlayerPositionY - command.targetY));
 					const bool targetOccupied = (state.worldItemEntityId != 0
-					        && state.worldItemLevelId == state.secondaryPlayerLevelId
-					        && state.worldItemPositionX == command.targetX
-					        && state.worldItemPositionY == command.targetY)
+					                                && state.worldItemLevelId == state.secondaryPlayerLevelId
+					                                && state.worldItemPositionX == command.targetX
+					                                && state.worldItemPositionY == command.targetY)
 					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
 						       return item.levelId == state.secondaryPlayerLevelId
 						           && item.positionX == command.targetX
 						           && item.positionY == command.targetY;
 					       })
-					    || (state.entityId != 0
-					        && state.life > 0
-					        && state.levelId == state.secondaryPlayerLevelId
-					        && state.positionX == command.targetX
-					        && state.positionY == command.targetY)
-					    || (state.combatTargetEntityId != 0
-					        && state.combatTargetHitPointsQ6 > 0
-					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
-					        && state.combatTargetPositionX == command.targetX
-					        && state.combatTargetPositionY == command.targetY)
-					    || (state.objectEntityId != 0
-					        && !state.objectActivated
-					        && !state.objectDestroyed
-					        && state.objectLevelId == state.secondaryPlayerLevelId
-					        && state.objectPositionX == command.targetX
-					        && state.objectPositionY == command.targetY);
+					    || (state.entityId != 0 && state.life > 0 && state.levelId == state.secondaryPlayerLevelId && state.positionX == command.targetX && state.positionY == command.targetY) || (state.combatTargetEntityId != 0 && state.combatTargetHitPointsQ6 > 0 && state.combatTargetLevelId == state.secondaryPlayerLevelId && state.combatTargetPositionX == command.targetX && state.combatTargetPositionY == command.targetY) || (state.objectEntityId != 0 && !state.objectActivated && !state.objectDestroyed && state.objectLevelId == state.secondaryPlayerLevelId && state.objectPositionX == command.targetX && state.objectPositionY == command.targetY);
 					if (state.secondaryHeldItemDefined
 					    && distance <= 1
 					    && command.targetX >= 0 && command.targetX < 40
@@ -16748,7 +16753,7 @@ bool ExecuteReplayFixture(
 						state.worldItemPrice = state.secondaryHeldItem.price;
 						state.worldItemState = state.secondaryHeldItem.state;
 						state.secondaryHeldItemDefined = false;
-						state.secondaryHeldItem = { };
+						state.secondaryHeldItem = {};
 						accepted = true;
 					} else if (!state.secondaryHeldItemDefined) {
 						rejectReason = "InvalidTarget";
@@ -16766,30 +16771,15 @@ bool ExecuteReplayFixture(
 					    std::abs(state.secondaryPlayerPositionX - command.targetX),
 					    std::abs(state.secondaryPlayerPositionY - command.targetY));
 					const bool targetOccupied = (state.worldItemEntityId != 0
-					        && state.worldItemLevelId == state.secondaryPlayerLevelId
-					        && state.worldItemPositionX == command.targetX
-					        && state.worldItemPositionY == command.targetY)
+					                                && state.worldItemLevelId == state.secondaryPlayerLevelId
+					                                && state.worldItemPositionX == command.targetX
+					                                && state.worldItemPositionY == command.targetY)
 					    || std::any_of(state.worldItems.begin(), state.worldItems.end(), [&](const auto &item) {
 						       return item.levelId == state.secondaryPlayerLevelId
 						           && item.positionX == command.targetX
 						           && item.positionY == command.targetY;
 					       })
-					    || (state.entityId != 0
-					        && state.life > 0
-					        && state.levelId == state.secondaryPlayerLevelId
-					        && state.positionX == command.targetX
-					        && state.positionY == command.targetY)
-					    || (state.combatTargetEntityId != 0
-					        && state.combatTargetHitPointsQ6 > 0
-					        && state.combatTargetLevelId == state.secondaryPlayerLevelId
-					        && state.combatTargetPositionX == command.targetX
-					        && state.combatTargetPositionY == command.targetY)
-					    || (state.objectEntityId != 0
-					        && !state.objectActivated
-					        && !state.objectDestroyed
-					        && state.objectLevelId == state.secondaryPlayerLevelId
-					        && state.objectPositionX == command.targetX
-					        && state.objectPositionY == command.targetY);
+					    || (state.entityId != 0 && state.life > 0 && state.levelId == state.secondaryPlayerLevelId && state.positionX == command.targetX && state.positionY == command.targetY) || (state.combatTargetEntityId != 0 && state.combatTargetHitPointsQ6 > 0 && state.combatTargetLevelId == state.secondaryPlayerLevelId && state.combatTargetPositionX == command.targetX && state.combatTargetPositionY == command.targetY) || (state.objectEntityId != 0 && !state.objectActivated && !state.objectDestroyed && state.objectLevelId == state.secondaryPlayerLevelId && state.objectPositionX == command.targetX && state.objectPositionY == command.targetY);
 					if (sourceFound
 					    && (command.itemLocation == "Inventory")
 					    && !state.heldItemDefined
@@ -16819,8 +16809,9 @@ bool ExecuteReplayFixture(
 				    && state.combatTargetHitPointsQ6 > 0
 				    && state.combatTargetLevelId == state.secondaryPlayerLevelId
 				    && std::max(
-					       std::abs(state.secondaryPlayerPositionX - state.combatTargetPositionX),
-					       std::abs(state.secondaryPlayerPositionY - state.combatTargetPositionY)) <= 1) {
+				           std::abs(state.secondaryPlayerPositionX - state.combatTargetPositionX),
+				           std::abs(state.secondaryPlayerPositionY - state.combatTargetPositionY))
+				        <= 1) {
 					const int32_t damage = std::max(1, 10 - state.combatTargetArmorClass);
 					state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damage * 64);
 					state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
@@ -17078,58 +17069,58 @@ bool ExecuteReplayFixture(
 						rejectReason = "NotAllowed";
 					} else {
 						if (state.heldItemDefined) {
-						state.worldItems.push_back({
-						    AllocateReplayWorldItemEntityId(state),
-						    state.levelId,
-						    state.positionX,
-						    state.positionY,
-						    state.heldItem.itemSeed,
-						    state.heldItem.price,
-						    state.heldItem.state,
-						});
-						state.heldItemDefined = false;
-						state.heldItem = { };
+							state.worldItems.push_back({
+							    AllocateReplayWorldItemEntityId(state),
+							    state.levelId,
+							    state.positionX,
+							    state.positionY,
+							    state.heldItem.itemSeed,
+							    state.heldItem.price,
+							    state.heldItem.state,
+							});
+							state.heldItemDefined = false;
+							state.heldItem = {};
 						}
 						state.worldItemState = pickedItemState;
 						if (isGold) {
-						if (HasReplayGoldTopology(state)) {
-							const uint32_t remainder = AddReplayGoldPartial(state, pickedItemPrice);
-							if (remainder != 0) {
-								state.heldItemDefined = true;
-								state.heldItem = {
-								    0,
-								    0,
-								    pickedItemSeed,
-								    remainder,
-								    command.order.targetTick,
-								    pickedItemState,
-								};
-								state.heldItem.state.value = static_cast<int32_t>(remainder);
-								state.heldItem.state.identifiedValue = static_cast<int32_t>(remainder);
+							if (HasReplayGoldTopology(state)) {
+								const uint32_t remainder = AddReplayGoldPartial(state, pickedItemPrice);
+								if (remainder != 0) {
+									state.heldItemDefined = true;
+									state.heldItem = {
+										0,
+										0,
+										pickedItemSeed,
+										remainder,
+										command.order.targetTick,
+										pickedItemState,
+									};
+									state.heldItem.state.value = static_cast<int32_t>(remainder);
+									state.heldItem.state.identifiedValue = static_cast<int32_t>(remainder);
+								}
+							} else {
+								state.gold += pickedItemPrice;
 							}
+							state.worldItemEntityId = 0;
+							accepted = true;
 						} else {
-							state.gold += pickedItemPrice;
-						}
-						state.worldItemEntityId = 0;
-						accepted = true;
-					} else {
-						const int targetCell = CanPlaceReplayInventoryItem(
-						    state.inventoryGrid,
-						    0,
-						    pickedItemState.inventoryWidth,
-						    pickedItemState.inventoryHeight)
-						    ? 0
-						    : FindReplayInventoryPlacement(state, pickedItemState);
-						if (targetCell >= 0 && state.inventory.size() < 40) {
-							const size_t inventoryIndex = state.inventory.size();
-							state.inventory.push_back({ 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState });
-							FillReplayInventoryGrid(state, targetCell, inventoryIndex, pickedItemState);
-						} else {
-							state.heldItemDefined = true;
-							state.heldItem = { 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState };
-						}
-						state.worldItemEntityId = 0;
-						accepted = true;
+							const int targetCell = CanPlaceReplayInventoryItem(
+							                           state.inventoryGrid,
+							                           0,
+							                           pickedItemState.inventoryWidth,
+							                           pickedItemState.inventoryHeight)
+							    ? 0
+							    : FindReplayInventoryPlacement(state, pickedItemState);
+							if (targetCell >= 0 && state.inventory.size() < 40) {
+								const size_t inventoryIndex = state.inventory.size();
+								state.inventory.push_back({ 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState });
+								FillReplayInventoryGrid(state, targetCell, inventoryIndex, pickedItemState);
+							} else {
+								state.heldItemDefined = true;
+								state.heldItem = { 0, 0, pickedItemSeed, pickedItemPrice, command.order.targetTick, pickedItemState };
+							}
+							state.worldItemEntityId = 0;
+							accepted = true;
 						}
 					}
 				}
@@ -17142,10 +17133,10 @@ bool ExecuteReplayFixture(
 				    : state.positionY;
 				const int distance = std::max(std::abs(originX - command.targetX), std::abs(originY - command.targetY));
 				const bool targetOccupied = (state.combatTargetEntityId != 0
-				        && state.combatTargetHitPoints > 0
-				        && state.combatTargetLevelId == state.levelId
-				        && state.combatTargetPositionX == command.targetX
-				        && state.combatTargetPositionY == command.targetY)
+				                                && state.combatTargetHitPoints > 0
+				                                && state.combatTargetLevelId == state.levelId
+				                                && state.combatTargetPositionX == command.targetX
+				                                && state.combatTargetPositionY == command.targetY)
 				    || (state.secondaryPlayerEntityId != 0
 				        && state.secondaryPlayerLife > 0
 				        && state.secondaryPlayerLevelId == state.levelId
@@ -17180,7 +17171,7 @@ bool ExecuteReplayFixture(
 					state.worldItemPrice = state.heldItem.price;
 					state.worldItemState = state.heldItem.state;
 					state.heldItemDefined = false;
-					state.heldItem = { };
+					state.heldItem = {};
 					accepted = true;
 				}
 			} else if (command.kind == "DropItem") {
@@ -17192,10 +17183,10 @@ bool ExecuteReplayFixture(
 				    : state.positionY;
 				const int distance = std::max(std::abs(originX - command.targetX), std::abs(originY - command.targetY));
 				const bool targetOccupied = (state.combatTargetEntityId != 0
-				        && state.combatTargetHitPoints > 0
-				        && state.combatTargetLevelId == state.levelId
-				        && state.combatTargetPositionX == command.targetX
-				        && state.combatTargetPositionY == command.targetY)
+				                                && state.combatTargetHitPoints > 0
+				                                && state.combatTargetLevelId == state.levelId
+				                                && state.combatTargetPositionX == command.targetX
+				                                && state.combatTargetPositionY == command.targetY)
 				    || (state.secondaryPlayerEntityId != 0
 				        && state.secondaryPlayerLife > 0
 				        && state.secondaryPlayerLevelId == state.levelId

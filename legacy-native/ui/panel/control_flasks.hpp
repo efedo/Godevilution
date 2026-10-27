@@ -6,7 +6,6 @@
  * Interface for flask indicators.
  */
 
-
 #include <optional>
 
 #include "engine/gfx/surface.hpp"

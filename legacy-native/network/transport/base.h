@@ -6,7 +6,6 @@
  * Interface for base network transport.
  */
 
-
 #include <array>
 #include <cstdint>
 #include <deque>
@@ -15,10 +14,10 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include "network/transport/abstract_net.h"
-#include "network/transport/packet.h"
 #include "network/protocol/multi.h"
 #include "network/storm/storm_net.hpp"
+#include "network/transport/abstract_net.h"
+#include "network/transport/packet.h"
 
 namespace devilution {
 namespace net {

@@ -4,7 +4,6 @@
  * Implementation of record reading from data files.
  */
 
-
 #include "data/record_reader.hpp"
 
 namespace devilution {

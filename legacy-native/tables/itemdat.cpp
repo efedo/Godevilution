@@ -11,8 +11,8 @@
 
 #include <fmt/format.h>
 
-#include "data/mpq_file.hpp"
 #include "data/iterators.hpp"
+#include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
 #include "game/events/event_bus.hpp"
 #include "tables/spelldat.h"

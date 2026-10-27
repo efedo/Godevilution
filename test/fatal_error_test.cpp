@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "application/fatal_error.h"
 #include "application/diablo.h"
+#include "application/fatal_error.h"
 
 using namespace devilution;
 

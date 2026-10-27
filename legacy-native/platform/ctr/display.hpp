@@ -6,7 +6,6 @@
  * Interface for display and window management.
  */
 
-
 #include <cstdint>
 
 uint32_t Get3DSScalingFlag(bool fitToScreen, int width, int height);

@@ -6,7 +6,6 @@
  * Interface for sound effect type enumerations.
  */
 
-
 #include <cstdint>
 
 #include <magic_enum/magic_enum.hpp>

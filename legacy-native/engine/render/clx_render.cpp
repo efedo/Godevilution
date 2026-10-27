@@ -8,12 +8,12 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "engine/gfx/surface.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/blit_impl.hpp"
-#include "engine/gfx/surface.hpp"
 #include "utils/attributes.h"
-#include "utils/image/clx_decode.hpp"
 #include "utils/container/static_vector.hpp"
+#include "utils/image/clx_decode.hpp"
 
 #ifdef DEBUG_CLX
 #include <fmt/format.h>

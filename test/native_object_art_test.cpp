@@ -32,6 +32,7 @@
 #include "network/protocol/msg.h"
 #include "tables/objdat.h"
 #include "utils/paths.h"
+#include "utils/sdl/sdl_compat.h"
 
 namespace devilution {
 namespace {
@@ -41,7 +42,7 @@ struct NativeObjectSpec {
 	const char *stem;
 };
 
-constexpr std::array<NativeObjectSpec, 10> NativeObjects {{
+constexpr std::array<NativeObjectSpec, 10> NativeObjects { {
 	{ 1, "l1doors" },
 	{ 2, "l1doors" },
 	{ 5, "chest1" },
@@ -52,7 +53,7 @@ constexpr std::array<NativeObjectSpec, 10> NativeObjects {{
 	{ 54, "traphole" },
 	{ 57, "barrel" },
 	{ 58, "barrelex" },
-}};
+} };
 
 constexpr std::array<const char *, 8> NativeObjectStems {
 	"l1doors", "chest1", "chest2", "chest3", "sarc", "traphole", "barrel", "barrelex"
@@ -164,8 +165,8 @@ void WriteNativeFrame(std::ostream &output, ClxSprite sprite, uint32_t frameNumb
 	const int canvasWidth = nativeWidth + MaximumOpaqueRightSpill;
 	OwnedSurface first(canvasWidth, height);
 	OwnedSurface second(canvasWidth, height);
-	ASSERT_EQ(SDL_FillRect(first.surface, nullptr, FirstBackground), 0);
-	ASSERT_EQ(SDL_FillRect(second.surface, nullptr, SecondBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(first.surface, nullptr, FirstBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(second.surface, nullptr, SecondBackground), 0);
 	ClxDraw(first, { 0, height - 1 }, sprite);
 	ClxDraw(second, { 0, height - 1 }, sprite);
 
@@ -263,17 +264,17 @@ Object MakeNativeObject(const NativeObjectSpec &spec, const NativeObjectArt &ass
 
 void FillBackgrounds(OwnedSurface &first, OwnedSurface &second)
 {
-	ASSERT_EQ(SDL_FillRect(first.surface, nullptr, FirstBackground), 0);
-	ASSERT_EQ(SDL_FillRect(second.surface, nullptr, SecondBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(first.surface, nullptr, FirstBackground), 0);
+	ASSERT_EQ(SDL_FillSurfaceRect(second.surface, nullptr, SecondBackground), 0);
 }
 
 void RenderProbe(
-	std::ostream &output,
-	const NativeObjectSpec &spec,
-	std::string_view state,
-	std::string_view probe,
-	const Object &object,
-	Point tilePosition)
+    std::ostream &output,
+    const NativeObjectSpec &spec,
+    std::string_view state,
+    std::string_view probe,
+    const Object &object,
+    Point tilePosition)
 {
 	ASSERT_TRUE(object._oAnimData);
 	const ClxSprite sprite = object.currentSprite();

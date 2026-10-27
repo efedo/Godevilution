@@ -4,7 +4,6 @@
  * Implementation of game data file handling.
  */
 
-
 #include "data/mpq_file.hpp"
 
 #include <bitset>

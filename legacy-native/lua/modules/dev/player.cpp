@@ -4,7 +4,6 @@
  * Implementation of player.
  */
 
-
 #ifdef _DEBUG
 #include "lua/modules/dev/player.hpp"
 
@@ -15,11 +14,11 @@
 
 #include "application/debug.h"
 #include "engine/assets.hpp"
+#include "game/players/players.hpp"
 #include "lua/metadoc.hpp"
 #include "lua/modules/dev/player/gold.hpp"
 #include "lua/modules/dev/player/spells.hpp"
 #include "lua/modules/dev/player/stats.hpp"
-#include "game/players/players.hpp"
 
 namespace devilution {
 

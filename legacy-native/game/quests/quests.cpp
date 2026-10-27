@@ -11,35 +11,35 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/panel/control.hpp"
-#include "engine/cursor.h"
+#include "application/game_mode.hpp"
 #include "data/mpq_file.hpp"
 #include "data/record_reader.hpp"
+#include "engine/cursor.h"
 #include "engine/load/load_file.hpp"
+#include "engine/math/world_tile.hpp"
 #include "engine/random.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/math/world_tile.hpp"
-#include "application/game_mode.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/town.h"
 #include "game/levels/triggers.h"
-#include "ui/minitext.h"
 #include "game/missiles/missiles.hpp"
-#include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
-#include "persistence/options.h"
-#include "ui/panel/ui_panels.hpp"
 #include "game/stores/stores.hpp"
-#include "tables/townerdat.hpp"
 #include "game/towners/towners.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
+#include "persistence/options.h"
+#include "tables/townerdat.hpp"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/minitext.h"
+#include "ui/panel/control.hpp"
+#include "ui/panel/ui_panels.hpp"
 #include "utils/endian/endian_swap.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
 #include "utils/string/utf8.hpp"
-#include "network/protocol/legacy_world_state_policy.hpp"
 
 #ifdef _DEBUG
 #include "application/debug.h"
@@ -351,7 +351,7 @@ void CheckQuests()
 		if (setLevelNumber() == poisonWater._qslvl
 		    && poisonWater._qactive != QUEST_INIT
 		    && levelType() == poisonWater._qlvltype
-			&& MonsterPoolAdapter::ActiveMonsterCountValue() == 4
+		    && MonsterPoolAdapter::ActiveMonsterCountValue() == 4
 		    && poisonWater._qactive != QUEST_DONE) {
 			poisonWater._qactive = QUEST_DONE;
 			poisonWater._qlog = true; // even if the player skips talking to Pepin completely they should at least notice the water being purified once they cleanse the level
@@ -639,10 +639,10 @@ void ResyncQuests()
 		}
 		if (Quests[Q_LTBANNER]._qvar1 == 2) {
 			ObjChangeMapResync(
-				setPiece().position.x + setPiece().size.width - 2,
-				setPiece().position.y + setPiece().size.height - 2,
-				setPiece().position.x + setPiece().size.width + 1,
-				setPiece().position.y + setPiece().size.height + 1);
+			    setPiece().position.x + setPiece().size.width - 2,
+			    setPiece().position.y + setPiece().size.height - 2,
+			    setPiece().position.x + setPiece().size.width + 1,
+			    setPiece().position.y + setPiece().size.height + 1);
 			ObjChangeMapResync(setPiece().position.x, setPiece().position.y, setPiece().position.x + (setPiece().size.width / 2) + 2, setPiece().position.y + (setPiece().size.height / 2) - 2);
 			for (Object &object : ObjectPoolAdapter::ActiveObjectsRange())
 				SyncObjectAnim(object);

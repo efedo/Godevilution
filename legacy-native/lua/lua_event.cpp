@@ -4,7 +4,6 @@
  * Implementation of lua event.
  */
 
-
 #include "lua/lua_event.hpp"
 
 #include <optional>

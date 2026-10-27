@@ -6,7 +6,6 @@
  * Interface for vector and displacement math.
  */
 
-
 #include <cmath>
 #include <limits>
 

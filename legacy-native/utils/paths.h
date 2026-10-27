@@ -6,7 +6,6 @@
  * Interface for file path management.
  */
 
-
 #include <string>
 
 namespace devilution {

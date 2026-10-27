@@ -6,7 +6,6 @@
  * Interface for CEL to CLX format conversion.
  */
 
-
 #include <cstddef>
 #include <cstdint>
 

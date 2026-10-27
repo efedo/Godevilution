@@ -7,11 +7,11 @@
 
 #include <algorithm>
 
-#include "game/players/inv_iterators.hpp"
 #include "game/levels/dungeon_common.h"
-#include "persistence/options.h"
+#include "game/players/inv_iterators.hpp"
 #include "game/players/players.hpp"
 #include "network/protocol/legacy_item_policy.hpp"
+#include "persistence/options.h"
 #include "utils/algorithm/container.hpp"
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -98,10 +98,10 @@ bool DoPickup(Item item)
 
 void AutoPickup(const Player &player)
 {
-	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (!ShouldProcessLegacyAutoPickup(authoritative::GetServerBackedRuntime().IsConnected()))
 		return;
-	#endif
+#endif
 
 	if (&player != MyPlayer)
 		return;

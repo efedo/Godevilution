@@ -6,7 +6,6 @@
  * Interface for byte order swapping.
  */
 
-
 #include <cstdint>
 
 #ifdef USE_SDL3

@@ -6,7 +6,6 @@
  * Interface for game control bindings.
  */
 
-
 #include <cstdint>
 
 #ifdef USE_SDL3

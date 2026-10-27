@@ -4,7 +4,6 @@
  * Implementation of items.
  */
 
-
 #include "lua/modules/items.hpp"
 
 #include <string_view>
@@ -14,8 +13,8 @@
 
 #include "data/mpq_file.hpp"
 #include "game/items/items.hpp"
-#include "lua/metadoc.hpp"
 #include "game/players/players.hpp"
+#include "lua/metadoc.hpp"
 #include "tables/itemdat.h"
 #include "utils/string/utf8.hpp"
 

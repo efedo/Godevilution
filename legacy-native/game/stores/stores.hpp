@@ -13,12 +13,12 @@
 #include <utility>
 #include <vector>
 
-#include "ui/menu/ui_flags.hpp"
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/gfx/surface.hpp"
-#include "application/game_mode.hpp"
 #include "game/items/items.hpp"
+#include "ui/menu/ui_flags.hpp"
+#include "ui/panel/control.hpp"
 #include "utils/attributes.h"
 #include "utils/container/static_vector.hpp"
 

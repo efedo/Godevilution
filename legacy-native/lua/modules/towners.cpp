@@ -4,7 +4,6 @@
  * Implementation of towners.
  */
 
-
 #include "lua/modules/towners.hpp"
 
 #include <optional>
@@ -14,10 +13,10 @@
 #include <sol/sol.hpp>
 
 #include "engine/math/point.hpp"
-#include "lua/metadoc.hpp"
 #include "game/players/players.hpp"
 #include "game/stores/stores.hpp"
 #include "game/towners/towners.hpp"
+#include "lua/metadoc.hpp"
 
 namespace devilution {
 namespace {

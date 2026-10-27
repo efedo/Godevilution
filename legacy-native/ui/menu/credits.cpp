@@ -4,7 +4,6 @@
  * Implementation of credits screen.
  */
 
-
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -22,18 +21,18 @@
 #include <SDL.h>
 #endif
 
-#include "ui/menu/credits_lines.h"
-#include "ui/menu/diabloui.h"
-#include "ui/menu/support_lines.h"
-#include "ui/menu/ui_flags.hpp"
 #include "controls/input.h"
 #include "controls/menu_controls.h"
+#include "engine/gfx/surface.hpp"
+#include "engine/hwcursor.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/math/point.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/text_render.hpp"
-#include "engine/gfx/surface.hpp"
-#include "engine/hwcursor.hpp"
+#include "ui/menu/credits_lines.h"
+#include "ui/menu/diabloui.h"
+#include "ui/menu/support_lines.h"
+#include "ui/menu/ui_flags.hpp"
 #include "utils/display.h"
 #include "utils/is_of.hpp"
 #include "utils/language.h"

@@ -6,7 +6,6 @@
  * Interface for metadoc.
  */
 
-
 #include <cstdint>
 #include <optional>
 #include <string>

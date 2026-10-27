@@ -4,7 +4,6 @@
  * Implementation of display and window management.
  */
 
-
 #include "platform/ctr/display.hpp"
 #include <SDL.h>
 

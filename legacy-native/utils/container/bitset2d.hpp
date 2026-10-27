@@ -4,7 +4,6 @@
  * Interface for 2D bitset container.
  */
 
-
 #pragma once
 
 #include <bitset>

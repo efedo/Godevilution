@@ -4,7 +4,6 @@
  * Implementation of repl.
  */
 
-
 #ifdef _DEBUG
 #include "lua/repl.hpp"
 

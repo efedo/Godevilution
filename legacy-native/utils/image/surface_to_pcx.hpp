@@ -4,7 +4,6 @@
  * Interface for surface to PCX conversion.
  */
 
-
 #include <string>
 
 #ifdef USE_SDL3

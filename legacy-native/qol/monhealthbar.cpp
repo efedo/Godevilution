@@ -9,14 +9,14 @@
 
 #include <fmt/format.h>
 
-#include "ui/panel/control.hpp"
+#include "application/game_mode.hpp"
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/render/clx_render.hpp"
 #include "engine/render/primitive_render.hpp"
-#include "application/game_mode.hpp"
 #include "persistence/options.h"
+#include "ui/panel/control.hpp"
 #include "utils/language.h"
 #include "utils/string/str_cat.hpp"
 

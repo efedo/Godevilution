@@ -5,5 +5,4 @@
  * Interface for romfs.
  */
 
-
 void switch_romfs_init();

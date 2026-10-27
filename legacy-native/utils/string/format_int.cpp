@@ -4,7 +4,6 @@
  * Implementation of integer formatting.
  */
 
-
 #include "utils/string/format_int.hpp"
 
 #include <cstdint>

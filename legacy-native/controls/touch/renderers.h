@@ -6,7 +6,6 @@
  * Interface for renderers.
  */
 
-
 #include <cstdint>
 #include <optional>
 

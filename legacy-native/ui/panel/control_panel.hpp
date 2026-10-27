@@ -6,7 +6,6 @@
  * Interface for game control panel.
  */
 
-
 #include "engine/math/rectangle.hpp"
 #include "ui/panel/ui_panels.hpp"
 

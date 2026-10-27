@@ -4,7 +4,6 @@
  * Implementation of event handlers.
  */
 
-
 #include "controls/touch/event_handlers.h"
 
 #ifdef USE_SDL3
@@ -14,19 +13,19 @@
 #include <SDL.h>
 #endif
 
-#include "ui/panel/control.hpp"
+#include "application/diablo.h"
+#include "application/game_mode.hpp"
 #include "controls/player_controls.h"
 #include "engine/cursor.h"
-#include "application/diablo.h"
 #include "engine/render/primitive_render.hpp"
 #include "engine/render/world_renderer.h"
-#include "application/game_mode.hpp"
-#include "ui/menu_framework.h"
 #include "game/players/inventory.hpp"
+#include "game/stores/stores.hpp"
+#include "qol/stash.h"
+#include "ui/menu_framework.h"
+#include "ui/panel/control.hpp"
 #include "ui/panel/spell_book.hpp"
 #include "ui/panel/spell_list.hpp"
-#include "qol/stash.h"
-#include "game/stores/stores.hpp"
 #include "utils/is_of.hpp"
 #include "utils/sdl/sdl_compat.h"
 #include "utils/ui_fwd.h"

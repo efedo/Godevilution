@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include "engine/cursor.h"
-#include "engine/assets.hpp"
 #include "application/game_mode.hpp"
+#include "engine/assets.hpp"
+#include "engine/cursor.h"
 #include "persistence/pack.h"
 #include "tables/monstdat.h"
 #include "tables/playerdat.hpp"
@@ -1397,13 +1397,13 @@ TEST_F(NetPackTest, UnPackNetPlayer_invalid_townItemLevel)
 		if ((item._iCreateInfo & CF_TOWN) == 0)
 			continue;
 		const uint16_t createInfo = item._iCreateInfo;
-		const bool CurrentStoreManager.boyItem() = (item._iCreateInfo & CF_BOY) != 0;
+		const bool BoyItem = (item._iCreateInfo & CF_BOY) != 0;
 		item._iCreateInfo &= ~CF_LEVEL;
-		item._iCreateInfo |= CurrentStoreManager.boyItem() ? MyPlayer->getMaxCharacterLevel() + 1 : 31;
+		item._iCreateInfo |= BoyItem ? MyPlayer->getMaxCharacterLevel() + 1 : 31;
 		ASSERT_FALSE(TestNetPackValidation());
 		item._iCreateInfo = createInfo;
 
-		size_t &count = CurrentStoreManager.boyItem() ? boyCount : otherCount;
+		size_t &count = BoyItem ? boyCount : otherCount;
 		count++;
 	}
 	ASSERT_GT(boyCount, 0);

@@ -6,7 +6,6 @@
  * Interface for string_view hashing.
  */
 
-
 #include <cstdint>
 #include <string>
 #include <string_view>

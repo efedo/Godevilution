@@ -5,7 +5,6 @@
  * Interface for player.
  */
 
-
 #ifdef _DEBUG
 
 #include <sol/sol.hpp>

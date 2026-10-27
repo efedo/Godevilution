@@ -103,10 +103,10 @@ struct LoopbackSocketPair {
 };
 
 bool WriteBytesWithin(
-	tcp::socket &socket,
-	const uint8_t *bytes,
-	std::size_t size,
-	std::chrono::steady_clock::time_point deadline)
+    tcp::socket &socket,
+    const uint8_t *bytes,
+    std::size_t size,
+    std::chrono::steady_clock::time_point deadline)
 {
 	asio::error_code modeError;
 	const bool wasNonBlocking = socket.non_blocking();
@@ -132,10 +132,10 @@ bool WriteBytesWithin(
 }
 
 std::size_t ReadSomeWithin(
-	tcp::socket &socket,
-	uint8_t *bytes,
-	std::size_t size,
-	std::chrono::steady_clock::time_point deadline)
+    tcp::socket &socket,
+    uint8_t *bytes,
+    std::size_t size,
+    std::chrono::steady_clock::time_point deadline)
 {
 	asio::error_code modeError;
 	const bool wasNonBlocking = socket.non_blocking();
@@ -159,13 +159,13 @@ std::size_t ReadSomeWithin(
 class ScopedPeerThread {
 public:
 	explicit ScopedPeerThread(std::function<void()> function)
-		: thread_([this, function = std::move(function)]() mutable {
-			try {
-				function();
-			} catch (...) {
-				error_ = std::current_exception();
-			}
-		})
+	    : thread_([this, function = std::move(function)]() mutable {
+		    try {
+			    function();
+		    } catch (...) {
+			    error_ = std::current_exception();
+		    }
+	    })
 	{
 	}
 
@@ -216,9 +216,9 @@ TEST(AuthoritativeEnvelopeCodec, ReadsPayloadWhenServerFragmentsTheFrame)
 		const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
 		for (uint8_t byte : frame) {
 			if (!WriteBytesWithin(sockets.server, &byte, 1, deadline)) {
-			writerFailed = true;
-			return;
-		}
+				writerFailed = true;
+				return;
+			}
 		}
 		sockets.server.close();
 	});

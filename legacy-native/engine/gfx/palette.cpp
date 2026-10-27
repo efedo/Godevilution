@@ -18,13 +18,13 @@
 #include <SDL.h>
 #endif
 
-#include "engine/gfx/backbuffer_state.hpp"
+#include "application/headless_mode.hpp"
 #include "engine/demomode.h"
+#include "engine/gfx/backbuffer_state.hpp"
 #include "engine/gfx/graphics_pipeline.h"
+#include "engine/hwcursor.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/random.hpp"
-#include "application/headless_mode.hpp"
-#include "engine/hwcursor.hpp"
 #include "persistence/options.h"
 #include "utils/display.h"
 #include "utils/palette_blending.hpp"

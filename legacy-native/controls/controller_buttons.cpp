@@ -4,7 +4,6 @@
  * Implementation of controller button definitions.
  */
 
-
 #include "controller_buttons.h"
 
 namespace devilution {

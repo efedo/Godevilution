@@ -6,7 +6,6 @@
  * Interface for panel type definitions.
  */
 
-
 #include <cstdint>
 
 namespace devilution {
