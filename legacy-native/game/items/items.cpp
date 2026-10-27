@@ -1246,6 +1246,21 @@ void SaveItemAffix(const Player &player, Item &item, const PLStruct &affix)
 	}
 }
 
+/**
+ * @brief Rolls a configured affix chance with the vanilla dice for the shipped values.
+ *
+ * Vanilla rolls one in four for a prefix and two in three for a suffix or onlygood; a percent roll
+ * with the same odds draws differently, so items regenerated from vanilla seeds would change.
+ */
+bool RollAffixChance(int percent)
+{
+	if (percent == 25)
+		return FlipCoin(4);
+	if (percent == 66)
+		return !FlipCoin(3);
+	return GenerateRnd(100) < percent;
+}
+
 std::optional<const PLStruct *> SelectAffix(
     const std::vector<PLStruct> &affixList,
     AffixItemType type,
@@ -1365,8 +1380,8 @@ void GetItemPowerPrefixAndSuffix(
     tl::function_ref<void(const PLStruct &suffix)> suffixFound)
 {
 	const auto &cfg = CurrentItemGenerationConfig;
-	bool allocatePrefix = FlipCoin(4);
-	bool allocateSuffix = !FlipCoin(3);
+	bool allocatePrefix = RollAffixChance(cfg.prefixPercent);
+	bool allocateSuffix = RollAffixChance(cfg.suffixPercent);
 	if (!allocatePrefix && !allocateSuffix) {
 		// At least try and give each item a prefix or suffix
 		if (FlipCoin())
@@ -1375,7 +1390,7 @@ void GetItemPowerPrefixAndSuffix(
 			allocateSuffix = true;
 	}
 	goodorevil goe = GOE_ANY;
-	if (!onlygood && !FlipCoin(3))
+	if (!onlygood && RollAffixChance(cfg.onlygoodChance))
 		onlygood = true;
 
 	if (allocatePrefix) {
@@ -1578,7 +1593,7 @@ _item_indexes RndUItem(Monster *monster)
 
 _item_indexes RndAllItems()
 {
-	if (GenerateRnd(100) > 25)
+	if (GenerateRnd(100) >= 100 - CurrentItemGenerationConfig.goldPercent) // Vanilla: > 25
 		return IDI_GOLD;
 
 	int itemMaxLevel = ItemsGetCurrlevel() * 2;
@@ -3501,7 +3516,7 @@ _item_indexes RndItemForMonsterLevel(int8_t monsterLevel)
 	if (GenerateRnd(100) >= 100 - cfg.noDropPercent)
 		return IDI_NONE;
 
-	if (GenerateRnd(100) > 25)
+	if (GenerateRnd(100) >= 100 - CurrentItemGenerationConfig.goldPercent) // Vanilla: > 25
 		return IDI_GOLD;
 
 	return GetItemIndexForDroppableItem(true, [&monsterLevel](const ItemData &item) {

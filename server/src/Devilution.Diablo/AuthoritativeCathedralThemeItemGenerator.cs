@@ -1091,8 +1091,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPlayerContext? player)
     {
-        var allocatePrefix = GenerateRnd(random, 100, "GetItemPower prefix allocation") < catalog.Rules.PrefixPercent;
-        var allocateSuffix = GenerateRnd(random, 100, "GetItemPower suffix allocation") < catalog.Rules.SuffixPercent;
+        var allocatePrefix = RollAffixChance(random, catalog.Rules.PrefixPercent, "GetItemPower prefix allocation");
+        var allocateSuffix = RollAffixChance(random, catalog.Rules.SuffixPercent, "GetItemPower suffix allocation");
         if (!allocatePrefix && !allocateSuffix) {
             if (GenerateRnd(random, 2, "GetItemPower fallback allocation") == 0)
                 allocatePrefix = true;
@@ -1101,7 +1101,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         }
         var effectiveOnlyGood = onlyGood;
         if (!effectiveOnlyGood)
-            effectiveOnlyGood = GenerateRnd(random, 100, "GetItemPower onlygood") < catalog.Rules.OnlyGoodChance;
+            effectiveOnlyGood = RollAffixChance(random, catalog.Rules.OnlyGoodChance, "GetItemPower onlygood");
         var goe = GoeAny;
         AuthoritativeCathedralNativeAffixDefinition? prefix = null;
         AuthoritativeCathedralNativeAffixDefinition? suffix = null;
@@ -1733,7 +1733,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int currentLevel,
         AuthoritativeCathedralThemeItemCatalog catalog)
     {
-        if (!onlyGood && GenerateRnd(random, 100, "RndAllItems gold") < catalog.Rules.GoldPercent)
+        if (!onlyGood && GenerateRnd(random, 100, "RndAllItems gold") >= 100 - catalog.Rules.GoldPercent)
             return FindGoldItem(catalog);
         return SelectDroppable(random, currentLevel, onlyGood, -1, -1, catalog, onlyGood);
     }
@@ -1911,6 +1911,17 @@ public static class AuthoritativeCathedralThemeItemGenerator
         }
         return (width == 0 ? 0 : width - 2) < 254;
     }
+
+    /// <summary>
+    /// Rolls a configured affix chance with the vanilla dice for the shipped values, as native
+    /// RollAffixChance does: one in four for 25 and two in three for 66.
+    /// </summary>
+    private static bool RollAffixChance(AuthoritativeLegacyRandom random, int percent, string operation)
+        => percent switch {
+            25 => GenerateRnd(random, 4, operation) == 0,
+            66 => GenerateRnd(random, 3, operation) != 0,
+            _ => GenerateRnd(random, 100, operation) < percent,
+        };
 
     private static int GenerateRnd(AuthoritativeLegacyRandom random, int limit, string operation)
     {

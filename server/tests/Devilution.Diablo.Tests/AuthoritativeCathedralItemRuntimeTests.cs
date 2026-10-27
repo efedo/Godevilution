@@ -299,17 +299,16 @@ internal static class AuthoritativeCathedralItemRuntimeTestData
             rules: forceDrop
                 ? sourceCatalog.Rules with { NoDropPercent = 0, GoldPercent = 100 }
                 : null);
-        if (forceDrop) {
-            var gold = AuthoritativeCathedralMonsterLootGeneratorTests.Catalog().Items.Single(row => row.NativeItemIndex == 0);
-            gold = gold with {
-                AnimationFrameCount = itemCatalog.CursorAnimations[gold.CursorGraphic].FrameCount,
-                AnimationTicksPerFrame = itemCatalog.CursorAnimations[gold.CursorGraphic].TicksPerFrame,
-            };
-            itemCatalog = new(itemCatalog.Items.Select(row => row.NativeItemIndex == 0 ? gold : row),
-                itemCatalog.Prefixes, itemCatalog.Suffixes, itemCatalog.Uniques, itemCatalog.Spells,
-                itemCatalog.CursorAnimations, itemCatalog.GlyphWidths, itemCatalog.Cursors,
-                itemCatalog.AlwaysMagicMiscIds, itemCatalog.Rules, itemCatalog.ReplacementGlyphWidth);
-        }
+        // Native gold selection needs a usable IDI_GOLD row whenever a seed draws gold.
+        var gold = AuthoritativeCathedralMonsterLootGeneratorTests.Catalog().Items.Single(row => row.NativeItemIndex == 0);
+        gold = gold with {
+            AnimationFrameCount = itemCatalog.CursorAnimations[gold.CursorGraphic].FrameCount,
+            AnimationTicksPerFrame = itemCatalog.CursorAnimations[gold.CursorGraphic].TicksPerFrame,
+        };
+        itemCatalog = new(itemCatalog.Items.Select(row => row.NativeItemIndex == 0 ? gold : row),
+            itemCatalog.Prefixes, itemCatalog.Suffixes, itemCatalog.Uniques, itemCatalog.Spells,
+            itemCatalog.CursorAnimations, itemCatalog.GlyphWidths, itemCatalog.Cursors,
+            itemCatalog.AlwaysMagicMiscIds, itemCatalog.Rules, itemCatalog.ReplacementGlyphWidth);
         var bindings = new Dictionary<int, AuthoritativeCathedralItemContentBinding> {
             [0] = new(0, 1001, "gold"),
             [1] = new(1, 1002, "short_sword"),

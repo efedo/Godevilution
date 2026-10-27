@@ -15,6 +15,13 @@ contracts stay in their existing guides.
   XP, MSVC, PS4, PS5, Xbox, Xbox One, Amiga, Vita, Miyoo, OpenDingux, RetroFW);
   Linux SDL1 and macOS now build without packaging. Six pre-existing native test
   failures (pack, writehero, Wirt purchase, timedemo) remain open.
+- Vanilla item regeneration: the `item_generation.tsv` prefix, suffix, onlygood
+  and gold rolls again draw like vanilla for the shipped values (native and the
+  C# Cathedral generators), so items rebuilt from vanilla seeds match; native now
+  applies `alwaysMagicMisc` (case-insensitive, unknown entries fatal). Fixes the
+  pack, writehero and Wirt purchase tests. Skip the vanilla timedemo, which
+  diverges (the warrior dies on level 1). Force-include `<fmt/format.h>` for
+  SDL_audiolib so macOS builds with current Homebrew fmt.
 
 ## 2026-10-25
 

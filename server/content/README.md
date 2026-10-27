@@ -3415,7 +3415,9 @@ unique-item schema, including stable unique and base-item symbols.
 `item_affixes.tsv` must additionally use its complete ordered normalized-affix
 schema with explicit generation metadata. `item_generation.tsv` must use its
 complete ordered eleven-column schema, including the explicit always-magic misc
-list.
+list. Prefix, suffix and onlygood chances of 25 and 66 roll vanilla's one-in-four
+and two-in-three dice; other values roll a percentage. Gold drops when
+`GenerateRnd(100) >= 100 - goldPercent`, as in vanilla.
 `native_missile_aliases.tsv` must use its complete ordered alias schema, and
 `native_missiles.tsv` must additionally use its complete ordered native-missile
 metadata schema, while `native_missile_sprites.tsv` must use its complete ordered
