@@ -20,8 +20,9 @@ contracts stay in their existing guides.
   C# Cathedral generators), so items rebuilt from vanilla seeds match; native now
   applies `alwaysMagicMisc` (case-insensitive, unknown entries fatal). Fixes the
   pack, writehero and Wirt purchase tests. Skip the vanilla timedemo, which
-  diverges (the warrior dies on level 1). Force-include `<fmt/format.h>` for
-  SDL_audiolib so macOS builds with current Homebrew fmt.
+  diverges (the warrior dies on level 1). Use `<fmt/format.h>` in SDL_audiolib
+  (force-included) and in native files that call `fmt::format`, so macOS builds
+  with current Homebrew fmt.
 
 ## 2026-10-25
 
