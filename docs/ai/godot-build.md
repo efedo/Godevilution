@@ -56,9 +56,11 @@ Gold and named equipment/belt slots; life and mana follow the native formulas.
 Every Journey also requires native scene and player draws in Town and on each
 floor (native residents in Town when the resident pack is set), and drives the
 Hero (attributes, class skill), Items (weapon to the inventory and back) and
-Trade (Smith buy and sell) panels with real clicks. `-Visible` runs the Journey
-windowed and saves `native-depth-NN-L<n>.png` and `native-panel-*.png` in the
-session directory.
+Trade (Smith buy and sell) panels with real clicks. It then plays the Town
+controls: Escape after the Hero panel readied a skill, a floor click walk, a held
+WASD walk of at least three tiles, and ten G presses to brightness 50 and back.
+`-Visible` runs the Journey windowed and saves `native-depth-NN-L<n>.png`,
+`native-panel-*.png` and `native-brightness-{0,50}.png` in the session directory.
 The four art importers below also accept `--archive <DIABDAT.MPQ> --assets-directory assets`
 in place of `--source-root`.
 

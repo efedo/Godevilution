@@ -7,6 +7,14 @@ contracts stay in their existing guides.
 
 ## 2026-10-26
 
+- Playtest controls (batch 1.4): left click on the floor walks instead of casting
+  the class skill (the spell selector's fallback made every floor click a cast);
+  holding the button or a WASD key keeps walking (WASD are now screen-relative);
+  left click attacks monsters and right click casts the readied spell on empty
+  tiles. G / Shift+G add DevilutionX's brightness tone curve, saved per user.
+  World art samples nearest-pixel. The launcher reads the server log as one string
+  so a partly written log no longer fails port detection.
+
 - Native CI repair: format `legacy-native/` and `test/` with clang-format 18;
   build `replay_fixture.cpp` only into `replay_test` (3DS); fall back to
   `app_fatal` in the content manifest without exceptions (Switch); fix stale test

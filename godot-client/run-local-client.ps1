@@ -2128,7 +2128,8 @@ try {
             $persistence = $null
             for ($attempt = 0; $attempt -lt 120; $attempt++) {
                 if ($serverProcess.HasExited) { throw "Authoritative server exited during startup. See $stderrPath" }
-                $output = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
+                # A [string] keeps -match scalar, so a partly written log still sets $Matches.
+                $output = [string](Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue)
                 if ($output -match 'listening on [^:]+:(\d+)') { $actualPort = [int]$Matches[1] }
                 if ($output -match 'Content manifest: ([0-9a-fA-F]{64})') { $contentHash = $Matches[1] }
                 if ($output -match 'Ruleset identity: ([0-9a-fA-F]{64})') { $rulesetHash = $Matches[1] }

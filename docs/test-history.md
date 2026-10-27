@@ -9,6 +9,17 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-26 — Playtest controls and brightness
+
+After the user's first playtest found Town too dark and movement unreliable, the
+Warrior Journey plays the Town controls. `test-godot-native-depth-progression.ps1
+-TargetDepth 1` passed headless and with `-Visible`: Escape disarmed the readied
+Repair skill, a floor click walked to (60, 67), holding W walked 4 tiles, and
+brightness 50 raised the world's mean luminance from 0.12 to 0.22. New
+`NativeBrightnessTests` pin the native tone curve and `ScreenDirectionMovementTests`
+the WASD directions; the client protocol suite passes. Native brightness 0 stays
+the default; the user playtest is pending.
+
 ### 2026-10-25 — Rendered Town to L4
 
 `test-godot-native-depth-progression.ps1 -TargetDepth 4 -TestParticipant

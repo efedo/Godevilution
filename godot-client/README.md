@@ -75,9 +75,13 @@ the owned host. This local profile starts in town with seed 0 and unchanged base
 content. Normal single-player and preview launchers keep their original saves.
 
 The responsive HUD separates Hero, Items, Trade, Stash, and World tabs from the
-world view (minimum window 960x600). WASD/arrows move; Ctrl+left click requests a
-step toward a tile without casting. Ordinary left click retains interaction or
-selected-spell casting, and right click attacks a target. Q/E selects spell sources.
+world view (minimum window 960x600). Left click walks to a tile along a native path
+(holding the button keeps walking toward the cursor), attacks a monster, or
+interacts. Right click attacks a monster or casts the readied spell on an empty
+tile. Picking a spell in the Hero panel or with Q/E makes left click cast it until
+Escape. WASD walk screen-relative while held; arrows take one grid step. G and
+Shift+G step the DevilutionX brightness option (0 is the native palette, saved in
+`user://settings.cfg`; acceptance runs keep 0). World art draws pixel-exact.
 The always-visible Quick use belt row and keys 1–8 use the matching belt slot
 without changing item or spell selection; the server remains authoritative for
 whether use is allowed in the current context.

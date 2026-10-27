@@ -49,7 +49,8 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   `run-godot-client.ps1` builds them, with the art, on first launch and starts native Town.
   One all-class profile offers Warrior, Rogue and Sorcerer; class-bound profiles still load.
   Its headless Warrior journeys reach L1-L4 and back with fresh-host resume (batch 1.3);
-  a windowed run draws Town and L1-L4 natively and uses the Hero, Items and Trade panels (batch 1.4).
+  a windowed run draws Town and L1-L4 natively and uses the Hero, Items and Trade panels (batch 1.4);
+  click and held WASD walking and the DevilutionX brightness option followed the first playtest.
 - The pure MPQ-free Town family matches all 191 native cases. Additive format-5
   Warrior/Sorcerer profiles now compile semantic Town inputs and canonical
   residents, retain separate 112x112 fine/special and 40x40 coarse/protected

@@ -95,6 +95,13 @@ if ($allClass) {
         ($Visible -and @($panels.Captures).Count -lt 3)) {
         throw 'The Warrior Journey lacks its Hero, Items and Trade panel evidence.'
     }
+    # Click walk, held WASD walk and the native brightness keys in Town.
+    $controls = $journey.NativeControls
+    if ($null -eq $controls -or $controls.SpellDisarmed -ne $true -or $controls.ClickWalked -ne $true -or
+        $controls.HeldWalkTiles -lt 3 -or $controls.Brightness -ne 50 -or
+        ($Visible -and $controls.BrightLuminance -le $controls.DarkLuminance)) {
+        throw 'The Warrior Journey lacks its walking and brightness control evidence.'
+    }
     if ($Visible) { Write-Output "Floor captures: $sessionDirectory" }
 } else {
     if ($journey.Passed -ne $true -or $journey.LevelId -ne 0 -or $null -eq $journey.NativeDepthProgression) {

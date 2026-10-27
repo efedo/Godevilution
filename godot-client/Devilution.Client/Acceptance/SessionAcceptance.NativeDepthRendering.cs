@@ -1,3 +1,4 @@
+using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
 
@@ -151,6 +152,114 @@ public partial class SessionAcceptance
         GD.Print($"Native Warrior panels passed: skill={skill}; smith={bought?.ToString() ?? "none affordable"}; gold={goldBefore}->{goldAfterBuy}->{goldAfterSell}");
         return new NativeWarriorPanels(attributes, skill, weapon.ItemSeed, bought, cheapest.Item?.Price ?? 0,
             goldBefore, goldAfterBuy, goldAfterSell, residents, captures.ToArray());
+    }
+
+    private sealed record NativeWarriorControls(bool SpellDisarmed, int ClickWalkX, int ClickWalkY, bool ClickWalked,
+        string HeldWalkKey, int HeldWalkTiles, int Brightness, double? DarkLuminance, double? BrightLuminance);
+
+    /**
+     * Plays the Town controls the user reported: Escape returns left click to walking after
+     * the Hero panel readied a skill, a floor click walks there, a held WASD key keeps walking,
+     * and G / Shift+G step the native brightness.
+     */
+    private async Task<NativeWarriorControls> VerifyNativeWarriorControlsAsync(Main main, string directory)
+    {
+        Require(main.ObservedSpellSourceArmed, "Picking a Hero spell source did not arm left-click casting.");
+        await PressAcceptanceKey(Key.Escape);
+        Require(!main.ObservedSpellSourceArmed, "Escape did not return left click to walking.");
+
+        // A floor click two or three tiles away walks there along a native path.
+        var snapshot = main.ObservedSnapshot!;
+        var player = snapshot.Players.Single();
+        var geometry = DepthGeometry(main, 0);
+        var occupied = snapshot.Objects.Where(item => item.LevelId == 0).Select(item => (item.PositionX, item.PositionY))
+            .Concat(snapshot.WorldItems.Where(item => item.LevelId == 0).Select(item => (item.PositionX, item.PositionY)))
+            .Concat(snapshot.Monsters.Where(item => item.LevelId == 0).Select(item => (item.PositionX, item.PositionY)))
+            .Concat(AuthoritativeWorldDestinationSelector.GetDestinations(snapshot).Select(item => (item.X, item.Y)))
+            .Concat(geometry.WarpTriggers.Select(item => (item.TriggerX, item.TriggerY))).ToHashSet();
+        bool Open(int x, int y) => x >= 0 && y >= 0 && x < geometry.Width && y < geometry.Height
+            && !geometry.BlockedCells.Contains(y * geometry.Width + x)
+            && !geometry.StaticObjectBlockedCells.Contains(y * geometry.Width + x) && !occupied.Contains((x, y));
+        var walk = Enumerable.Range(-3, 7)
+            .SelectMany(dx => Enumerable.Range(-3, 7).Select(dy => (X: player.PositionX + dx, Y: player.PositionY + dy)))
+            .Where(cell => Math.Max(Math.Abs(cell.X - player.PositionX), Math.Abs(cell.Y - player.PositionY)) >= 2
+                && Open(cell.X, cell.Y) && Open((cell.X + player.PositionX) / 2, (cell.Y + player.PositionY) / 2))
+            .OrderByDescending(cell => Math.Abs(cell.X - player.PositionX) + Math.Abs(cell.Y - player.PositionY)).First();
+        await SubmitNativeWarriorCommandAsync(main, "Walk to a clicked floor tile", () => ClickWorld(main, walk.X, walk.Y));
+        await Until(() => main.ObservedSnapshot!.Players.Single() is { } walker
+                && walker.PositionX == walk.X && walker.PositionY == walk.Y && Settled(main),
+            $"A left click on floor tile ({walk.X}, {walk.Y}) did not walk there.", 10);
+
+        // Holding a WASD key keeps walking until it is released.
+        var heldKey = "none";
+        var heldTiles = 0;
+        foreach (var key in new[] { Key.W, Key.S, Key.A, Key.D }) {
+            var start = main.ObservedSnapshot!.Players.Single();
+            GetViewport().GuiReleaseFocus();
+            Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
+            var holding = System.Diagnostics.Stopwatch.StartNew();
+            while (holding.Elapsed.TotalSeconds < 3) {
+                await Frame();
+                var held = main.ObservedSnapshot!.Players.Single();
+                if (Math.Max(Math.Abs(held.PositionX - start.PositionX), Math.Abs(held.PositionY - start.PositionY)) >= 3)
+                    break;
+            }
+            Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
+            await Until(() => Settled(main), "The held walk did not stop after the key was released.", 5);
+            var end = main.ObservedSnapshot!.Players.Single();
+            var tiles = Math.Max(Math.Abs(end.PositionX - start.PositionX), Math.Abs(end.PositionY - start.PositionY));
+            if (tiles > heldTiles) {
+                heldTiles = tiles;
+                heldKey = key.ToString();
+            }
+            if (heldTiles >= 3)
+                break;
+        }
+        Require(heldTiles >= 3, $"Holding a WASD key walked at most {heldTiles} tiles.");
+
+        // G brightens by one native step per press and Shift+G restores the native palette.
+        double? dark = null;
+        double? bright = null;
+        if (NativeWarriorVisible)
+            dark = await CaptureWorldLuminance(main, System.IO.Path.Combine(directory, "native-brightness-0.png"));
+        for (var step = 0; step < 10; step++)
+            await PressAcceptanceKey(Key.G);
+        var brightness = main.ObservedWorldBrightness;
+        Require(brightness == 50, $"Ten G presses set brightness {brightness}, not 50.");
+        if (NativeWarriorVisible) {
+            bright = await CaptureWorldLuminance(main, System.IO.Path.Combine(directory, "native-brightness-50.png"));
+            Require(bright > dark, $"Brightness 50 did not brighten the world ({dark} -> {bright}).");
+        }
+        for (var step = 0; step < 10; step++) {
+            GetViewport().GuiReleaseFocus();
+            Input.ParseInputEvent(new InputEventKey { Keycode = Key.G, PhysicalKeycode = Key.G, ShiftPressed = true, Pressed = true });
+            await Frame();
+            Input.ParseInputEvent(new InputEventKey { Keycode = Key.G, PhysicalKeycode = Key.G, ShiftPressed = true, Pressed = false });
+            await Frame();
+        }
+        Require(main.ObservedWorldBrightness == 0, "Shift+G did not return to the native palette.");
+        var result = new NativeWarriorControls(true, walk.X, walk.Y, true, heldKey, heldTiles, brightness, dark, bright);
+        GD.Print($"Native Warrior controls passed: {result}");
+        return result;
+    }
+
+    /** Saves a capture and returns the world area's mean luminance. */
+    private async Task<double> CaptureWorldLuminance(Main main, string path)
+    {
+        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        using var image = GetViewport().GetTexture().GetImage();
+        Require(image.SavePng(path) == Error.Ok, "Could not save visible acceptance evidence.");
+        var area = ((Control)main.FindChild("WorldArea", true, false)).GetGlobalRect();
+        var total = 0.0;
+        var count = 0;
+        for (var y = (int)area.Position.Y; y < (int)area.End.Y; y += 4) {
+            for (var x = (int)area.Position.X; x < (int)area.End.X; x += 4) {
+                var color = image.GetPixel(x, y);
+                total += 0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B;
+                count++;
+            }
+        }
+        return count == 0 ? 0 : total / count;
     }
 
     /** Runs one real-control action; a clock-gated TooLate refusal changes nothing, so it is repeated. */

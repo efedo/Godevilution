@@ -219,6 +219,8 @@ public partial class Main
         observedEventBatchCount = 0;
         snapshotRevision = 0;
         selectedSpellSourceKey = null;
+        spellSourceArmed = false;
+        heldMouseWalk = false;
         ObservedLastQueuedSequence = 0;
         localSessionWarning = null;
         bookmarkRetrySeconds = 0;

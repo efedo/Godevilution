@@ -28,6 +28,8 @@ public partial class Main : Node2D
     private Task? reconnectTask;
     private PendingConnectionError? pendingConnectionError;
     private string? selectedSpellSourceKey;
+    // A spell picked in the Hero panel or with Q/E arms left click to cast it until Escape.
+    private bool spellSourceArmed;
     private string? resumeTokenPath;
     private bool persistLocalSession;
     private string? localSessionWarning;
@@ -56,6 +58,8 @@ public partial class Main : Node2D
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal bool ObservedSpellSourceArmed => spellSourceArmed;
+    internal int ObservedWorldBrightness => world?.Brightness ?? 0;
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
@@ -219,6 +223,7 @@ public partial class Main : Node2D
         world = new WorldPresentation();
         AddChild(worldFrame);
         worldFrame.AddChild(world);
+        LoadBrightness();
         hud = new HudPresentation();
         AddChild(hud);
         feedback = new PresentationFeedback();
@@ -488,6 +493,7 @@ public partial class Main : Node2D
             client?.IsConnected == true);
         DriveHeldEntityAttack();
         TrySubmitPendingWorldInteraction();
+        UpdateHeldWalk(delta);
         if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
                 client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
             var sequence = Queue(routeStep, automaticInput: true);
@@ -547,6 +553,11 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            if (toggle.Keycode == Key.G) {
+                AdjustBrightness(toggle.ShiftPressed ? -1 : 1);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
         }
 
         if (@event is InputEventKey key && key.Pressed && !key.Echo && client?.IsConnected == true) {
@@ -560,11 +571,19 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            if (key.Keycode == Key.Escape && spellSourceArmed) {
+                spellSourceArmed = false;
+                hud?.SetStatus("Left click walks again; right click casts the readied spell.");
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            // Arrows step one grid axis; WASD walk screen-relative and keep walking while held.
             var direction = key.Keycode switch {
-                Key.Up or Key.W => Vector2I.Up,
-                Key.Down or Key.S => Vector2I.Down,
-                Key.Left or Key.A => Vector2I.Left,
-                Key.Right or Key.D => Vector2I.Right,
+                Key.Up => Vector2I.Up,
+                Key.Down => Vector2I.Down,
+                Key.Left => Vector2I.Left,
+                Key.Right => Vector2I.Right,
+                Key.W or Key.A or Key.S or Key.D => HeldScreenWalkDirection(key.Keycode),
                 _ => Vector2I.Zero,
             };
             if (direction != Vector2I.Zero)
@@ -630,6 +649,9 @@ public partial class Main : Node2D
                             targetEntityId,
                             beforeClick);
                     }
+                } else if (CreateCastRequest(target) is { } readiedCast) {
+                    // Native right click casts the readied spell where no monster stands.
+                    Queue(new Command { CastRequested = readiedCast });
                 } else {
                     hud?.SetStatus("No authoritative combat target at that tile.");
                 }
@@ -642,6 +664,7 @@ public partial class Main : Node2D
 
             if (mouse.CtrlPressed) {
                 QueueMoveTo(target);
+                BeginHeldMouseWalk(target);
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -673,7 +696,7 @@ public partial class Main : Node2D
             var selectedSpellSource = AuthoritativeSpellSourceSelector.Select(
                 AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
                 selectedSpellSourceKey);
-            if (selectedSpellSource?.TargetingKind == SpellTargetingKind.WorldEntity
+            if (spellSourceArmed && selectedSpellSource?.TargetingKind == SpellTargetingKind.WorldEntity
                 && AuthoritativeTargetSelector.SelectWorldEntityTarget(
                     model.Snapshot,
                     player?.EntityId ?? 0,
@@ -782,17 +805,17 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
-            var cast = CreateCastRequest(target);
-            if (cast is not null)
+            var cast = spellSourceArmed ? CreateCastRequest(target) : null;
+            if (cast is not null) {
                 Queue(new Command { CastRequested = cast });
-            else
-                Queue(new Command {
-                    MoveRequested = new MoveRequested {
-                        TargetCell = true,
-                        TargetX = target.X,
-                        TargetY = target.Y,
-                    },
-                });
+            } else if (world?.CombatTargetEntityIdAt(target) is { } meleeTargetEntityId) {
+                // Native left click on a monster attacks it.
+                heldEntityAttack.Reset();
+                Queue(new Command { AttackRequested = new AttackRequested { TargetEntityId = meleeTargetEntityId } });
+            } else {
+                QueueMoveTo(target);
+                BeginHeldMouseWalk(target);
+            }
         }
     }
 
@@ -974,9 +997,10 @@ public partial class Main : Node2D
             selectedSpellSourceKey,
             direction);
         selectedSpellSourceKey = source?.Key;
+        spellSourceArmed = source is not null;
         if (source is not null) {
             hud?.ClearItemSelection();
-            hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast; Q/E cycles)");
+            hud?.SetStatus($"Selected {source.DisplayName} (left click casts; Q/E cycles; Escape walks)");
         }
     }
 
@@ -986,9 +1010,10 @@ public partial class Main : Node2D
             AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
             sourceKey);
         selectedSpellSourceKey = source?.Key;
+        spellSourceArmed = source is not null;
         if (source is not null) {
             hud?.ClearItemSelection();
-            hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast)");
+            hud?.SetStatus($"Selected {source.DisplayName} (left click casts; Escape walks)");
         }
     }
 

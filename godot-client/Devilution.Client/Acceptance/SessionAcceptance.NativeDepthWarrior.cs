@@ -59,6 +59,7 @@ public partial class SessionAcceptance
             StartNativeWarriorDrawCapture(main);
             var draws = new List<NativeWarriorFloorDraw> { await VerifyNativeWarriorFloorDrawAsync(main, directory, 0) };
             var panels = await VerifyNativeWarriorPanelsAsync(main, directory);
+            var controls = await VerifyNativeWarriorControlsAsync(main, directory);
             await VisitNativeWarriorTownAsync(main);
             var floors = new List<NativeWarriorFloor>();
             for (uint depth = 1; depth <= target; depth++) {
@@ -94,7 +95,7 @@ public partial class SessionAcceptance
                 RulesetHash = identity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
                 LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY,
                 Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
-                NativeDraws = draws.ToArray(), NativePanels = panels,
+                NativeDraws = draws.ToArray(), NativePanels = panels, NativeControls = controls,
             });
             GD.Print($"Native Warrior Town/L1-L4 checkpoint passed; sequence={checkpoint.Sequence}");
             return;
