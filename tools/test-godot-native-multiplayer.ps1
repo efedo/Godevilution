@@ -1,10 +1,11 @@
-<# Batch 1.5b: two headless clients fight on native multiplayer L1, then both resume on a fresh host. #>
+<# Batch 1.5b: two clients fight on native multiplayer L1, then both resume on a fresh host. -Windowed shows both clients and saves each one's capture of its peer. #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)] [string]$ProfileDirectory,
     [string]$GodotExecutable,
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 1800,
-    [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug'
+    [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
+    [switch]$Windowed
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,7 +18,7 @@ $sessionDirectory = Join-Path $profileRoot ('sessions/native-multiplayer-' + [gu
 $launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $arguments = @{
     CathedralNativeTownProfileDirectory = $profileRoot; Multiplayer = $true
-    PersistenceMode = 'cohort'; Headless = $true; Automated = $true
+    PersistenceMode = 'cohort'; Headless = -not $Windowed; Automated = $true
     SessionDirectory = $sessionDirectory; QuitAfterSeconds = $QuitAfterSeconds
     ServerBuildConfiguration = $ServerBuildConfiguration
 }
@@ -39,7 +40,8 @@ foreach ($slot in 0, 1) {
     if ($evidence.Passed -ne $true -or $evidence.Slot -ne $slot + 1 -or $evidence.ClassId -ne $slot -or
         $evidence.PeerClassId -ne 1 - $slot -or $evidence.LevelId -ne 1 -or
         $evidence.PeerEntityId -ne $journey[1 - $slot].EntityId -or
-        $evidence.Fight.ExperienceAfter -le $evidence.Fight.ExperienceBefore) {
+        $evidence.Fight.ExperienceAfter -le $evidence.Fight.ExperienceBefore -or
+        ($Windowed -and -not $evidence.PeerDraw.Capture)) {
         throw "Player $($slot + 1) lacks its shared L1 fight evidence."
     }
 }

@@ -52,7 +52,8 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   a windowed run draws Town and L1-L4 natively and uses the Hero, Items and Trade panels (batch 1.4);
   click and held WASD walking and the DevilutionX brightness option followed the first playtest.
   The profile also hosts multiplayer with native multiplayer generation rules; two headless
-  clients of different classes meet and fight on L1 and resume on a fresh host (1.5a, 1.5b headless).
+  clients of different classes meet, draw each other and fight on L1, and resume on a fresh host,
+  headless and windowed (1.5a, 1.5b).
 - The pure MPQ-free Town family matches all 191 native cases. Additive format-5
   Warrior/Sorcerer profiles now compile semantic Town inputs and canonical
   residents, retain separate 112x112 fine/special and 40x40 coarse/protected

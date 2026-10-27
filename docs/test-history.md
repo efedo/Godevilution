@@ -9,6 +9,16 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-27 — Two-player native smoke (windowed)
+
+With the user's approval, `tools/test-godot-native-multiplayer.ps1 -Windowed`
+passed twice with the setup-built player, scene, Towner and object packs: in
+Journey and Resume each client drew its peer with native art (no fallback) and
+saved a capture showing both players on L1; the Warrior and the Rogue earned 90
+and 54 XP. The first windowed attempt timed out waiting for that draw on both
+clients before the failure reported draw state; its cause is unknown. The headless
+run with the same check also passes.
+
 ### 2026-10-27 — Two-player native smoke (headless)
 
 `tools/test-godot-native-multiplayer.ps1` passed twice on the setup-built

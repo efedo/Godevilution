@@ -48,7 +48,7 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
-## Current batch: 1.5b Two-player smoke
+## Batch 1.5b Two-player smoke (done)
 
 - **Player-visible outcome:** two clients join one native multiplayer host,
   see each other and fight together on L1, then resume on a fresh host.
@@ -60,9 +60,11 @@ separate. The server owns gameplay, RNG, world state and persistence. The
 - **Exit check:** scripted two-client journey with cold resume; both clients draw
   each other natively. Windowed runs need the user's approval; run headless first.
 - **Out of scope:** Resurrect/Heal Other in play, Catacombs, Town warps.
-- **State (2026-10-27):** the headless journey and resume pass
-  (`tools/test-godot-native-multiplayer.ps1`). Open: the windowed run in which
-  both clients draw each other, which needs the user's approval.
+- **State (2026-10-27):** done. The journey and resume pass headless and
+  windowed (`tools/test-godot-native-multiplayer.ps1 [-Windowed]`); each client
+  waits for L1 to draw both players natively and, windowed, saves a capture.
+  One earlier windowed attempt timed out on that draw wait on both clients, before
+  its failure reported draw state; two reruns passed. 1.6 is next.
 
 ## Batch 1.5a Multiplayer native Cathedral (done)
 

@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-10-27
 
+- Two-player native smoke closed (batch 1.5b): both multiplayer phases wait until
+  L1 draws both participants natively, and `test-godot-native-multiplayer.ps1
+  -Windowed` runs the pair windowed, saving each client's capture of its peer.
+
 - Two-player native smoke (batch 1.5b, headless): `tools/test-godot-native-multiplayer.ps1`
   runs `NativeMultiplayerJourney` (a Warrior and a Rogue each kill on shared L1) and
   `NativeMultiplayerResume` (both restore on a fresh host and take their next

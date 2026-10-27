@@ -95,6 +95,9 @@ public partial class Main : Node2D
     }
     internal NativePlayerDrawObservation? ObservedNativePlayerDrawing
         => world?.ObserveNativePlayerDrawing(model.PlayerEntityId);
+    /** The latest native draw of any listed player, such as a multiplayer peer. */
+    internal NativePlayerDrawObservation? ObservedNativePlayerDrawingFor(uint entityId)
+        => world?.ObserveNativePlayerDrawing(entityId);
     internal IReadOnlyList<NativePlayerDrawObservation> ObservedNativePlayerDrawingHistory
         => world?.ObserveNativePlayerDrawingHistory(model.PlayerEntityId)
             ?? Array.Empty<NativePlayerDrawObservation>();

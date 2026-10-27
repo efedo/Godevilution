@@ -49,7 +49,9 @@ starts one host and two clients; slot 1 creates the Warrior that generates the
 run and walks to L1, then slot 2 joins as a Rogue and both meet on L1.
 `tools/test-godot-native-multiplayer.ps1 -ProfileDirectory <profile>` runs
 `NativeMultiplayerJourney` (each participant kills on L1 in turn) and the
-fresh-host `NativeMultiplayerResume` on one new session.
+fresh-host `NativeMultiplayerResume` on one new session. Both phases wait for L1
+to draw both players; `-Windowed` shows the clients and saves each one's
+`<phase>-peers.png` capture.
 
 The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 `tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>

@@ -86,6 +86,7 @@ public partial class SessionAcceptance
         if (resuming)
             Require(peer.EntityId == saved!.PeerEntityId && peer.PositionX == saved.PeerX && peer.PositionY == saved.PeerY,
                 "The fresh host did not restore the peer's L1 position.");
+        var peerDraw = await NativeMultiplayerPeerDrawAsync(main, directory, prefix, local.EntityId, peer.EntityId);
         object? fight = null;
         if (phase == "NativeMultiplayerJourney") {
             // One participant fights at a time, so neither attack races the other's target.
@@ -117,7 +118,7 @@ public partial class SessionAcceptance
             RulesetHash = identity.RulesetIdentityHash, Slot = slot, ClassId = classId, local.EntityId,
             PeerEntityId = peer.EntityId, PeerClassId = peer.CharacterClassId, LevelId = local.LevelId,
             L1Monsters = monsters.Length, MaxMonsterHitPointsQ6 = monsters.Max(monster => monster.HitPointsQ6),
-            Fight = fight, Checkpoint = checkpoint,
+            PeerDraw = peerDraw, Fight = fight, Checkpoint = checkpoint,
         });
         // Keep both scenes connected until each has written its evidence.
         WriteEvidence(directory, prefix + "-done.json", new { Done = true });
@@ -127,6 +128,32 @@ public partial class SessionAcceptance
 
     private static PlayerSnapshot NativeMultiplayerLocal(Main main, string name)
         => main.ObservedSnapshot!.Players.Single(player => player.CharacterName == name);
+
+    /**
+     * Waits until L1 draws both this participant and its peer, with native player art when a
+     * player pack is configured, and saves a capture when the client has a window.
+     */
+    private async Task<object> NativeMultiplayerPeerDrawAsync(Main main, string directory, string prefix, uint localId, uint peerId)
+    {
+        var playerArt = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_PLAYER_PACK"));
+        bool Drawn(uint entityId) => main.ObservedNativePlayerDrawingFor(entityId) is { } draw
+            && (!playerArt || draw is { IsLoaded: true, UsedFallback: false });
+        try {
+            await Until(() => main.ObservedNativeSceneDrawing is { NativeSceneActive: true, LevelId: 1 } && Drawn(localId) && Drawn(peerId),
+                "L1 did not draw both multiplayer participants.", 30);
+        } catch (InvalidOperationException failure) {
+            throw new InvalidOperationException($"{failure.Message} Scene {main.ObservedNativeSceneDrawing}; "
+                + $"local {main.ObservedNativePlayerDrawingFor(localId)}; peer {main.ObservedNativePlayerDrawingFor(peerId)}; "
+                + string.Join(", ", main.ObservedSnapshot!.Players.Select(player => $"{player.EntityId}@{player.LevelId}:{player.PositionX},{player.PositionY}")), failure);
+        }
+        string? capture = null;
+        if (NativeWarriorVisible) {
+            capture = prefix + "-peers.png";
+            await Capture(System.IO.Path.Combine(directory, capture));
+        }
+        var peer = main.ObservedNativePlayerDrawingFor(peerId)!;
+        return new { NativeArt = playerArt, PeerClip = peer.ClipKey, PeerFallback = peer.UsedFallback, Capture = capture };
+    }
 
     private async Task NativeMultiplayerTravelToL1Async(Main main, string name)
     {

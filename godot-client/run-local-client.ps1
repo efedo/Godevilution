@@ -146,9 +146,10 @@ if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and
 $nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
 $nativeMultiplayerPhase = $AcceptancePhase -cin @('NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume')
-if ($nativeMultiplayerPhase -and (-not $cathedralNativeTown -or -not $Headless -or -not $Automated -or $CharacterClassId -ge 0 -or
+# Batch 1.5b: these phases may also run windowed, so each client's capture shows its peer.
+if ($nativeMultiplayerPhase -and (-not $cathedralNativeTown -or -not $Automated -or $CharacterClassId -ge 0 -or
     -not [string]::IsNullOrWhiteSpace($CharacterName))) {
-    throw 'Native multiplayer acceptance requires the all-class native Town profile and an automated headless launch without class or name overrides.'
+    throw 'Native multiplayer acceptance requires the all-class native Town profile and an automated launch without class or name overrides.'
 }
 if ($nativeMultiplayer -and ($nativeClassPhase -or $SessionMenuAcceptance)) {
     throw 'Native multiplayer only supports a direct launch or its NativeMultiplayer* phases.'
