@@ -56,10 +56,14 @@ public partial class SessionAcceptance
         if (phase == "NativeDepthJourney") {
             Require(previous is null && main.ObservedSnapshot!.Players.Single() is { LevelId: 0, CharacterClassId: 0 },
                 "The depth journey must start with a new Warrior in Town.");
+            StartNativeWarriorDrawCapture(main);
+            var draws = new List<NativeWarriorFloorDraw> { await VerifyNativeWarriorFloorDrawAsync(main, directory, 0) };
+            var panels = await VerifyNativeWarriorPanelsAsync(main, directory);
             await VisitNativeWarriorTownAsync(main);
             var floors = new List<NativeWarriorFloor>();
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
+                draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
                 var floor = await DefeatNativeWarriorFloorAsync(main, directory, depth);
                 floors.Add(floor);
                 var afterKill = main.ObservedSnapshot!.Players.Single();
@@ -76,8 +80,9 @@ public partial class SessionAcceptance
             }
             for (var destination = (int)target - 1; destination >= 0; destination--)
                 await TravelNativeWarriorAsync(main, directory, (uint)destination);
-            await UseNativeTownHealer(main);
+            await HealNativeWarriorInTownAsync(main);
             await Until(() => Settled(main), "The four-floor journey did not settle in Town.");
+            draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, 0));
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var checkpoint = new NativeWarriorDepthCheckpoint(Convert.ToBase64String(player.ToByteArray()),
@@ -88,7 +93,8 @@ public partial class SessionAcceptance
                 Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
                 RulesetHash = identity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
                 LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY,
-                Sequence = checkpoint.Sequence, Visible = false, NativeDepthWarrior = checkpoint,
+                Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
+                NativeDraws = draws.ToArray(), NativePanels = panels,
             });
             GD.Print($"Native Warrior Town/L1-L4 checkpoint passed; sequence={checkpoint.Sequence}");
             return;
@@ -164,10 +170,27 @@ public partial class SessionAcceptance
         WriteEvidence(directory, "native-warrior-grind.json", new { Passed = true, Floors = floors.ToArray() });
     }
 
+    /** Pepin's healing; a refusal while the Warrior is still entering Town changes nothing, so it is repeated. */
+    private async Task HealNativeWarriorInTownAsync(Main main)
+    {
+        for (var attempt = 1; ; attempt++) {
+            try {
+                await UseNativeTownHealer(main);
+                return;
+            } catch (InvalidOperationException failure) when (attempt < 4 && failure.Message.Contains("NotAllowed", StringComparison.Ordinal)) {
+                var player = main.ObservedSnapshot!.Players.Single();
+                GD.Print($"Native Warrior healer refused (attempt {attempt}): mode={player.CombatMode}; action={player.CurrentAction}; "
+                    + $"at=({player.PositionX},{player.PositionY}); held={player.HeldItem is not null}; store={main.ObservedSnapshot.ActiveStore?.StoreId}");
+                var tick = main.ObservedSnapshot.Tick;
+                await Until(() => main.ObservedSnapshot!.Tick >= tick + 20 && Settled(main), "The refused healer visit did not settle.", 10);
+            }
+        }
+    }
+
     /** A player's Town stop: Pepin heals, then his cheapest healing potion is bought up to the supply. */
     private async Task VisitNativeWarriorTownAsync(Main main)
     {
-        await UseNativeTownHealer(main);
+        await HealNativeWarriorInTownAsync(main);
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var openSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "OpenHealer4");

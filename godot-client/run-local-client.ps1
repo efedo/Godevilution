@@ -146,7 +146,8 @@ $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
 if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
-if ($nativeClassPhase -and (-not $Headless -or -not $Automated -or $CharacterClassId -ge 0 -or
+# Only the depth Journey may run windowed, for its per-floor captures.
+if ($nativeClassPhase -and ((-not $Headless -and $AcceptancePhase -cne 'NativeDepthJourney') -or -not $Automated -or $CharacterClassId -ge 0 -or
     -not [string]::IsNullOrWhiteSpace($CharacterName))) {
     if ($cathedralNativeTown) {
         throw 'Native Town class acceptance requires an automated headless cohort launch without class or name overrides.'

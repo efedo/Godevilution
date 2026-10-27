@@ -47,3 +47,24 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   supervises the Sol 5.6 workers and owns integration, verification, concise
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
+
+## Current batch: 1.4 Rendered slice
+
+- **Player-visible outcome:** the windowed native launch draws Town and
+  Cathedral L1-L4 with native player, scene, resident and object art, and the
+  Hero, Items and Trade panels work on the native profile with real controls.
+- **Native source:** none ported; draws use the existing native art catalogs.
+- **Files and contracts owned:** the Warrior depth journey gains per-floor
+  native draw checks (Town and each Cathedral floor), PNG captures when visible,
+  and panel steps (Items equip swap, Hero attributes and skill source, Smith
+  buy and sell); the launcher and `test-godot-native-depth-progression.ps1`
+  accept `-Visible` for the NativeDepth phases only; fixes for rendering or
+  control defects those steps expose.
+- **Exit check:** `test-godot-native-depth-progression.ps1 -TargetDepth 4
+  -TestParticipant tools/native-test-heroes/warrior-l4.json -Visible` passes
+  with a capture per floor and panel; the headless per-floor pairs still pass;
+  the user plays Town-L4-Town through `run-godot-client.ps1` and reports it
+  playable.
+- **Out of scope:** native monster art, lighting, palette cycling, wall
+  transparency, native-styled panels, Rogue/Sorcerer visible runs, looting.
+- **Size:** a few hundred lines plus whatever fixes the visible run exposes.

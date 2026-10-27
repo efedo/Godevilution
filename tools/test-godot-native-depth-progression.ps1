@@ -8,7 +8,9 @@ param(
     # All-class profile only: the deepest floor this test reaches, and the played-character
     # definition that starts it (tools/native-test-heroes); a fresh Warrior when omitted.
     [ValidateRange(1, 4)] [int]$TargetDepth = 4,
-    [string]$TestParticipant
+    [string]$TestParticipant,
+    # All-class profile only: run the Journey windowed and save a capture of each floor.
+    [switch]$Visible
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,8 +44,8 @@ $arguments = @{
     SessionDirectory = $sessionDirectory; QuitAfterSeconds = $QuitAfterSeconds
     ServerBuildConfiguration = $ServerBuildConfiguration
 }
-if (-not $allClass -and ($TestParticipant -or $TargetDepth -ne 4)) {
-    throw '-TestParticipant and -TargetDepth apply only to the all-class Town profile.'
+if (-not $allClass -and ($TestParticipant -or $TargetDepth -ne 4 -or $Visible)) {
+    throw '-TestParticipant, -TargetDepth and -Visible apply only to the all-class Town profile.'
 }
 if ($allClass) {
     $arguments.CathedralNativeTownProfileDirectory = $profileRoot
@@ -58,7 +60,9 @@ if ($GodotExecutable) { $arguments.GodotExecutable = $GodotExecutable }
 if ($CommandTimingTrace) { $arguments.CommandTimingTrace = $true }
 
 Write-Output "Native Town/L1-L4 Journey session: $sessionDirectory"
-& $launcher @arguments -AcceptancePhase $journeyPhase
+$journeyArguments = $arguments.Clone()
+if ($Visible) { $journeyArguments.Headless = $false }
+& $launcher @journeyArguments -AcceptancePhase $journeyPhase
 if ($LASTEXITCODE -ne 0) { throw "Native Town/L1-L4 Journey failed with exit $LASTEXITCODE." }
 $journeyPath = Join-Path $sessionDirectory ($journeyPhase.ToLowerInvariant() + '.json')
 $journey = Get-Content -LiteralPath $journeyPath -Raw -ErrorAction Stop | ConvertFrom-Json
@@ -73,6 +77,25 @@ if ($allClass) {
             $_.MonsterEntityId -le 0 -or $_.ExperienceAfter -le $_.ExperienceBefore -or $_.Attacks -le 0 }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
+    # Town, each floor on first entry, and Town again, each drawn with native scene layers.
+    $draws = @($journey.NativeDraws)
+    if ([string]::Join(',', [string[]]@($draws | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', @(0) + @(1..$TargetDepth) + @(0)) -or
+        @($draws | Where-Object { $_.FloorDraws -le 0 -or $_.ContentDraws -le 0 -or $_.ActorDraws -le 0 }).Count -ne 0 -or
+        $journey.Visible -ne [bool]$Visible -or
+        ($Visible -and @($draws | Where-Object { -not $_.Capture -or
+            -not (Test-Path -LiteralPath (Join-Path $sessionDirectory $_.Capture) -PathType Leaf) }).Count -ne 0)) {
+        throw 'The Warrior Journey did not draw every floor natively or lacks a floor capture.'
+    }
+    # Hero, Items and Trade panels driven with real controls in Town.
+    $panels = $journey.NativePanels
+    if ($null -eq $panels -or -not $panels.Attributes -or -not $panels.SkillSource -or $panels.WeaponSeed -le 0 -or
+        ($null -ne $panels.SmithItemSeed -and ($panels.GoldAfterBuy -ne $panels.GoldBefore - $panels.SmithPrice -or
+            $panels.GoldAfterSell -le $panels.GoldAfterBuy)) -or
+        ($env:GODEVILUTION_NATIVE_TOWNER_PACK -and $panels.NativeResidents -le 0) -or
+        ($Visible -and @($panels.Captures).Count -lt 3)) {
+        throw 'The Warrior Journey lacks its Hero, Items and Trade panel evidence.'
+    }
+    if ($Visible) { Write-Output "Floor captures: $sessionDirectory" }
 } else {
     if ($journey.Passed -ne $true -or $journey.LevelId -ne 0 -or $null -eq $journey.NativeDepthProgression) {
         throw 'The native four-floor Journey did not save a passed Town checkpoint.'

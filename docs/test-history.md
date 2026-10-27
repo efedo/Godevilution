@@ -9,6 +9,21 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-25 — Rendered Town to L4
+
+`test-godot-native-depth-progression.ps1 -TargetDepth 4 -TestParticipant
+tools/native-test-heroes/warrior-l4.json -Visible` passed windowed on the local
+Vulkan GPU, with fresh-host Resume; `-TargetDepth 1 -Visible` also passed.
+Captures of Town, L1-L4 and Town again show native Town and Cathedral tiles, the
+native Warrior and L1 objects; the Hero, Items and Trade panels worked with real
+clicks (Repair skill, weapon round trip, Smith buy at 25 and sell at 7, native
+residents drawn at the Smith). Headless `-TargetDepth` 1 to 4 pass. One earlier
+headless L4 run failed when the Town Healer refused `NotAllowed` after the
+return to Town; the journey now logs the Warrior's state and retries that
+refusal, and the refusal did not recur. Monsters use generic art; lighting,
+palette cycling and wall transparency are not native; the Smith offers only its
+pinned rows. The user playtest is pending.
+
 ### 2026-10-25 — Cathedral L1-L4 on the default profile
 
 On the setup-built all-class profile, `test-godot-native-depth-progression.ps1

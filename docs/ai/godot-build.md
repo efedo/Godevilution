@@ -53,6 +53,12 @@ heroes' `basis` notes record how their level, attributes and gear were chosen.
 `--test-participant <file>` (launcher `-TestParticipantPath`, automated native
 acceptance only) replaces the class start's level, experience, attributes,
 Gold and named equipment/belt slots; life and mana follow the native formulas.
+Every Journey also requires native scene and player draws in Town and on each
+floor (native residents in Town when the resident pack is set), and drives the
+Hero (attributes, class skill), Items (weapon to the inventory and back) and
+Trade (Smith buy and sell) panels with real clicks. `-Visible` runs the Journey
+windowed and saves `native-depth-NN-L<n>.png` and `native-panel-*.png` in the
+session directory.
 The four art importers below also accept `--archive <DIABDAT.MPQ> --assets-directory assets`
 in place of `--source-root`.
 

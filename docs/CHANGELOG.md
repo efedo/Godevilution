@@ -7,6 +7,14 @@ contracts stay in their existing guides.
 
 ## 2026-10-25
 
+- Rendered slice (batch 1.4): the Warrior depth Journey checks native scene,
+  player and resident draws in Town and on each of L1-L4, and drives the Hero,
+  Items and Trade panels with real controls (class skill, weapon to the
+  inventory and back, Smith buy and sell). `test-godot-native-depth-progression.ps1
+  -Visible` runs it windowed with a capture per floor and panel; the launcher
+  allows a window for that phase only. Route travel takes an optional caller
+  interrupt.
+
 - Cathedral L1-L4 by default (batch 1.3): the all-class profile's new
   `NativeDepthJourney`/`NativeDepthResume` phases take an ordinary-melee Warrior
   from Town to a target floor (one XP kill per floor, Town healer and Pepin's
