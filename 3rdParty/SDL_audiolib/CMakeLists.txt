@@ -46,3 +46,6 @@ add_library(SDL_audiolib::SDL_audiolib ALIAS SDL_audiolib)
 
 # External library, disable warnings.
 target_compile_options(SDL_audiolib PRIVATE -w)
+
+# Newer fmt releases (Homebrew) no longer provide fmt::format via <fmt/core.h>, which aulib_log.h relies on.
+target_compile_options(SDL_audiolib PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:SHELL:-include fmt/format.h>")

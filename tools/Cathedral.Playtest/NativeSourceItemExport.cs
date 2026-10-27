@@ -109,10 +109,10 @@ public static class NativeSourceItemExport
             row.RequiredInt32("suffixPercent"), row.RequiredInt32("onlygoodChance"),
             row.RequiredInt32("noDropPercent"), row.RequiredInt32("goldPercent"));
 
-    /** LoadItemGenerationConfig drops names ParseItemMiscId rejects (it is case-sensitive). */
+    /** LoadItemGenerationConfig upper-cases each name and rejects unknown ones. */
     private static HashSet<int> AlwaysMagicMisc(TsvRow row)
         => row["alwaysMagicMisc"].Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Where(MiscIds.ContainsKey).Select(name => MiscIds[name]).ToHashSet();
+            .Select(name => Lookup(MiscIds, name.ToUpperInvariant(), "alwaysMagicMisc")).ToHashSet();
 
     /** items.cpp ItemCAnimTbl/ItemAnimLs, as GetItemAnimationLengthForTesting reads them. */
     public static IReadOnlyDictionary<int, AuthoritativeCathedralNativeAnimationDefinition> CursorAnimations()

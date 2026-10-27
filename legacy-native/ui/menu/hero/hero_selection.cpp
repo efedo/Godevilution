@@ -22,7 +22,7 @@
 #include <SDL.h>
 #endif
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "application/game_mode.hpp"
 #include "controls/control_mode.hpp"

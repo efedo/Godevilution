@@ -37,7 +37,7 @@
 #endif
 
 #include <expected.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "application/diablo.h"
 #include "application/game_mode.hpp"
