@@ -40,7 +40,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeCathedralNativeItemSidecars itemSidecars,
         AuthoritativeCathedralFreshLevelRequest? entryRequest = null,
         IReadOnlyCollection<AuthoritativeItemState>? carriedItems = null,
-        AuthoritativeCathedralNativeCharacterStart? characterStart = null)
+        AuthoritativeCathedralNativeCharacterStart? characterStart = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(runtimeCatalog);
@@ -93,7 +94,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             storySeed: 0x13579BDF,
             AuthoritativeCathedralEntry.Main,
             hero,
-            depthCandidate.Level.StableSymbol);
+            depthCandidate.Level.StableSymbol,
+            gameMode: gameMode);
         var generated = AuthoritativeCathedralFreshLevelGenerator.Generate(request);
         var generatedFingerprint = AuthoritativeCathedralLevel1RuntimeCatalog.ComputeFineFingerprint(
             generated.Geometry.Level);

@@ -77,6 +77,20 @@ public sealed class AuthoritativeCathedralPopulationMetadata
     public IReadOnlyList<AuthoritativeCathedralPopulationDepthRule> DepthRules { get; }
     public IReadOnlyList<int> StoryMessages { get; }
     public IReadOnlyList<bool> ShrineAvailable { get; }
+
+    /**
+     * AddShrine's list for the game mode. Multiplayer is derived from the native
+     * shrineavail table, so it is available only when the pack's single-player
+     * list is the native one.
+     */
+    public IReadOnlyList<bool> ShrineAvailableFor(DiabloGameMode gameMode) => gameMode switch {
+        DiabloGameMode.SinglePlayer => ShrineAvailable,
+        DiabloGameMode.Multiplayer when ShrineAvailable.SequenceEqual(AuthoritativeNativeShrineAvailability.SinglePlayer)
+            => AuthoritativeNativeShrineAvailability.Multiplayer,
+        DiabloGameMode.Multiplayer => throw new InvalidDataException(
+            "Multiplayer shrines require the native single-player shrine list."),
+        _ => throw new ArgumentOutOfRangeException(nameof(gameMode)),
+    };
     /** Full native byte channel, including the opaque 0x40 bit absent from named geometry flags. */
     public IReadOnlyList<byte> EffectivePieceProperties { get; }
     public IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> PotionDefinitions { get; }
@@ -245,7 +259,8 @@ public sealed class AuthoritativeCathedralPopulationMetadata
         AuthoritativeCathedralPopulationGeometry geometry,
         AuthoritativeCathedralPopulationPlayer player, int nextTransparencyValue,
         IReadOnlyList<AuthoritativeCathedralPopulationPoint> triggerPositions,
-        int maximumPlacementAttempts = 1_000_000, int maximumThemeSelectionAttempts = 1_000_000)
+        int maximumPlacementAttempts = 1_000_000, int maximumThemeSelectionAttempts = 1_000_000,
+        bool multiplayer = false)
     {
         ArgumentNullException.ThrowIfNull(geometry);
         var rule = RuleForDepth(depth);
@@ -253,7 +268,7 @@ public sealed class AuthoritativeCathedralPopulationMetadata
             throw new InvalidDataException("Pre-selection geometry must use the pack's effective SOL properties.");
         return new(depth, populationSeed, storySeed, geometry, Population.Monsters, Population.Objects,
             player, rule.TrapPercent, StoryMessages, nextTransparencyValue, triggerPositions,
-            maximumPlacementAttempts, maximumThemeSelectionAttempts);
+            maximumPlacementAttempts, maximumThemeSelectionAttempts) { Multiplayer = multiplayer };
     }
 
     public AuthoritativeCathedralPopulationDepthRule RuleForDepth(int depth)

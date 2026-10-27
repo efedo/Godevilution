@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume', 'NativeMultiplayerCreate')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
@@ -128,7 +128,9 @@ if ($cathedralProfileModes.Count -gt 1) {
     throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, mutable doors, or one pinned native population profile.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
-if (($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
+# Batch 1.5a: the all-class native Town profile may host one two-player multiplayer run.
+$nativeMultiplayer = $cathedralNativeTown -and $Multiplayer
+if (($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or ($Multiplayer -and -not $nativeMultiplayer) -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
 if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
@@ -143,6 +145,14 @@ if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and
 # NativeDepth* is the Warrior Town-L1-L4 journey on the all-class Town profile.
 $nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
+$nativeMultiplayerPhase = $AcceptancePhase -ceq 'NativeMultiplayerCreate'
+if ($nativeMultiplayerPhase -and (-not $cathedralNativeTown -or -not $Headless -or -not $Automated -or $CharacterClassId -ge 0 -or
+    -not [string]::IsNullOrWhiteSpace($CharacterName))) {
+    throw 'Native multiplayer acceptance requires the all-class native Town profile and an automated headless launch without class or name overrides.'
+}
+if ($nativeMultiplayer -and ($nativeClassPhase -or $SessionMenuAcceptance)) {
+    throw 'Native multiplayer only supports a direct launch or NativeMultiplayerCreate.'
+}
 if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
@@ -154,7 +164,7 @@ if ($nativeClassPhase -and ((-not $Headless -and $AcceptancePhase -cne 'NativeDe
     }
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
-if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not $nativeClassPhase) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
+if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not ($nativeClassPhase -or $nativeMultiplayerPhase)) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
     ($CharacterClassId -ge 0 -and $CharacterClassId -notin @(0, 1, 2)))) {
     throw 'Class-bound native profiles require a direct single-player Warrior, Rogue or Sorcerer cohort launch or their explicit acceptance phases.'
 }
@@ -220,7 +230,7 @@ if ($cooperative -and -not $Multiplayer) {
     throw 'Cooperative acceptance requires -Multiplayer so two independent clients are launched.'
 }
 if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent) -and -not $cooperative) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume')))) {
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'NativeMultiplayerCreate')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
 if ($multiplayerRecovery -and $PersistenceMode -cne 'cohort') {
@@ -2026,6 +2036,9 @@ try {
         Get-CathedralNativeTownProfile $CathedralNativeTownProfileDirectory $SessionDirectory
     } else { $null }
     $allClassNativeTown = $cathedralNativeTown -and $cathedralNativeTownProfile.AllClass
+    if ($nativeMultiplayer -and -not $allClassNativeTown) {
+        throw 'Native multiplayer requires the all-class native Town profile.'
+    }
     $phaseClassId = if ($AcceptancePhase -like 'NativeWarrior*' -or $AcceptancePhase -like 'NativeDepth*') { 0 } elseif ($AcceptancePhase -like 'NativeRogue*') { 1 } elseif ($AcceptancePhase -like 'NativeSorcerer*') { 2 } else { -1 }
     # The all-class profile starts the class the player (or the acceptance phase) picks.
     $boundNativeClassId = if ($allClassNativeTown) { if ($phaseClassId -ge 0) { $phaseClassId } else { $CharacterClassId } }
@@ -2333,7 +2346,7 @@ try {
             ServerBuildConfiguration = $ServerBuildConfiguration;
             PersistenceMode = $PersistenceMode; HostPersistence = $startedServer.Persistence;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
-        if ($cooperative -or $cathedralNativePhase -or $nativeClassPhase) {
+        if ($cooperative -or $cathedralNativePhase -or $nativeClassPhase -or $nativeMultiplayerPhase) {
             # These identities were validated against the actual started host.
             $processEvidence.ContentHash = $contentHash
             $processEvidence.RulesetHash = $rulesetHash

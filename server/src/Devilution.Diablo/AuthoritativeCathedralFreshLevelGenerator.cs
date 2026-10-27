@@ -40,9 +40,14 @@ public sealed class AuthoritativeCathedralFreshLevelRequest
         int maximumPlacementAttempts,
         int maximumItemPlacementAttempts,
         int maximumThemeSelectionAttempts,
-        IReadOnlySet<int>? initialUniqueItemFlags = null)
+        IReadOnlySet<int>? initialUniqueItemFlags = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+        if (gameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer))
+            throw new ArgumentOutOfRangeException(nameof(gameMode));
+        GameMode = gameMode;
+        _ = metadata.ShrineAvailableFor(gameMode);
         Hero = hero ?? throw new ArgumentNullException(nameof(hero));
         if (depth is < AuthoritativeCathedralDepthGenerator.MinimumSupportedDepth
             or > AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth)
@@ -81,6 +86,8 @@ public sealed class AuthoritativeCathedralFreshLevelRequest
     public int MaximumThemeSelectionAttempts { get; }
     /** Global run history sampled before this floor's first generation, never a borrowed mutable set. */
     public IReadOnlySet<int> InitialUniqueItemFlags { get; }
+    /** Native gbIsMultiplayer for this floor's generation. */
+    public DiabloGameMode GameMode { get; }
 
     private static void ValidateHero(AuthoritativeCathedralFreshLevelHeroContext hero)
     {
@@ -177,7 +184,8 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         string? stableLevelSymbol = null,
         int maximumPlacementAttempts = DefaultMaximumAttempts,
         int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-        int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+        int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(hero);
@@ -185,7 +193,7 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         var symbol = stableLevelSymbol ?? $"cathedral{depth}";
         return new(metadata, depth, dungeonSeed, storySeed, entry, hero, symbol,
             maximumPlacementAttempts, maximumItemPlacementAttempts,
-            maximumThemeSelectionAttempts);
+            maximumThemeSelectionAttempts, gameMode: gameMode);
     }
 
     /** First entry to another floor carries the run's unique history; legacy fresh APIs remain empty-history. */
@@ -200,7 +208,8 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         string? stableLevelSymbol = null,
         int maximumPlacementAttempts = DefaultMaximumAttempts,
         int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-        int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+        int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(hero);
@@ -208,7 +217,7 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         _ = metadata.RuleForDepth(depth);
         return new(metadata, depth, dungeonSeed, storySeed, entry, hero,
             stableLevelSymbol ?? $"cathedral{depth}", maximumPlacementAttempts,
-            maximumItemPlacementAttempts, maximumThemeSelectionAttempts, initialUniqueItemFlags);
+            maximumItemPlacementAttempts, maximumThemeSelectionAttempts, initialUniqueItemFlags, gameMode);
     }
 
     public static AuthoritativeCathedralFreshLevelResult Generate(
@@ -245,9 +254,10 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         var initialPopulation = request.Metadata.CreateInitialPopulationParameters(
             request.Depth, request.DungeonSeed, request.StorySeed, derived.Geometry,
             player, derived.NextTransparencyValue, derived.TriggerPositions,
-            request.MaximumPlacementAttempts, request.MaximumThemeSelectionAttempts);
+            request.MaximumPlacementAttempts, request.MaximumThemeSelectionAttempts,
+            request.GameMode == DiabloGameMode.Multiplayer);
         var itemPolicy = new AuthoritativeCathedralThemeItemPolicy(
-            request.Depth, DiabloGameMode.SinglePlayer, DiabloDifficulty.Normal,
+            request.Depth, request.GameMode, DiabloDifficulty.Normal,
             Hellfire: false, Spawn: false, QuestEnabled: false, SetLevel: false,
             LegacyLevelItemGenerationAllowed: true, CurrentDungeonLevel: request.Depth);
         var itemTiles = Enumerable.Range(0, CellCount)
@@ -273,7 +283,7 @@ public static class AuthoritativeCathedralFreshLevelGenerator
             derived.TriggerPositions,
             request.Metadata.UniqueMonsters.Definitions,
             request.Metadata.RuleForDepth(request.Depth).MonsterDensityDivisor,
-            request.Metadata.ShrineAvailable,
+            request.Metadata.ShrineAvailableFor(request.GameMode),
             request.Metadata.Items.Catalog,
             itemPolicy,
             new AuthoritativeCathedralThemeItemPlayerContext(
@@ -311,10 +321,11 @@ public static class AuthoritativeCathedralFreshLevelGenerator
         string? stableLevelSymbol = null,
         int maximumPlacementAttempts = DefaultMaximumAttempts,
         int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-        int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+        int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
         => Generate(CreateRequest(metadata, depth, dungeonSeed, storySeed, entry, hero,
             stableLevelSymbol, maximumPlacementAttempts, maximumItemPlacementAttempts,
-            maximumThemeSelectionAttempts));
+            maximumThemeSelectionAttempts, gameMode));
 
     private static AuthoritativeCathedralFreshPreThemeState DerivePreThemeState(
         AuthoritativeCathedralPopulationMetadata metadata,

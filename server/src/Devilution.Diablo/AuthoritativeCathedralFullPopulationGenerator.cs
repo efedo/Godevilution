@@ -104,13 +104,13 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
 
         if (initialPopulation.Depth != itemPolicy.Depth
             || initialPopulation.Depth is < 1 or > 4
-            || itemPolicy.GameMode != DiabloGameMode.SinglePlayer
+            || itemPolicy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
             || itemPolicy.Difficulty != DiabloDifficulty.Normal
             || itemPolicy.Hellfire || itemPolicy.Spawn || itemPolicy.QuestEnabled || itemPolicy.SetLevel
             || !itemPolicy.LegacyLevelItemGenerationAllowed
             || itemPolicy.CurrentDungeonLevel is < 0 or > 4
             || (itemPolicy.CurrentDungeonLevel != 0 && itemPolicy.CurrentDungeonLevel != itemPolicy.Depth))
-            throw new InvalidDataException("Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
+            throw new InvalidDataException("Only ordinary original-Diablo Cathedral Normal generation is supported.");
         if (maximumPlacementAttempts <= 0 || maximumItemPlacementAttempts <= 0)
             throw new InvalidDataException("Full Cathedral population bounds must be positive.");
         if (monsterDensityDivisor <= 0)
@@ -420,7 +420,9 @@ public static class AuthoritativeCathedralFullPopulationGenerator
                 initial.Population.Monsters.Count,
                 initialLit,
                 initialTileFlags,
-                bestiary));
+                bestiary) {
+                Multiplayer = request.ItemPolicy.GameMode == DiabloGameMode.Multiplayer,
+            });
 
         var itemTiles = request.InitialItemTiles
             .Select((tile, index) => tile with {

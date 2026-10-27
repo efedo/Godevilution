@@ -47,6 +47,7 @@ public sealed partial class DiabloWorldState
             cathedralDoors: new AuthoritativeCathedralDoorCatalog([door])) {
             nativePopulationPolicy = build.Policy.Bindings,
             nativePopulationParticipantClassId = nativePopulationParticipantClassId,
+            nativePopulationMultiplayer = nativePopulationMultiplayer,
         };
         floor.deferCohortInitialization = false;
         floor.RebuildProjectedGeometry();

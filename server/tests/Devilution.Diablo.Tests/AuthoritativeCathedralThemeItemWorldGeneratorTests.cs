@@ -421,7 +421,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldGeneratorTests
         objectRefs[0] = 2;
         Assert.Throws<InvalidDataException>(() => EmptyWorld(objectRefs: objectRefs));
 
-        var policy = Policy with { GameMode = DiabloGameMode.Multiplayer };
+        var policy = Policy with { GameMode = DiabloGameMode.Multiplayer, Difficulty = DiabloDifficulty.Nightmare };
         Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeItemWorldGenerator.CreateTypeItem(
             Request(EmptyWorld(), policy: policy, requestedItemType: 1)));
     }

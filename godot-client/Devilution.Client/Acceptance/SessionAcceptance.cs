@@ -38,7 +38,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume" or "NativeWarriorJourney" or "NativeWarriorResume" or "NativeSorcererJourney" or "NativeSorcererResume" or "NativeRogueJourney" or "NativeRogueResume" or "NativeDepthJourney" or "NativeDepthResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume" or "NativeWarriorJourney" or "NativeWarriorResume" or "NativeSorcererJourney" or "NativeSorcererResume" or "NativeRogueJourney" or "NativeRogueResume" or "NativeDepthJourney" or "NativeDepthResume" or "NativeMultiplayerCreate"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var sessionMenuAcceptance = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1";
         Require(!sessionMenuAcceptance || phase is "Create" or "Resume",
@@ -62,6 +62,10 @@ public partial class SessionAcceptance : Node
             GetTree().Root.Size = new Vector2I(1280, 720);
         if (phase is "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery") {
             await RunMultiplayerAsync(directory, phase);
+            return;
+        }
+        if (phase == "NativeMultiplayerCreate") {
+            await RunNativeMultiplayerCreateAsync(directory);
             return;
         }
         if (phase is "CooperativeJourney" or "CooperativeResume") {
@@ -523,6 +527,7 @@ public partial class SessionAcceptance : Node
             "CathedralNativeDepthProgressionJourney" => 3540,
             "CathedralNativeDepthProgressionResume" => 3540,
             "NativeDepthJourney" or "NativeDepthResume" => 3540,
+            "NativeMultiplayerCreate" => 885,
                 "NativeWarriorJourney" or "NativeSorcererJourney" or "NativeRogueJourney" => 885,
             "NativeWarriorResume" or "NativeSorcererResume" or "NativeRogueResume" => 180,
             "Lifecycle" => 345, "LifecycleResume" => 70,

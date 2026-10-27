@@ -44,17 +44,23 @@ public sealed class NativeMonsterInitializationTests
     [Theory]
     [InlineData(0U, 0U)]
     [InlineData(1U, 0U)]
-    public void ExplicitZeroAiSeedUsesExistingNativeMultiplayerProcessStream(uint itemSeed, uint aiSeed)
+    [InlineData(1U, 5U)]
+    public void NativeMultiplayerAiSeedFollowsMonsterSeedsEachTick(uint itemSeed, uint aiSeed)
     {
+        // multi.cpp MonsterSeeds: slot 7 is reseeded from the loop count before ProcessMonsters
+        // advances it, so the restored seed never reaches the stream.
         var target = Target(itemSeed, aiSeed);
         var random = new DeterministicLegacyRandom(0xCAFEBABE);
-        var expected = new DeterministicLegacyRandom(aiSeed);
-        var expectedSeed = unchecked((uint)expected.AdvanceRndSeed());
         var processor = Processor(target, random, DiabloGameMode.Multiplayer);
-        processor.AdvanceTick(1, [Player()]);
-        Assert.Equal(itemSeed, target.MonsterItemSeed);
-        Assert.Equal(expectedSeed, target.MonsterAiSeed);
-        Assert.Equal(expected.State, random.State);
+        foreach (var tick in new ulong[] { 1, 300 }) {
+            var loops = (uint)tick;
+            var expected = new DeterministicLegacyRandom(unchecked(((loops >> 8) | (loops << 24)) + 7U));
+            var expectedSeed = unchecked((uint)expected.AdvanceRndSeed());
+            processor.AdvanceTick(tick, [Player()]);
+            Assert.Equal(itemSeed, target.MonsterItemSeed);
+            Assert.Equal(expectedSeed, target.MonsterAiSeed);
+            Assert.Equal(expected.State, random.State);
+        }
         Assert.True(target.NativeInitializationPresent);
     }
 
@@ -162,7 +168,7 @@ public sealed class NativeMonsterInitializationTests
     }
 
     [Theory]
-    [InlineData(DiabloGameMode.Multiplayer, DiabloDifficulty.Normal)]
+    [InlineData(DiabloGameMode.Multiplayer, DiabloDifficulty.Nightmare)]
     [InlineData(DiabloGameMode.SinglePlayer, DiabloDifficulty.Nightmare)]
     [InlineData(DiabloGameMode.SinglePlayer, DiabloDifficulty.Hell)]
     public void NativeMetadataProfileRejectsUnsupportedModeAndDifficultyEvenWithoutActors(

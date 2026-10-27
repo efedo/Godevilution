@@ -35,6 +35,8 @@ public sealed class AuthoritativeCathedralInitialPopulationParameters
     public uint PopulationSeed => ObjectTemplate.PopulationSeed;
     public uint StorySeed => ObjectTemplate.StorySeed;
     public AuthoritativeCathedralPopulationGeometry PreThemeGeometry => ObjectTemplate.Geometry;
+    /** Native gbIsMultiplayer for InitObjects' pre-spawned monsters. */
+    public bool Multiplayer { get; init; }
 }
 
 /** The connected pre-selection, held-theme and initial-object results; not final encounters. */
@@ -84,7 +86,7 @@ public static class AuthoritativeCathedralInitialPopulationGenerator
             parameters.Depth, parameters.PopulationSeed, parameters.StorySeed,
             heldGeometry, objectInput.Objects, bestiary.PopulationDefinitions,
             objectInput.Player, objectInput.TrapPercent, objectInput.StoryMessages,
-            objectInput.MaximumPlacementAttempts));
+            objectInput.MaximumPlacementAttempts) { Multiplayer = parameters.Multiplayer });
         return new(bestiary, themes, population);
     }
 }

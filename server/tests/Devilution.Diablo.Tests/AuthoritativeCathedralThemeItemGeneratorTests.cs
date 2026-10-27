@@ -283,7 +283,7 @@ public sealed class AuthoritativeCathedralThemeItemGeneratorTests
     [Fact]
     public void UnsupportedPolicyFailsClosedBeforeRandomMutation()
     {
-        var random = new AuthoritativeCathedralThemeItemPolicy(1, DiabloGameMode.Multiplayer);
+        var random = new AuthoritativeCathedralThemeItemPolicy(1, DiabloGameMode.Multiplayer, DiabloDifficulty.Nightmare);
         var request = new AuthoritativeCathedralThemeItemRequest(1, 1, 2, 0, false, false);
 
         Assert.Throws<InvalidDataException>(() =>
@@ -373,7 +373,7 @@ public sealed class AuthoritativeCathedralThemeItemGeneratorTests
 
         var selectionRequest = new AuthoritativeCathedralThemeItemSelectionRequest(
             1, 1, false, InputItem: input, UniqueItemFlags: flags);
-        var unsupportedPolicy = new AuthoritativeCathedralThemeItemPolicy(1, DiabloGameMode.Multiplayer);
+        var unsupportedPolicy = new AuthoritativeCathedralThemeItemPolicy(1, DiabloGameMode.Multiplayer, DiabloDifficulty.Nightmare);
         AssertRejected(() => AuthoritativeCathedralThemeItemGenerator.CreateRandomItem(
             selectionRequest, catalog, unsupportedPolicy));
         AssertRejected(() => AuthoritativeCathedralThemeItemGenerator.CreateTypeItem(

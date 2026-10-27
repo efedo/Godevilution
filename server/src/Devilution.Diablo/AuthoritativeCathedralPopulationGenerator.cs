@@ -354,7 +354,7 @@ public static class AuthoritativeCathedralPopulationGenerator
             // Native RandomIntBetween clamps the rare negative GenerateRnd.
             // Do not change the shared RNG's other established call sites.
             var rawHp = data.MinimumHitPoints + random.RandomIntLessThan(data.MaximumHitPoints - data.MinimumHitPoints + 1);
-            var hitPoints = Math.Max((rawHp << 6) / 2, 64);
+            var hitPoints = input.Multiplayer ? rawHp << 6 : Math.Max((rawHp << 6) / 2, 64);
             var monster = new MonsterState {
                 Slot = monsters.Count, Type = data.NativeType, LevelType = levelType, Tile = position, Future = position, Old = position,
                 AnimTicksPerFrame = data.Rates[0], AnimNumberOfFrames = data.Frames[0], AnimTickCounter = tickCounter, AnimCurrentFrame = currentFrame,

@@ -1,6 +1,9 @@
-<# Fresh-cold Cathedral generation in native load order. No server/client is launched. #>
+<#
+    Fresh-cold Cathedral generation in native load order. No server/client is launched.
+    -Multiplayer captures and compares the same matrix with native gbIsMultiplayer.
+#>
 [CmdletBinding()]
-param([Parameter(Mandatory = $true)] [string]$MetadataPackDirectory)
+param([Parameter(Mandatory = $true)] [string]$MetadataPackDirectory, [switch]$Multiplayer)
 
 $ErrorActionPreference = 'Stop'
 $freshRepository = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -24,12 +27,16 @@ foreach ($freshImport in @(
     }
 }
 
+$freshCaptureName = if ($Multiplayer) { 'CaptureFreshOrdinaryMultiplayerPopulation' } else { 'CaptureFreshOrdinaryPopulation' }
+$freshFileName = if ($Multiplayer) { 'native-fresh-multiplayer-population.json' } else { 'native-fresh-population.json' }
+$freshParityMethod = if ($Multiplayer) { 'FreshMultiplayerLevelMatchesNative' } else { 'FreshLevelMatchesNative' }
+
 function Assert-CathedralFreshNativeReport([string]$Path) {
     $report = [IO.File]::ReadAllText($Path) | ConvertFrom-Json
     $cases = @($report.testsuites | ForEach-Object { $_.testsuite })
     if ($report.tests -ne 1 -or $report.failures -ne 0 -or $report.disabled -ne 0 -or $report.errors -ne 0 -or
         $cases.Count -ne 1 -or $cases[0].classname -cne 'ThemeRoomGenerationTest' -or
-        $cases[0].name -cne 'CaptureFreshOrdinaryPopulation' -or $cases[0].status -cne 'RUN' -or
+        $cases[0].name -cne $(if ($Multiplayer) { 'CaptureFreshOrdinaryMultiplayerPopulation' } else { 'CaptureFreshOrdinaryPopulation' }) -or $cases[0].status -cne 'RUN' -or
         $cases[0].result -cne 'COMPLETED' -or @($cases[0].failures).Where({ $null -ne $_ }).Count -ne 0) {
         throw 'The exact fresh-population native fixture must pass without exclusions.'
     }
@@ -47,10 +54,12 @@ function Assert-CathedralFreshManagedReport([string]$Path, [switch]$Factory) {
         throw 'All selected fresh-population cases must pass without exclusions.'
     }
     if (-not $Factory) {
+        # Recomputed here: the launcher tests load these functions without the script body.
+        $freshParityMethod = if ($Multiplayer) { 'FreshMultiplayerLevelMatchesNative' } else { 'FreshLevelMatchesNative' }
         $names = @(foreach ($depth in 1..4) { foreach ($seed in @(2588, 743271966)) { foreach ($entry in @('main', 'previous')) {
-            $type + '.FreshLevelMatchesNative(depth: ' + $depth + ', seed: ' + $seed + ', entry: \"' + $entry + '\")'
+            $type + '.' + $freshParityMethod + '(depth: ' + $depth + ', seed: ' + $seed + ', entry: \"' + $entry + '\")'
         } } })
-        if ($cases.Count -ne 16 -or @($cases | Where-Object method -cne 'FreshLevelMatchesNative').Count -ne 0 -or
+        if ($cases.Count -ne 16 -or @($cases | Where-Object method -cne $freshParityMethod).Count -ne 0 -or
             @(Compare-Object $names @($cases.name) -CaseSensitive).Count -ne 0) {
             throw 'The exact sixteen fresh-population comparisons are required.'
         }
@@ -76,7 +85,7 @@ function Assert-CathedralFreshManagedReport([string]$Path, [switch]$Factory) {
 }
 
 function Assert-CathedralFreshRepeatability($First, $Second) {
-    if ($null -eq $First -or $null -eq $Second -or $First.Name -cne 'native-fresh-population.json' -or
+    if ($null -eq $First -or $null -eq $Second -or $First.Name -cne $(if ($Multiplayer) { 'native-fresh-multiplayer-population.json' } else { 'native-fresh-population.json' }) -or
         $Second.Name -cne $First.Name -or $First.Length -le 0 -or $First.Length -gt 128MB -or
         $First.Length -ne $Second.Length -or $First.Sha256 -cnotmatch '^[0-9A-F]{64}$' -or $First.Sha256 -cne $Second.Sha256) {
         throw 'Two independent fresh-population captures must be byte-identical.'
@@ -91,10 +100,11 @@ $freshRoot = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-Fresh-Populatio
 Assert-CathedralFullExternalPath $freshRoot $freshRepository
 New-Item -ItemType Directory -Path $freshRoot | Out-Null
 $freshRecord = [ordered]@{ Passed = $false; StartedUtc = [DateTime]::UtcNow.ToString('O'); EndedUtc = $null
-    Scope = 'fresh-cold-original-diablo-cathedral-sp-normal-clear-before-createlevel-through-createthemerooms'
+    Scope = 'fresh-cold-original-diablo-cathedral-' + $(if ($Multiplayer) { 'mp' } else { 'sp' }) + '-normal-clear-before-createlevel-through-createthemerooms'
     MetadataPackDirectory = $MetadataPackDirectory; NativeBuild = $freshBuild.Directory
     Stages = @(); Artifacts = @(); Error = $null; EvidenceError = $null }
-$freshVariables = @('GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY', 'GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY')
+$freshVariables = @($(if ($Multiplayer) { 'GODEVILUTION_CATHEDRAL_FRESH_MULTIPLAYER_POPULATION_ORACLE_DIRECTORY' } else { 'GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY' }),
+    'GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY')
 $freshPrevious = @{}
 foreach ($variable in $freshVariables) { $freshPrevious[$variable] = [Environment]::GetEnvironmentVariable($variable, 'Process') }
 $freshPrimaryError = $null
@@ -111,12 +121,12 @@ try {
         New-Item -ItemType Directory -Path $captureDirectory | Out-Null
         [Environment]::SetEnvironmentVariable($freshVariables[0], $captureDirectory, 'Process')
         $report = Join-Path $freshRoot "native-tests-$capture.json"
-        $arguments = '--gtest_filter=ThemeRoomGenerationTest.CaptureFreshOrdinaryPopulation --gtest_output=json:' + (Quote-CathedralNativeArgument $report)
+        $arguments = '--gtest_filter=ThemeRoomGenerationTest.' + $freshCaptureName + ' --gtest_output=json:' + (Quote-CathedralNativeArgument $report)
         $outcome = Invoke-CathedralPopulationOwnedProcess (Join-Path $freshBuild.Directory 'theme_item_generation_test.exe') $arguments (Join-Path $freshRoot "native-tests-$capture.log") 120000
         $freshRecord.Stages += $outcome | Select-Object Pid, ExitCode, TimedOut, ConfirmedExited, LogRetained, Error, CleanupError
         Assert-ThemeOwnedStage $outcome 'Native fresh-population capture'
         Assert-CathedralFreshNativeReport $report
-        $artifact = Get-ThemeRoomArtifact $captureDirectory 'native-fresh-population.json' 128MB
+        $artifact = Get-ThemeRoomArtifact $captureDirectory $freshFileName 128MB
         if ($capture -eq 2) { Assert-CathedralFreshRepeatability $freshRecord.Artifacts[0] $artifact }
         $freshRecord.Artifacts += $artifact
     }
@@ -127,9 +137,14 @@ try {
     [Environment]::SetEnvironmentVariable($freshVariables[0], (Join-Path $freshRoot 'capture-1'), 'Process')
     [Environment]::SetEnvironmentVariable($freshVariables[1], $MetadataPackDirectory, 'Process')
     foreach ($factory in @($false, $true)) {
-        $method = if ($factory) { '*AuthoritativeCathedralFreshLevelGeneratorTests*' } else { '*AuthoritativeCathedralFreshLevelNativeOracleTests.FreshLevelMatchesNative*' }
+        # The factory stage names its checks: the class also holds L2-entry tests that need other corpora.
+        $methods = if ($factory) { @('GeneratedDepthCarriesNativeNextTransparencyValue',
+                'CreateRequestRetainsIndependentDungeonAndStorySeeds', 'InvalidHeroBoundsAreRejectedBeforeFreshGeneration',
+                'HeroEntryContextIsExplicitAndBoundedWithoutOriginalAssets', 'MaterializersPreserveCounterWithoutAliasingCallerLayers',
+                'FreshGenerationDerivesGeometryTriggersPoolsAndPlayerLight') | ForEach-Object { '*AuthoritativeCathedralFreshLevelGeneratorTests.' + $_ + '*' } }
+            else { @('*AuthoritativeCathedralFreshLevelNativeOracleTests.' + $freshParityMethod + '*') }
         $name = if ($factory) { 'factory' } else { 'parity' }
-        $arguments = '--no-ansi --parallel none --filter-method ' + (Quote-CathedralNativeArgument $method) +
+        $arguments = '--no-ansi --parallel none' + (($methods | ForEach-Object { ' --filter-method ' + (Quote-CathedralNativeArgument $_) }) -join '') +
             ' --explicit on --fail-skips on --report-xunit --results-directory ' + (Quote-CathedralNativeArgument $freshRoot) + ' --report-xunit-filename ' + $name + '.xml'
         $outcome = Invoke-CathedralPopulationOwnedProcess (Join-Path $freshRepository 'server/tests/Devilution.Diablo.Tests/bin/Debug/net8.0/Devilution.Diablo.Tests.exe') `
             $arguments (Join-Path $freshRoot ($name + '.log')) 180000

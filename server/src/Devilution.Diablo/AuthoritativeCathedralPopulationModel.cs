@@ -78,6 +78,8 @@ public sealed class AuthoritativeCathedralPopulationParameters
     public const int MonsterCapacity = 200;
     public const int GolemNativeType = 109;
     public const string Policy = "ordinary-original-diablo-fresh-initial-objects";
+    /** Native gbIsMultiplayer: pre-spawned skeletons keep full life. */
+    public bool Multiplayer { get; init; }
     private static readonly int[] SkeletonTypes = [8, 9, 10, 11, 20, 21, 22, 23, 24, 25, 26, 27];
 
     public AuthoritativeCathedralPopulationParameters(

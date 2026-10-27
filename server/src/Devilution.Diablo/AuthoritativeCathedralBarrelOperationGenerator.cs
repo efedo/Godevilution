@@ -229,7 +229,7 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
         if (policy.Depth is < 1 or > 4
             || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
             || policy.Hellfire || policy.SetLevel
-            || policy.GameMode != DiabloGameMode.SinglePlayer
+            || policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
             || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)

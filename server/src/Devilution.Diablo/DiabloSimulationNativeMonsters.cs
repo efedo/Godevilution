@@ -11,9 +11,9 @@ public sealed partial class DiabloSimulation
             && !AuthoritativeNativeMonsterInitialization.IsFingerprint(fingerprint))
             throw new InvalidDataException("Native monster runtime metadata identity is invalid.");
         if (fingerprint is not null
-            && (gameMode != DiabloGameMode.SinglePlayer || difficulty != DiabloDifficulty.Normal
+            && (gameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer) || difficulty != DiabloDifficulty.Normal
                 || CombatRules.GameVariant != DiabloGameVariant.Diablo))
-            throw new InvalidDataException("Cold Cathedral actor imports require original Diablo single-player Normal.");
+            throw new InvalidDataException("Cold Cathedral actor imports require original Diablo Normal.");
         var nativeSlots = new HashSet<(uint Level, int Slot)>();
         foreach (var target in WorldState.CombatTargets.Values) {
             if (target.NativeInitialization is not { } native)

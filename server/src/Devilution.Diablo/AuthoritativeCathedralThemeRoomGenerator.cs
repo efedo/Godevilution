@@ -922,7 +922,7 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             var tick = random.GenerateRnd(animationRate - 1);
             var frame = random.GenerateRnd(data.Frames[0] - 1);
             var rawHp = data.MinimumHitPoints + random.RandomIntLessThan(data.MaximumHitPoints - data.MinimumHitPoints + 1);
-            var hp = Math.Max((rawHp << 6) / 2, 64);
+            var hp = input.ItemPolicy.GameMode == DiabloGameMode.Multiplayer ? rawHp << 6 : Math.Max((rawHp << 6) / 2, 64);
             var slot = activeMonsters[activeMonsterCount++];
             var monster = monsters[slot] with {
                 Slot = slot, Type = data.NativeType, LevelType = levelType, Mode = 0, Goal = 1,
@@ -1387,7 +1387,8 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             var maximumDepth = familyContext.IsCatacombs ? 8 : 4;
             if (policy.Depth < minimumDepth || policy.Depth > maximumDepth
                 || policy.CurrentDungeonLevel < 0 || policy.CurrentDungeonLevel > maximumDepth
-                || policy.GameMode != DiabloGameMode.SinglePlayer || policy.Difficulty != DiabloDifficulty.Normal
+                || !AuthoritativeCathedralThemeItemGenerator.AdmitsGameMode(policy, familyContext)
+                || policy.Difficulty != DiabloDifficulty.Normal
                 || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
                 || !policy.LegacyLevelItemGenerationAllowed
                 || (policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth))

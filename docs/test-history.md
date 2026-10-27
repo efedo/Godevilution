@@ -9,6 +9,21 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-26 — Multiplayer native Cathedral
+
+`test-cathedral-fresh-population.ps1 -Multiplayer` captured 16 fresh native
+multiplayer Cathedral populations (repeated byte for byte) and the C# generators
+matched all 16; the single-player corpus is unchanged and its pipeline still
+passes. The explicit `TwoMultiplayerParticipantsEnterCathedralL1` server theory
+passes for class pairs (0,0), (0,1) and (2,1), with more and fuller-life L1
+monsters than single-player on the same seed. On the setup-built all-class
+profile, `NativeMultiplayerCreate` passed headless: a Warrior created the run and
+walked to L1, a Rogue joined and walked there, and both clients saw the pair on
+L1 (146 L1 monsters). Diablo.Tests (except the known worker-delegation document
+check), Server.Tests and the client protocol tests pass, and the single-player
+`-TargetDepth 1` Journey/Resume still passes. Healer Resurrect stock, Town warps,
+fighting together and resume (1.5b) were not covered.
+
 ### 2026-10-26 — Playtest controls and brightness
 
 After the user's first playtest found Town too dark and movement unreliable, the

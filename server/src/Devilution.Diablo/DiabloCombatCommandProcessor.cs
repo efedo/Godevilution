@@ -5974,7 +5974,7 @@ public sealed partial class DiabloCombatCommandProcessor
                     target,
                     world.CombatTargets,
                     world.HasAiLineOfSight);
-            AdvanceNativeMonsterAiSeed(target);
+            AdvanceNativeMonsterAiSeed(target, tick);
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);
                 continue;
@@ -6416,12 +6416,20 @@ public sealed partial class DiabloCombatCommandProcessor
     private static int ClampNativeDistance(long distance)
         => distance >= int.MaxValue ? int.MaxValue : (int)distance;
 
-    /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */
-    private void AdvanceNativeMonsterAiSeed(AuthoritativeCombatTarget target)
+    /**
+     * Native ProcessMonsters advances each monster's multiplayer AI seed once per tick.
+     * Native-populated monsters first take multi.cpp MonsterSeeds: every game loop
+     * reseeds slot i with ((loops >> 8) | (loops << 24)) + i. The server tick is the loop count.
+     */
+    private void AdvanceNativeMonsterAiSeed(AuthoritativeCombatTarget target, ulong tick)
     {
         if (gameMode != DiabloGameMode.Multiplayer || !target.UsesNativeRandomSeeds)
             return;
 
+        if (target.NativeInitialization is { } native) {
+            var loops = unchecked((uint)tick);
+            target.MonsterAiSeed = unchecked(((loops >> 8) | (loops << 24)) + (uint)native.InitialState.Slot);
+        }
         random.Restore(target.MonsterAiSeed);
         target.MonsterAiSeed = unchecked((uint)random.AdvanceRndSeed());
     }

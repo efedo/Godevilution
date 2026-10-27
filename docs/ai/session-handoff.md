@@ -48,7 +48,27 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
-## Current batch: 1.5a Multiplayer native Cathedral
+## Current batch: 1.5b Two-player smoke
+
+- **Player-visible outcome:** two clients join one native multiplayer host,
+  see each other and fight together on L1, then resume on a fresh host.
+- **Builds on:** 1.5a `NativeMultiplayerCreate` (two headless clients meet on
+  L1) and the authored `CooperativeJourney`/`CooperativeResume` pattern.
+- **Files and contracts owned:** a native multiplayer journey/resume phase pair
+  in `SessionAcceptance`, its launcher gate, and cold restore of
+  `nativePopulationMultiplayer` with mixed-class participants.
+- **Exit check:** scripted two-client journey with cold resume; both clients draw
+  each other natively. Windowed runs need the user's approval; run headless first.
+- **Out of scope:** Resurrect/Heal Other in play, Catacombs, Town warps.
+
+## Batch 1.5a Multiplayer native Cathedral (done)
+
+Done 2026-10-26: oracle, server theory and `NativeMultiplayerCreate` pass (see
+test history). Open gaps, recorded as inventory 9.24: the Healer's multiplayer
+Resurrect scroll (the profile has no random or third pinned Healer stock),
+multiplayer Town warps (native opens them at clvl 8/13/17 into Catacombs and
+beyond), and native delta re-entry, for which retained floors stand in. Monster
+AI seeds use the server tick as native `sgdwGameLoops`.
 
 1.4 stays open for the user's Town-L4-Town playtest. Batch 1.5 was split: the
 native profile's Cathedral owners reject multiplayer ("Only ordinary

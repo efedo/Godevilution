@@ -18,6 +18,7 @@ public sealed partial class DiabloWorldState
             : nativePopulationPolicies.Values;
 
     private uint? nativePopulationParticipantClassId;
+    private bool nativePopulationMultiplayer;
     private bool nativePopulationLifecycleConfigured;
 
     internal bool HasNativePopulation => nativePopulationPolicy is not null;
@@ -141,8 +142,10 @@ public sealed partial class DiabloWorldState
             return;
         foreach (var policy in NativePopulationOwners)
             policy.ValidateWorld(this);
+        // Multiplayer runs admit every base-game class; the run's class only generated its floors.
         if (participants.Any(player => !AllowsNativePopulationLevel(player.LevelId)
-            || player.CharacterClassId != nativePopulationParticipantClassId))
+            || player.CharacterClassId != nativePopulationParticipantClassId
+                && !(nativePopulationMultiplayer && player.CharacterClassId is 0 or 1 or 2)))
             throw new InvalidDataException("The native route requires its bound base-game class in Town or an owned Cathedral level.");
         if (participants.Any(player => NativePopulationOwners.Any(policy => policy.ReservesEntityId(player.EntityId))))
             throw new InvalidDataException("A participant reused a dormant native monster entity reservation.");

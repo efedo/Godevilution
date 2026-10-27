@@ -304,6 +304,11 @@ public sealed class AuthoritativeCathedralEncounterParameters
 	public int MaximumPlacementAttempts { get; }
 	public IReadOnlyList<bool> InitialVisibleTransparencyRegions { get; }
 	public AuthoritativeCathedralBestiaryResult? ComposedBestiary { get; }
+	/** Native gbIsMultiplayer: full monster life and the per-depth scatter multiplier. */
+	public bool Multiplayer { get; init; }
+	/** level_generation.tsv mpMonsterMultiplierPercent for Cathedral depths 1-4 (checked by the native export). */
+	public const int NativeMultiplayerMonsterMultiplierPercent = 150;
+	public int MultiplayerMonsterMultiplierPercent { get; init; } = NativeMultiplayerMonsterMultiplierPercent;
 
 	internal static bool IsQuestSuppressedUnique(int nativeUniqueId)
 		=> Array.IndexOf(QuestSuppressedUniqueIds, nativeUniqueId) >= 0;
@@ -565,7 +570,7 @@ public static class AuthoritativeCathedralEncounterGenerator
 			var slot = PlaceMonster(levelType, position);
 			activeMonsterCount++;
 			var monster = monsterSlots[slot];
-			var maxHitPoints = Math.Max((definition.MaximumHitPoints << 6) / 2, 64);
+			var maxHitPoints = ScaleLife(definition.MaximumHitPoints << 6);
 			var lightId = definition.NativeUniqueId == HorkDemonUniqueId ? NoLight : AddLight(position, 3);
 			monster = monster with {
 				UniqueType = definition.NativeUniqueId,
@@ -609,6 +614,8 @@ public static class AuthoritativeCathedralEncounterGenerator
 					if (!IsSolid(new(x, y)))
 						walkable++;
 			var count = walkable / input.MonsterDensityDivisor;
+			if (input.Multiplayer)
+				count = count * input.MultiplayerMonsterMultiplierPercent / 100;
 			if (activeMonsterCount + count > MaximumScatterMonsterCount)
 				count = MaximumScatterMonsterCount - activeMonsterCount;
 			totalMonsters = activeMonsterCount + count;
@@ -704,6 +711,10 @@ public static class AuthoritativeCathedralEncounterGenerator
 			int direction)
 			=> new(origin.X + DeltaX[direction], origin.Y + DeltaY[direction]);
 
+		// InitMonster / PrepareUniqueMonst: single-player halves life, never below 64.
+		private int ScaleLife(int maximumHitPoints)
+			=> input.Multiplayer ? maximumHitPoints : Math.Max(maximumHitPoints / 2, 64);
+
 		private int PlaceMonster(int levelType, AuthoritativeCathedralPopulationPoint position)
 		{
 			if (activeMonsterCount >= MonsterCapacity)
@@ -713,7 +724,7 @@ public static class AuthoritativeCathedralEncounterGenerator
 			var tickCounter = random.GenerateRnd(data.Rates[0] - 1);
 			var currentFrame = random.GenerateRnd(data.Frames[0] - 1);
 			var rawHp = data.MinimumHitPoints + random.RandomIntLessThan(data.MaximumHitPoints - data.MinimumHitPoints + 1);
-			var hitPoints = Math.Max((rawHp << 6) / 2, 64);
+			var hitPoints = ScaleLife(rawHp << 6);
 			// InitMonster writes a subset of the native slot. In particular a
 			// rolled-back group retains scratch, last/temp, translation and pack
 			// fields until an actual native assignment replaces them.

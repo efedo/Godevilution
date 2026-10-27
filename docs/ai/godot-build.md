@@ -42,6 +42,12 @@ pair for a class with `tools/test-godot-native-classes.ps1 -ProfileDirectory
 <profile> -NativeTown -Class warrior|rogue|sorcerer`; the Rogue pair has no Town
 class ability step.
 
+The all-class profile also hosts multiplayer (batch 1.5a): `run-local-client.ps1
+-CathedralNativeTownProfileDirectory <profile> -Multiplayer -PersistenceMode cohort
+-SessionDirectory <new> -Headless -Automated -AcceptancePhase NativeMultiplayerCreate`
+starts one host and two clients; slot 1 creates the Warrior that generates the
+run and walks to L1, then slot 2 joins as a Rogue and both meet on L1.
+
 The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 `tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>
 -TargetDepth 1..4 [-TestParticipant tools/native-test-heroes/warrior-l<n>.json]`

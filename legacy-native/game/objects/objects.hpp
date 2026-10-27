@@ -209,6 +209,7 @@ void SyncNakrulRoom();
 void TestObjSetMicro(Point position, int pn);
 /** Actual original-Diablo single-player shrine admission metadata, without selection. */
 std::array<bool, 26> SinglePlayerShrineAvailabilityForTesting();
+std::array<bool, 26> MultiplayerShrineAvailabilityForTesting();
 #endif
 
 } // namespace devilution

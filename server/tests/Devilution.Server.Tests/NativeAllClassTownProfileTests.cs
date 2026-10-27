@@ -1,5 +1,6 @@
 using Devilution.Data;
 using Devilution.Engine;
+using Devilution.Protocol.V1;
 using Devilution.Server.Gameplay;
 using Devilution.Server.Host;
 using Xunit;
@@ -53,5 +54,56 @@ public sealed class NativeAllClassTownProfileTests
             resumed.CommitCohortRestore(prepared);
         Assert.Equal(classId, resumed.SelectedClassId);
         Assert.Equal(saved.SerializedState, resumed.CaptureCohortState().SerializedState);
+    }
+
+    /** Native multiplayer (batch 1.5a): two players of any supported classes share one run and walk into L1. */
+    [Theory(Explicit = true)]
+    [InlineData(0U, 0U)]
+    [InlineData(0U, 1U)]
+    [InlineData(2U, 1U)]
+    public void TwoMultiplayerParticipantsEnterCathedralL1(uint firstClassId, uint secondClassId)
+    {
+        var multiplayer = EnterCathedralL1(AuthoritativeGameMode.Multiplayer,
+            [("first", PlayerEntityId, firstClassId), ("second", PlayerEntityId + 1, secondClassId)]);
+        Assert.Equal(new[] { 1U, 1U }, multiplayer.Players.OrderBy(player => player.EntityId).Select(player => player.LevelId));
+        var singlePlayer = EnterCathedralL1(AuthoritativeGameMode.SinglePlayer, [("first", PlayerEntityId, firstClassId)]);
+        // Same seed and generating class: multiplayer places 150% scatter monsters at full life.
+        var multiplayerL1 = multiplayer.Monsters.Where(monster => monster.LevelId == 1).ToArray();
+        var singlePlayerL1 = singlePlayer.Monsters.Where(monster => monster.LevelId == 1).ToArray();
+        Assert.NotEmpty(singlePlayerL1);
+        Assert.True(multiplayerL1.Length > singlePlayerL1.Length,
+            $"Multiplayer L1 has {multiplayerL1.Length} monsters, single-player {singlePlayerL1.Length}.");
+        Assert.True(multiplayerL1.Max(monster => monster.MaxHitPointsQ6) > singlePlayerL1.Max(monster => monster.MaxHitPointsQ6));
+    }
+
+    private static Snapshot EnterCathedralL1(AuthoritativeGameMode gameMode, (string Session, uint EntityId, uint ClassId)[] participants)
+    {
+        var (factory, registry, content) = Load();
+        var adapter = factory.Activate(registry, content, new AuthoritativePlayerStartConfiguration(null, null, null) {
+            RandomSeed = 2588, StartingLevelId = 0, GameMode = gameMode,
+        });
+        ulong tick = 4;
+        adapter.AdvanceTo(tick);
+        foreach (var (session, entityId, classId) in participants)
+            adapter.InitializeParticipant(session, new AuthoritativeParticipantSelection(classId) { EntityId = entityId });
+        tick = 30;
+        adapter.AdvanceTo(tick);
+        foreach (var (session, entityId, classId) in participants) {
+            var snapshot = adapter.CreateSnapshot(session, entityId, tick);
+            var player = snapshot.Players.Single(candidate => candidate.EntityId == entityId);
+            Assert.Equal((classId, 0U), (player.CharacterClassId, player.LevelId));
+            var stairs = snapshot.LevelGeometry.Single(level => level.LevelId == 0).WarpTriggers
+                .First(trigger => trigger.TargetLevelId == 1);
+            var result = adapter.Execute(session, new Command {
+                MoveRequested = new MoveRequested { TargetCell = true, FollowPath = true, TargetX = stairs.TriggerX, TargetY = stairs.TriggerY },
+            }, tick + 1);
+            Assert.True(result.Succeeded, $"{session} could not path to the L1 stairs: {result.RejectReason}.");
+            for (var step = 0; step < 4000; step++) {
+                adapter.AdvanceTo(++tick);
+                if (adapter.CreateSnapshot(session, entityId, tick).Players.Single(candidate => candidate.EntityId == entityId).LevelId == 1)
+                    break;
+            }
+        }
+        return adapter.CreateSnapshot(participants[0].Session, participants[0].EntityId, tick);
     }
 }

@@ -1678,7 +1678,7 @@ struct NativeThemeRoomGuard {
 
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
-	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt);
+	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt, bool multiplayer = false);
 	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages = false);
 
 	void SetUp() override
@@ -1834,7 +1834,7 @@ protected:
 			WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.rate); });
 		});
 		json.Key("shrineAvailable");
-		WriteArray(out, SinglePlayerShrineAvailabilityForTesting(), [&](bool available) { out << (available ? "true" : "false"); });
+		WriteArray(out, gbIsMultiplayer ? MultiplayerShrineAvailabilityForTesting() : SinglePlayerShrineAvailabilityForTesting(), [&](bool available) { out << (available ? "true" : "false"); });
 	}
 
 private:
@@ -3641,7 +3641,7 @@ std::optional<std::string> WriteNativeRogueInventoryFootprints(const std::filesy
 	return std::nullopt;
 }
 
-void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady, bool nativeRogueRoute, std::optional<HeroClass> nativeClassRoute)
+void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady, bool nativeRogueRoute, std::optional<HeroClass> nativeClassRoute, bool multiplayer)
 {
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
@@ -3712,6 +3712,7 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	const int lightRadius = nativeClassRoute.has_value() ? canonicalHero._pLightRad : 8;
 	const char *fileName = nativeClassRoute.has_value() ? "native-class-l1-population.json" : nativeRogueRoute ? "native-rogue-l1-population.json"
 	    : levelReady                                                                                           ? "native-level-ready.json"
+	    : multiplayer                                                                                          ? "native-fresh-multiplayer-population.json"
 	                                                                                                           : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
 	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
@@ -3720,10 +3721,12 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 		JsonObject document(stream);
 		document.String("format", nativeClassRoute.has_value() ? "godevilution-cathedral-native-class-l1" : nativeRogueRoute ? "godevilution-cathedral-native-rogue-l1"
 		        : levelReady                                                                                                 ? "godevilution-cathedral-level-ready"
+		        : multiplayer                                                                                                ? "godevilution-cathedral-fresh-multiplayer-population"
 		                                                                                                                     : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population"));
 		document.Number("version", 1);
 		document.String("policy", nativeClassRoute.has_value() ? "fresh-cold-original-diablo-class-l1-main-seed2588" : nativeRogueRoute ? "fresh-cold-original-diablo-rogue-l1-main-seed2588"
 		        : levelReady                                                                                                            ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join"
+		        : multiplayer                                                                                                           ? "fresh-cold-original-diablo-multiplayer-normal-clear-before-createlevel-through-createthemerooms"
 		                                                                                                                                : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
 		document.Number("playerMaximumLife", maximumLife);
 		document.Number("playerMaximumMana", maximumMana);
@@ -3810,7 +3813,7 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 					MyPlayer->pLvlLoad = 1;
 					MyPlayer->_pLightRad = lightRadius;
 					if (freshLoadOrder) MyPlayer->position.future = { static_cast<uint8_t>(playableRoute ? 57 : 75), static_cast<uint8_t>(playableRoute ? 40 : 68) };
-					gbIsMultiplayer = false;
+					gbIsMultiplayer = multiplayer;
 					gbIsSpawn = false;
 					gbIsHellfire = false;
 					gbIsHellfireSaveGame = false;
@@ -4802,6 +4805,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 TEST_F(ThemeRoomGenerationTest, CaptureFreshOrdinaryPopulation)
 {
 	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY"), true);
+}
+
+// The same fresh matrix with gbIsMultiplayer: full monster life, 150% scatter, multiplayer shrines and spell pools.
+TEST_F(ThemeRoomGenerationTest, CaptureFreshOrdinaryMultiplayerPopulation)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FRESH_MULTIPLAYER_POPULATION_ORACLE_DIRECTORY"), true, false, false, std::nullopt, true);
 }
 
 // Separately selected exact playable-profile tuple; established corpus bytes stay frozen.

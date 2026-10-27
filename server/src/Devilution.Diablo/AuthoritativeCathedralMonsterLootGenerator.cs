@@ -287,7 +287,7 @@ public static class AuthoritativeCathedralMonsterLootGenerator
         ArgumentNullException.ThrowIfNull(request.MonsterCatalog);
         if (request.Policy.Depth is < 1 or > 4
             || request.Policy.CurrentDungeonLevel is < 0 or > 4
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || request.Policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
             || request.Policy.Difficulty != DiabloDifficulty.Normal
             || request.Policy.Hellfire || request.Policy.Spawn
             || request.Policy.QuestEnabled || request.Policy.SetLevel

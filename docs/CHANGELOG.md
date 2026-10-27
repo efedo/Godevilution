@@ -7,6 +7,16 @@ contracts stay in their existing guides.
 
 ## 2026-10-26
 
+- Multiplayer native Cathedral (batch 1.5a): the all-class native profile hosts
+  multiplayer. The first participant's class generates the run; others pick any
+  class. Cathedral generation follows native multiplayer rules: no monster life
+  halving, 150% scatter counts, the multiplayer shrine list, and Resurrect/Heal
+  Other in the spell, staff and item pools. Monster AI reseeds per tick as native
+  `MonsterSeeds`. The native fresh-population oracle gains a multiplayer capture
+  (`test-cathedral-fresh-population.ps1 -Multiplayer`), and the launcher accepts
+  `-Multiplayer` with the native Town profile and the `NativeMultiplayerCreate`
+  phase. Healer Resurrect stock and multiplayer Town warps stay open.
+
 - Playtest controls (batch 1.4): left click on the floor walks instead of casting
   the class skill (the spell selector's fallback made every floor click a cast);
   holding the button or a WASD key keeps walking (WASD are now screen-relative);

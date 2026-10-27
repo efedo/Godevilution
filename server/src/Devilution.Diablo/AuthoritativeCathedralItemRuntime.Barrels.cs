@@ -47,7 +47,7 @@ public partial class AuthoritativeCathedralItemRuntime
         var family = NativeItemFamily(levelId);
         var facts = request.Barrel;
         if (request.Policy.Depth != levelProfile.Depth
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || !AuthoritativeCathedralThemeItemGenerator.AdmitsGameMode(request.Policy, family)
             || facts.LevelId != levelId)
             throw new InvalidDataException("Native barrel item transactions require the owned single-player Cathedral pool.");
         if (!levelProfile.ObjectBindings.Any(binding =>

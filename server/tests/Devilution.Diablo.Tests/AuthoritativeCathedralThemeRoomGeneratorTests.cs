@@ -37,7 +37,7 @@ public sealed class AuthoritativeCathedralThemeRoomGeneratorTests
         var policies = new[] {
             new AuthoritativeCathedralThemeItemPolicy(0),
             new AuthoritativeCathedralThemeItemPolicy(5),
-            new AuthoritativeCathedralThemeItemPolicy(1, GameMode: DiabloGameMode.Multiplayer),
+            new AuthoritativeCathedralThemeItemPolicy(1, GameMode: DiabloGameMode.Multiplayer, Difficulty: DiabloDifficulty.Nightmare),
             new AuthoritativeCathedralThemeItemPolicy(1, Difficulty: DiabloDifficulty.Nightmare),
             new AuthoritativeCathedralThemeItemPolicy(1, Hellfire: true),
             new AuthoritativeCathedralThemeItemPolicy(1, Spawn: true),

@@ -13,7 +13,9 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
 {
     internal const string Policy = "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms";
+    internal const string MultiplayerPolicy = "fresh-cold-original-diablo-multiplayer-normal-clear-before-createlevel-through-createthemerooms";
     private const string FileName = "native-fresh-population.json";
+    private const string MultiplayerFileName = "native-fresh-multiplayer-population.json";
     public static TheoryData<int, uint, string> Cases => AuthoritativeCathedralEncounterNativeOracleTests.Cases;
 
     [Theory(Explicit = true)]
@@ -47,6 +49,32 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
             new(MaximumLifeBase: 6400, MaximumManaBase: 3200, LightRadius: 8, IdleFrames: 10,
                 PreEntryFuture: new(75, 68), LevelChanging: true));
         VerifyFreshRow(row, metadata, actual, 10);
+    }
+
+    /** The same matrix with native gbIsMultiplayer (batch 1.5a). */
+    [Theory(Explicit = true)]
+    [MemberData(nameof(Cases))]
+    public void FreshMultiplayerLevelMatchesNative(int depth, uint seed, string entry)
+    {
+        var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            "GODEVILUTION_CATHEDRAL_FRESH_MULTIPLAYER_POPULATION_ORACLE_DIRECTORY");
+        Assert.Equal(new[] { MultiplayerFileName }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory).Select(Path.GetFileName));
+        var corpus = AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, MultiplayerFileName), 128 * 1024 * 1024);
+        ValidateHeader(corpus, multiplayer: true);
+        var rows = A(corpus, "cases").EnumerateArray().ToArray();
+        ValidateMatrix(rows.Select(row => (N(row, "depth"), U(row, "seed"), S(row, "entry"))).ToArray());
+        var row = rows.Single(row => N(row, "depth") == depth && U(row, "seed") == seed && S(row, "entry") == entry);
+        var metadata = CathedralPopulationMetadataCompiler.LoadDirectory(
+            AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+                "GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY"));
+        var nativeItems = ReadCatalog(corpus.GetProperty("itemCatalog"));
+        Assert.Equal(AuthoritativeCathedralThemeItemMetadata.CreateTables(nativeItems).Select(table => table.ToCanonicalTsv()),
+            AuthoritativeCathedralThemeItemMetadata.CreateTables(metadata.Items.Catalog).Select(table => table.ToCanonicalTsv()));
+        var actual = AuthoritativeCathedralFreshLevelGenerator.Generate(metadata, depth, seed, 0x13579BDF,
+            entry == "main" ? AuthoritativeCathedralEntry.Main : AuthoritativeCathedralEntry.Previous,
+            new(MaximumLifeBase: 6400, MaximumManaBase: 3200, LightRadius: 8, IdleFrames: 10,
+                PreEntryFuture: new(75, 68), LevelChanging: true), gameMode: DiabloGameMode.Multiplayer);
+        VerifyFreshRow(row, metadata, actual, 10, DiabloGameMode.Multiplayer);
     }
 
     [Fact(Explicit = true)]
@@ -183,7 +211,8 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
         int InventoryHeight);
 
     private static void VerifyFreshRow(JsonElement row, AuthoritativeCathedralPopulationMetadata metadata,
-        AuthoritativeCathedralFreshLevelResult actual, int idleFrames)
+        AuthoritativeCathedralFreshLevelResult actual, int idleFrames,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         Properties(row, "depth", "seed", "entry", "snapshot", "preClearRandomState", "postClearRandomState",
             "nextTransparencyValue", "triggerPositions", "prePlayerRandomState", "playerIdleFrames",
@@ -244,7 +273,7 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
             Assert.Equal(expected.Definition.Rates, generated.Definition.Rates);
         }
         Assert.Equal(metadata.Population.Objects, roomCatalog.Objects);
-        Assert.Equal(metadata.ShrineAvailable, roomCatalog.ShrineAvailable);
+        Assert.Equal(metadata.ShrineAvailableFor(gameMode), roomCatalog.ShrineAvailable);
         EqualWorld("fresh after InitItems", ReadWorld(row.GetProperty("afterItems")),
             new(actual.Population.BeforeThemeRooms, actual.Population.InitialItems.FinalRandomState,
                 actual.Population.InitialPopulation.Themes.PlacementOrigin, actual.Population.InitialPopulation.Themes.PlacementVariant));
@@ -280,12 +309,13 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
             N(value, "offsetX"), N(value, "offsetY"), N(value, "radius"), N(value, "oldRadius"), B(value, "isInvalid"), B(value, "hasChanged"));
     }
 
-    internal static void ValidateHeader(JsonElement value)
+    internal static void ValidateHeader(JsonElement value, bool multiplayer = false)
     {
         Properties(value, "format", "version", "policy", "playerMaximumLife", "playerMaximumMana", "playerLightRadius",
             "storySeed", "playerFuture", "playerLevelChanging", "itemCatalog", "cases", "caseCount", "multiRoomCases");
-        if (S(value, "format") != "godevilution-cathedral-fresh-population" || N(value, "version") != 1
-            || S(value, "policy") != Policy || N(value, "playerMaximumLife") != 6400
+        if (S(value, "format") != (multiplayer ? "godevilution-cathedral-fresh-multiplayer-population" : "godevilution-cathedral-fresh-population")
+            || N(value, "version") != 1
+            || S(value, "policy") != (multiplayer ? MultiplayerPolicy : Policy) || N(value, "playerMaximumLife") != 6400
             || N(value, "playerMaximumMana") != 3200 || N(value, "playerLightRadius") != 8
             || U(value, "storySeed") != 0x13579BDF || N(value, "caseCount") != 16
             || N(value, "multiRoomCases") <= 0 || !B(value, "playerLevelChanging")

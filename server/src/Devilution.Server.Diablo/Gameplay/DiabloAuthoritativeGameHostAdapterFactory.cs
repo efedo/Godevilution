@@ -72,14 +72,16 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
         if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId
                 or CathedralNativeDepthProgressionId or CathedralNativeClassProgressionId or CathedralNativeTownProgressionId
                 or CathedralNativeAllClassTownId)
-            && (playerStart.GameMode != AuthoritativeGameMode.SinglePlayer
+            // The default all-class profile also hosts native multiplayer (batch 1.5a).
+            && ((playerStart.GameMode != AuthoritativeGameMode.SinglePlayer
+                    && !(adapterId == CathedralNativeAllClassTownId && playerStart.GameMode == AuthoritativeGameMode.Multiplayer))
                 || playerStart.Difficulty != AuthoritativeGameDifficulty.Normal
                 || playerStart.ProceduralMonsterLimit is not null
                 || playerStart.ProceduralMonsterLevelId is not null
                 || playerStart.StartingLevelId is not (null or 0 or 1)
                 || playerStart.StatPoints is not (null or 0)))
             throw new NotSupportedException(
-                "The native-populated Cathedral profile requires a Normal single-player start at Town or L1 without procedural overrides.");
+                "The native-populated Cathedral profile requires a Normal start at Town or L1 without procedural overrides; only the all-class profile hosts multiplayer.");
         var gameMode = playerStart.GameMode switch {
             AuthoritativeGameMode.SinglePlayer => DiabloGameMode.SinglePlayer,
             AuthoritativeGameMode.Multiplayer => DiabloGameMode.Multiplayer,
@@ -99,14 +101,16 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             if (!town.GetNativeTownClassIds(content).Order().SequenceEqual(AllClassTownClassIds))
                 throw new InvalidDataException("The all-class native Town profile must start Warrior, Rogue and Sorcerer.");
             // Each class is its own native run; activate all of them and keep the one the player picks.
-            // A test participant belongs to the run of its own class only.
+            // A test participant belongs to the run of its own class only. In multiplayer the first
+            // participant's class generates the levels and later participants may pick any class.
             var testClass = playerStart.TestParticipantDefinition is { } definition
                 ? NativeTestParticipant.Parse(definition).ClassSymbol : null;
             string[] classSymbols = ["warrior", "rogue", "sorcerer"];
             return new NativeClassSelectingGameHostAdapter(AllClassTownClassIds.ToDictionary(classId => classId,
-                classId => CreateExecutor(town.ActivateNativeTownClass(content, classId, playerStart.RandomSeed),
+                classId => CreateExecutor(town.ActivateNativeTownClass(content, classId, playerStart.RandomSeed, gameMode),
                     testClass is null || testClass == classSymbols[classId] ? playerStart : playerStart with { TestParticipantDefinition = null },
-                    nativePopulation: true, classBound: true, nativeProtocol: true, allClass: true)));
+                    nativePopulation: true, classBound: true, nativeProtocol: true, allClass: true,
+                    multiplayerClasses: gameMode == DiabloGameMode.Multiplayer ? AllClassTownClassIds : null)));
         }
         var activatedContent = adapterId switch {
             CathedralNativeTownProgressionId => registry.GetRequiredCapability<IDiabloCathedralNativeTownProgressionBootstrap>()
@@ -136,7 +140,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
 
     private static StoreSimulationExecutor CreateExecutor(DiabloContentActivation activatedContent,
         AuthoritativePlayerStartConfiguration playerStart, bool nativePopulation, bool classBound, bool nativeProtocol,
-        bool allClass = false)
+        bool allClass = false, IReadOnlyCollection<uint>? multiplayerClasses = null)
     {
         var startingLevelId = playerStart.StartingLevelId
             ?? activatedContent.DefaultStartingLevelId;
@@ -170,7 +174,9 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             activatedContent,
             (sessionId, requestedClassId) => {
                 var playerClass = isClassBoundNativeProfile
-                    ? requestedClassId.HasValue && requestedClassId.Value != characterStart!.ClassId
+                    ? requestedClassId is { } joiningClassId && multiplayerClasses?.Contains(joiningClassId) == true
+                        ? activatedContent.PlayerClasses.GetRequired(joiningClassId)
+                    : requestedClassId.HasValue && requestedClassId.Value != characterStart!.ClassId
                         ? throw new NotSupportedException(
                             $"The class-bound native profile requires its compiled {characterStart!.ClassSymbol} class.")
                         : activatedContent.PlayerClasses.GetRequired(characterStart!.ClassId)

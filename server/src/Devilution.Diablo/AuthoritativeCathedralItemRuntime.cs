@@ -641,7 +641,7 @@ public partial class AuthoritativeCathedralItemRuntime
         var level = GetLevel(levelId);
         var levelProfile = GetLevelProfile(levelId);
         if (levelProfile.Depth is < 1 or > 4 || request.Policy.Depth != levelProfile.Depth
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer)
+            || request.Policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer))
             throw new InvalidDataException("Native chest item transactions require the owned single-player Cathedral pool.");
         if (!levelProfile.ObjectBindings.Any(binding =>
                 binding.NativeObjectSlot == request.ChestObjectSlot

@@ -3657,6 +3657,14 @@ std::array<bool, 26> SinglePlayerShrineAvailabilityForTesting()
 	return available;
 }
 
+std::array<bool, 26> MultiplayerShrineAvailabilityForTesting()
+{
+	std::array<bool, 26> available;
+	for (size_t index = 0; index < available.size(); ++index)
+		available[index] = shrineavail[index] != ShrineTypeSingle;
+	return available;
+}
+
 void TestObjSetMicro(Point position, int pn)
 {
 	ObjSetMicro(position, pn);

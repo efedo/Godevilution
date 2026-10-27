@@ -81,7 +81,7 @@ public static class AuthoritativeCathedralChestLootGenerator
         if (request.Policy.Depth is < 1 or > 4
             || request.Policy.CurrentDungeonLevel != 0 && request.Policy.CurrentDungeonLevel != request.Policy.Depth
             || request.Policy.Hellfire || request.Policy.SetLevel
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || request.Policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
             || request.Policy.Difficulty != DiabloDifficulty.Normal
             || request.Policy.Spawn || request.Policy.QuestEnabled
             || !request.Policy.LegacyLevelItemGenerationAllowed)

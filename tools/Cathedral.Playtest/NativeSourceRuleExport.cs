@@ -11,43 +11,6 @@ public static class NativeSourceRuleExport
     // monsters.cpp InitMonsters: MaxMonsters (200) minus the 10 reserved slots.
     public const int OrdinaryMonsterCapacity = 200 - 10;
 
-    private enum ShrineGameType
-    {
-        Any,
-        Single,
-        Multi,
-    }
-
-    // objects.cpp shrineavail[], first 26 entries (original Diablo shrines).
-    private static readonly ShrineGameType[] ShrineAvailability = [
-        ShrineGameType.Any, // Mysterious
-        ShrineGameType.Any, // Hidden
-        ShrineGameType.Single, // Gloomy
-        ShrineGameType.Single, // Weird
-        ShrineGameType.Any, // Magical
-        ShrineGameType.Any, // Stone
-        ShrineGameType.Any, // Religious
-        ShrineGameType.Any, // Enchanted
-        ShrineGameType.Single, // Thaumaturgic
-        ShrineGameType.Any, // Fascinating
-        ShrineGameType.Any, // Cryptic
-        ShrineGameType.Any, // Magical
-        ShrineGameType.Any, // Eldritch
-        ShrineGameType.Any, // Eerie
-        ShrineGameType.Any, // Divine
-        ShrineGameType.Any, // Holy
-        ShrineGameType.Any, // Sacred
-        ShrineGameType.Any, // Spiritual
-        ShrineGameType.Multi, // Spooky
-        ShrineGameType.Any, // Abandoned
-        ShrineGameType.Any, // Creepy
-        ShrineGameType.Any, // Quiet
-        ShrineGameType.Any, // Secluded
-        ShrineGameType.Any, // Ornate
-        ShrineGameType.Any, // Glimmering
-        ShrineGameType.Multi, // Tainted
-    ];
-
     // objects.cpp StoryText[3][3]; the population records each book's first entry.
     private static readonly string[] StoryBookSpeech = ["TEXT_BOOK11", "TEXT_BOOK21", "TEXT_BOOK31"];
 
@@ -60,6 +23,10 @@ public static class NativeSourceRuleExport
                 candidate.RequiredInt32("minLevel") <= depth && depth <= candidate.RequiredInt32("maxLevel"));
             var divisor = row?.RequiredInt32("monsterDensityDivisor") ?? 30;
             var trapPercent = row?.RequiredInt32("trapPercent") ?? 0;
+            // The Cathedral metadata does not store the multiplayer multiplier; the encounter generator assumes the native value.
+            if ((row?.RequiredInt32("mpMonsterMultiplierPercent") ?? 150)
+                != AuthoritativeCathedralEncounterParameters.NativeMultiplayerMonsterMultiplierPercent)
+                throw new InvalidDataException($"Cathedral depth {depth} has a non-native multiplayer monster multiplier.");
             return new AuthoritativeCathedralPopulationDepthRule(depth, divisor, trapPercent, OrdinaryMonsterCapacity);
         }).ToArray();
     }
@@ -77,7 +44,7 @@ public static class NativeSourceRuleExport
 
     /** CreateShrine: single-player excludes multiplayer-only shrines; Enchanted is allowed in Cathedral. */
     public static IReadOnlyList<bool> SinglePlayerShrineAvailability()
-        => ShrineAvailability.Select(type => type != ShrineGameType.Multi).ToArray();
+        => AuthoritativeNativeShrineAvailability.SinglePlayer.ToArray();
 
     internal static TsvTable Load(string textDataRoot, params string[] parts)
     {

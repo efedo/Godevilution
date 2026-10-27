@@ -47,7 +47,7 @@ public partial class AuthoritativeCathedralItemRuntime
         var family = NativeItemFamily(levelId);
         var facts = request.Sarcophagus;
         if (request.Policy.Depth != levelProfile.Depth
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || !AuthoritativeCathedralThemeItemGenerator.AdmitsGameMode(request.Policy, family)
             || facts.LevelId != levelId)
             throw new InvalidDataException("Native sarcophagus item transactions require the owned single-player Cathedral pool.");
         if (!levelProfile.ObjectBindings.Any(binding =>

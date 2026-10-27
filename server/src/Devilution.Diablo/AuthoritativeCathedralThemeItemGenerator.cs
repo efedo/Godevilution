@@ -664,7 +664,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
     {
         ValidateSelectionRequest(request, catalog, policy, familyContext);
         var random = new AuthoritativeLegacyRandom(request.RandomState);
-        var itemIndex = SelectRandomItem(random, request.OnlyGood, request.CurrentLevel, catalog);
+        var itemIndex = SelectRandomItem(random, request.OnlyGood, request.CurrentLevel, catalog, policy.GameMode == DiabloGameMode.Multiplayer);
         var itemSeed = unchecked((uint)random.AdvanceRndSeed());
         var itemRequest = new AuthoritativeCathedralThemeItemRequest(
             itemSeed,
@@ -706,7 +706,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         var itemIndex = request.RequestedItemType == ItemTypeGold
             ? FindGoldItem(catalog)
             : SelectTypeItem(random, request.RequestedItemType, request.RequestedMiscId,
-                request.CurrentLevel, request.OnlyGood, catalog);
+                request.CurrentLevel, request.OnlyGood, catalog, policy.GameMode == DiabloGameMode.Multiplayer);
         var itemSeed = unchecked((uint)random.AdvanceRndSeed());
         var itemRequest = new AuthoritativeCathedralThemeItemRequest(
             itemSeed,
@@ -750,7 +750,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         ValidateSelectionRequest(new AuthoritativeCathedralThemeItemSelectionRequest(
             randomState, currentLevel, onlyGood), catalog, policy, familyContext);
         var random = new AuthoritativeLegacyRandom(randomState);
-        var itemIndex = SelectRandomItem(random, onlyGood, currentLevel, catalog);
+        var itemIndex = SelectRandomItem(random, onlyGood, currentLevel, catalog, policy.GameMode == DiabloGameMode.Multiplayer);
         return new(itemIndex, random.State);
     }
 
@@ -785,7 +785,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         var random = new AuthoritativeLegacyRandom(randomState);
         var itemIndex = itemType == ItemTypeGold
             ? FindGoldItem(catalog)
-            : SelectTypeItem(random, itemType, miscId, currentLevel, onlyGood, catalog);
+            : SelectTypeItem(random, itemType, miscId, currentLevel, onlyGood, catalog, policy.GameMode == DiabloGameMode.Multiplayer);
         return new(itemIndex, random.State);
     }
 
@@ -854,7 +854,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             if (request.ForceNotUnique)
                 random.Discard(1);
             result.Item = unique is null
-                ? GetItemBonus(item, baseLevel / 2, baseLevel, request.OnlyGood, random, catalog, request.Player)
+                ? GetItemBonus(item, baseLevel / 2, baseLevel, request.OnlyGood, random, catalog, request.Player, policy.GameMode == DiabloGameMode.Multiplayer)
                 : ApplyUnique(item, unique, random, catalog, request.Player);
         }
         if (result.Item.Magical != QualityUnique)
@@ -932,7 +932,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         if (level == 0)
             level = 1;
         var roll = GenerateRnd(random, catalog.Spells.Count, "GetBookSpell spell") + 1;
-        var spell = SelectSpell(roll, level, false, catalog);
+        var spell = SelectSpell(roll, level, false, catalog, policy.GameMode == DiabloGameMode.Multiplayer);
         var name = CopyNativeName(item.BaseName);
         var identifiedName = CopyNativeName(item.IdentifiedName);
         name = CopyNativeName(name + spell.Name);
@@ -957,7 +957,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int roll,
         int level,
         bool staff,
-        AuthoritativeCathedralThemeItemCatalog catalog)
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        bool multiplayer)
     {
         if (roll <= 0)
             return staff ? catalog.Spells[0] : catalog.Spells[1];
@@ -975,9 +976,10 @@ public static class AuthoritativeCathedralThemeItemGenerator
             if (selected && remaining <= 0)
                 return spell;
             spellId++;
-            if (spellId == 32)
+            // Single-player skips Resurrect (32) and Heal Other (34).
+            if (!multiplayer && spellId == 32)
                 spellId = 33;
-            if (spellId == 34)
+            if (!multiplayer && spellId == 34)
                 spellId = 35;
             if (spellId >= catalog.Spells.Count)
                 spellId = 1;
@@ -997,7 +999,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         bool onlyGood,
         AuthoritativeLegacyRandom random,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        AuthoritativeCathedralThemeItemPlayerContext? player)
+        AuthoritativeCathedralThemeItemPlayerContext? player,
+        bool multiplayer)
     {
         minimumLevel = Math.Min(minimumLevel, 25);
         var affixType = item.ItemType switch {
@@ -1010,7 +1013,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             _ => 0,
         };
         if (item.ItemType == ItemTypeStaff)
-            return GetStaffSpellOrPower(item, maximumLevel, onlyGood, random, catalog, player);
+            return GetStaffSpellOrPower(item, maximumLevel, onlyGood, random, catalog, player, multiplayer);
         if (affixType == 0)
             return item;
         return GetItemPower(item, minimumLevel, maximumLevel, affixType, onlyGood, random, catalog, player);
@@ -1022,7 +1025,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         bool onlyGood,
         AuthoritativeLegacyRandom random,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        AuthoritativeCathedralThemeItemPlayerContext? player)
+        AuthoritativeCathedralThemeItemPlayerContext? player,
+        bool multiplayer)
     {
         if (GenerateRnd(random, 4, "GetStaffSpell branch") == 0)
             return GetItemPower(item, level / 2, level, AffixStaff, onlyGood, random, catalog, player);
@@ -1031,7 +1035,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         if (spellLevel == 0)
             spellLevel = 1;
         var roll = GenerateRnd(random, catalog.Spells.Count, "GetStaffSpell spell") + 1;
-        var spell = SelectSpell(roll, spellLevel, true, catalog);
+        var spell = SelectSpell(roll, spellLevel, true, catalog, multiplayer);
         var charges = checked(spell.StaffMinimumCharges
             + GenerateRnd(random, checked(spell.StaffMaximumCharges - spell.StaffMinimumCharges + 1), "GetStaffSpell charges"));
         var value = checked(item.Value + charges * spell.StaffCost / 5);
@@ -1731,11 +1735,12 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeLegacyRandom random,
         bool onlyGood,
         int currentLevel,
-        AuthoritativeCathedralThemeItemCatalog catalog)
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        bool multiplayer)
     {
         if (!onlyGood && GenerateRnd(random, 100, "RndAllItems gold") < catalog.Rules.GoldPercent)
             return FindGoldItem(catalog);
-        return SelectDroppable(random, currentLevel, onlyGood, -1, -1, catalog, onlyGood);
+        return SelectDroppable(random, currentLevel, onlyGood, -1, -1, catalog, onlyGood, multiplayer);
     }
 
     private static int SelectTypeItem(
@@ -1744,8 +1749,9 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int miscId,
         int currentLevel,
         bool onlyGood,
-        AuthoritativeCathedralThemeItemCatalog catalog)
-        => SelectDroppable(random, currentLevel, onlyGood, itemType, miscId, catalog, false);
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        bool multiplayer)
+        => SelectDroppable(random, currentLevel, onlyGood, itemType, miscId, catalog, false, multiplayer);
 
     private static int SelectDroppable(
         AuthoritativeLegacyRandom random,
@@ -1754,13 +1760,14 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int itemType,
         int miscId,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        bool allowGoodBookBypass)
+        bool allowGoodBookBypass,
+        bool multiplayer)
     {
         var maximumLevel = checked(currentLevel * 2);
         var candidates = catalog.Items.Where(item => item.Available && item.DropRate > 0
                 && (allowGoodBookBypass && onlyGood && item.ItemType == ItemTypeMisc && item.MiscId == MiscBook
                     || item.MinimumMonsterLevel <= maximumLevel)
-                && (item.SpellId is not 32 and not 34)
+                && (multiplayer || item.SpellId is not 32 and not 34)
                 && (itemType < 0
                     ? onlyGood
                         ? item.ItemType != ItemTypeGold && (item.ItemType != ItemTypeMisc || item.MiscId == MiscBook)
@@ -1965,7 +1972,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (policy.Depth is < 1 or > 4 || policy.CurrentDungeonLevel is < 0 or > 4
-            || policy.GameMode != DiabloGameMode.SinglePlayer || policy.Difficulty != DiabloDifficulty.Normal
+            || policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
+            || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
             || !policy.LegacyLevelItemGenerationAllowed)
             throw new InvalidDataException("Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
@@ -1983,7 +1991,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         var minimumDepth = familyContext.IsCatacombs ? 5 : 1;
         if (policy.Depth < minimumDepth || policy.Depth > maximumDepth
             || policy.CurrentDungeonLevel < 0 || policy.CurrentDungeonLevel > maximumDepth
-            || policy.GameMode != DiabloGameMode.SinglePlayer || policy.Difficulty != DiabloDifficulty.Normal
+            || !AdmitsGameMode(policy, familyContext) || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
             || !policy.LegacyLevelItemGenerationAllowed)
             throw new InvalidDataException(familyContext.IsCatacombs
@@ -1994,6 +2002,13 @@ public static class AuthoritativeCathedralThemeItemGenerator
                 ? "Current dungeon level must match the requested Catacombs depth."
                 : "Current dungeon level must match the requested Cathedral depth.");
     }
+
+    /** Cathedral generation has native multiplayer rules; Catacombs stays single-player. */
+    internal static bool AdmitsGameMode(
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+        => policy.GameMode == DiabloGameMode.SinglePlayer
+            || policy.GameMode == DiabloGameMode.Multiplayer && !familyContext.IsCatacombs;
 
     private static HashSet<int> CopyFlags(IReadOnlySet<int>? flags)
         => flags is null ? [] : flags.ToHashSet();

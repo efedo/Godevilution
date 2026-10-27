@@ -306,6 +306,12 @@ public interface IDiabloCathedralNativeTownProgressionBootstrap
     /** Activates one class of an all-class Town profile; class-bound profiles use ActivateNativeTownProgression. */
     DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed = 0)
         => throw new NotSupportedException("This bootstrap does not activate all-class native profiles.");
+
+    /** As above in a game mode; multiplayer generates Cathedral L1-L4 with native multiplayer rules. */
+    DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed, DiabloGameMode gameMode)
+        => gameMode == DiabloGameMode.SinglePlayer
+            ? ActivateNativeTownClass(content, classId, randomSeed)
+            : throw new NotSupportedException("This bootstrap does not activate multiplayer native profiles.");
 }
 
 internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap, IDiabloCathedralNativeDepthProgressionBootstrap, IDiabloCathedralNativeTownProgressionBootstrap
@@ -418,7 +424,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             : throw new InvalidDataException("An all-class native Town profile requires its compiled character-start table.");
 
     public DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed = 0)
-        => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+        => ActivateNativeTownClass(content, classId, randomSeed, DiabloGameMode.SinglePlayer);
+
+    public DiabloContentActivation ActivateNativeTownClass(ComposedContent content, uint classId, uint randomSeed, DiabloGameMode gameMode)
+        => ActivateCore(content, randomSeed, gameMode, null, DiabloDifficulty.Normal,
             nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
             nativePopulation: true, nativeDepthProgression: true,
             nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth,
@@ -533,8 +542,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         if (nativeDepthProgression && (nativeProgression
             || nativeProgressionMaximumDepth != AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth))
             throw new ArgumentOutOfRangeException(nameof(nativeProgressionMaximumDepth));
+        // Only the all-class Town profile admits native multiplayer (batch 1.5a).
+        var nativeMultiplayer = gameMode == DiabloGameMode.Multiplayer && nativeTown && nativeClassId is not null;
         if (nativePopulation && (!cathedralDepths || !cathedralDoors
-            || gameMode != DiabloGameMode.SinglePlayer || difficulty != DiabloDifficulty.Normal
+            || gameMode != DiabloGameMode.SinglePlayer && !nativeMultiplayer || difficulty != DiabloDifficulty.Normal
             || monsterSpawns is not null))
             throw new NotSupportedException("Native Cathedral population requires the explicit single-player Normal L1 route without procedural spawn overrides.");
         var hasNativeTownTables = content.Manifest.Packs.SelectMany(pack => pack.Tables)
@@ -1659,7 +1670,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     ?? throw new InvalidDataException("Native population requires complete captured store stock."))
                     .Select(item => item.State).ToArray(),
                 sidecars.Items,
-                characterStart: nativeCharacterStart);
+                characterStart: nativeCharacterStart,
+                gameMode: gameMode);
             world.ReplaceLevel(nativePopulationBuild.Policy.CreateBackingLevel());
             combatTargets = (combatTargets ?? Array.Empty<AuthoritativeCombatTarget>())
                 .Concat(nativePopulationBuild.Monsters.Records
@@ -1742,7 +1754,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                         var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
                             sidecars.Population, candidate.Identity.Depth, candidate.Identity.DungeonSeed,
                             0x13579BDF, candidate.Identity.Entry, entry.Hero,
-                            entry.InitialUniqueItemFlags.ToHashSet(), candidate.Level.StableSymbol);
+                            entry.InitialUniqueItemFlags.ToHashSet(), candidate.Level.StableSymbol, gameMode: gameMode);
                         return AuthoritativeCathedralNativePopulationBuilder.Build(sidecars.Population,
                             sidecars.Runtime, candidate, playerClasses, playerAnimations, playerLoadouts,
                             monsterTypes, itemCatalog, spells,
@@ -1753,7 +1765,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                         : DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
                         FreshActivation = () => nativeTown
                             ? nativeClassId is { } freshClassId
-                                ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownClass(content, freshClassId, randomSeed)
+                                ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownClass(content, freshClassId, randomSeed, gameMode)
                                 : new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownProgression(content, randomSeed)
                             : nativeClassId is { } depthClassId
                                 ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeDepthProgressionClass(content, depthClassId, randomSeed)

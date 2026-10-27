@@ -15,7 +15,8 @@ public sealed partial class DiabloWorldState
     {
         nativePopulationPolicy = options.NativePopulationPolicy?.Bindings
             ?? throw new InvalidDataException("Direct native population construction requires its immutable owner.");
-        if (options.GameMode != DiabloGameMode.SinglePlayer || options.Difficulty != DiabloDifficulty.Normal
+        if (options.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
+            || options.Difficulty != DiabloDifficulty.Normal
             || options.CombatRules?.GameVariant != DiabloGameVariant.Diablo
             || options.NativeCathedralItems is null
             || options.NativeProgressionRestore is null
@@ -47,6 +48,7 @@ public sealed partial class DiabloWorldState
             || participantClass.ClassId is not (0U or 1U or 2U))
             throw new InvalidDataException("Native population supports only the canonical base-game classes.");
         nativePopulationParticipantClassId = participantClass.ClassId;
+        nativePopulationMultiplayer = options.GameMode == DiabloGameMode.Multiplayer;
         if (World is null)
             throw new InvalidDataException("Native population requires its complete backing world.");
         foreach (var owner in NativePopulationOwners) {
