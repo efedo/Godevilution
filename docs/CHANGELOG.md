@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-10-27
 
+- Combat processor split (batch 1.7): `DiabloCombatCommandProcessor.cs` (18,387 lines) moves
+  whole members, in order and unchanged, into twelve partials for player attacks, spells,
+  monster AI, missiles and player death; the main file keeps state and entry points.
+
 - Shared per-level state (batch 1.6): ten level-keyed registries in `DiabloWorldState`
   (population owners, door levels and owners, monster phases, ranged mappings, floor
   entries) are one `LevelState` per level; both floor admissions share adoption and item merging.

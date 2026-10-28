@@ -48,6 +48,24 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 1.7 Split the combat processor (done)
+
+- **Player-visible outcome:** none by design; combat code becomes reviewable
+  per native module before Phase 2 ports into it.
+- **Native source:** module boundaries only: `player.cpp`, `spells.cpp`,
+  `missiles.cpp`, `monster.cpp`.
+- **Files and contracts owned:** `DiabloCombatCommandProcessor.cs` (18,387 lines)
+  moves whole members, in order, into partial files named for those modules. The
+  main file keeps fields, the constructor and the command/tick entry points.
+  No member body changes.
+- **Exit check:** no combat file over about 2,000 lines; the moved text equals the
+  original member text; Diablo.Tests, Server.Tests and client protocol tests pass.
+- **Out of scope:** renames, reordering inside members, other large files.
+- **Size:** under a day.
+- **State (2026-10-27):** done. Twelve partials of 1,057-1,887 lines; the main file
+  keeps 627. The concatenated member text equals the original apart from 13 blank
+  lines at the cuts. Phase 1 is complete except the user's 1.4 playtest.
+
 ## Batch 1.6 Shared per-level state (done)
 
 - **Player-visible outcome:** none by design; later floors extend one per-level
