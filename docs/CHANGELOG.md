@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-28
+
+- `LoadObjectData` registers the object behaviors, so the timedemo (which skips
+  game init) opens its chest again and `Timedemo.WarriorLevel1to2` replays tick
+  for tick like upstream; `objects_test` pins the registration.
+
 ## 2026-10-26
 
 - Native CI repair: format `legacy-native/` and `test/` with clang-format 18;

@@ -164,6 +164,22 @@ TEST_F(ObjectDataTableTest, TableSizeCoversAllObjectIds)
 	    << "AllObjects has fewer entries than OBJ_LAST requires";
 }
 
+TEST_F(ObjectDataTableTest, LoadObjectDataRegistersEveryNamedBehavior)
+{
+	// Callers that load data without the game's init (timedemo, tests, mod reload) must still be
+	// able to operate objects: an unregistered behavior makes OperateObject a silent no-op.
+	ObjectBehaviorRegistry.clear();
+	LoadObjectData();
+
+	for (size_t i = 0; i < AllObjects.size(); i++) {
+		const std::string &behavior = AllObjects[i].behavior;
+		if (!behavior.empty())
+			EXPECT_TRUE(ObjectBehaviorRegistry.contains(behavior)) << "object " << i << " behavior " << behavior;
+	}
+	for (const _object_id otype : { OBJ_CHEST1, OBJ_CHEST2, OBJ_CHEST3, OBJ_L1LDOOR, OBJ_SARC })
+		EXPECT_FALSE(AllObjects[otype].behavior.empty()) << "otype " << static_cast<int>(otype);
+}
+
 TEST_F(ObjectDataTableTest, TrapFlagMarksObjectsThatCanTriggerTraps)
 {
 	// The Trap flag in AllObjects marks objects that *can serve as trap triggers*

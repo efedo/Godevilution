@@ -304,6 +304,9 @@ void LoadObjectData()
 
 	AllObjects.shrink_to_fit();
 	ObjMasterLoadList.shrink_to_fit();
+
+	// Behaviors are looked up by the names just loaded; without them OperateObject is a no-op.
+	RegisterObjectBehaviors();
 }
 
 } // namespace devilution

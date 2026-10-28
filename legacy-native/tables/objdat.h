@@ -246,7 +246,7 @@ struct ObjectData {
 struct Player;
 struct Object;
 using ObjectBehaviorHandler = void (*)(Player &, Object &, bool sendmsg);
-extern std::unordered_map<std::string, ObjectBehaviorHandler> ObjectBehaviorRegistry;
+extern DVL_API_FOR_TEST std::unordered_map<std::string, ObjectBehaviorHandler> ObjectBehaviorRegistry;
 
 void RegisterObjectBehaviors();
 
@@ -257,6 +257,7 @@ extern const _object_id ObjTypeConv[];
 extern DVL_API_FOR_TEST std::vector<ObjectData> AllObjects;
 extern DVL_API_FOR_TEST std::vector<std::string> ObjMasterLoadList;
 
+/** Loads objdat.tsv and registers the behavior handlers its rows name. */
 void LoadObjectData();
 
 } // namespace devilution

@@ -104,9 +104,5 @@ void RunTimedemo(std::string timedemoFolderName)
 
 TEST(Timedemo, WarriorLevel1to2)
 {
-	// The recorded vanilla demo no longer replays: the warrior dies on dungeon level 1 before the
-	// recorded descent, so combat/monster simulation diverges from vanilla. Tracked in
-	// docs/feature-gap-inventory.md; re-enable once native simulation matches the recording.
-	GTEST_SKIP() << "Vanilla timedemo diverges from the native simulation (warrior dies on level 1)";
 	RunTimedemo("WarriorLevel1to2");
 }

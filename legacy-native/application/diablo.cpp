@@ -3230,7 +3230,6 @@ int DiabloMain(int argc, char **argv)
 	LoadMonsterData();
 	LoadItemData();
 	LoadObjectData();
-	RegisterObjectBehaviors();
 	LoadQuestData();
 	LoadSetLevelNames();
 	LoadQuestPools();
