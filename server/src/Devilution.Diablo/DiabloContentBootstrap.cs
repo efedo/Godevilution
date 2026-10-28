@@ -110,6 +110,9 @@ public sealed record DiabloContentActivation
     /** Canonical class-bound native starting facts; absent outside native population profiles. */
     public AuthoritativeCathedralNativeCharacterStart? NativeCharacterStart { get; init; }
 
+    /** The profile's Catacombs (L5-L8) metadata; absent outside native profiles built since batch 2.1. */
+    public AuthoritativeCatacombsPopulationMetadata? NativeCatacombsMetadata { get; init; }
+
     internal DiabloSimulationOptions? TrustedOptions { get; init; }
 
     /** Trusted activated configuration retained without exposing host persistence. */
@@ -1977,6 +1980,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     ? state => cohortFactory.CreateCohortCandidate(simulationOptions, state)
                     : null,
             NativeCharacterStart = nativeCharacterStart,
+            NativeCatacombsMetadata = nativePopulation
+                ? AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(content.Manifest) : null,
             };
     }
 

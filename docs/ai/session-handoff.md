@@ -48,12 +48,37 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
-## Next batch: 2.1 Catacombs in the profile
+## Batch 2.1 Catacombs in the profile (done)
 
-Phase 2 starts with the Catacombs queue (2.1-2.6) in the work plan. Write the 2.1
-contract here before code: it owns the setup and profile compiler inputs for
-L5-L8 (`AuthoritativeCatacombsPopulationMetadata`, `tools/Native.Setup`,
-`tools/Cathedral.Playtest`), not admission or rendering.
+- **Player-visible outcome:** none yet; first-run setup puts the L5-L8 generation
+  and population inputs into the default profile, so 2.2 can descend without new
+  setup or an MPQ on the server.
+- **Native source:** `LoadLevelSOLData`/`LoadMegaTiles` for DTYPE_CATACOMBS
+  (`l2.til`, `l2.sol`, no SOL patches); `leveldat.cpp` rows for depths 5-8; the
+  L8 story books (`TEXT_BOOK12/22/32`).
+- **Files and contracts owned:** `NativeSourceExport` and its geometry/rule
+  exporters build the Catacombs metadata tables from the archive; the all-class
+  Town compiler writes them as a fifth schema-neutral pack
+  (`native_catacombs_population`) bound by `contentManifestHash`; the Diablo
+  content bootstrap loads it, when present, as `DiabloContentActivation.NativeCatacombsMetadata`;
+  the launcher, art-profile reader and setup pass it through.
+- **Compatibility:** profiles without the pack still activate. A new
+  setup has a new content identity, so earlier saves stay in their kept profile
+  folder and load from it explicitly (the 1.2 precedent); they do not migrate.
+- **Exit check:** an explicit test matches the archive-built Catacombs tables
+  byte for byte against the native-exported pack; unit tests cover the pack's
+  optional loading and refusal of partial packs; `Native.Setup ensure` from a
+  clean setup root produces the pack and a changed input rebuilds; the headless
+  Town-L4 journey passes on the new profile; Diablo.Tests, Server.Tests, client
+  protocol tests and the C2 oracle consumers pass.
+- **Out of scope:** admission, descent, rendering, Catacombs art, quests.
+- **Size:** a few hundred lines.
+- **State (2026-10-28):** done. The archive-built tables match the native export byte
+  for byte; setup rebuilt the existing setup root (not an empty one) into
+  `profile-50bae5ff90ec1142` and reused it on rerun; the
+  headless Town-L4 journey and resume pass on it. The pre-2.1 profile still activates
+  (the host serves its Town), but its art packs were replaced, so its draw checks
+  fail; old saves were not resumed. Suites and 132 oracle consumers pass. 2.2 is next.
 
 ## Batch 1.7 Split the combat processor (done)
 

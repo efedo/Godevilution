@@ -26,6 +26,28 @@ public static class NativeSourceGeometryExport
         return new(new AuthoritativeNativeDunGeometryCatalog(pieces, properties), Array.AsReadOnly(effective));
     }
 
+    public const string CatacombsTilPath = "levels\\l2data\\l2.til";
+    public const string CatacombsSolPath = "levels\\l2data\\l2.sol";
+
+    /**
+     * LoadLevelSOLData, DTYPE_CATACOMBS: l2.sol fills the start of the zeroed MAXTILES
+     * table with no fixes. Returns the raw TIL and SOL bytes the metadata hashes.
+     */
+    public static (NativeSourceGeometry Geometry, byte[] Til, byte[] Sol) ReadCatacombs(MpqArchive archive)
+    {
+        ArgumentNullException.ThrowIfNull(archive);
+        var til = archive.ReadFile(CatacombsTilPath);
+        var sol = archive.ReadFile(CatacombsSolPath);
+        if (sol.Length is < 1 or > AuthoritativeDunTilePropertyCatalog.NativeTileCount)
+            throw new InvalidDataException($"Catacombs .sol data must contain between 1 and {AuthoritativeDunTilePropertyCatalog.NativeTileCount} bytes.");
+        var effective = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol.CopyTo(effective, 0);
+        var pieces = AuthoritativeDunPieceCatalog.LoadTil("l2.til", til);
+        var named = effective.Select(value => (byte)(value & ~UnnamedSolBit)).ToArray();
+        var properties = AuthoritativeDunTilePropertyCatalog.LoadSol("l2.sol", named);
+        return (new(new AuthoritativeNativeDunGeometryCatalog(pieces, properties), Array.AsReadOnly(effective)), til, sol);
+    }
+
     /**
      * LoadLevelSOLData (legacy-native/game/levels/dungeon_common.cpp), DTYPE_CATHEDRAL:
      * the file fills the start of a MAXTILES (1379) zeroed table, then native

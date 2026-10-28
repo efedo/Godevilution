@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-28
+
+- Catacombs in the profile (batch 2.1): setup builds the L5–L8 metadata (L2 geometry,
+  levels 5–8 rules, L8 books) from the archive into the all-class profile as a fifth
+  pack; the server exposes it as `NativeCatacombsMetadata`. Older profiles still load.
+
 ## 2026-10-27
 
 - Combat processor split (batch 1.7): `DiabloCombatCommandProcessor.cs` (18,387 lines) moves

@@ -2121,6 +2121,9 @@ try {
             $cathedralNativeTownProfile.ContentRoot, $cathedralNativeTownProfile.Metadata.classProfile.contentId,
             $cathedralNativeTownProfile.Metadata.classProfile.contentVersion, $cathedralNativeTownProfile.Metadata.adapterId,
             $cathedralNativeTownProfile.PopulationRoot, $cathedralNativeTownProfile.RuntimeRoot, $cathedralNativeTownProfile.TownRoot
+        if ($cathedralNativeTownProfile.CatacombsRoot) {
+            $overlayArguments += ' --content-overlay "{0}"' -f $cathedralNativeTownProfile.CatacombsRoot
+        }
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }

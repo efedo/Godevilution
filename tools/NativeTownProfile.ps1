@@ -77,6 +77,8 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     $rootEntries = @(
         $townFileName, 'cathedral-native-class-progression-playtest.json',
         'content', 'native_cathedral_population', 'native_cathedral_runtime', 'native_town_geometry', 'sessions')
+    # Since batch 2.1 an all-class profile may carry its Catacombs metadata; contentManifestHash binds it.
+    if ($allClass) { $rootEntries += 'native_catacombs_population' }
     foreach ($entry in Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop) {
         if ($entry.Name -notin $rootEntries -or $entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
             throw 'The native Town profile root contains an unexpected entry.'
@@ -86,7 +88,9 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     $populationRoot = Join-Path $root 'native_cathedral_population'
     $runtimeRoot = Join-Path $root 'native_cathedral_runtime'
     $townRoot = Join-Path $root 'native_town_geometry'
-    foreach ($path in @($contentRoot, $populationRoot, $runtimeRoot, $townRoot)) {
+    $catacombsRoot = Join-Path $root 'native_catacombs_population'
+    if (-not (Test-Path -LiteralPath $catacombsRoot -PathType Container)) { $catacombsRoot = $null }
+    foreach ($path in @($contentRoot, $populationRoot, $runtimeRoot, $townRoot, $catacombsRoot | Where-Object { $_ })) {
         Assert-NoCathedralReparsePoint $path
         foreach ($entry in Get-ChildItem -LiteralPath $path -Force -Recurse -ErrorAction Stop) {
             if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
@@ -116,6 +120,7 @@ function Get-CathedralNativeTownProfile([string]$Directory, [string]$Session) {
     return [pscustomobject]@{
         Metadata = $metadata; MetadataPath = $metadataPath; ClassMetadataPath = $classMetadataPath
         ContentRoot = $contentRoot; PopulationRoot = $populationRoot; RuntimeRoot = $runtimeRoot; TownRoot = $townRoot
+        CatacombsRoot = $catacombsRoot
         MetadataHash = (Get-FileSha256 $metadataPath).ToUpperInvariant()
         ContentTreeHash = Get-CathedralContentTreeHash $contentRoot
         PopulationTreeHash = Get-CathedralContentTreeHash $populationRoot

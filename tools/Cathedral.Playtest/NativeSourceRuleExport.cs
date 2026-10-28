@@ -32,12 +32,31 @@ public static class NativeSourceRuleExport
     }
 
     /** Speech ids follow textdat.tsv row order. */
-    public static IReadOnlyList<int> StoryMessages(string textDataRoot)
+    public static IReadOnlyList<int> StoryMessages(string textDataRoot) => SpeechIds(textDataRoot, StoryBookSpeech);
+
+    /** Catacombs levels 5-8 (leveldat.cpp FindRow), with the multiplayer multiplier the Catacombs metadata stores. */
+    public static IReadOnlyList<AuthoritativeCatacombsPopulationDepthRule> CatacombsDepthRules(string textDataRoot)
+    {
+        var table = Load(textDataRoot, "levels", "level_generation.tsv");
+        return Enumerable.Range(5, 4).Select(depth => {
+            var row = table.Rows.FirstOrDefault(candidate =>
+                candidate.RequiredInt32("minLevel") <= depth && depth <= candidate.RequiredInt32("maxLevel"))
+                ?? throw new InvalidDataException($"level_generation.tsv has no row for depth {depth}.");
+            return new AuthoritativeCatacombsPopulationDepthRule(depth, row.RequiredInt32("monsterDensityDivisor"),
+                row.RequiredInt32("mpMonsterMultiplierPercent"), row.RequiredInt32("trapPercent"), OrdinaryMonsterCapacity);
+        }).ToArray();
+    }
+
+    /** objects.cpp StoryText: on L8 (Catacombs) each book uses its second entry. */
+    public static IReadOnlyList<int> CatacombsStoryMessages(string textDataRoot)
+        => SpeechIds(textDataRoot, ["TEXT_BOOK12", "TEXT_BOOK22", "TEXT_BOOK32"]);
+
+    private static IReadOnlyList<int> SpeechIds(string textDataRoot, IEnumerable<string> names)
     {
         var table = Load(textDataRoot, "text", "textdat.tsv");
         var ids = table.Rows.Select((row, index) => (Id: row.Values[table.Columns[0]], Index: index))
             .ToDictionary(row => row.Id, row => row.Index, StringComparer.Ordinal);
-        return StoryBookSpeech.Select(name => ids.TryGetValue(name, out var id)
+        return names.Select(name => ids.TryGetValue(name, out var id)
             ? id
             : throw new InvalidDataException($"textdat.tsv has no {name} row.")).ToArray();
     }

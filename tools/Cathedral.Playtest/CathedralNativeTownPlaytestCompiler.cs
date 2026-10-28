@@ -19,6 +19,9 @@ public sealed record CathedralNativeTownPlaytestCompilerOptions(
 {
     /** Wrap an all-class progression profile as the format-6 all-class Town profile. */
     public bool AllClasses { get; init; }
+
+    /** Flat Catacombs metadata tables (NativeSourceExport); an all-class profile carries them as its fifth pack. */
+    public string? CatacombsMetadataDirectory { get; init; }
 }
 
 /** Closed outer profile. The nested format-4 class profile remains the original identity and is copied unchanged. */
@@ -138,6 +141,17 @@ public static class CathedralNativeTownPlaytestCompiler
         var rosterPath = RequireInputFile(options.RosterTablePath, MaximumRosterBytes, "towner roster table");
         var outputRoot = ValidateFreshOutputPath(options.OutputDirectory);
         RejectOutputInputOverlap(outputRoot, [classRoot, townSourceRoot, rosterPath]);
+        if (options.CatacombsMetadataDirectory is not null && !options.AllClasses)
+            throw new ArgumentException("Only the all-class Town profile carries Catacombs metadata.", nameof(options));
+        var catacombs = options.CatacombsMetadataDirectory is { } catacombsDirectory
+            ? AuthoritativeCatacombsPopulationMetadata.Load(new ContentPack(
+                AuthoritativeCatacombsPopulationMetadata.CatalogId, AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
+                ContentPackLoader.LoadDirectory(AuthoritativeCatacombsPopulationMetadata.CatalogId,
+                    AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
+                    RequireDirectory(catacombsDirectory, "Catacombs metadata directory")).Tables,
+                schema: new ContentSchemaIdentity(AuthoritativeCatacombsPopulationMetadata.SchemaId,
+                    AuthoritativeCatacombsPopulationMetadata.SchemaVersion)))
+            : null;
 
         var classProfilePath = Path.Combine(classRoot, ClassProfileFileName);
         using var classProfileDocument = ReadJsonProfile(classProfilePath);
@@ -161,6 +175,9 @@ public static class CathedralNativeTownPlaytestCompiler
         try {
             CopyClassProfile(classRoot, stagingRoot, classProfileDocument.RootElement);
             WritePack(Path.Combine(stagingRoot, TownDirectoryName), townPack);
+            if (catacombs is not null)
+                WritePack(Path.Combine(stagingRoot, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory),
+                    catacombs.ToProfileSidecar());
 
             var innerProfile = JsonDocument.Parse(classProfile.GetRawText());
             using (innerProfile) {
@@ -172,15 +189,20 @@ public static class CathedralNativeTownPlaytestCompiler
                     || !string.Equals(publishedTownPack.Version, TownPackVersion, StringComparison.Ordinal))
                     throw new InvalidDataException("Published Town geometry pack identity changed during compilation.");
 
-                var manifest = new ContentManifest(contentPack.Id, contentPack.Version,
-                    [contentPack, populationPack, runtimePack, publishedTownPack]);
+                ContentPack[] packs = [contentPack, populationPack, runtimePack, publishedTownPack];
+                if (catacombs is not null)
+                    packs = [.. packs, ContentPackLoader.LoadManifestDirectory(
+                        Path.Combine(stagingRoot, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory))];
+                var manifest = new ContentManifest(contentPack.Id, contentPack.Version, packs);
                 var composed = ComposedContent.Compose(manifest);
                 var townCatalog = AuthoritativeNativeTownCatalog.Load(composed);
                 var town = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap;
                 if (options.AllClasses) {
                     var classes = AllClassStarts(runtimePack);
                     foreach (var start in classes)
-                        _ = town.ActivateNativeTownClass(composed, start.ClassId, options.TownSeed);
+                        if (town.ActivateNativeTownClass(composed, start.ClassId, options.TownSeed)
+                                .NativeCatacombsMetadata?.Fingerprint != catacombs?.Fingerprint)
+                            throw new InvalidDataException("The server did not load the profile's Catacombs metadata unchanged.");
                     var allClassProfile = new CathedralNativeAllClassTownPlaytestProfile(AllClassFormatVersion, AllClassAdapterId,
                         classProfile, TownDirectoryName, publishedTownPack.Id, publishedTownPack.Version,
                         ComputePackTreeHash(Path.Combine(stagingRoot, TownDirectoryName)), townCatalog.Fingerprint,

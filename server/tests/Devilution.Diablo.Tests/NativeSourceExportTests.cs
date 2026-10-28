@@ -37,6 +37,18 @@ public sealed class NativeSourceExportTests
     }
 
     [Fact]
+    public void CatacombsRulesAndStoryBooksFollowTheNativeTables()
+    {
+        var textData = Path.Combine(Assets(), "txtdata");
+        var rules = NativeSourceRuleExport.CatacombsDepthRules(textData);
+        Assert.Equal(new[] { 5, 6, 7, 8 }, rules.Select(rule => rule.Depth));
+        Assert.Equal(new[] { 20, 20, 25, 25 }, rules.Select(rule => rule.TrapPercent));
+        Assert.All(rules, rule => Assert.Equal((30, 150, 190),
+            (rule.MonsterDensityDivisor, rule.MultiplayerMonsterMultiplierPercent, rule.OrdinaryMonsterCapacity)));
+        Assert.Equal(new[] { 250, 253, 256 }, NativeSourceRuleExport.CatacombsStoryMessages(textData));
+    }
+
+    [Fact]
     public void ShippedFontPagesMatchTheNativeAssetList()
     {
         var assetsCmake = File.ReadAllText(Path.Combine(Path.GetDirectoryName(Assets())!, "CMake", "Assets.cmake"));

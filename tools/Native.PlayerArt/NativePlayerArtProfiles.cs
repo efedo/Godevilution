@@ -228,12 +228,16 @@ public static class NativePlayerArtProfiles
             || settings.Rows[0].RequiredUInt32("initial_random_state") != townSeed)
             throw new InvalidDataException($"Town profile '{profilePath}' seed does not match its bound Town settings.");
 
-        var manifest = new ContentManifest(baseProfile.ContentPack.Id, baseProfile.ContentPack.Version,
-            [baseProfile.ContentPack, baseProfile.PopulationPack, baseProfile.RuntimePack, townPack]);
+        ContentPack[] packs = [baseProfile.ContentPack, baseProfile.PopulationPack, baseProfile.RuntimePack, townPack];
+        // Since batch 2.1 an all-class profile may carry its Catacombs metadata as a fifth pack.
+        if (allClass && Directory.Exists(Path.Combine(root, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory)))
+            packs = [.. packs, ContentPackLoader.LoadManifestDirectory(ResolveProfileDirectory(root,
+                AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory, profilePath))];
+        var manifest = new ContentManifest(baseProfile.ContentPack.Id, baseProfile.ContentPack.Version, packs);
         var declaredHash = RequiredString(townDocument, "contentManifestHash");
         if (!Sha256Pattern.IsMatch(declaredHash)
             || !string.Equals(manifest.Sha256, declaredHash, StringComparison.Ordinal))
-            throw new InvalidDataException($"Town profile '{profilePath}' content manifest hash does not match its four compiled packs.");
+            throw new InvalidDataException($"Town profile '{profilePath}' content manifest hash does not match its compiled packs.");
         var catalog = AuthoritativeNativeTownCatalog.Load(ComposedContent.Compose(manifest));
         if (!string.Equals(catalog.Fingerprint, catalogFingerprint, StringComparison.Ordinal))
             throw new InvalidDataException($"Town profile '{profilePath}' catalog fingerprint does not match its compiled Town semantics.");

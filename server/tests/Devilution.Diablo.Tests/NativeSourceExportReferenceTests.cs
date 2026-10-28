@@ -118,6 +118,23 @@ public sealed class NativeSourceExportReferenceTests
         }
     }
 
+    /** GODEVILUTION_NATIVE_CATACOMBS_REFERENCE_METADATA: a Catacombs metadata pack compiled from the native export. */
+    [Fact(Explicit = true)]
+    public void CatacombsMetadataTablesMatchTheNativeExportByteForByte()
+    {
+        var reference = Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_REFERENCE_METADATA");
+        Assert.False(string.IsNullOrWhiteSpace(reference), "Set GODEVILUTION_NATIVE_CATACOMBS_REFERENCE_METADATA to a compiled Catacombs pack.");
+        var (archive, cathedral) = Open();
+        using (archive) {
+            var assets = Path.GetDirectoryName(TextDataRoot())!;
+            var tables = NativeSourceExport.CreateCatacombsTables(archive, assets, cathedral);
+            Assert.Equal(AuthoritativeCatacombsPopulationMetadata.TableNames, tables.Select(table => table.SourcePath));
+            foreach (var table in tables)
+                Assert.True(File.ReadAllText(Path.Combine(reference!, table.SourcePath)) == table.ToCanonicalTsv()
+                    .Replace("\n", "\r\n", StringComparison.Ordinal), table.SourcePath);
+        }
+    }
+
     internal static void AssertTablesEqual(IReadOnlyList<TsvTable> expected, IReadOnlyList<TsvTable> actual)
     {
         Assert.Equal(expected.Select(table => table.SourcePath), actual.Select(table => table.SourcePath));

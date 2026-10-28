@@ -211,6 +211,36 @@ public sealed class AuthoritativeCatacombsPopulationMetadata
         => new(PackId, PackVersion, tables.Select(CloneTable).ToArray(),
             schema: new ContentSchemaIdentity(SchemaId, SchemaVersion));
 
+    /** Directory and table prefix of the optional fifth pack of an all-class native profile (batch 2.1). */
+    public const string ProfileSidecarDirectory = "native_catacombs_population";
+    public const string ProfileSidecarPackId = "godevilution.catacombs-native-population-metadata";
+    public const string ProfileSidecarPackVersion = "1.0.0";
+    private const string ProfileSidecarPrefix = ProfileSidecarDirectory + "/";
+
+    /** The schema-neutral, prefixed profile pack, so it composes beside the Cathedral sidecars. */
+    public ContentPack ToProfileSidecar()
+        => new(ProfileSidecarPackId, ProfileSidecarPackVersion,
+            tables.Select(table => CloneTable(table) with { SourcePath = ProfileSidecarPrefix + table.SourcePath }).ToArray());
+
+    /** The profile's Catacombs metadata, or null for a profile built before batch 2.1. */
+    public static AuthoritativeCatacombsPopulationMetadata? LoadProfileSidecar(ContentManifest manifest)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+        var packs = manifest.Packs.Where(pack => pack.Tables.Any(table =>
+            table.SourcePath.StartsWith(ProfileSidecarPrefix, StringComparison.Ordinal))).ToArray();
+        if (packs.Length == 0)
+            return null;
+        var pack = packs[0];
+        if (packs.Length != 1 || pack.Id != ProfileSidecarPackId || pack.Version != ProfileSidecarPackVersion
+            || pack.Schema is not null || pack.Dependencies.Count != 0 || pack.DependencyConstraints.Count != 0
+            || pack.Overlays.Count != 0 || pack.Assets.Count != 0
+            || !pack.Tables.All(table => table.SourcePath.StartsWith(ProfileSidecarPrefix, StringComparison.Ordinal)))
+            throw new InvalidDataException("Catacombs profile metadata must be one schema-neutral sidecar of prefixed tables.");
+        return Load(new ContentPack(CatalogId, SchemaVersion,
+            pack.Tables.Select(table => table with { SourcePath = table.SourcePath[ProfileSidecarPrefix.Length..] }).ToArray(),
+            schema: new ContentSchemaIdentity(SchemaId, SchemaVersion)));
+    }
+
     /** Builds the same detached schema from typed native metadata; inputs contain no generated world state. */
     public static IReadOnlyList<TsvTable> CreateTables(
         AuthoritativeNativeDunGeometryCatalog geometry,

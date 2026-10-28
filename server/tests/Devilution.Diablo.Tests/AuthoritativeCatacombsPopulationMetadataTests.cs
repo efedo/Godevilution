@@ -138,6 +138,29 @@ public sealed class AuthoritativeCatacombsPopulationMetadataTests
         Assert.Equal(original.Fingerprint, Load(original.ToContentPack().Tables).Fingerprint);
     }
 
+    [Fact]
+    public void ProfileSidecarRoundTripsAndIsOptional()
+    {
+        var metadata = Load(CreateCompleteTables());
+        var sidecar = metadata.ToProfileSidecar();
+        Assert.Null(sidecar.Schema);
+        Assert.All(sidecar.Tables, table => Assert.StartsWith("native_catacombs_population/", table.SourcePath));
+        var other = new ContentPack("other", "1.0.0", [TsvTable.Parse("other.tsv", "id\n1\n")]);
+
+        var loaded = AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(
+            new ContentManifest("other", "1.0.0", [other, sidecar]));
+        Assert.Equal(metadata.Fingerprint, loaded!.Fingerprint);
+        Assert.Null(AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(new ContentManifest("other", "1.0.0", [other])));
+
+        var partial = new ContentPack(sidecar.Id, sidecar.Version, sidecar.Tables.Skip(1).ToArray());
+        var renamed = new ContentPack("renamed", sidecar.Version, sidecar.Tables);
+        var mixed = new ContentPack(sidecar.Id, sidecar.Version, [.. sidecar.Tables, .. other.Tables]);
+        var copy = new ContentPack(sidecar.Id + ".copy", sidecar.Version, sidecar.Tables);
+        foreach (var packs in new[] { [other, partial], [other, renamed], [other, mixed], new[] { other, sidecar, copy } })
+            Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(
+                new ContentManifest("other", "1.0.0", packs)));
+    }
+
     internal static IReadOnlyList<TsvTable> CreateCompleteTables()
     {
         var c1Tables = CathedralPopulationMetadataCompilerTests.CreateCompleteTables();

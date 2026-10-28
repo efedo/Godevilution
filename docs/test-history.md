@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-28 — Catacombs inputs in the profile
+
+`NativeSourceExportReferenceTests` (explicit) matched the archive-built L5–L8 tables
+byte for byte against the native-exported pack. `run-godot-client.ps1 -SetupOnly`
+rebuilt the profile with the fifth pack and reused it on rerun; the headless Town–L4
+journey (`warrior-l4`) and fresh-host resume passed on it. The pre-2.1 profile still
+activates on the host, but its replaced art packs fail the journey draw checks.
+
 ### 2026-10-27 — Two-player native smoke (windowed)
 
 With the user's approval, `tools/test-godot-native-multiplayer.ps1 -Windowed`

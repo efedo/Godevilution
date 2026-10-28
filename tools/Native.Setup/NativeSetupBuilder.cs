@@ -24,8 +24,9 @@ public sealed record NativeSetupState(
     string ObjectPack);
 
 /**
- * Builds the all-class native Town profile and the client art packs from the player's
- * archive once per fingerprint and publishes them by writing current.json last.
+ * Builds the all-class native profile (Town, Cathedral, and the Catacombs inputs) and
+ * the client art packs from the player's archive once per fingerprint and publishes
+ * them by writing current.json last.
  * Profiles live under the setup root; packs live in the ignored client asset
  * folders the launcher already stages. Older builds are removed after publish.
  */
@@ -93,7 +94,9 @@ public static class NativeSetupBuilder
             CompileClassProfile(repositoryRoot, sources, metadataDirectory, classDirectory);
             var townDirectory = Path.Combine(staging, ProfileDirectoryName);
             CathedralNativeTownPlaytestCompiler.Compile(new(classDirectory, sources.TownSourceDirectory,
-                Path.Combine(assets, "txtdata", "towners", "towners.tsv"), townDirectory, TownSeed) { AllClasses = true });
+                Path.Combine(assets, "txtdata", "towners", "towners.tsv"), townDirectory, TownSeed) {
+                    AllClasses = true, CatacombsMetadataDirectory = sources.CatacombsMetadataDirectory,
+                });
             Directory.Delete(classDirectory, recursive: true);
             string[] townProfiles = [townDirectory];
 

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Devilution.Data;
 using Devilution.Diablo;
@@ -11,7 +12,8 @@ public sealed record NativeSourceExportLayout(
     string MetadataDirectory,
     string MonsterRuntimeTable,
     string InventoryFootprintTable,
-    string TownSourceDirectory);
+    string TownSourceDirectory,
+    string CatacombsMetadataDirectory);
 
 /**
  * Builds the native profile compiler inputs without the native engine: archive
@@ -23,6 +25,7 @@ public static class NativeSourceExport
     public const string GeometryDirectoryName = "geometry";
     public const string MetadataDirectoryName = "population-metadata";
     public const string TownSourceDirectoryName = "town";
+    public const string CatacombsMetadataDirectoryName = "catacombs-population-metadata";
     private const string OpenTownMap = "automap.dun";
 
     /** The 19 Cathedral population metadata source tables (--compile-population-metadata input). */
@@ -47,6 +50,25 @@ public static class NativeSourceExport
             NativeSourceRuleExport.SinglePlayerShrineAvailability());
     }
 
+    /**
+     * The Catacombs (L5-L8) metadata tables: archive L2 geometry, the Cathedral
+     * monster, object, unique, item and shrine tables, levels 5-8 rules and the L8 books.
+     */
+    public static IReadOnlyList<TsvTable> CreateCatacombsTables(MpqArchive archive, string assetsRoot,
+        AuthoritativeCathedralPopulationMetadata cathedral)
+    {
+        ArgumentNullException.ThrowIfNull(cathedral);
+        var (geometry, til, sol) = NativeSourceGeometryExport.ReadCatacombs(archive);
+        var textData = Path.Combine(assetsRoot, "txtdata");
+        var story = File.ReadAllBytes(Path.Combine(textData, "text", "textdat.tsv"));
+        return AuthoritativeCatacombsPopulationMetadata.CreateTables(geometry.Catalog, geometry.EffectivePieceProperties,
+            Sha256(til), Sha256(sol), cathedral.Population.Monsters, cathedral.Population.Objects,
+            cathedral.UniqueMonsters.Definitions, cathedral.Items.Catalog, NativeSourceRuleExport.CatacombsDepthRules(textData),
+            NativeSourceRuleExport.CatacombsStoryMessages(textData), story.Length, Sha256(story), cathedral.ShrineAvailable);
+    }
+
+    private static string Sha256(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+
     public static NativeSourceExportLayout Write(MpqArchive archive, string assetsRoot, string outputDirectory)
     {
         var population = CreatePopulationTables(archive, assetsRoot);
@@ -60,9 +82,15 @@ public static class NativeSourceExport
             Path.Combine(outputDirectory, MetadataDirectoryName),
             Path.Combine(outputDirectory, AuthoritativeCathedralMonsterRuntimeCatalog.TableName),
             Path.Combine(outputDirectory, NativeSourceFootprintExport.TableName),
-            Path.Combine(outputDirectory, TownSourceDirectoryName));
+            Path.Combine(outputDirectory, TownSourceDirectoryName),
+            Path.Combine(outputDirectory, CatacombsMetadataDirectoryName));
         WriteTables(population.Where(table => geometryNames.Contains(table.SourcePath, StringComparer.Ordinal)), layout.GeometryDirectory);
         WriteTables(population, layout.MetadataDirectory);
+        var cathedral = AuthoritativeCathedralPopulationMetadata.Load(new ContentPack(
+            CathedralPopulationMetadataCompiler.PackId, CathedralPopulationMetadataCompiler.PackVersion, population,
+            schema: new ContentSchemaIdentity(AuthoritativeCathedralPopulationMetadata.SchemaId,
+                AuthoritativeCathedralPopulationMetadata.SchemaVersion)));
+        WriteTables(CreateCatacombsTables(archive, assetsRoot, cathedral), layout.CatacombsMetadataDirectory);
         WriteTables([NativeSourceMonsterExport.Runtime(Path.Combine(assetsRoot, "txtdata")).CreateTable(),
             NativeSourceFootprintExport.CreateTable(archive, assetsRoot, items)], outputDirectory);
         // The Town compiler reads these files unchanged; automap.dun ships with the open assets (CMake/Assets.cmake).

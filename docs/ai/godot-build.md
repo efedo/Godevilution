@@ -325,13 +325,19 @@ dotnet run --project tools/Cathedral.Playtest -- --export-native-sources --archi
 ```
 
 It writes `geometry/`, `population-metadata/` (the `--compile-population-metadata`
-input), `cathedral_population_monster_runtime.tsv`, `native-rogue-l1-inventory.tsv`
-and `town/` (the `--town-source-directory` input; the roster is
-`assets/txtdata/towners/towners.tsv`). The output is retail-derived: keep it local.
+input), `cathedral_population_monster_runtime.tsv`, `native-rogue-l1-inventory.tsv`,
+`town/` (the `--town-source-directory` input; the roster is
+`assets/txtdata/towners/towners.tsv`) and `catacombs-population-metadata/` (the
+L5–L8 tables). Setup writes those Catacombs tables into the all-class profile as
+`native_catacombs_population`, a fifth pack bound by `contentManifestHash`; the
+server loads it as `DiabloContentActivation.NativeCatacombsMetadata`, and profiles
+built before it still load. The output is retail-derived: keep it local.
 Warrior and Sorcerer Town profiles compiled from it are byte-identical to the
 native-built profiles. `NativeSourceExportReferenceTests` (explicit) repeats that
 check given `GODEVILUTION_NATIVE_SOURCE_ARCHIVE` and a compiled
-`GODEVILUTION_NATIVE_SOURCE_REFERENCE_PROFILE`; CI checks the open-data tables
+`GODEVILUTION_NATIVE_SOURCE_REFERENCE_PROFILE`, and compares the Catacombs tables
+with a native-exported pack in `GODEVILUTION_NATIVE_CATACOMBS_REFERENCE_METADATA`;
+CI checks the open-data tables
 against `test/fixtures/native-open-metadata`.
 
 ## Native Warrior and Sorcerer profiles
