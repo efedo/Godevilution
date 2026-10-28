@@ -48,6 +48,13 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Next batch: 2.1 Catacombs in the profile
+
+Phase 2 starts with the Catacombs queue (2.1-2.6) in the work plan. Write the 2.1
+contract here before code: it owns the setup and profile compiler inputs for
+L5-L8 (`AuthoritativeCatacombsPopulationMetadata`, `tools/Native.Setup`,
+`tools/Cathedral.Playtest`), not admission or rendering.
+
 ## Batch 1.7 Split the combat processor (done)
 
 - **Player-visible outcome:** none by design; combat code becomes reviewable

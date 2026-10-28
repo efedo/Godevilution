@@ -109,7 +109,7 @@ Passing a scoped test or adding a schema version does not close a milestone.
 - Committed Catacombs work covers generation, population, actors, doors, items,
   chests, ranged release clocks and Arrow flight behind internal C2 owners; no
   playable Catacombs profile is active. The in-progress Magma/Acid caster chains
-  are shelved. New Catacombs-only parity work is frozen until Phase 2 reaches it.
+  are shelved. Phase 2 now queues Catacombs as batches 2.1–2.6 in the work plan.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 14 archive-free native oracle corpora and runs their 137
   managed comparisons. Retail-archive corpora stay local by design (public

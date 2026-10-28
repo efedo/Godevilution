@@ -38,8 +38,8 @@ playable floor). CI had been red since 2026-08-01.
 | Phase | Deliverable | Exit | State |
 | --- | --- | --- | --- |
 | 0 | Stabilize | CI green on `master`, clean tree, CI-runnable parity tests in CI | Done |
-| 1 | Playable native Cathedral | A human plays Town→L4→Town in a window through `run-godot-client.ps1` with native art, any supported class, save/resume and a two-player smoke | Next |
-| 2 | Faithful native port, by family | Each dungeon family is playable the same way (rendered, all classes, resumable), with CI-run parity for its ported modules | Pending |
+| 1 | Playable native Cathedral | A human plays Town→L4→Town in a window through `run-godot-client.ps1` with native art, any supported class, save/resume and a two-player smoke | Done except the user's 1.4 playtest |
+| 2 | Faithful native port, by family | Each dungeon family is playable the same way (rendered, all classes, resumable), with CI-run parity for its ported modules | Next (Catacombs) |
 | 3 | Complete client | Every panel, quest, store and effect needed for Town to Diablo, plus audio and menus; a human plays Town to Diablo | Pending |
 | 4 | Finish and harden | Hellfire, multiplayer/recovery hardening, packaging, M5 legacy retirement | Pending |
 
@@ -84,6 +84,23 @@ contract; do not add, drop or reorder batches without the planner.
 - Replace the legacy seeded `(seed * 1664525 + 1013904223) % N` rolls (PvP melee
   hit, item affix/unique rolls, C++ replay model) with the native RNG stream as
   part of the combat and item ports; see inventory 2.8.
+
+#### Catacombs queue (L5–L8, quest-disabled)
+
+Existing C2 generation, population, actor admission, doors, chests, ranged clocks
+and Arrow flight pass their comparisons but sit behind class-bound,
+one-participant admission that no normal launch reaches. These batches join them
+to the default profile through the shared per-level state (1.6), then fill what
+play needs. Quests and set levels stay out until their own phase.
+
+| Batch | Player-visible outcome | Exit | State |
+| --- | --- | --- | --- |
+| 2.1 Catacombs in the profile | First-run setup builds L5–L8 generation and population inputs into the all-class profile from the archive; the server loads them without opening an MPQ. | Clean setup produces them; a changed input rebuilds; existing profiles and saves still load; C2 comparisons stay green. | Pending |
+| 2.2 Descend to L5–L8 | Any class walks L4→L5 and on to L8 and back; floors generate on first entry into the shared level state, save and resume on a fresh host; multiplayer clvl 8 Town warp reaches L5. | Headless Town→L8→Town journey with fresh-host resume (test heroes for depth); two-client L5 smoke; Diablo/Server suites green. | Pending |
+| 2.3 Render the Catacombs | Setup imports the native L2 tiles, walls, palette and objects; the client draws L5–L8 natively, including doors and lighting. | Headless draw checks per floor; a visible capture run with the user's approval. | Pending |
+| 2.4 Catacombs monsters in play | The L5–L8 rosters fight as native: AI and missiles translated from `monster.cpp`/`missiles.cpp` for each family present, including the shelved Magma/Acid chains. | CI-run native comparisons for the ported families; scripted fights on each floor; split by family if over five days. | Pending |
+| 2.5 Catacombs objects and loot | L2 objects, shrines, traps, chests and drops behave natively with live effects and item levels. | CI-run comparisons for the ported object/item paths; journey interactions on each floor. | Pending |
+| 2.6 Catacombs exit | A human plays Town→L8→Town in a window with any class, saves and resumes; two players fight on L5. | User playtest report; windowed two-client run with approval. | Pending |
 
 ### Phase 3: Complete client
 
