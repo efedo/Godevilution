@@ -1254,7 +1254,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     world.AddLevel(level);
                 var stairs = catacombsDepths.CreateWarps(depthGenerationPlan.Candidates
                     .Single(candidate => candidate.Level.LevelId == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth).Routes,
-                    multiplayerTownWarp: gameMode == DiabloGameMode.Multiplayer);
+                    multiplayer: gameMode == DiabloGameMode.Multiplayer);
                 if (stairs.Any(stair => warps.Any(warp => warp.WarpId == stair.WarpId)))
                     throw new InvalidDataException("Catacombs stair warps collide with content-owned warp identities.");
                 warps = [.. warps, .. stairs];
@@ -1962,7 +1962,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     throw new InvalidDataException("Generated level geometry was changed by an incompatible activation fragment or entry override.");
                 }
             }
-            foreach (var warp in warps) {
+            // A closed Town warp has no trigger (native IsWarpOpen); its tile stays solid until it opens.
+            foreach (var warp in warps.Where(warp => simulation.WorldState.IsNativeTownWarpOpen(warp.RequiredTownWarp))) {
                 if (!simulation.WorldState.IsWalkable(warp.SourceLevelId, warp.TriggerX, warp.TriggerY)
                     || !simulation.WorldState.IsWalkable(warp.TargetLevelId, warp.TargetX, warp.TargetY)) {
                     throw new InvalidDataException("Generated routes contain a blocked endpoint in final effective geometry.");

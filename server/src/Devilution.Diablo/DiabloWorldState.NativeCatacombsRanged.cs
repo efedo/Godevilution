@@ -332,6 +332,10 @@ public sealed partial class DiabloWorldState
         foreach (var (entityId, nativeAi) in bindings.LiveNativeAis) {
             if (nativeAi is not ("SkeletonRanged" or "GoatRanged" or "Acid" or "Magma" or "AcidUnique"))
                 continue;
+            // The admitted roster keeps killed actors; their retained corpse is the binding's death check.
+            if (!CombatTargets.ContainsKey(entityId)
+                && Corpses.TryGetValue(entityId, out var corpse) && corpse.LevelId == bindings.LevelId)
+                continue;
             if (!CombatTargets.TryGetValue(entityId, out var target)
                 || target.LevelId != bindings.LevelId
                 || target.NativeAi != nativeAi

@@ -73,6 +73,23 @@ public sealed class AuthoritativeObjectSelectorTests
         Assert.Equal(21U, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
     }
 
+    [Theory]
+    [InlineData(42U, true)]
+    [InlineData(43U, true)]
+    [InlineData(41U, false)]
+    [InlineData(44U, false)]
+    public void SelectsNativeCatacombsDoorsOpenOrClosed(uint nativeObjectId, bool selectable)
+    {
+        var door = new ObjectSnapshot { EntityId = 21, NativeObjectId = nativeObjectId };
+        var snapshot = SnapshotWithObject(door);
+
+        Assert.Equal(selectable ? 21U : null, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
+        door.MissilePassable = true;
+        Assert.Equal(selectable ? 21U : null, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
+        door.Destroyed = true;
+        Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
+    }
+
     [Fact]
     public void SelectsNativeChestOnlyWhenServerCapabilityIsPresent()
     {

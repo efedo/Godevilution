@@ -12,6 +12,7 @@ public sealed partial class DiabloSimulation
     {
         state.ValidateShape();
         sourceOptions = PrepareNativeProgressionCohortOptions(sourceOptions, state);
+        state = AddMissingTownWarpRoutes(sourceOptions, state);
         if (state.FormatVersion >= DiabloCohortState.NativeCombatFormatVersion
             && sourceOptions.NativePopulationPolicy is null)
             throw new InvalidDataException("Native combat cohorts require the exact populated level owner.");
@@ -38,6 +39,7 @@ public sealed partial class DiabloSimulation
         var world = state.Geometry is null
             ? null
             : RestoreGeometry(state.Geometry);
+        world?.AdoptWarpBehavior(sourceOptions.World!.WarpTargets);
         var stores = CreateCohortStoreCatalog(sourceOptions.StoreCatalog, state.Stores);
         var participants = state.Participants
             .OrderBy(participant => participant.SessionId, StringComparer.Ordinal)
@@ -174,6 +176,32 @@ public sealed partial class DiabloSimulation
                 }
                 return target with { NativeInitialization = expected, Monster = monster };
             }).ToArray(),
+        };
+    }
+
+    /**
+     * Batch 2.2c: single-player runs saved before the Town warp routes existed lack only
+     * that pair (Town to L5 and L5's warp-up); take the trusted route list in their place.
+     */
+    private static DiabloCohortState AddMissingTownWarpRoutes(DiabloSimulationOptions options, DiabloCohortState state)
+    {
+        if (options.World is not { } world)
+            return state;
+        var trusted = world.WarpTargets;
+        var routes = trusted.Select(AuthoritativeWorld.CaptureWarpState).ToArray();
+        var withoutTownWarps = trusted
+            .Where(warp => warp.RequiredTownWarp == AuthoritativeTownWarpUnlocks.None
+                && warp.UnlocksTownWarp == AuthoritativeTownWarpUnlocks.None)
+            .Select(AuthoritativeWorld.CaptureWarpState).ToArray();
+        if (withoutTownWarps.Length == routes.Length)
+            return state;
+        DiabloWorldGeometryState? Upgrade(DiabloWorldGeometryState? geometry)
+            => geometry?.WarpTargets is { } saved && saved.SequenceEqual(withoutTownWarps)
+                ? geometry with { WarpTargets = routes } : geometry;
+        return state with {
+            Geometry = Upgrade(state.Geometry),
+            CathedralDoors = state.CathedralDoors is { } doors
+                ? doors with { BackingGeometry = Upgrade(doors.BackingGeometry)! } : null,
         };
     }
 

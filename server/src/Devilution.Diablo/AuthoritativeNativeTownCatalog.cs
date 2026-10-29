@@ -207,6 +207,46 @@ public sealed class AuthoritativeNativeTownCatalog
             Roster, fingerprint);
     }
 
+    /**
+     * The same single-player Town after native WM_DIABTWARPUP set pTownWarps (batch 2.2c).
+     * It is one run with the base catalog, so it keeps the fingerprint; CreateTown reseeds
+     * from the same state and the Catacombs branch draws no RNG.
+     */
+    public AuthoritativeNativeTownCatalog WithWarpUnlocks(AuthoritativeTownWarpUnlocks unlocks)
+    {
+        if (unlocks == Settings.WarpUnlocks)
+            return this;
+        if (Settings.IsMultiplayer || (unlocks & ~AuthoritativeTownWarpUnlocks.Catacombs) != 0)
+            throw new InvalidDataException("Only the single-player Catacombs Town warp unlock is supported.");
+        return new AuthoritativeNativeTownCatalog(Settings with { WarpUnlocks = unlocks }, PieceCatalog,
+            TileProperties, nativeSourceFlags, sector1South, sector2South, sector3South, sector4South, automap,
+            Roster, Fingerprint);
+    }
+
+    /** The catalog variant a checkpoint's settings were captured with. */
+    public AuthoritativeNativeTownCatalog ForCheckpoint(DiabloNativeTownCheckpoint checkpoint)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        return checkpoint.Settings is { } settings ? WithWarpUnlocks(settings.WarpUnlocks) : this;
+    }
+
+    /** Native IsWarpOpen for this catalog's bound settings; None is always open. */
+    public bool IsTownWarpOpen(AuthoritativeTownWarpUnlocks warp)
+    {
+        var openings = Settings.WarpPolicy.ResolveOpenings();
+        return warp switch {
+            AuthoritativeTownWarpUnlocks.None => true,
+            AuthoritativeTownWarpUnlocks.Catacombs => openings.Catacombs,
+            AuthoritativeTownWarpUnlocks.Caves => openings.Caves,
+            AuthoritativeTownWarpUnlocks.Hell => openings.Hell,
+            _ => throw new ArgumentOutOfRangeException(nameof(warp)),
+        };
+    }
+
+    /** Replays typed history from this catalog's initial Town. */
+    public AuthoritativeTownGeometry Rebuild(IReadOnlyList<AuthoritativeNativeTownMutation> typedMutationHistory)
+        => Replay(ValidateMutations(typedMutationHistory));
+
     /** Builds fresh original Town geometry solely from this catalog's bound settings and maps. */
     public AuthoritativeTownGeometry CreateInitialGeometry()
         => AuthoritativeTownGeometryBuilder.Build(new AuthoritativeTownGeometryRequest(

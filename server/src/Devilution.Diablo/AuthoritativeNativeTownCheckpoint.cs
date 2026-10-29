@@ -170,18 +170,21 @@ public sealed record DiabloNativeTownCheckpoint
             throw new InvalidDataException("Native Town checkpoint contains invalid warp-policy settings.", exception);
         }
         // Multiplayer opens every non-Hellfire warp, which also skips the closed-Hell RNG draws.
+        // Single-player opens only the Catacombs warp, once L5's warp-up is taken (batch 2.2c).
         var multiplayer = Settings.IsMultiplayer;
+        var catacombs = multiplayer || Settings.WarpUnlocks == AuthoritativeTownWarpUnlocks.Catacombs;
         if (Settings.IsSpawn
             || Settings.IsHellfire
             || Settings.CharacterLevel != 1
-            || Settings.WarpUnlocks != AuthoritativeTownWarpUnlocks.None
+            || Settings.WarpUnlocks is not (AuthoritativeTownWarpUnlocks.None or AuthoritativeTownWarpUnlocks.Catacombs)
+            || multiplayer && Settings.WarpUnlocks != AuthoritativeTownWarpUnlocks.None
             || Settings.FarmerQuestState != AuthoritativeTownFarmerQuestState.Other
             || Settings.GraveQuestState != AuthoritativeTownGraveQuestState.Other
             || Settings.Entry != AuthoritativeTownEntry.Main
             || Settings.TownWarpFrom != 0
             || Settings.WaterQuestState != AuthoritativeTownWaterQuestState.NotAvailable
             || InitialRandomState != Settings.InitialRandomState
-            || WarpOpenings != new AuthoritativeTownWarpOpenings(multiplayer, multiplayer, multiplayer, false, multiplayer)
+            || WarpOpenings != new AuthoritativeTownWarpOpenings(catacombs, multiplayer, multiplayer, false, multiplayer)
             || (ViewPositionX, ViewPositionY) != (75, 68)
             || (MinimumDungeonPositionX, MinimumDungeonPositionY,
                 MaximumDungeonPositionX, MaximumDungeonPositionY) != (10, 10, 84, 84)

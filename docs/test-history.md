@@ -9,6 +9,23 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-29 — Single-player Town warp
+
+Explicit progression tests: `SinglePlayerL5WarpUpOpensTheTownWarpAndRestoresCold`
+(unlock, unchanged closed-Hell choices and fingerprint, ungated warp-down, byte-identical
+restore on a fresh activation), `PreTownWarpSinglePlayerSaveRestoresWithClosedTownWarp`,
+`OpenedDoorsReachTheL5WarpUpAndWalkingOntoItReturnsToTown` (three doors, then Town
+(49,22)), `KilledCatacombsArcherRestoresOnAFreshHost` (failed before the fix), and the
+multiplayer restore keeping the clvl 8 gate (failed before the fix). New unit tests cover
+the Town catalog unlock, Catacombs door selection, and the MonsterArrow "Arrow" identity in
+the server mapper, host validator and client model. With the native packs,
+`test-godot-native-depth-progression.ps1 -TargetDepth 5 -TestParticipant warrior-l8`
+passes: the Warrior opens three L5 doors, arrives in Town at (49,22), takes the Town warp
+to L5 and back, and the fresh-host resume takes it again (Debug server).
+Both multiplayer smokes (L1 fight and the clvl 8 warp to L5) still pass with resume.
+All nine explicit progression tests pass; Diablo.Tests (3841), Server.Tests (1870) and
+client protocol tests (1217) pass apart from the expected worker-pool documentation test.
+
 ### 2026-10-28 — Multiplayer Catacombs
 
 The multiplayer Catacombs theme-pass (44) and chest (4) captures, now in

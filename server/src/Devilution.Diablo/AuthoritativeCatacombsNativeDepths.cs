@@ -96,8 +96,13 @@ internal sealed class AuthoritativeCatacombsNativeDepths
      * The native staircase L4<->L5<->...<->L8. Multiplayer adds the always-open Town warp
      * (clvl 8 gate) and L5's warp-up; the single-player unlock is not modelled yet.
      */
+    /**
+     * Stairs L4-L8 plus the Catacombs Town warp pair. The Town warp exists while the Town
+     * opens it (multiplayer always, single-player once L5's warp-up was taken); native
+     * multiplayer alone gates it at clvl 8.
+     */
     internal IReadOnlyList<AuthoritativeWarpTarget> CreateWarps(AuthoritativeCathedralLevel1RoutePoints level4,
-        bool multiplayerTownWarp = false)
+        bool multiplayer = false)
     {
         var warps = new List<AuthoritativeWarpTarget>();
         for (var depth = FirstDepth; depth <= LastDepth; depth++) {
@@ -108,15 +113,13 @@ internal sealed class AuthoritativeCatacombsNativeDepths
             warps.Add(new((uint)(UpWarpIdBase + depth - 1), (uint)depth, target.UpTrigger.X, target.UpTrigger.Y,
                 (uint)depth - 1, source.PreviousEntry.X, source.PreviousEntry.Y) { StableSymbol = $"{Symbol(depth)}_to_{Symbol(depth - 1)}" });
         }
-        if (multiplayerTownWarp) {
-            warps.Add(new(TownWarpDownId, 0, TownWarpTrigger.X, TownWarpTrigger.Y, FirstDepth, townWarp.Entry.X, townWarp.Entry.Y) {
-                StableSymbol = $"town_warp_to_{Symbol(FirstDepth)}", RequiredCharacterLevel = 8,
-                FirstEntry = AuthoritativeCatacombsEntry.TownWarpDown,
-            });
-            warps.Add(new(TownWarpUpId, FirstDepth, townWarp.Trigger.X, townWarp.Trigger.Y, 0, TownWarpArrival.X, TownWarpArrival.Y) {
-                StableSymbol = $"{Symbol(FirstDepth)}_town_warp_up",
-            });
-        }
+        warps.Add(new(TownWarpDownId, 0, TownWarpTrigger.X, TownWarpTrigger.Y, FirstDepth, townWarp.Entry.X, townWarp.Entry.Y) {
+            StableSymbol = $"town_warp_to_{Symbol(FirstDepth)}", RequiredCharacterLevel = multiplayer ? 8U : 0U,
+            FirstEntry = AuthoritativeCatacombsEntry.TownWarpDown, RequiredTownWarp = AuthoritativeTownWarpUnlocks.Catacombs,
+        });
+        warps.Add(new(TownWarpUpId, FirstDepth, townWarp.Trigger.X, townWarp.Trigger.Y, 0, TownWarpArrival.X, TownWarpArrival.Y) {
+            StableSymbol = $"{Symbol(FirstDepth)}_town_warp_up", UnlocksTownWarp = AuthoritativeTownWarpUnlocks.Catacombs,
+        });
         return warps;
     }
 

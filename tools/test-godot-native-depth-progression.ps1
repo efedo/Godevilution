@@ -79,6 +79,10 @@ if ($allClass) {
             ($_.LevelId -gt 4 -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
+    # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
+    if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
+        throw 'The Warrior Journey did not open and take the single-player Town warp.'
+    }
     # Town, each floor on first entry, and Town again, each drawn with native scene layers.
     $draws = @($journey.NativeDraws)
     $drawnDepth = [Math]::Min($TargetDepth, 4)

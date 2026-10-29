@@ -62,7 +62,9 @@ runs `NativeDepthJourney` (one XP kill per floor down to the target, Town healer
 between floors, return to Town) and the fresh-host `NativeDepthResume` (exact
 cold baseline, every floor retained). L5–L8 are entered and retained only: no
 kill or native draw check until 2.3/2.4. Until the per-poll cohort save is cheaper,
-an L8 resume needs `-ServerBuildConfiguration Release`. Each floor test starts from a played
+an L8 resume needs `-ServerBuildConfiguration Release`. At `-TargetDepth` 5 or deeper
+the Journey climbs back to L5, opens its doors to the warp-up, returns to Town at (49,22),
+takes the opened Town warp to L5 and back, and the resume requires the warp still open. Each floor test starts from a played
 hero: a new Warrior for L1, `warrior-l2`..`warrior-l4` and `warrior-l8` for deeper floors. The
 heroes' `basis` notes record how their level, attributes and gear were chosen.
 `--test-participant <file>` (launcher `-TestParticipantPath`, automated native

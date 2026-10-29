@@ -576,6 +576,7 @@ public sealed class DiabloWorldCommandProcessor
             random.Restore(first.Admission.FinalRandomState);
         }
         var sourceLevelId = player.LevelId;
+        world.UnlockNativeTownWarp(warp.UnlocksTownWarp);
         player.NativeWalkPath = null;
         player.NativeQueuedRangedAttack = null;
         player.LevelId = warp.TargetLevelId;
@@ -1351,7 +1352,8 @@ public sealed class DiabloWorldCommandProcessor
     private bool IsWarpAvailable(AuthoritativeWarpTarget warp)
     {
         if (!world.AllowsNativePopulationLevel(warp.SourceLevelId)
-            || !world.CanEnterNativePopulationLevel(warp.TargetLevelId))
+            || !world.CanEnterNativePopulationLevel(warp.TargetLevelId)
+            || !world.IsNativeTownWarpOpen(warp.RequiredTownWarp))
             return false;
         if (warp.RequiredQuestId == 0)
             return true;

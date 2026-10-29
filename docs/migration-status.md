@@ -116,7 +116,8 @@ Passing a scoped test or adding a schema version does not close a milestone.
   durable tick and the cohort saves every 20 ticks or on a due command.
   Since 2.2b native multiplayer also runs L1–L8 with native multiplayer rules, and
   clvl 8+ players reach L5 by the Town warp; two headless clients meet on L5 and
-  resume there. The single-player warp unlock is 2.2c.
+  resume there. Since 2.2c single-player L5's warp-up opens the Catacombs Town warp
+  (kept in the save); the headless journey opens L5's doors, takes both warps and resumes.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 17 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases). Retail-archive corpora stay local by design (public

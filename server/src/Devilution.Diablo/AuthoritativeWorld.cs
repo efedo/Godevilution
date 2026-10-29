@@ -120,21 +120,38 @@ public sealed class AuthoritativeWorld
                 .ToArray(),
             warpTargets.Values
                 .OrderBy(target => target.WarpId)
-                .Select(target => new DiabloWorldGeometryWarpState(
-                    target.WarpId,
-                    target.SourceLevelId,
-                    target.TriggerX,
-                    target.TriggerY,
-                    target.TargetLevelId,
-                    target.TargetX,
-                    target.TargetY,
-                    target.RequiredQuestId,
-                    target.RequiredQuestCompleted,
-                    target.TargetSetLevelId,
-                    target.TargetSetLevelActiveMap,
-                    target.TargetSetLevelSymbol,
-                    target.StableSymbol))
+                .Select(CaptureWarpState)
                 .ToArray());
+    }
+
+    internal static DiabloWorldGeometryWarpState CaptureWarpState(AuthoritativeWarpTarget target)
+        => new(
+            target.WarpId,
+            target.SourceLevelId,
+            target.TriggerX,
+            target.TriggerY,
+            target.TargetLevelId,
+            target.TargetX,
+            target.TargetY,
+            target.RequiredQuestId,
+            target.RequiredQuestCompleted,
+            target.TargetSetLevelId,
+            target.TargetSetLevelActiveMap,
+            target.TargetSetLevelSymbol,
+            target.StableSymbol);
+
+    /**
+     * Saved geometry keeps warp topology only; trusted content supplies each warp's gates
+     * and effects (clvl, first entry, Town warp unlocks) for every warp with the same topology.
+     */
+    internal void AdoptWarpBehavior(IEnumerable<AuthoritativeWarpTarget> trusted)
+    {
+        ArgumentNullException.ThrowIfNull(trusted);
+        foreach (var source in trusted) {
+            if (warpTargets.TryGetValue(source.WarpId, out var saved)
+                && CaptureWarpState(saved) == CaptureWarpState(source))
+                warpTargets[source.WarpId] = source;
+        }
     }
 
     /**
@@ -237,6 +254,9 @@ public sealed class AuthoritativeWorld
                 TargetSetLevelSymbol = savedWarp.TargetSetLevelSymbol,
                 StableSymbol = savedWarp.StableSymbol,
             };
+            // Keep this world's gates and effects for an unchanged route (see AdoptWarpBehavior).
+            if (warpTargets.TryGetValue(savedWarp.WarpId, out var current) && CaptureWarpState(current) == savedWarp)
+                restoredWarp = current;
             // ReplaceLevel historically permits a registered warp endpoint to
             // become blocked. Preserve that legal backing state during restore;
             // new public registrations remain walkability-gated below.

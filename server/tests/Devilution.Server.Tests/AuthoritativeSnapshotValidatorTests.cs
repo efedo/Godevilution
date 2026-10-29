@@ -933,15 +933,32 @@ public sealed class AuthoritativeSnapshotValidatorTests
             },
         };
 
+        static Snapshot Arrow(int behavior, string missileId) => new() {
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    RemainingTicks = 1,
+                    Behavior = behavior,
+                    NativeVisual = NativeProjectileVisual.Arrow,
+                    NativeMissileId = missileId,
+                },
+            },
+        };
+
         foreach (var snapshot in new[] {
             missingSource,
             invalidDamageRange,
             invalidPresentation,
             invalidMissileIdentity,
             oversizedMissileIdentity,
+            Arrow(59, "Lightning"),
+            Arrow(58, "Arrow"),
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
+        // The native C2 Arrow owner (MonsterArrow) keeps identity "Arrow".
+        AuthoritativeSnapshotValidator.Validate(Arrow(59, "Arrow"));
     }
 
     [Fact]

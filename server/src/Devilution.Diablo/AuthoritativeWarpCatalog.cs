@@ -76,6 +76,12 @@ public sealed class AuthoritativeWarpTarget
 
     /** The native entry a first visit generates with; null is the ordinary stair entry. */
     public AuthoritativeCatacombsEntry? FirstEntry { get; init; }
+
+    /** Native IsWarpOpen: a Town warp exists only while the Town opens it; None is ungated. */
+    public AuthoritativeTownWarpUnlocks RequiredTownWarp { get; init; }
+
+    /** Native WM_DIABTWARPUP: taking this warp sets the player's pTownWarps bit. */
+    public AuthoritativeTownWarpUnlocks UnlocksTownWarp { get; init; }
 }
 
 /** Loads normalized native trigger destinations from an external content table. */

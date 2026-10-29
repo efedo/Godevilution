@@ -48,6 +48,46 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.2c Single-player Town warp (done)
+
+- **Player-visible outcome:** in single-player, stepping on L5's warp-up (piece
+  558) returns to Town at (49,22) and opens the Catacombs warp: Town is drawn with
+  its opening and (49,21) leads to L5 (no clvl gate, native SP). The unlock
+  persists across save and fresh-host resume.
+- **Native source:** `players.cpp` StartNewLvl (`WM_DIABTWARPUP` sets
+  `pTownWarps |= 1 << (levelType - 2)`); `triggers.cpp` IsWarpOpen,
+  InitTownTriggers and InitL2Triggers; `town.cpp` CreateTown warp tiles under the
+  unlock mask.
+- **Files and contracts owned:**
+  - the L5 warp-up route in single-player (today multiplayer only) and an
+    unlock effect on it that sets the Town's `WarpUnlocks` Catacombs bit;
+  - Town geometry rebuilt from the unlocked settings (opening tiles, same closed
+    Hell choices) and the Town warp route published once unlocked;
+  - the Town checkpoint and catalog accept single-player `WarpUnlocks` Catacombs
+    (today `None` only). Existing format 13 field, no new cohort format; saves
+    without the unlock restore unchanged;
+  - a native Town oracle case for unlock mask 1 if the existing capture lacks it;
+  - the headless depth journey gains a warp leg: L5 warp-up, Town warp back to
+    L5, and a resume that checks the open warp.
+- **Exit check:** server tests for the SP warp-up unlock, the warp-down entry and
+  a cold restore with the unlock; Town geometry matches native for mask 1;
+  `test-godot-native-depth-progression.ps1 -TargetDepth 5` with `warrior-l8` and
+  the warp leg, plus its fresh-host resume; Diablo.Tests, Server.Tests and client
+  protocol tests pass.
+- **Out of scope:** Caves and Hell warps (no families yet), Hellfire clvl
+  unlocks, the multiplayer per-player bit (multiplayer opens all warps),
+  rendering L5 (2.3), quests.
+- **Size:** two to three days.
+- **State (2026-10-29):** done. Warps carry `RequiredTownWarp`/`UnlocksTownWarp`; the
+  Town catalog's `WithWarpUnlocks` keeps its fingerprint, and the world state rebuilds
+  Town on unlock and publishes only open warps. Restored warps take behaviour from
+  trusted content by id when topology matches (this fixed the 2.2b multiplayer clvl
+  gate on restore). The existing Town oracle (warps 0–7) covers mask 1. Found on the
+  way and fixed: Catacombs doors were not clickable in the client, MonsterArrow
+  `"Arrow"` failed three snapshot validators (server crash on L5), and a killed
+  Catacombs archer blocked fresh-host restore. L5's monsters fight already; their
+  native AI parity stays 2.4.
+
 ## Batch 2.2b Multiplayer Catacombs (done)
 
 - **Player-visible outcome:** in a native multiplayer game, players of clvl 8 or

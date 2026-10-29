@@ -5,6 +5,20 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-29
+
+- Single-player Town warp (batch 2.2c): L5's warp-up (piece 558) returns to Town at
+  (49,22) and sets the Town's `WarpUnlocks` Catacombs bit, as native `WM_DIABTWARPUP`;
+  the Town is rebuilt with its warp opening (same closed-Hell choices and catalog
+  fingerprint), and (49,21) then leads to L5 at any clvl. The unlock is saved in the
+  existing Town checkpoint; older single-player saves without the warp pair restore
+  with it closed. Warp gates (clvl, first entry, Town warp) now come from trusted
+  content on restore, which also fixes 2.2b multiplayer restores losing the clvl 8 gate.
+  The client can click native Catacombs doors (42/43). Live C2 Arrow flights no longer
+  fail snapshot validation, and a floor with a killed Catacombs archer restores on a
+  fresh host. The headless depth journey at `-TargetDepth 5` opens L5's doors, takes
+  the warp-up and the Town warp, and resumes with the warp open.
+
 ## 2026-10-28
 
 - Multiplayer Catacombs (batch 2.2b): with the Catacombs pack, native multiplayer runs

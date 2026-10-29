@@ -101,6 +101,35 @@ public sealed class AuthoritativeNativeTownCatalogTests
         Assert.Equal(restored.NativeSolidCells, backing.NativePieceCollisionCells);
     }
 
+    /** Batch 2.2c: the single-player Catacombs unlock is the same run with the warp drawn open. */
+    [Fact]
+    public void CatacombsWarpUnlockKeepsIdentityAndClosedHellChoicesAndRestoresByCheckpoint()
+    {
+        var catalog = LoadCatalog();
+        var history = new[] { AuthoritativeNativeTownMutation.OpenHive };
+        var locked = catalog.Capture(Apply(catalog.CreateInitialGeometry(), history), history);
+        Assert.False(catalog.IsTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.True(catalog.IsTownWarpOpen(AuthoritativeTownWarpUnlocks.None));
+
+        var unlocked = catalog.WithWarpUnlocks(AuthoritativeTownWarpUnlocks.Catacombs);
+        Assert.Same(unlocked, unlocked.WithWarpUnlocks(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.True(unlocked.IsTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.False(unlocked.IsTownWarpOpen(AuthoritativeTownWarpUnlocks.Caves));
+        Assert.Equal(catalog.Fingerprint, unlocked.Fingerprint);
+        var geometry = unlocked.Rebuild(history);
+        var checkpoint = unlocked.Capture(geometry, history);
+        Assert.Equal(new AuthoritativeTownWarpOpenings(true, false, false, false, false), checkpoint.WarpOpenings);
+        Assert.Equal(locked.ClosedHellTileChoices, checkpoint.ClosedHellTileChoices);
+        Assert.NotEqual(locked.NativePieceLayer, checkpoint.NativePieceLayer);
+
+        // The base catalog picks the variant each checkpoint was captured with.
+        Assert.Same(catalog, catalog.ForCheckpoint(locked));
+        Assert.Equal(geometry.NativePieceLayer, catalog.ForCheckpoint(checkpoint).Restore(checkpoint).NativePieceLayer);
+        Assert.Throws<InvalidDataException>(() => catalog.Restore(checkpoint));
+        Assert.Throws<InvalidDataException>(() => catalog.WithWarpUnlocks(AuthoritativeTownWarpUnlocks.Caves));
+        Assert.Throws<InvalidDataException>(() => catalog.ForMultiplayer().WithWarpUnlocks(AuthoritativeTownWarpUnlocks.Catacombs));
+    }
+
     [Fact]
     public void RestoreRejectsChangedProvenanceChannelsSettingsAndMutationHistory()
     {

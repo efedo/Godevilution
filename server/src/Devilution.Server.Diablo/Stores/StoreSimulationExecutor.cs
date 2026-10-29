@@ -815,7 +815,7 @@ public sealed class StoreSimulationExecutor
                 active.Simulation.SpellBooks,
                 active.Simulation.Items,
                 active.Simulation.WorldState.CapturePresentationLevelGeometry(),
-                active.Simulation.WorldState.World?.WarpTargets,
+                active.Simulation.WorldState.PublishedWarpTargets,
                 allowZeroPlayerEntityId: entityId == 0);
         }));
     }

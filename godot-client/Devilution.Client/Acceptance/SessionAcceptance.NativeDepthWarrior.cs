@@ -22,6 +22,7 @@ public partial class SessionAcceptance
     // L5-L8 are traversed only: generated, entered, retained and resumed.
     private const uint NativeWarriorDeepestFloor = 8;
     private const uint NativeWarriorDrawnFloor = 4;
+    private const uint NativeWarriorTownWarpDepth = 5;
     private const int NativeWarriorTravelAttempts = 16;
     private int nativeWarriorRouteCount;
     // One-time evidence run: clear floors as a player would and record the Warrior entering each one.
@@ -89,8 +90,11 @@ public partial class SessionAcceptance
                     GD.Print($"Native Warrior healed in Town and returned to L{depth}");
                 }
             }
-            for (var destination = (int)target - 1; destination >= 0; destination--)
+            // From L5 and below, the way home is L5's warp-up, which opens the Town warp (batch 2.2c).
+            var stairsUpTo = target >= NativeWarriorTownWarpDepth ? (int)NativeWarriorTownWarpDepth : 0;
+            for (var destination = (int)target - 1; destination >= stairsUpTo; destination--)
                 await TravelNativeWarriorAsync(main, directory, (uint)destination);
+            var townWarp = target >= NativeWarriorTownWarpDepth ? await NativeWarriorTownWarpLegAsync(main, directory) : null;
             await HealNativeWarriorInTownAsync(main);
             await Until(() => Settled(main), "The four-floor journey did not settle in Town.");
             draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, 0));
@@ -105,7 +109,7 @@ public partial class SessionAcceptance
                 RulesetHash = identity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
                 LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY,
                 Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
-                NativeDraws = draws.ToArray(), NativePanels = panels, NativeControls = controls,
+                NativeDraws = draws.ToArray(), NativePanels = panels, NativeControls = controls, TownWarp = townWarp,
             });
             GD.Print($"Native Warrior Town/L1-L4 checkpoint passed; sequence={checkpoint.Sequence}");
             return;
@@ -126,6 +130,8 @@ public partial class SessionAcceptance
             && main.ObservedLastQueuedSequence == 0 && main.ObservedPendingCommandCount == 0 && Settled(main),
             "The fresh host changed the saved Warrior, RNG, four-floor world or command cursor before input.");
         VerifyNativeWarriorRetention(main, expected);
+        Require(target < NativeWarriorTownWarpDepth || NativeWarriorTownWarpOpen(main),
+            "The fresh host did not restore the open Town warp.");
         for (uint depth = 1; depth <= target; depth++) {
             await TravelNativeWarriorAsync(main, directory, depth);
             VerifyNativeWarriorRetention(main, expected);
@@ -133,6 +139,10 @@ public partial class SessionAcceptance
         for (var destination = (int)target - 1; destination >= 0; destination--) {
             await TravelNativeWarriorAsync(main, directory, (uint)destination);
             VerifyNativeWarriorRetention(main, expected);
+        }
+        if (target >= NativeWarriorTownWarpDepth) {
+            await TravelNativeWarriorAsync(main, directory, NativeWarriorTownWarpDepth);
+            await TravelNativeWarriorAsync(main, directory, 0);
         }
         var final = main.ObservedSnapshot!.Players.Single();
         Require(final.LevelId == 0 && final.Life > 0, "The resumed four-floor journey did not return alive to Town.");
@@ -144,6 +154,26 @@ public partial class SessionAcceptance
         });
         GD.Print("Native Warrior Town/L1-L4 fresh-host resume and retained revisit passed");
     }
+
+    /**
+     * Native single-player WM_DIABTWARPUP: L5's warp-up returns to Town (49,22) and opens
+     * the Catacombs Town warp, which leads back to L5; the Warrior then returns by the warp-up.
+     */
+    private async Task<object> NativeWarriorTownWarpLegAsync(Main main, string directory)
+    {
+        Require(main.ObservedSnapshot!.Players.Single().LevelId == NativeWarriorTownWarpDepth && !NativeWarriorTownWarpOpen(main),
+            "The Town warp leg must start on L5 with the Town warp closed.");
+        await TravelNativeWarriorAsync(main, directory, 0);
+        var arrival = main.ObservedSnapshot!.Players.Single();
+        Require(NativeWarriorTownWarpOpen(main), "L5's warp-up did not open the Town warp.");
+        await TravelNativeWarriorAsync(main, directory, NativeWarriorTownWarpDepth);
+        await TravelNativeWarriorAsync(main, directory, 0);
+        GD.Print($"Native Warrior opened the Town warp at ({arrival.PositionX},{arrival.PositionY}) and took it to L5 and back");
+        return new { Opened = true, ArrivalX = arrival.PositionX, ArrivalY = arrival.PositionY };
+    }
+
+    private static bool NativeWarriorTownWarpOpen(Main main)
+        => DepthGeometry(main, 0).WarpTriggers.Any(route => route.Available && route.TargetLevelId == NativeWarriorTownWarpDepth);
 
     private async Task GrindNativeWarriorAsync(Main main, string directory)
     {
@@ -261,6 +291,8 @@ public partial class SessionAcceptance
             if (player.LevelId != 0 && !flee)
                 await ClearNativeWarriorThreatsAsync(main, player.LevelId);
             await UseNativeHealingPotionIfNeeded(main);
+            if (player.LevelId >= NativeWarriorTownWarpDepth)
+                await OpenNativeWarriorCatacombsDoorsAsync(main, destination);
             // Journey and resume run in separate processes, so the phase keeps their route evidence apart.
             var routeDirectory = System.IO.Path.Combine(directory, "native-warrior-routes",
                 System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") ?? "phase",
@@ -284,6 +316,80 @@ public partial class SessionAcceptance
             }
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
+    }
+
+    /**
+     * Catacombs doors (native 42/43) close off rooms such as L5's warp-up; until the route's
+     * trigger is reachable, the Warrior opens the closed door it reaches nearest the trigger.
+     */
+    private async Task OpenNativeWarriorCatacombsDoorsAsync(Main main, uint destination)
+    {
+        for (var opened = 0; opened < NativeWarriorTravelAttempts; opened++) {
+            var snapshot = main.ObservedSnapshot!;
+            var player = snapshot.Players.Single();
+            var geometry = DepthGeometryFromSnapshot(snapshot, player.LevelId);
+            var route = geometry.WarpTriggers.Single(item => item.Available && item.TargetLevelId == destination);
+            var reach = NativeWarriorReach(geometry, player, route.TriggerX, route.TriggerY);
+            if (reach.Contains((route.TriggerX, route.TriggerY)))
+                return;
+            var door = snapshot.Objects
+                .Where(item => item.LevelId == player.LevelId && item.NativeObjectId is 42 or 43 && !item.MissilePassable
+                    && reach.Any(cell => Math.Abs(cell.X - item.PositionX) + Math.Abs(cell.Y - item.PositionY) == 1))
+                .OrderBy(item => NativeDistance(item.PositionX, item.PositionY, route.TriggerX, route.TriggerY))
+                .ThenBy(item => item.EntityId).FirstOrDefault();
+            // The route planner decides what remains; a door is opened only while one stands in reach.
+            if (door is null)
+                return;
+            await ClearNativeWarriorThreatsAsync(main, player.LevelId);
+            try {
+                await MoveAdjacentToNativePosition(main, current => current.Objects.Single(item => item.EntityId == door.EntityId),
+                    async blocked => {
+                        if (!blocked)
+                            return false;
+                        await ClearNativeWarriorThreatsAsync(main, player.LevelId);
+                        return main.ObservedSnapshot!.Monsters.Any(monster => monster.Alive && monster.LevelId == player.LevelId);
+                    });
+            } catch (InvalidOperationException failure) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                && alive.LevelId == player.LevelId) {
+                // A monster stepped into the walk or kept hitting the Warrior; fight it and plan again.
+                GD.Print($"Native Warrior door approach interrupted ({failure.Message[..Math.Min(failure.Message.Length, 120)]}); "
+                    + DescribeNativeWarriorSurroundings(main) + $"; mode={alive.CombatMode}; action={alive.CurrentAction}; "
+                    + $"walkPending={alive.NativeWalkPathPending}; pending={main.ObservedPendingCommandCount}; "
+                    + $"queued={main.ObservedLastQueuedSequence}; result={main.ObservedCommandResult?.ClientSequence}/"
+                    + $"{main.ObservedCommandResult?.Status}/{main.ObservedCommandResult?.RejectReason}");
+                await UseNativeHealingPotionIfNeeded(main);
+                continue;
+            }
+            var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+            await ClickWorld(main, door.PositionX, door.PositionY);
+            await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
+            await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
+                $"Native Catacombs door {door.EntityId} did not open.", 5);
+            GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
+        }
+        throw new InvalidOperationException($"The Warrior opened {NativeWarriorTravelAttempts} Catacombs doors without reaching the L{destination} route.");
+    }
+
+    /** Cardinal walking reach over the projected blocked cells; the goal trigger counts as reached. */
+    private static HashSet<(int X, int Y)> NativeWarriorReach(LevelGeometrySnapshot geometry, PlayerSnapshot player, int goalX, int goalY)
+    {
+        var blocked = geometry.BlockedCells.Concat(geometry.StaticObjectBlockedCells).ToHashSet();
+        var reach = new HashSet<(int X, int Y)> { (player.PositionX, player.PositionY) };
+        var queue = new Queue<(int X, int Y)>(reach);
+        while (queue.TryDequeue(out var cell)) {
+            if (cell == (goalX, goalY))
+                continue;
+            foreach (var offset in CardinalOffsets) {
+                var next = (X: cell.X + offset.X, Y: cell.Y + offset.Y);
+                if ((uint)next.X >= geometry.Width || (uint)next.Y >= geometry.Height
+                    || blocked.Contains(next.Y * (int)geometry.Width + next.X)
+                    || next != (goalX, goalY) && geometry.WarpTriggers.Any(trigger => (trigger.TriggerX, trigger.TriggerY) == next)
+                    || !reach.Add(next))
+                    continue;
+                queue.Enqueue(next);
+            }
+        }
+        return reach;
     }
 
     private static string DescribeNativeWarriorSurroundings(Main main)

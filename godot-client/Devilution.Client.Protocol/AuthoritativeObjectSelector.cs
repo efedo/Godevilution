@@ -100,6 +100,9 @@ public static class AuthoritativeObjectSelector
             return IsValidNativeSarcophagusInteraction(@object);
         if (@object.CathedralDoor is not null)
             return IsValidCathedralDoorInteraction(@object);
+        // Native OBJ_L2LDOOR/OBJ_L2RDOOR: the server opens or closes the Catacombs door it owns.
+        if (@object.NativeObjectId is 42 or 43)
+            return true;
         return @object.EffectKind != 0
             || @object.QuestId != 0
             || @object.QuestTransitionKind != 0

@@ -1232,7 +1232,10 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
         foreach (var projectile in projectiles) {
+            // The C2 Arrow owner keeps native identity "Arrow"; other ids name monster magic.
             if (projectile.NativeMissileId is not null
+                && !(projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                    && projectile.NativeMissileId == "Arrow")
                 && (projectile.Behavior != AuthoritativeProjectileBehavior.MonsterMagic
                     || ResolveNativeProjectileVisual(
                         projectile.Behavior,
@@ -2673,7 +2676,8 @@ internal static class DiabloProtocolMapper
                     ? string.IsNullOrEmpty(projectile.NativeMissileId)
                         ? ResolveNativeMonsterMissileId(projectile.NativeVisual)
                         : projectile.NativeMissileId
-                    : null,
+                    : (AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                        && projectile.NativeMissileId == "Arrow" ? "Arrow" : null,
                 Phase = (AuthoritativeProjectilePhase)projectile.Phase,
                 StartX = projectile.StartX,
                 StartY = projectile.StartY,

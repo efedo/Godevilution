@@ -22,6 +22,8 @@ public sealed partial class DiabloWorldState
         }
         if (World is null || nativeTownCatalog is not null)
             throw new InvalidDataException("Native Town requires one configured authoritative world.");
+        if (checkpoint is not null)
+            catalog = catalog.ForCheckpoint(checkpoint);
         nativeTownCatalog = catalog;
         nativeTownGeometry = checkpoint is null ? catalog.CreateInitialGeometry() : catalog.Restore(checkpoint);
         if (checkpoint is not null)
@@ -86,9 +88,11 @@ public sealed partial class DiabloWorldState
             return;
         if (nativeTownCatalog is null || checkpoint is null || World is null)
             throw new InvalidDataException("Saved native Town capability differs from the active profile.");
-        var restored = nativeTownCatalog.Restore(checkpoint);
-        var prototype = World.Levels.Single(level => level.LevelId == nativeTownCatalog.LevelId);
-        var replacement = nativeTownCatalog.CreateBackingLevel(restored, prototype);
+        var owner = nativeTownCatalog.ForCheckpoint(checkpoint);
+        var restored = owner.Restore(checkpoint);
+        var prototype = World.Levels.Single(level => level.LevelId == owner.LevelId);
+        var replacement = owner.CreateBackingLevel(restored, prototype);
+        nativeTownCatalog = owner;
         nativeTownGeometry = restored;
         nativeTownMutations.Clear();
         nativeTownMutations.AddRange(checkpoint.Mutations);
@@ -112,18 +116,47 @@ public sealed partial class DiabloWorldState
             return;
         if (nativeTownCatalog is null || checkpoint is null)
             throw new InvalidDataException("Saved native Town capability differs from the active profile.");
-        var restored = nativeTownCatalog.Restore(checkpoint);
+        var owner = nativeTownCatalog.ForCheckpoint(checkpoint);
+        var restored = owner.Restore(checkpoint);
         // Require the duplicated legacy fine/SOL projection before installing owned special/coarse state.
-        var previous = nativeTownGeometry;
-        nativeTownGeometry = restored;
+        var (previousCatalog, previous) = (nativeTownCatalog, nativeTownGeometry);
+        (nativeTownCatalog, nativeTownGeometry) = (owner, restored);
         try {
             PreserveNativeTownProjection();
         } catch {
-            nativeTownGeometry = previous;
+            (nativeTownCatalog, nativeTownGeometry) = (previousCatalog, previous);
             throw;
         }
         nativeTownMutations.Clear();
         nativeTownMutations.AddRange(checkpoint.Mutations);
+    }
+
+    /** Native IsWarpOpen: whether the active Town has this warp; non-Town warps are ungated. */
+    public bool IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks warp)
+        => warp == AuthoritativeTownWarpUnlocks.None
+            || nativeTownCatalog is { } catalog && catalog.IsTownWarpOpen(warp);
+
+    /** Warp triggers that exist in the current world, as native InitTownTriggers publishes them. */
+    public IReadOnlyList<AuthoritativeWarpTarget>? PublishedWarpTargets
+        => World?.WarpTargets.Where(warp => IsNativeTownWarpOpen(warp.RequiredTownWarp)).ToArray();
+
+    /**
+     * Native WM_DIABTWARPUP sets the pTownWarps bit; the next CreateTown draws the opening.
+     * Rebuilds the Town under the unlocked settings with the same typed history.
+     */
+    internal void UnlockNativeTownWarp(AuthoritativeTownWarpUnlocks warp)
+    {
+        if (warp == AuthoritativeTownWarpUnlocks.None || nativeTownCatalog is not { } catalog
+            || catalog.IsTownWarpOpen(warp) || World is null)
+            return;
+        var unlocked = catalog.WithWarpUnlocks(catalog.Settings.WarpUnlocks | warp);
+        var geometry = unlocked.Rebuild(nativeTownMutations);
+        var prototype = World.Levels.Single(level => level.LevelId == catalog.LevelId);
+        var replacement = unlocked.CreateBackingLevel(geometry, prototype);
+        (nativeTownCatalog, nativeTownGeometry) = (unlocked, geometry);
+        World.ReplaceLevel(replacement);
+        projectedLevels[catalog.LevelId] = replacement;
+        PreserveNativeTownDoorBacking(replacement);
     }
 
     /** Typed operations retain native generation RNG and record exact replayable provenance. */

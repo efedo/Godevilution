@@ -1515,6 +1515,9 @@ public static class AuthoritativeSnapshotValidator
     {
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
+        // Native C2 Arrow owners keep their missile identity.
+        if ((AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow)
+            return projectile.NativeMissileId == "Arrow";
         if ((AuthoritativeProjectileBehavior)projectile.Behavior
                 != AuthoritativeProjectileBehavior.MonsterMagic
             || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(projectile.NativeMissileId)

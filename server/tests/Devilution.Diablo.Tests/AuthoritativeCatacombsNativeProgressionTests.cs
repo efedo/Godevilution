@@ -22,8 +22,9 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         var simulation = activation.Simulation;
         var world = simulation.WorldState;
         Assert.NotNull(activation.NativeCatacombsMetadata);
-        // Single-player Town warps stay closed until their unlock is modelled.
-        Assert.DoesNotContain(world.World!.WarpTargets, row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
+        // The single-player Town warp stays closed until L5's warp-up is taken.
+        Assert.False(world.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.DoesNotContain(world.PublishedWarpTargets!, row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
         var start = world.World!.WarpTargets.Single(row => row.SourceLevelId == 1 && row.TargetLevelId == 2);
         var template = activation.PlayerLoadouts.CreateTemplate("native-catacombs-descent", classId,
             null, null, null, startingLevelId: 1, startingPositionX: start.TriggerX, startingPositionY: start.TriggerY);
@@ -90,6 +91,215 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         Assert.Equal(6U, player.LevelId);
     }
 
+    /**
+     * Native single-player WM_DIABTWARPUP: L5's warp-up returns to Town and sets pTownWarps,
+     * so CreateTown opens the Catacombs warp, which then leads back to L5 at any clvl.
+     */
+    [Fact(Explicit = true)]
+    public void SinglePlayerL5WarpUpOpensTheTownWarpAndRestoresCold()
+    {
+        var (activation, runtime, player) = DescendToL5("native-town-warp-sp");
+        var simulation = activation.Simulation;
+        var world = simulation.WorldState;
+        var commands = WorldCommands(simulation);
+        var lockedTown = world.CaptureNativeTown()!;
+        var lockedPieces = world.World!.Levels.Single(level => level.LevelId == 0).NativePieceLayer!.ToArray();
+        Assert.Equal(new AuthoritativeTownWarpOpenings(false, false, false, false, false), lockedTown.WarpOpenings);
+
+        UseStair(world, commands, player, 5, 0);
+        Assert.Equal((49, 22), (player.PositionX, player.PositionY));
+        Assert.True(world.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.False(world.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Caves));
+        var down = Assert.Single(world.PublishedWarpTargets!, row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
+        Assert.Equal(0U, down.RequiredCharacterLevel);
+        var town = world.CaptureNativeTown()!;
+        Assert.Equal(AuthoritativeTownWarpUnlocks.Catacombs, town.Settings.WarpUnlocks);
+        Assert.Equal(new AuthoritativeTownWarpOpenings(true, false, false, false, false), town.WarpOpenings);
+        Assert.Equal(lockedTown.ClosedHellTileChoices, town.ClosedHellTileChoices);
+        Assert.Equal(lockedTown.CatalogFingerprint, town.CatalogFingerprint);
+        Assert.NotEqual(lockedPieces, world.World.Levels.Single(level => level.LevelId == 0).NativePieceLayer!);
+
+        // No clvl gate in single-player; L5 is already generated, so no new entry.
+        Assert.Equal(1U, player.CharacterLevel);
+        UseStair(world, commands, player, 0, 5);
+        Assert.Equal((down.TargetX, down.TargetY), (player.PositionX, player.PositionY));
+        UseStair(world, commands, player, 5, 0);
+        var captured = simulation.CaptureCohortState(runtime);
+        Assert.Equal(Enumerable.Range(2, 4).Select(value => (uint)value),
+            captured.NativeProgression!.Entries.Select(entry => entry.LevelId));
+
+        var codec = new DiabloCohortCodec();
+        var bytes = codec.Serialize(captured);
+        // A fresh host activates the locked Town and adopts the unlock from the save.
+        var (content, seed) = LoadAllClassProfile();
+        var fresh = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap.ActivateNativeTownClass(content, 0, seed);
+        Assert.False(fresh.Simulation.WorldState.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        var candidate = fresh.CohortCandidateFactory!(codec.Deserialize(bytes));
+        var restoredRuntime = candidate.CreateRuntime();
+        Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        var restoredWorld = candidate.Simulation.WorldState;
+        Assert.True(restoredWorld.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        Assert.Equal(AuthoritativeTownWarpUnlocks.Catacombs, restoredWorld.World!.WarpTargets
+            .Single(row => row.SourceLevelId == 0 && row.TargetLevelId == 5).RequiredTownWarp);
+        var restoredPlayer = restoredRuntime.Read("native-town-warp-sp", value => value);
+        UseStair(restoredWorld, WorldCommands(candidate.Simulation), restoredPlayer, 0, 5);
+    }
+
+    /**
+     * L5's warp-up room lies behind closed Catacombs doors (native 42/43): opened from adjacent
+     * tiles they connect it, and a walk that stops on the warp-up returns to Town (49,22).
+     */
+    [Fact(Explicit = true)]
+    public void OpenedDoorsReachTheL5WarpUpAndWalkingOntoItReturnsToTown()
+    {
+        var (activation, runtime, player) = DescendToL5("native-town-warp-walk");
+        var simulation = activation.Simulation;
+        var warpUp = simulation.WorldState.World!.WarpTargets.Single(row => row.SourceLevelId == 5 && row.TargetLevelId == 0);
+        var goal = (warpUp.TriggerX, warpUp.TriggerY);
+        while (player.CurrentAction is { } arrival)
+            runtime.AdvanceTo(Math.Max(arrival.EndTick, checked(runtime.LastAdvancedTick + 1)));
+        Assert.False(Reach(simulation, player).ContainsKey(goal));
+        var opened = new List<(int, int)>();
+        for (var attempt = 0; attempt < 16 && !Reach(simulation, player).ContainsKey(goal); attempt++) {
+            var reach = Reach(simulation, player);
+            var door = simulation.WorldState.Objects.Values
+                .Where(o => o.LevelId == 5 && o.NativeObjectId is 42 or 43 && !o.MissilePassable)
+                .Select(o => (Door: o, From: reach.Keys.Where(cell => NativeDistance(cell, (o.PositionX, o.PositionY)) == 1)
+                    .Cast<(int, int)?>().FirstOrDefault()))
+                .Where(pair => pair.From is not null)
+                .OrderBy(pair => NativeDistance((pair.Door.PositionX, pair.Door.PositionY), goal))
+                .First();
+            (player.PositionX, player.PositionY) = door.From!.Value;
+            var result = simulation.Execute(player, new DiabloOperateObjectIntent(door.Door.EntityId),
+                checked(runtime.LastAdvancedTick + 1), [player]);
+            Assert.True(result.Succeeded, $"Door {door.Door.EntityId}: {result.Failure}");
+            runtime.AdvanceTo(checked(runtime.LastAdvancedTick + 1));
+            Assert.True(door.Door.MissilePassable, $"Door {door.Door.EntityId} did not open.");
+            opened.Add((door.Door.PositionX, door.Door.PositionY));
+        }
+        Assert.True(Reach(simulation, player).ContainsKey(goal), $"Opened {opened.Count} doors without reaching the warp-up.");
+
+        // Monster AI on L5 is batch 2.4; walk the last tile onto the trigger as a stair test does.
+        var from = Reach(simulation, player).Keys.First(cell => NativeDistance(cell, goal) == 1);
+        (player.PositionX, player.PositionY) = from;
+        var walk = simulation.Execute(player, new DiabloMoveToIntent(warpUp.TriggerX, warpUp.TriggerY, FollowPath: true),
+            checked(runtime.LastAdvancedTick + 1), [player]);
+        Assert.True(walk.Succeeded, $"{walk.Failure}");
+        for (var step = 0; step < 100 && player.LevelId == 5; step++)
+            runtime.AdvanceTo(checked(runtime.LastAdvancedTick + 1));
+        Assert.Equal((0U, 49, 22), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.True(simulation.WorldState.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+    }
+
+    private static int NativeDistance((int X, int Y) first, (int X, int Y) second)
+        => Math.Max(Math.Abs(first.X - second.X), Math.Abs(first.Y - second.Y));
+
+    private static Dictionary<(int, int), int> Reach(DiabloSimulation simulation, AuthoritativePlayerState player)
+    {
+        var world = simulation.WorldState;
+        var seen = new Dictionary<(int, int), int> { [(player.PositionX, player.PositionY)] = 0 };
+        var queue = new Queue<(int X, int Y)>([(player.PositionX, player.PositionY)]);
+        while (queue.Count > 0) {
+            var (x, y) = queue.Dequeue();
+            for (var dx = -1; dx <= 1; dx++)
+                for (var dy = -1; dy <= 1; dy++) {
+                    var next = (x + dx, y + dy);
+                    if (seen.ContainsKey(next) || !world.IsWalkable(5, next.Item1, next.Item2))
+                        continue;
+                    seen[next] = seen[(x, y)] + 1;
+                    queue.Enqueue(next);
+                }
+        }
+        return seen;
+    }
+
+    /** The admitted L5 roster keeps a killed archer; its corpse lets a fresh host restore the floor. */
+    [Fact(Explicit = true)]
+    public void KilledCatacombsArcherRestoresOnAFreshHost()
+    {
+        var (activation, runtime, player) = DescendToL5("native-killed-archer");
+        var simulation = activation.Simulation;
+        var world = simulation.WorldState;
+        var archer = world.CombatTargets.Values
+            .Where(target => target.LevelId == 5 && target.NativeAi is "SkeletonRanged" or "GoatRanged")
+            .OrderBy(target => target.EntityId).First();
+        DiabloCombatIntentResult? last = null;
+        for (var swing = 0; swing < 40 && world.CombatTargets.ContainsKey(archer.EntityId); swing++) {
+            (player.PositionX, player.PositionY) = AdjacentWalkable(simulation, archer.PositionX, archer.PositionY);
+            player.Life = player.LifeMaximum;
+            archer.HitPoints = 1;
+            last = simulation.Execute(player, new DiabloAttackIntent(archer.EntityId), checked(runtime.LastAdvancedTick + 1), [player]);
+            runtime.AdvanceTo(checked(runtime.LastAdvancedTick + 20));
+        }
+        Assert.False(world.CombatTargets.ContainsKey(archer.EntityId),
+            $"{last?.Succeeded}/{last?.Failure}; hp={archer.HitPointsQ6}; at ({archer.PositionX},{archer.PositionY}) player ({player.PositionX},{player.PositionY})");
+        Assert.Contains(archer.EntityId, world.Corpses.Keys);
+
+        var codec = new DiabloCohortCodec();
+        var bytes = codec.Serialize(simulation.CaptureCohortState(runtime));
+        var (content, seed) = LoadAllClassProfile();
+        var fresh = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap.ActivateNativeTownClass(content, 0, seed);
+        var candidate = fresh.CohortCandidateFactory!(codec.Deserialize(bytes));
+        var restoredRuntime = candidate.CreateRuntime();
+        Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        Assert.Contains(archer.EntityId, candidate.Simulation.WorldState.Corpses.Keys);
+    }
+
+    private static (int X, int Y) AdjacentWalkable(DiabloSimulation simulation, int x, int y)
+    {
+        return new[] { (1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1) }
+            .Select(offset => (X: x + offset.Item1, Y: y + offset.Item2))
+            .First(cell => simulation.WorldState.World!.IsWalkable(5, cell.X, cell.Y)
+                && !simulation.WorldState.CombatTargets.Values.Any(target => target.LevelId == 5
+                    && (target.PositionX, target.PositionY) == cell));
+    }
+
+    /** Saves from before batch 2.2c lack the Town warp pair; they restore with it, still closed. */
+    [Fact(Explicit = true)]
+    public void PreTownWarpSinglePlayerSaveRestoresWithClosedTownWarp()
+    {
+        var (activation, runtime, _) = DescendToL5("native-town-warp-legacy");
+        var captured = activation.Simulation.CaptureCohortState(runtime);
+        static bool TownWarp(DiabloWorldGeometryWarpState warp)
+            => warp.WarpId is 1201 or 1202;
+        Assert.Equal(2, captured.Geometry!.WarpTargets!.Count(TownWarp));
+        var legacy = captured with {
+            Geometry = captured.Geometry with { WarpTargets = captured.Geometry.WarpTargets!.Where(warp => !TownWarp(warp)).ToArray() },
+            CathedralDoors = captured.CathedralDoors! with {
+                BackingGeometry = captured.CathedralDoors.BackingGeometry with {
+                    WarpTargets = captured.CathedralDoors.BackingGeometry.WarpTargets!.Where(warp => !TownWarp(warp)).ToArray(),
+                },
+            },
+        };
+        var codec = new DiabloCohortCodec();
+        var candidate = activation.CohortCandidateFactory!(codec.Deserialize(codec.Serialize(legacy)));
+        var restoredRuntime = candidate.CreateRuntime();
+        var restoredWorld = candidate.Simulation.WorldState;
+        Assert.Equal(2, restoredWorld.World!.WarpTargets.Count(warp => TownWarp(AuthoritativeWorld.CaptureWarpState(warp))));
+        Assert.False(restoredWorld.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+        var restoredPlayer = restoredRuntime.Read("native-town-warp-legacy", value => value);
+        UseStair(restoredWorld, WorldCommands(candidate.Simulation), restoredPlayer, 5, 0);
+        Assert.True(restoredWorld.IsNativeTownWarpOpen(AuthoritativeTownWarpUnlocks.Catacombs));
+    }
+
+    private static (DiabloContentActivation Activation, Devilution.Engine.AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> Runtime, AuthoritativePlayerState Player) DescendToL5(string name)
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var activation = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap
+            .ActivateNativeTownClass(content, 0, seed);
+        var simulation = activation.Simulation;
+        var start = simulation.WorldState.World!.WarpTargets.Single(row => row.SourceLevelId == 1 && row.TargetLevelId == 2);
+        var template = activation.PlayerLoadouts.CreateTemplate(name, 0,
+            null, null, null, startingLevelId: 1, startingPositionX: start.TriggerX, startingPositionY: start.TriggerY);
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write(name, player => player.EntityId = 0x70000001);
+        var player = runtime.Read(name, value => value);
+        var commands = WorldCommands(simulation);
+        for (uint level = 1; level < 5; level++)
+            UseStair(simulation.WorldState, commands, player, level, level + 1);
+        return (activation, runtime, player);
+    }
+
     /** Native multiplayer WM_DIABTOWNWARP: clvl 8 enters L5 first by ENTRY_TWARPDN; L5's warp-up returns. */
     [Fact(Explicit = true)]
     public void MultiplayerTownWarpGatesCharacterLevelEntersL5AndRestoresCold()
@@ -131,6 +341,8 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         var candidate = activation.CohortCandidateFactory!(codec.Deserialize(bytes));
         var restoredRuntime = candidate.CreateRuntime();
         Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        var restoredDown = candidate.Simulation.WorldState.World!.WarpTargets.Single(row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
+        Assert.Equal((8U, AuthoritativeCatacombsEntry.TownWarpDown), (restoredDown.RequiredCharacterLevel, restoredDown.FirstEntry));
         var restoredPlayer = restoredRuntime.Read("native-town-warp", value => value);
         UseStair(candidate.Simulation.WorldState, WorldCommands(candidate.Simulation), restoredPlayer, 5, 0);
         Assert.Equal((49, 22), (restoredPlayer.PositionX, restoredPlayer.PositionY));

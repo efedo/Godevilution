@@ -2702,6 +2702,16 @@ public sealed class ClientModelTests
         misplacedNativeMissile.Projectiles[0].NativeMissileId = "Lightning";
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: misplacedNativeMissile)));
+
+        // MonsterArrow (59) accepts only the native C2 Arrow identity.
+        var monsterArrow = invalidNativeMissile.Clone();
+        monsterArrow.Projectiles[0].Behavior = 59;
+        monsterArrow.Projectiles[0].NativeMissileId = "Lightning";
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: monsterArrow)));
+        monsterArrow.Projectiles[0].NativeMissileId = "Arrow";
+        model.Apply(new AuthoritativeClientMessage(Snapshot: monsterArrow));
+        Assert.Equal("Arrow", Assert.Single(model.Snapshot!.Projectiles).NativeMissileId);
     }
 
     [Fact]

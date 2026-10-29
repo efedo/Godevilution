@@ -133,7 +133,8 @@ public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeGameHost
                 foreach (var restore in prepared.Values)
                     restore.Dispose();
                 throw prepared.Count == 0
-                    ? new InvalidDataException("No class run of the all-class native profile accepts the saved cohort.",
+                    ? new InvalidDataException("No class run of the all-class native profile accepts the saved cohort: "
+                        + string.Join("; ", failures.Select(failure => failure.Message).Distinct()),
                         new AggregateException(failures))
                     : new InvalidDataException("The saved cohort matches more than one class run of the all-class native profile.");
             }

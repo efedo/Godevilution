@@ -3122,6 +3122,34 @@ public sealed class DialogueProtocolProjectionTests
         Assert.Throws<InvalidDataException>(() =>
             DiabloProtocolMapper.ToProtocolSnapshot(misplaced));
     }
+    /** The native C2 Arrow owner projects, restores and validates identity "Arrow" on MonsterArrow only. */
+    [Fact]
+    public void ProjectsAndRestoresNativeCatacombsArrowIdentity()
+    {
+        var player = new StorePlayerSnapshot(0, null, [], 0, 64, 0, 0, PlayerAttributesState.Zero, [], [], []) {
+            EntityId = 1,
+            LevelId = 5,
+        };
+        var source = new DiabloSimulationSnapshot(1, player, [], [], [], [],
+            [new DiabloProjectileState(2, 1, 0, 5, 1, 4, 4, 4, 4, 0, AuthoritativeDamageType.Physical, 0, 3) {
+                Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+                NativeMissileId = "Arrow",
+            }],
+            null);
+
+        var projectile = Assert.Single(DiabloProtocolMapper.ToProtocolSnapshot(source).Projectiles);
+        Assert.Equal(NativeProjectileVisual.Arrow, projectile.NativeVisual);
+        Assert.Equal("Arrow", projectile.NativeMissileId);
+        Assert.Equal("Arrow", Assert.Single(DiabloProtocolMapper.FromProtocolSnapshot(
+            DiabloProtocolMapper.ToProtocolSnapshot(source)).Projectiles).NativeMissileId);
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Projectiles = [source.Projectiles[0] with { NativeMissileId = "Lightning" }],
+        }));
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Projectiles = [source.Projectiles[0] with { Behavior = AuthoritativeProjectileBehavior.WeaponArrow }],
+        }));
+    }
+
     [Fact]
     public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()
     {
