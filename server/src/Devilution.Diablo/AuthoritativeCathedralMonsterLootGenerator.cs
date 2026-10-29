@@ -311,7 +311,7 @@ public static class AuthoritativeCathedralMonsterLootGenerator
         if (!familyContext.IsCatacombs
             || request.Policy.Depth is < 5 or > 8
             || request.Policy.CurrentDungeonLevel is < 0 or > 8
-            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || request.Policy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
             || request.Policy.Difficulty != DiabloDifficulty.Normal
             || request.Policy.Hellfire || request.Policy.Spawn
             || request.Policy.QuestEnabled || request.Policy.SetLevel

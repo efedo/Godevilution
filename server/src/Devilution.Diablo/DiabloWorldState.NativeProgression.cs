@@ -39,12 +39,12 @@ public sealed partial class DiabloWorldState
 
     internal (NativeProgressionAdmission Admission, DiabloNativeFloorEntry Entry)? PrepareNativeProgressionEntry(
         AuthoritativePlayerState player, uint levelId, IReadOnlyList<AuthoritativePlayerState> players,
-        AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells)
+        AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells, AuthoritativeCatacombsEntry? firstEntry = null)
     {
         if (OwnsNativePopulationLevel(levelId) || levelId == 0 || nativeProgression is null)
             return null;
         if (nativeProgression.IsCatacombs(levelId)) {
-            var catacombs = nativeProgression.PrepareCatacombs(levelId, player, cathedralItems!.UniqueItemFlags);
+            var catacombs = nativeProgression.PrepareCatacombs(levelId, player, cathedralItems!.UniqueItemFlags, firstEntry);
             return (new(null, PrepareNativeCatacombsFloorAdmission(catacombs.Build, items, spells,
                 nativeProgression.CatacombsMissiles!, players)), catacombs.Entry);
         }

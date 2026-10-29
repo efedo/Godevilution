@@ -571,12 +571,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 WaterQuestState: AuthoritativeTownWaterQuestState.NotAvailable })
             throw new NotSupportedException("The explicit Town profile requires its original single-player quest-disabled initial context.");
         var nativePopulationSidecars = nativePopulation ? LoadNativePopulationSidecars(content) : null;
-        // Batch 2.2a: a single-player all-class Town profile with the 1.1.0 Catacombs pack continues to L8.
-        var catacombsDepths = nativeTown && nativeClassId is not null && gameMode == DiabloGameMode.SinglePlayer
+        // Batches 2.2a/2.2b: an all-class Town profile with the 1.1.0 Catacombs pack continues to L8.
+        var catacombsDepths = nativeTown && nativeClassId is not null
             && AuthoritativeCatacombsPopulationMetadata.LoadProfileAutomap(content.Manifest) is { } catacombsAutomap
                 ? AuthoritativeCatacombsNativeDepths.Create(
                     AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(content.Manifest)!, catacombsAutomap, 0x13579BDF)
                 : null;
+        // Batch 2.2b: the multiplayer L1-L8 run draws its Town with the open native warps.
+        if (catacombsDepths is not null && gameMode == DiabloGameMode.Multiplayer) {
+            nativeTownCatalog = nativeTownCatalog!.ForMultiplayer();
+            nativeTownGeometry = nativeTownCatalog.CreateInitialGeometry();
+        }
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
         var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
         var hasGeneratedRoutes = content.TryGetTable(AuthoritativeNativeGeneratedRouteBindings.TableName, out var generatedRoutesTable);
@@ -1248,7 +1253,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 foreach (var level in catacombsDepths.Levels)
                     world.AddLevel(level);
                 var stairs = catacombsDepths.CreateWarps(depthGenerationPlan.Candidates
-                    .Single(candidate => candidate.Level.LevelId == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth).Routes);
+                    .Single(candidate => candidate.Level.LevelId == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth).Routes,
+                    multiplayerTownWarp: gameMode == DiabloGameMode.Multiplayer);
                 if (stairs.Any(stair => warps.Any(warp => warp.WarpId == stair.WarpId)))
                     throw new InvalidDataException("Catacombs stair warps collide with content-owned warp identities.");
                 warps = [.. warps, .. stairs];
@@ -1781,7 +1787,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     var catacombsStart = nativeCharacterStart
                         ?? throw new InvalidDataException("Native Catacombs requires the bound class start.");
                     buildCatacombs = entry => catacombsDepths.Build(entry, catacombsStart, sidecars.Runtime,
-                        playerClasses, monsterTypes, itemCatalog, spells, stock, catacombsItems);
+                        playerClasses, monsterTypes, itemCatalog, spells, stock, catacombsItems, gameMode);
                 }
                 nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
                     depthRunFingerprint, playerAnimations, entry => {

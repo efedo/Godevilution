@@ -51,7 +51,9 @@ run and walks to L1, then slot 2 joins as a Rogue and both meet on L1.
 `NativeMultiplayerJourney` (each participant kills on L1 in turn) and the
 fresh-host `NativeMultiplayerResume` on one new session. Both phases wait for L1
 to draw both players; `-Windowed` shows the clients and saves each one's
-`<phase>-peers.png` capture.
+`<phase>-peers.png` capture. `-TargetLevel 5 -TestParticipant
+tools/native-test-heroes/warrior-l8.json` (headless) instead sends two such
+Warriors through the clvl 8 Town warp to meet and resume on L5.
 
 The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 `tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>

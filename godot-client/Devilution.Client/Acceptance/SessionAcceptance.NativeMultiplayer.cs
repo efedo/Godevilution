@@ -11,6 +11,8 @@ namespace Devilution.Client.Acceptance;
  * Warrior that generates the run; slot 2 joins as a Rogue. Create meets on L1, Journey also
  * fights there, and Resume restores both on a fresh host. Shared single-player helpers assume
  * one listed player, so this file selects the local player by name.
+ * Batch 2.2b: with GODEVILUTION_NATIVE_MULTIPLAYER_TARGET=5 both join as test-participant
+ * Warriors (the participant is class-bound) and meet on L5 through the clvl 8 Town warp.
  */
 public partial class SessionAcceptance
 {
@@ -25,7 +27,12 @@ public partial class SessionAcceptance
         var peerDirectory = System.IO.Path.Combine(System.IO.Directory.GetParent(directory)!.FullName, $"player-{peerSlot}");
         var prefix = phase.ToLowerInvariant();
         var resuming = phase == "NativeMultiplayerResume";
-        var classId = slot == 1 ? 0U : 1U;
+        var target = Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_MULTIPLAYER_TARGET") is { Length: > 0 } value
+            ? uint.Parse(value, System.Globalization.CultureInfo.InvariantCulture) : 1U;
+        Require(target is 1 or 5, "Native multiplayer acceptance targets L1 or L5.");
+        var arrived = $"{prefix}-l{target}.json";
+        var classId = slot == 1 || target == 5 ? 0U : 1U;
+        var peerClassId = slot == 2 || target == 5 ? 0U : 1U;
         var name = $"Native-MP-{slot}";
         var peerName = $"Native-MP-{peerSlot}";
         NativeMultiplayerCheckpoint? saved = null;
@@ -40,8 +47,8 @@ public partial class SessionAcceptance
             "Creation needs a fresh bookmark; resume needs this player's bookmark.");
         // The run's generating participant connects first in every phase.
         if (slot == 2)
-            await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-l1.json")),
-                "The first participant did not reach L1.", 300);
+            await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, arrived)),
+                $"The first participant did not reach L{target}.", 300);
         var main = GD.Load<PackedScene>("res://Main.tscn").Instantiate<Main>();
         timingObservedMain = main;
         AddChild(main);
@@ -65,35 +72,39 @@ public partial class SessionAcceptance
             "The participant did not enter native multiplayer as its selected class.");
         if (resuming) {
             var hello = main.ObservedInitialConnection?.ServerHello;
-            Require(local.EntityId == saved!.EntityId && local.LevelId == 1 && local.PositionX == saved.X && local.PositionY == saved.Y
+            Require(local.EntityId == saved!.EntityId && local.LevelId == target && local.PositionX == saved.X && local.PositionY == saved.Y
                 && local.Experience == saved.Experience && hello is { ResumedSessionMatched: true }
                 && hello.LastClientSequence == saved.Sequence,
-                $"The fresh host did not restore the participant's L1 state: {local.EntityId}/{local.LevelId}/{local.PositionX},{local.PositionY}/{local.Experience}, cursor {hello?.LastClientSequence}; saved {saved}.");
+                $"The fresh host did not restore the participant's L{target} state: {local.EntityId}/{local.LevelId}/{local.PositionX},{local.PositionY}/{local.Experience}, cursor {hello?.LastClientSequence}; saved {saved}.");
         } else {
             Require(local.LevelId == 0, "The participant must start in Town.");
-            await NativeMultiplayerTravelToL1Async(main, name);
+            if (target == 5)
+                Require(local.CharacterLevel >= 8, "The L5 Town warp needs a clvl 8 test participant.");
+            await NativeMultiplayerTravelAsync(main, name, target);
         }
         local = NativeMultiplayerLocal(main, name);
-        var monsters = main.ObservedSnapshot!.Monsters.Where(monster => monster.LevelId == 1).ToArray();
-        Require(monsters.Length > 0, "Native multiplayer L1 has no generated monsters.");
-        WriteEvidence(directory, prefix + "-l1.json", new { Slot = slot, local.EntityId });
-        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-l1.json"))
-            && main.ObservedSnapshot!.Players.Count == 2 && main.ObservedSnapshot.Players.All(player => player.LevelId == 1),
-            "Both participants did not become visible together on L1.", 300);
+        var monsters = main.ObservedSnapshot!.Monsters.Where(monster => monster.LevelId == target).ToArray();
+        Require(monsters.Length > 0, $"Native multiplayer L{target} has no generated monsters.");
+        WriteEvidence(directory, arrived, new { Slot = slot, local.EntityId });
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, arrived))
+            && main.ObservedSnapshot!.Players.Count == 2 && main.ObservedSnapshot.Players.All(player => player.LevelId == target),
+            $"Both participants did not become visible together on L{target}.", 300);
         var peer = main.ObservedSnapshot!.Players.Single(player => player.CharacterName == peerName);
-        Require(peer.EntityId != local.EntityId && peer.CharacterClassId == (slot == 1 ? 1U : 0U),
+        Require(peer.EntityId != local.EntityId && peer.CharacterClassId == peerClassId,
             "The peer participant's identity or class is wrong.");
         if (resuming)
             Require(peer.EntityId == saved!.PeerEntityId && peer.PositionX == saved.PeerX && peer.PositionY == saved.PeerY,
-                "The fresh host did not restore the peer's L1 position.");
-        var peerDraw = await NativeMultiplayerPeerDrawAsync(main, directory, prefix, local.EntityId, peer.EntityId);
+                $"The fresh host did not restore the peer's L{target} position.");
+        // Native Catacombs drawing arrives in batch 2.3.
+        var peerDraw = target == 1 ? await NativeMultiplayerPeerDrawAsync(main, directory, prefix, local.EntityId, peer.EntityId) : null;
         object? fight = null;
-        if (phase == "NativeMultiplayerJourney") {
+        // L5 fights wait for Catacombs monster AI and doors (batches 2.4/2.5); L5 is a travel and resume smoke.
+        if (phase == "NativeMultiplayerJourney" && target == 1) {
             // One participant fights at a time, so neither attack races the other's target.
             if (slot == 2)
                 await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-fought.json")),
                     "The first participant did not finish its fight.", 600);
-            fight = await NativeMultiplayerFightAsync(main, name);
+            fight = await NativeMultiplayerFightAsync(main, name, target);
             WriteEvidence(directory, prefix + "-fought.json", new { Fought = true });
             await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-fought.json")),
                 "The peer did not finish its fight.", 600);
@@ -117,7 +128,7 @@ public partial class SessionAcceptance
             Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
             RulesetHash = identity.RulesetIdentityHash, Slot = slot, ClassId = classId, local.EntityId,
             PeerEntityId = peer.EntityId, PeerClassId = peer.CharacterClassId, LevelId = local.LevelId,
-            L1Monsters = monsters.Length, MaxMonsterHitPointsQ6 = monsters.Max(monster => monster.HitPointsQ6),
+            local.CharacterLevel, Monsters = monsters.Length, MaxMonsterHitPointsQ6 = monsters.Max(monster => monster.HitPointsQ6),
             PeerDraw = peerDraw, Fight = fight, Checkpoint = checkpoint,
         });
         // Keep both scenes connected until each has written its evidence.
@@ -155,14 +166,15 @@ public partial class SessionAcceptance
         return new { NativeArt = playerArt, PeerClip = peer.ClipKey, PeerFallback = peer.UsedFallback, Capture = capture };
     }
 
-    private async Task NativeMultiplayerTravelToL1Async(Main main, string name)
+    /** Travels the Town route to L1 (Cathedral stairs) or L5 (the multiplayer Town warp). */
+    private async Task NativeMultiplayerTravelAsync(Main main, string name, uint target)
     {
         await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount),
             "The native multiplayer Town did not settle.");
         var routes = main.ObservedSnapshot!.LevelGeometry.Single(level => level.LevelId == 0)
             .WarpTriggers.OrderBy(route => route.WarpId).ToArray();
-        var index = Array.FindIndex(routes, route => route.Available && route.TargetLevelId == 1);
-        Require(index >= 0, "Native multiplayer Town did not publish the Cathedral stairs.");
+        var index = Array.FindIndex(routes, route => route.Available && route.TargetLevelId == target);
+        Require(index >= 0, $"Native multiplayer Town did not publish its route to L{target}.");
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, 4);
         await SelectRoute((OptionButton)main.FindChild("Routes", true, false), index);
@@ -170,15 +182,15 @@ public partial class SessionAcceptance
         // Travel stops when its path is blocked (Town residents walk); restart it from the new position.
         for (var attempt = 0; attempt < 6; attempt++) {
             await ClickControl(main, sections, 4, "Travel");
-            await Until(() => !cancel.Disabled || NativeMultiplayerLocal(main, name).LevelId == 1,
+            await Until(() => !cancel.Disabled || NativeMultiplayerLocal(main, name).LevelId == target,
                 "The real Travel button did not start route input.", 5);
             await Until(() => {
                 var player = NativeMultiplayerLocal(main, name);
-                Require(player.Life > 0, "The participant died walking to the Cathedral.");
-                return player.LevelId == 1 && main.ObservedPendingCommandCount == 0 || cancel.Disabled;
-            }, "The participant's travel neither stopped nor reached L1.", 120);
-            if (NativeMultiplayerLocal(main, name).LevelId == 1) {
-                await Until(() => main.ObservedPendingCommandCount == 0, "Travel commands did not drain on L1.", 15);
+                Require(player.Life > 0, $"The participant died walking to L{target}.");
+                return player.LevelId == target && main.ObservedPendingCommandCount == 0 || cancel.Disabled;
+            }, $"The participant's travel neither stopped nor reached L{target}.", 120);
+            if (NativeMultiplayerLocal(main, name).LevelId == target) {
+                await Until(() => main.ObservedPendingCommandCount == 0, $"Travel commands did not drain on L{target}.", 15);
                 return;
             }
             var stopped = NativeMultiplayerLocal(main, name);
@@ -187,29 +199,29 @@ public partial class SessionAcceptance
             await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount),
                 "The stopped travel did not settle.", 15);
         }
-        throw new InvalidOperationException("The participant did not reach native multiplayer L1 after six travel attempts.");
+        throw new InvalidOperationException($"The participant did not reach native multiplayer L{target} after six travel attempts.");
     }
 
-    /** Ordinary adjacent attacks on the nearest L1 monster until this participant earns experience. */
-    private async Task<object> NativeMultiplayerFightAsync(Main main, string name)
+    /** Ordinary adjacent attacks on the nearest monster of the level until this participant earns experience. */
+    private async Task<object> NativeMultiplayerFightAsync(Main main, string name, uint levelId)
     {
         var before = NativeMultiplayerLocal(main, name);
         var attacks = 0;
         for (var work = 0; work < 200; work++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single(candidate => candidate.CharacterName == name);
-            Require(player.Life > 0 && player.LevelId == 1, "The participant died or left L1 while fighting.");
+            Require(player.Life > 0 && player.LevelId == levelId, $"The participant died or left L{levelId} while fighting.");
             if (player.Experience > before.Experience)
                 return new { Attacks = attacks, ExperienceBefore = before.Experience, ExperienceAfter = player.Experience };
-            var target = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == 1)
+            var target = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                 .OrderBy(monster => NativeMonsterDistance(player, monster)).ThenBy(monster => monster.EntityId).FirstOrDefault();
-            Require(target is not null, "No living L1 monster remains to fight.");
+            Require(target is not null, $"No living L{levelId} monster remains to fight.");
             var sequence = main.ObservedLastQueuedSequence;
             if (NativeDistance(player.PositionX, player.PositionY, target!.PositionX, target.PositionY) <= 1) {
                 await ClickWorld(main, target.PositionX, target.PositionY, MouseButton.Right);
                 attacks++;
             } else {
-                var geometry = DepthGeometry(main, 1);
+                var geometry = DepthGeometry(main, levelId);
                 var step = FindNativeClassApproachStep(main, snapshot, player, geometry,
                     (x, y) => NativeDistance(x, y, target.PositionX, target.PositionY) <= 1);
                 if (step is null) {

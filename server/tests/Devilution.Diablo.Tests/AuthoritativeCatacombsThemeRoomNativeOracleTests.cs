@@ -8,26 +8,27 @@ namespace Devilution.Diablo.Tests;
 /** Controlled L2 theme seams supplement the ordinary generated-map corpus, without qualifying floor selection. */
 public sealed class AuthoritativeCatacombsThemeRoomNativeOracleTests
 {
-    private const string FileName = "native-catacombs-theme-rooms.json";
     private static readonly int[] Types = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16];
     private static readonly string[] EdgeNames = ["ordered-racks", "object-full-armor", "object-full-weapon",
         "item-full-gold", "item-full-minimum-gold", "item-full-nongold"];
-    private static readonly Lazy<JsonElement> Corpus = new(LoadCorpus);
-    public static TheoryData<int, string> Cases {
+    private static readonly Lazy<JsonElement> SinglePlayerCorpus = new(() => LoadCorpus(false));
+    private static readonly Lazy<JsonElement> MultiplayerCorpus = new(() => LoadCorpus(true));
+    public static TheoryData<int, string, bool> Cases {
         get {
-            var result = new TheoryData<int, string>();
-            foreach (var depth in new[] { 5, 8 })
-                foreach (var name in Names())
-                    result.Add(depth, name);
+            var result = new TheoryData<int, string, bool>();
+            foreach (var multiplayer in new[] { false, true })
+                foreach (var depth in new[] { 5, 8 })
+                    foreach (var name in Names())
+                        result.Add(depth, name, multiplayer);
             return result;
         }
     }
 
     [Theory(Explicit = true)]
     [MemberData(nameof(Cases))]
-    public void CompleteCatacombsThemeBranchMatchesNative(int depth, string name)
+    public void CompleteCatacombsThemeBranchMatchesNative(int depth, string name, bool multiplayer)
     {
-        var corpus = Corpus.Value;
+        var corpus = multiplayer ? MultiplayerCorpus.Value : SinglePlayerCorpus.Value;
         var row = corpus.GetProperty("cases").EnumerateArray().Single(value =>
             N(value, "depth") == depth && S(value, "name") == name);
         var itemCatalog = ReadCatalog(corpus.GetProperty("itemCatalog"));
@@ -47,7 +48,7 @@ public sealed class AuthoritativeCatacombsThemeRoomNativeOracleTests
         Assert.Equal(new AuthoritativeCathedralPopulationPlayer(0, depth, true, false, new(60, 60), new(61, 60)), player);
         var before = JsonSerializer.Serialize(input.State);
         var result = AuthoritativeCathedralThemeRoomGenerator.Generate(new(input.State, catalog, itemCatalog,
-            new(depth), themes, input.RandomState, player, new(MaximumLifeBase: 6400, MaximumManaBase: 3200),
+            new(depth, multiplayer ? DiabloGameMode.Multiplayer : DiabloGameMode.SinglePlayer), themes, input.RandomState, player, new(MaximumLifeBase: 6400, MaximumManaBase: 3200),
             InitialThemeVar1: input.ThemeVar1, InitialThemeOrigin: input.Origin),
             AuthoritativeNativeDungeonFamilyContext.Catacombs(depth));
         EqualWorld($"L{depth}:{name}", ReadWorld(row.GetProperty("expected")),
@@ -57,20 +58,23 @@ public sealed class AuthoritativeCatacombsThemeRoomNativeOracleTests
         Assert.NotSame(input.State.ItemSlots, result.State.ItemSlots);
     }
 
-    private static JsonElement LoadCorpus()
+    private static JsonElement LoadCorpus(bool multiplayer)
     {
-        var configuredDirectory = Environment.GetEnvironmentVariable("GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY");
+        var fileName = multiplayer ? "native-catacombs-multiplayer-theme-rooms.json" : "native-catacombs-theme-rooms.json";
+        var configuredDirectory = Environment.GetEnvironmentVariable(multiplayer
+            ? "GODEVILUTION_CATACOMBS_MULTIPLAYER_THEME_ROOM_ORACLE_DIRECTORY" : "GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY");
         if (string.IsNullOrWhiteSpace(configuredDirectory) || !Directory.Exists(configuredDirectory))
             throw new InvalidDataException("An explicit Catacombs controlled-theme reference directory is required.");
         var directory = Path.GetFullPath(configuredDirectory);
         for (var ancestor = new DirectoryInfo(directory); ancestor is not null; ancestor = ancestor.Parent)
             if ((ancestor.Attributes & FileAttributes.ReparsePoint) != 0)
                 throw new InvalidDataException("The controlled-theme reference directory has a reparse-point ancestor.");
-        Assert.Equal(new[] { FileName }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory).Select(Path.GetFileName));
-        var corpus = AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, FileName), 128 * 1024 * 1024);
+        Assert.Equal(new[] { fileName }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory).Select(Path.GetFileName));
+        var corpus = AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, fileName), 128 * 1024 * 1024);
         Assert.Equal("godevilution-catacombs-theme-rooms", S(corpus, "format"));
         Assert.Equal(1, N(corpus, "version"));
-        Assert.Equal("controlled-original-diablo-single-player-normal-catacombs-theme-branches", S(corpus, "policy"));
+        Assert.Equal(multiplayer ? "controlled-original-diablo-multiplayer-normal-catacombs-theme-branches"
+            : "controlled-original-diablo-single-player-normal-catacombs-theme-branches", S(corpus, "policy"));
         Assert.Equal(6400, N(corpus, "playerMaximumLife"));
         Assert.Equal(3200, N(corpus, "playerMaximumMana"));
         Assert.Equal(44, N(corpus, "caseCount"));

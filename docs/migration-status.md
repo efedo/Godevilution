@@ -113,10 +113,12 @@ Passing a scoped test or adding a schema version does not close a milestone.
   2.1 the default profile carries the L5–L8 inputs, and since 2.2a the server run
   descends to L8 and saves it (format 12). The headless L8 client journey passes; its
   fresh-host resume passes only on a Release server, because the host saves the whole
-  cohort (18 MB at L8) on every snapshot poll.
+  cohort (18 MB at L8) on every snapshot poll. Since 2.2b native multiplayer also runs
+  L1–L8 with native multiplayer rules, and clvl 8+ players reach L5 by the Town warp;
+  two headless clients meet on L5 and resume there. The single-player warp unlock is 2.2c.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
-- CI now regenerates 14 archive-free native oracle corpora and runs their 137
-  managed comparisons. Retail-archive corpora stay local by design (public
+- CI now regenerates 17 archive-free native oracle corpora and runs their
+  managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases). Retail-archive corpora stay local by design (public
   repository), so those comparisons still skip in CI.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.

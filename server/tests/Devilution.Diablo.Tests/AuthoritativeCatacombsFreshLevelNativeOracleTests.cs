@@ -20,9 +20,22 @@ public sealed class AuthoritativeCatacombsFreshLevelNativeOracleTests
     [MemberData(nameof(Cases))]
     public void CompleteFreshAndReadyPhasesMatchNative(
         string file, string characterClass, int characterClassId, int depth, string entry, uint seed, bool retainedUniqueHistory)
+        => CompareFreshAndReady(file, characterClass, characterClassId, depth, entry, seed, retainedUniqueHistory, false);
+
+    /** The same matrix captured with gbIsMultiplayer (batch 2.2b). */
+    [Theory(Explicit = true)]
+    [MemberData(nameof(Cases))]
+    public void CompleteMultiplayerFreshAndReadyPhasesMatchNative(
+        string file, string characterClass, int characterClassId, int depth, string entry, uint seed, bool retainedUniqueHistory)
+        => CompareFreshAndReady(file, characterClass, characterClassId, depth, entry, seed, retainedUniqueHistory, true);
+
+    private static void CompareFreshAndReady(
+        string file, string characterClass, int characterClassId, int depth, string entry, uint seed, bool retainedUniqueHistory,
+        bool multiplayer)
     {
-        var (_, metadata) = AuthoritativeCatacombsInitialPopulationNativeOracleTests.QualifiedInputs();
-        using var document = AuthoritativeCatacombsInitialPopulationNativeOracleTests.OpenQualifiedCase(file);
+        var gameMode = multiplayer ? DiabloGameMode.Multiplayer : DiabloGameMode.SinglePlayer;
+        var (_, metadata) = AuthoritativeCatacombsInitialPopulationNativeOracleTests.QualifiedInputs(multiplayer);
+        using var document = AuthoritativeCatacombsInitialPopulationNativeOracleTests.OpenQualifiedCase(file, multiplayer);
         var row = document.RootElement;
         Assert.Equal(characterClass, S(row, "characterClass"));
         Assert.Equal(characterClassId, N(row, "characterClassId"));
@@ -49,13 +62,13 @@ public sealed class AuthoritativeCatacombsFreshLevelNativeOracleTests
         if (retainedUniqueHistory) {
             for (var priorDepth = 5; priorDepth < depth; priorDepth++) {
                 var prior = AuthoritativeCatacombsFreshLevelGenerator.Generate(metadata, priorDepth, seed, StorySeed,
-                    AuthoritativeCatacombsEntry.Main, hero, initialUniqueItemFlags: history);
+                    AuthoritativeCatacombsEntry.Main, hero, initialUniqueItemFlags: history, gameMode: gameMode);
                 history = prior.Population.State.UniqueItemFlags;
             }
         }
         AssertFlags(row.GetProperty("uniqueItemHistory").GetProperty("inputFlags"), history);
         var fresh = AuthoritativeCatacombsFreshLevelGenerator.Generate(metadata, depth, seed, StorySeed,
-            Entry(entry), hero, initialUniqueItemFlags: history);
+            Entry(entry), hero, initialUniqueItemFlags: history, gameMode: gameMode);
         Assert.Equal(history.Order(), fresh.Request.InitialUniqueItemFlags.Order());
         Assert.Equal(U(row, "attemptSeed"), fresh.Geometry.GenerationResult.AttemptSeed);
         var boundaries = row.GetProperty("rngBoundaries");

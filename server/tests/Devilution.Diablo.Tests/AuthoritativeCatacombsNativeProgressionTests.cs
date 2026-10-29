@@ -22,6 +22,8 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         var simulation = activation.Simulation;
         var world = simulation.WorldState;
         Assert.NotNull(activation.NativeCatacombsMetadata);
+        // Single-player Town warps stay closed until their unlock is modelled.
+        Assert.DoesNotContain(world.World!.WarpTargets, row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
         var start = world.World!.WarpTargets.Single(row => row.SourceLevelId == 1 && row.TargetLevelId == 2);
         var template = activation.PlayerLoadouts.CreateTemplate("native-catacombs-descent", classId,
             null, null, null, startingLevelId: 1, startingPositionX: start.TriggerX, startingPositionY: start.TriggerY);
@@ -86,6 +88,52 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         }
         Assert.True(crossed, $"The planned path no longer crosses the up stair: L{player.LevelId} ({player.PositionX},{player.PositionY}).");
         Assert.Equal(6U, player.LevelId);
+    }
+
+    /** Native multiplayer WM_DIABTOWNWARP: clvl 8 enters L5 first by ENTRY_TWARPDN; L5's warp-up returns. */
+    [Fact(Explicit = true)]
+    public void MultiplayerTownWarpGatesCharacterLevelEntersL5AndRestoresCold()
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var activation = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap
+            .ActivateNativeTownClass(content, 0, seed, DiabloGameMode.Multiplayer);
+        var simulation = activation.Simulation;
+        var world = simulation.WorldState;
+        var down = world.World!.WarpTargets.Single(row => row.SourceLevelId == 0 && row.TargetLevelId == 5);
+        Assert.Equal((49, 21, 8U, AuthoritativeCatacombsEntry.TownWarpDown),
+            (down.TriggerX, down.TriggerY, down.RequiredCharacterLevel, down.FirstEntry));
+        var template = activation.PlayerLoadouts.CreateTemplate("native-town-warp", 0,
+            null, null, null, startingLevelId: 0, startingPositionX: down.TriggerX, startingPositionY: down.TriggerY);
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("native-town-warp", player => player.EntityId = 0x70000001);
+        var player = runtime.Read("native-town-warp", value => value);
+        var commands = WorldCommands(simulation);
+
+        // Below clvl 8 the warp is refused and the player walks one tile south.
+        Assert.Equal(1U, player.CharacterLevel);
+        var refused = commands.ExecuteLevelTrigger(player, 0, [player]);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, refused.Failure);
+        Assert.Equal(0U, player.LevelId);
+        var turnBack = Assert.Single(player.NativeWalkPath!.Directions);
+        Assert.Equal((0, 1), AuthoritativeNativePlayerPathfinder.GetDisplacement(turnBack));
+
+        player.NativeWalkPath = null;
+        player.CharacterLevel = 8;
+        UseStair(world, commands, player, 0, 5);
+        Assert.Equal((down.TargetX, down.TargetY), (player.PositionX, player.PositionY));
+        var captured = simulation.CaptureCohortState(runtime);
+        Assert.Equal(new AuthoritativeTownWarpOpenings(true, true, true, false, true), captured.NativeTown!.WarpOpenings);
+        var entry = Assert.Single(captured.NativeProgression!.Entries);
+        Assert.Equal((5U, AuthoritativeCatacombsEntry.TownWarpDown), (entry.LevelId, entry.CatacombsEntry));
+
+        var codec = new DiabloCohortCodec();
+        var bytes = codec.Serialize(captured);
+        var candidate = activation.CohortCandidateFactory!(codec.Deserialize(bytes));
+        var restoredRuntime = candidate.CreateRuntime();
+        Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        var restoredPlayer = restoredRuntime.Read("native-town-warp", value => value);
+        UseStair(candidate.Simulation.WorldState, WorldCommands(candidate.Simulation), restoredPlayer, 5, 0);
+        Assert.Equal((49, 22), (restoredPlayer.PositionX, restoredPlayer.PositionY));
     }
 
     [Fact]

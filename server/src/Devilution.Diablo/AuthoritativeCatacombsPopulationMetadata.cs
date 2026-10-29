@@ -96,6 +96,15 @@ public sealed class AuthoritativeCatacombsPopulationMetadata
     public IReadOnlyList<AuthoritativeCatacombsPopulationDepthRule> DepthRules { get; }
     public IReadOnlyList<int> StoryMessages { get; }
     public IReadOnlyList<bool> ShrineAvailable { get; }
+    /** AddShrine's list for the game mode, derived as the Cathedral list is. */
+    public IReadOnlyList<bool> ShrineAvailableFor(DiabloGameMode gameMode) => gameMode switch {
+        DiabloGameMode.SinglePlayer => ShrineAvailable,
+        DiabloGameMode.Multiplayer when ShrineAvailable.SequenceEqual(AuthoritativeNativeShrineAvailability.SinglePlayer)
+            => AuthoritativeNativeShrineAvailability.Multiplayer,
+        DiabloGameMode.Multiplayer => throw new InvalidDataException(
+            "Multiplayer shrines require the native single-player shrine list."),
+        _ => throw new ArgumentOutOfRangeException(nameof(gameMode)),
+    };
     /** Effective 1379-byte SOL channel; indices 559..1378 are explicit zero padding. */
     public IReadOnlyList<byte> EffectivePieceProperties { get; }
     public IReadOnlyList<AuthoritativeCatacombsSourceAsset> SourceAssets { get; }

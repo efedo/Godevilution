@@ -192,7 +192,22 @@ public sealed class AuthoritativeNativeTownCatalog
             fingerprint);
     }
 
-    /** Builds fresh original-SP Town geometry solely from this catalog's bound settings and maps. */
+    /**
+     * The same Town under native gbIsMultiplayer: IsWarpOpen opens every warp but the
+     * Nest, so CreateTown keeps the open warp tiles (batch 2.2b). It has its own identity.
+     */
+    public AuthoritativeNativeTownCatalog ForMultiplayer()
+    {
+        if (Settings.IsMultiplayer)
+            return this;
+        var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+            $"{CatalogId}\nmultiplayer\n{Fingerprint}"))).ToLowerInvariant();
+        return new AuthoritativeNativeTownCatalog(Settings with { IsMultiplayer = true }, PieceCatalog,
+            TileProperties, nativeSourceFlags, sector1South, sector2South, sector3South, sector4South, automap,
+            Roster, fingerprint);
+    }
+
+    /** Builds fresh original Town geometry solely from this catalog's bound settings and maps. */
     public AuthoritativeTownGeometry CreateInitialGeometry()
         => AuthoritativeTownGeometryBuilder.Build(new AuthoritativeTownGeometryRequest(
             sector1South,

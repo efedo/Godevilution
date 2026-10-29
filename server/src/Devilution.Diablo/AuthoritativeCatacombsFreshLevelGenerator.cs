@@ -27,9 +27,14 @@ public sealed class AuthoritativeCatacombsFreshLevelRequest
 	int maximumPlacementAttempts,
 	int maximumItemPlacementAttempts,
 	int maximumThemeSelectionAttempts,
-	IReadOnlySet<int> initialUniqueItemFlags)
+	IReadOnlySet<int> initialUniqueItemFlags,
+	DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
 	{
 		Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+		if (gameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer))
+			throw new ArgumentOutOfRangeException(nameof(gameMode));
+		_ = metadata.ShrineAvailableFor(gameMode);
+		GameMode = gameMode;
 		Hero = hero ?? throw new ArgumentNullException(nameof(hero));
 		_ = AuthoritativeNativeDungeonFamilyContext.Catacombs(depth);
 		if (entry is not AuthoritativeCatacombsEntry.Main
@@ -77,6 +82,8 @@ public sealed class AuthoritativeCatacombsFreshLevelRequest
 	public int MaximumItemPlacementAttempts { get; }
 	public int MaximumThemeSelectionAttempts { get; }
 	public IReadOnlySet<int> InitialUniqueItemFlags { get; }
+	/** Native gbIsMultiplayer for this floor's generation. */
+	public DiabloGameMode GameMode { get; }
 }
 
 /** Complete native-boundary result before level-ready processing. */
@@ -157,14 +164,15 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 	IReadOnlySet<int>? initialUniqueItemFlags = null,
 	int maximumPlacementAttempts = DefaultMaximumAttempts,
 	int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-	int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+	int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+	DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
 	{
 		ArgumentNullException.ThrowIfNull(metadata);
 		ArgumentNullException.ThrowIfNull(hero);
 		return new(metadata, depth, dungeonSeed, storySeed, entry, retainedLevelSeed, hero,
 			stableLevelSymbol ?? $"catacombs{depth}", maximumPlacementAttempts,
 			maximumItemPlacementAttempts, maximumThemeSelectionAttempts,
-			initialUniqueItemFlags ?? new HashSet<int>());
+			initialUniqueItemFlags ?? new HashSet<int>(), gameMode);
 	}
 
 	public static AuthoritativeCatacombsFreshLevelRequest CreateEntryRequest(
@@ -179,10 +187,11 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 		IReadOnlySet<int>? initialUniqueItemFlags = null,
 		int maximumPlacementAttempts = DefaultMaximumAttempts,
 		int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-		int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+		int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+		DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
 		=> CreateRequest(metadata, depth, dungeonSeed, storySeed, entry, hero,
 			stableLevelSymbol, retainedLevelSeed, initialUniqueItemFlags,
-			maximumPlacementAttempts, maximumItemPlacementAttempts, maximumThemeSelectionAttempts);
+			maximumPlacementAttempts, maximumItemPlacementAttempts, maximumThemeSelectionAttempts, gameMode);
 
 	public static AuthoritativeCatacombsFreshLevelResult Generate(AuthoritativeCatacombsFreshLevelRequest request)
 	{
@@ -204,7 +213,7 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 			request.Metadata.Population.Objects, player,
 			request.Metadata.RuleForDepth(request.Depth).TrapPercent,
 			request.Metadata.StoryMessages, request.MaximumPlacementAttempts,
-			request.MaximumThemeSelectionAttempts);
+			request.MaximumThemeSelectionAttempts) { Multiplayer = request.GameMode == DiabloGameMode.Multiplayer };
 		var initialResult = AuthoritativeCatacombsInitialPopulationGenerator.Generate(initialPopulation);
 		// InitPlayer's cursor stream is derived from the theme boundary before the
 		// independent population stream is consumed by the full suffix.
@@ -217,7 +226,7 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 		var initialPreLight = new byte[CellCount];
 		var lightAllocator = CreatePlayerLightAllocator(entryPosition, request.Hero.LightRadius);
 		var itemPolicy = new AuthoritativeCathedralThemeItemPolicy(
-			request.Depth, DiabloGameMode.SinglePlayer, DiabloDifficulty.Normal,
+			request.Depth, request.GameMode, DiabloDifficulty.Normal,
 			Hellfire: false, Spawn: false, QuestEnabled: false, SetLevel: false,
 			LegacyLevelItemGenerationAllowed: true, CurrentDungeonLevel: request.Depth);
 		var fullRequest = new AuthoritativeCatacombsFullPopulationRequest(
@@ -233,7 +242,7 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 			derived.TriggerPositions,
 			request.Metadata.UniqueMonsters.Definitions,
 			request.Metadata.RuleForDepth(request.Depth).MonsterDensityDivisor,
-			request.Metadata.ShrineAvailable,
+			request.Metadata.ShrineAvailableFor(request.GameMode),
 			request.Metadata.Items.Catalog,
 			itemPolicy,
 			new AuthoritativeCathedralThemeItemPlayerContext(
@@ -270,10 +279,11 @@ public static class AuthoritativeCatacombsFreshLevelGenerator
 		IReadOnlySet<int>? initialUniqueItemFlags = null,
 		int maximumPlacementAttempts = DefaultMaximumAttempts,
 		int maximumItemPlacementAttempts = DefaultMaximumAttempts,
-		int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+		int maximumThemeSelectionAttempts = DefaultMaximumAttempts,
+		DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
 		=> Generate(CreateRequest(metadata, depth, dungeonSeed, storySeed, entry, hero,
 			stableLevelSymbol, retainedLevelSeed, initialUniqueItemFlags, maximumPlacementAttempts,
-			maximumItemPlacementAttempts, maximumThemeSelectionAttempts));
+			maximumItemPlacementAttempts, maximumThemeSelectionAttempts, gameMode));
 
 	private static AuthoritativeCatacombsFreshPreThemeState DerivePreThemeState(
 		AuthoritativeCatacombsPopulationMetadata metadata,

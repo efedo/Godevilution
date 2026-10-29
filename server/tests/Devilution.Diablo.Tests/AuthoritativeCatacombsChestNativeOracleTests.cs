@@ -14,25 +14,36 @@ public sealed class AuthoritativeCatacombsChestNativeOracleTests
     };
 
     [Theory(Explicit = true)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(8)]
-    public void ChestLootObjectMutationAndIntrinsicTrapPlanMatchNative(int depth)
+    [InlineData(5, false)]
+    [InlineData(6, false)]
+    [InlineData(7, false)]
+    [InlineData(8, false)]
+    [InlineData(5, true)]
+    [InlineData(6, true)]
+    [InlineData(7, true)]
+    [InlineData(8, true)]
+    public void ChestLootObjectMutationAndIntrinsicTrapPlanMatchNative(int depth, bool multiplayer)
     {
-        var configured = Environment.GetEnvironmentVariable("GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY");
+        var configured = Environment.GetEnvironmentVariable(multiplayer
+            ? "GODEVILUTION_CATACOMBS_MULTIPLAYER_CHEST_ORACLE_DIRECTORY" : "GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY");
         if (string.IsNullOrWhiteSpace(configured))
             throw new InvalidDataException("An explicit native Catacombs chest comparison directory is required.");
         var directory = Path.GetFullPath(configured);
         Assert.True(Directory.Exists(directory));
-        const string file = "native-catacombs-chest-operations.json";
+        var file = multiplayer ? "native-catacombs-multiplayer-chest-operations.json" : "native-catacombs-chest-operations.json";
+        var gameMode = multiplayer ? DiabloGameMode.Multiplayer : DiabloGameMode.SinglePlayer;
         Assert.Equal(new[] { file }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory)
             .Select(Path.GetFileName));
         Assert.InRange(new FileInfo(Path.Combine(directory, file)).Length, 1, 64L * 1024 * 1024);
         using var document = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory, file)),
             new JsonDocumentOptions { MaxDepth = 64 });
         var corpus = document.RootElement;
-        Properties(corpus, "format", "version", "playerMaximumLife", "playerMaximumMana", "catalog", "roomCatalog", "cases", "caseCount");
+        if (multiplayer) {
+            Properties(corpus, "format", "version", "multiplayer", "playerMaximumLife", "playerMaximumMana", "catalog", "roomCatalog", "cases", "caseCount");
+            Assert.True(corpus.GetProperty("multiplayer").GetBoolean());
+        } else {
+            Properties(corpus, "format", "version", "playerMaximumLife", "playerMaximumMana", "catalog", "roomCatalog", "cases", "caseCount");
+        }
         Assert.Equal("godevilution-catacombs-chest-operations", S(corpus, "format"));
         Assert.Equal(1, N(corpus, "version"));
         var catalog = ReadCatalog(corpus.GetProperty("catalog"));
@@ -55,7 +66,7 @@ public sealed class AuthoritativeCatacombsChestNativeOracleTests
                 chest.Position.X, chest.Position.Y, chest.RndSeed, chest.Var1, chest.Var2, chest.Var4,
                 chest.TrapFlag, chest.AnimFrame) { LinkedWallTrap = wall };
             var result = AuthoritativeCatacombsChestLootGenerator.Generate(new(input, catalog,
-                new(depth), facts, N(value, "remotePlayerX"), N(value, "remotePlayerY"),
+                new(depth, gameMode), facts, N(value, "remotePlayerX"), N(value, "remotePlayerY"),
                 new(true, true, N(corpus, "playerMaximumMana"), N(corpus, "playerMaximumLife"))),
                 AuthoritativeNativeDungeonFamilyContext.Catacombs(depth));
             var expected = AuthoritativeCathedralThemeItemWorldNativeOracleTests.ReadState(

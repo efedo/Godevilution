@@ -12,6 +12,9 @@ public sealed record DiabloNativeFloorEntry(
 {
     /** Catacombs only: the entering participant's life, an input of the native ready phase. */
     public int? CatacombsLifeQ6 { get; init; }
+
+    /** L5 only: TownWarpDown when the floor was first entered by the Town warp; null is Main. */
+    public AuthoritativeCatacombsEntry? CatacombsEntry { get; init; }
 }
 
 /** Explicit depth-run definition; all mutable owners remain local to a simulation. */
@@ -98,18 +101,25 @@ internal sealed class AuthoritativeCathedralNativeProgression
     }
 
     internal (DiabloNativeFloorEntry Entry, AuthoritativeCatacombsNativePopulationBuild Build) PrepareCatacombs(
-        uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags)
+        uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags,
+        AuthoritativeCatacombsEntry? firstEntry = null)
     {
-        if (!IsCatacombs(levelId))
-            throw new InvalidDataException("A Catacombs floor entry requires a Catacombs depth.");
-        var entry = SampleEntry(levelId, player, uniqueFlags) with { CatacombsLifeQ6 = player.Life };
+        if (!IsCatacombs(levelId) || firstEntry is not (null or AuthoritativeCatacombsEntry.TownWarpDown))
+            throw new InvalidDataException("A Catacombs floor entry requires a Catacombs depth and stair or Town warp.");
+        var townWarp = firstEntry == AuthoritativeCatacombsEntry.TownWarpDown;
+        if (townWarp && (levelId != AuthoritativeCatacombsNativeDepths.FirstDepth || player.LevelId != 0))
+            throw new InvalidDataException("The native Town warp enters only L5 from Town.");
+        var entry = SampleEntry(levelId, player, uniqueFlags, townWarp) with {
+            CatacombsLifeQ6 = player.Life, CatacombsEntry = firstEntry,
+        };
         var prepared = buildCatacombs!(entry);
         return (entry with { GenerationFingerprint = prepared.Policy.Fingerprint }, prepared);
     }
 
-    private DiabloNativeFloorEntry SampleEntry(uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags)
+    private DiabloNativeFloorEntry SampleEntry(uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags,
+        bool townWarp = false)
     {
-        if (!Supports(levelId) || player.LevelId + 1 != levelId || player.Life <= 0)
+        if (!Supports(levelId) || !townWarp && player.LevelId + 1 != levelId || player.Life <= 0)
             throw new InvalidDataException("Native floor entry requires a living participant on the preceding floor's stair.");
         return new DiabloNativeFloorEntry(levelId,
             new(player.BaseLifeMaximum, player.BaseManaMaximum, player.LightRadius,
@@ -140,6 +150,8 @@ internal sealed class AuthoritativeCathedralNativeProgression
     {
         if (!Supports(entry.LevelId) || IsCatacombs(entry.LevelId) != catacombs
             || (entry.CatacombsLifeQ6 is > 0) != catacombs || entry.Hero is null || entry.InitialUniqueItemFlags is null
+            || entry.CatacombsEntry is not (null or AuthoritativeCatacombsEntry.TownWarpDown)
+            || entry.CatacombsEntry is not null && entry.LevelId != AuthoritativeCatacombsNativeDepths.FirstDepth
             || entry.InitialUniqueItemFlags.Any(flag => flag is < 0 or >= 128)
             || !entry.InitialUniqueItemFlags.SequenceEqual(entry.InitialUniqueItemFlags.Distinct().Order()))
             throw new InvalidDataException("A retained native floor has an invalid first-entry context.");

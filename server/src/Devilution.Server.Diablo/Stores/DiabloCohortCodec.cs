@@ -363,7 +363,8 @@ public sealed partial class DiabloCohortCodec
     /** Older schemas refuse even explicitly written default C2 fields. */
     private static bool IsCatacombsActorField(Type type, string name) =>
         type == typeof(DiabloCohortState) && name == nameof(DiabloCohortState.NativeCatacombs)
-        || type == typeof(DiabloNativeFloorEntry) && name == nameof(DiabloNativeFloorEntry.CatacombsLifeQ6)
+        || type == typeof(DiabloNativeFloorEntry)
+            && name is nameof(DiabloNativeFloorEntry.CatacombsLifeQ6) or nameof(DiabloNativeFloorEntry.CatacombsEntry)
         ||         type == typeof(AuthoritativeNativeMeleeCursor) && name == nameof(AuthoritativeNativeMeleeCursor.UsesSpecialAttack)
         || type == typeof(AuthoritativeNativeMonsterInitialization)
             && name is nameof(AuthoritativeNativeMonsterInitialization.CatacombsDepth)

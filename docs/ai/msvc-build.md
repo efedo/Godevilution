@@ -108,6 +108,13 @@ directory with `--explicit on --fail-skips on`. The fixture captures full item/R
 and raw object state, one-use refusal and intrinsic trap creation arguments;
 post-initialization graphic direction is separate. It does not qualify retained
 missile controllers, live floor ownership or cold restore.
+Multiplayer variants use `GODEVILUTION_CATACOMBS_MULTIPLAYER_THEME_ROOM_ORACLE_DIRECTORY`
+(`CaptureCompleteCatacombsMultiplayerThemePass`) and
+`GODEVILUTION_CATACOMBS_MULTIPLAYER_CHEST_ORACLE_DIRECTORY`
+(`CaptureNativeCatacombsMultiplayerChestOperations`) with the same consumers;
+`GODEVILUTION_NATIVE_CATACOMBS_MULTIPLAYER_POPULATION_REFERENCE_DIRECTORY`
+(`CaptureNativeCatacombsFreshMultiplayerPopulationStages`, archive-backed) feeds the
+multiplayer fresh/ready comparison.
 
 The fresh/ready comparison additionally requires
 `GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_TABLE_PATH` for ordered C2 admission.

@@ -101,13 +101,13 @@ public sealed class AuthoritativeCatacombsFullPopulationRequest
 			|| !initialPopulation.Generation.NativeTransparency.SequenceEqual(initialPopulation.PreThemeGeometry.Transparency))
 			throw new InvalidDataException("The Catacombs initial result, geometry, and family context must agree.");
 		if (itemPolicy.Depth != initialPopulation.Depth
-			|| itemPolicy.GameMode != DiabloGameMode.SinglePlayer
+			|| itemPolicy.GameMode is not (DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer)
 			|| itemPolicy.Difficulty != DiabloDifficulty.Normal
 			|| itemPolicy.Hellfire || itemPolicy.Spawn || itemPolicy.QuestEnabled || itemPolicy.SetLevel
 			|| !itemPolicy.LegacyLevelItemGenerationAllowed
 			|| itemPolicy.CurrentDungeonLevel is < 0 or > 8
 			|| (itemPolicy.CurrentDungeonLevel != 0 && itemPolicy.CurrentDungeonLevel != initialPopulation.Depth))
-			throw new InvalidDataException("Only ordinary original-Diablo Catacombs SP Normal generation is supported.");
+			throw new InvalidDataException("Only ordinary original-Diablo Catacombs Normal generation is supported.");
 		if (maximumPlacementAttempts <= 0 || maximumItemPlacementAttempts <= 0)
 			throw new InvalidDataException("Full Catacombs population bounds must be positive.");
 		if (monsterDensityDivisor <= 0)

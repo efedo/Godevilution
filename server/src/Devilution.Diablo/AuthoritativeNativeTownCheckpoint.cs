@@ -169,8 +169,9 @@ public sealed record DiabloNativeTownCheckpoint
         } catch (ArgumentOutOfRangeException exception) {
             throw new InvalidDataException("Native Town checkpoint contains invalid warp-policy settings.", exception);
         }
+        // Multiplayer opens every non-Hellfire warp, which also skips the closed-Hell RNG draws.
+        var multiplayer = Settings.IsMultiplayer;
         if (Settings.IsSpawn
-            || Settings.IsMultiplayer
             || Settings.IsHellfire
             || Settings.CharacterLevel != 1
             || Settings.WarpUnlocks != AuthoritativeTownWarpUnlocks.None
@@ -180,11 +181,11 @@ public sealed record DiabloNativeTownCheckpoint
             || Settings.TownWarpFrom != 0
             || Settings.WaterQuestState != AuthoritativeTownWaterQuestState.NotAvailable
             || InitialRandomState != Settings.InitialRandomState
-            || WarpOpenings != new AuthoritativeTownWarpOpenings(false, false, false, false, false)
+            || WarpOpenings != new AuthoritativeTownWarpOpenings(multiplayer, multiplayer, multiplayer, false, multiplayer)
             || (ViewPositionX, ViewPositionY) != (75, 68)
             || (MinimumDungeonPositionX, MinimumDungeonPositionY,
                 MaximumDungeonPositionX, MaximumDungeonPositionY) != (10, 10, 84, 84)
-            || ClosedHellTileChoices.Count != 10
+            || ClosedHellTileChoices.Count != (multiplayer ? 0 : 10)
             || ClosedHellTileChoices.Any(choice => choice is < 1 or > 4)
             || Mutations.Count > AuthoritativeNativeTownCatalog.MaximumMutationCount
             || Mutations.Any(mutation => !Enum.IsDefined(mutation))) {

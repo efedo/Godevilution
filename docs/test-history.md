@@ -9,6 +9,21 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-28 — Multiplayer Catacombs
+
+The multiplayer Catacombs theme-pass (44) and chest (4) captures, now in
+`tools/run-native-oracle-parity.sh`, match their consumers alongside the
+single-player cases (96 of 96). The archive-backed fresh and ready population
+oracle matches all 32 multiplayer cases (and the 32 single-player ones). The
+explicit `MultiplayerTownWarpGatesCharacterLevelEntersL5AndRestoresCold` refuses
+the warp at clvl 1 with a one-tile turn-back, enters L5 at clvl 8, round-trips
+the cohort byte-identically and returns to Town at (49,22). With the native packs,
+`test-godot-native-multiplayer.ps1 -TargetLevel 5 -TestParticipant warrior-l8`
+takes two clvl 13 Warriors through the warp to L5 and resumes both there on a
+fresh host; the default L1 Warrior/Rogue fight and resume still pass (Release
+server). Diablo.Tests (3840), Server.Tests (1854) and client protocol tests (1213)
+pass apart from the expected worker-pool documentation test. L5 has no fight until Catacombs AI (2.4).
+
 ### 2026-10-28 — Descend to L5–L8 (server)
 
 The explicit `AuthoritativeCatacombsNativeProgressionTests` took a Warrior, Rogue

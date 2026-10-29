@@ -7,6 +7,16 @@ contracts stay in their existing guides.
 
 ## 2026-10-28
 
+- Multiplayer Catacombs (batch 2.2b): with the Catacombs pack, native multiplayer runs
+  L1–L8 with native multiplayer rules on L5–L8 (full monster life, 150% scatter,
+  multiplayer shrine, item and spell pools). The multiplayer Town opens its warp tiles;
+  the warp at (49,21) takes clvl 8+ players to L5 (entered first by `TownWarpDown`),
+  lower levels are turned back one tile south, and L5's warp-up returns to (49,22).
+  Floor entries may now skip levels; the optional cohort field `CatacombsEntry`
+  records a Town-warp entry. `tools/run-native-oracle-parity.sh` adds multiplayer
+  Catacombs theme-pass and chest captures; `test-godot-native-multiplayer.ps1
+  -TargetLevel 5 -TestParticipant` sends two clvl 8+ Warriors through the warp.
+
 - Descend to L5–L8 (batch 2.2a, server): the Catacombs pack (1.1.0) adds the `l2.amp`
   automap; the native Town run continues by stairs to L8 under run identity
   `native-town-l1-l8-v1`, generating Catacombs floors on first entry for all three

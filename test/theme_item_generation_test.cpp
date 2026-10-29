@@ -1679,7 +1679,9 @@ struct NativeThemeRoomGuard {
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
 	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt, bool multiplayer = false);
-	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages = false);
+	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages = false, bool multiplayer = false);
+	void CaptureCatacombsThemePass(const char *directory, bool multiplayer);
+	void CaptureCatacombsChestOperations(const char *directory, bool multiplayer);
 
 	void SetUp() override
 	{
@@ -1845,7 +1847,17 @@ void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget);
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 {
-	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY");
+	CaptureCatacombsChestOperations(std::getenv("GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY"), false);
+}
+
+// The same lanes with gbIsMultiplayer: chest loot draws from the multiplayer item and spell pools.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMultiplayerChestOperations)
+{
+	CaptureCatacombsChestOperations(std::getenv("GODEVILUTION_CATACOMBS_MULTIPLAYER_CHEST_ORACLE_DIRECTORY"), true);
+}
+
+void ThemeRoomGenerationTest::CaptureCatacombsChestOperations(const char *directory, bool multiplayer)
+{
 	if (directory == nullptr || *directory == '\0')
 		GTEST_SKIP() << "Set the explicit Catacombs chest oracle directory.";
 	const std::filesystem::path root = std::filesystem::absolute(directory);
@@ -1872,13 +1884,18 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 	ASSERT_TRUE(IsMissileDataAvailable(MissileID::FireArrow));
 	Player remotePlayer;
 	remotePlayer.position.tile = { 46, 50 };
-	std::ofstream stream(root / "native-catacombs-chest-operations.json", std::ios::binary | std::ios::trunc);
+	const char *fileName = multiplayer ? "native-catacombs-multiplayer-chest-operations.json" : "native-catacombs-chest-operations.json";
+	gbIsMultiplayer = multiplayer;
+	// Native UpdateEnemy skips a dead multiplayer player; a real level entry is alive.
+	if (multiplayer) MyPlayer->life.current = MyPlayer->life.base = MyPlayer->life.maximum = MyPlayer->life.maximumBase;
+	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	int caseCount = 0;
 	{
 		JsonObject document(stream);
 		document.String("format", "godevilution-catacombs-chest-operations");
 		document.Number("version", 1);
+		if (multiplayer) document.Boolean("multiplayer", true);
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
 		document.Key("catalog");
@@ -2071,7 +2088,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
 	ASSERT_TRUE(stream.good());
 	stream.close();
 	EXPECT_EQ(caseCount, 30);
-	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-chest-operations.json"), 64U * 1024U * 1024U);
+	EXPECT_LE(std::filesystem::file_size(root / fileName), 64U * 1024U * 1024U);
 }
 
 void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget)
@@ -3191,14 +3208,28 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
 // Controlled L2 theme seams complement the separately captured generated maps.
 TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 {
-	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY");
+	CaptureCatacombsThemePass(std::getenv("GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY"), false);
+}
+
+// The same controlled branches with gbIsMultiplayer: full theme-monster life, multiplayer shrines and item pools.
+TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsMultiplayerThemePass)
+{
+	CaptureCatacombsThemePass(std::getenv("GODEVILUTION_CATACOMBS_MULTIPLAYER_THEME_ROOM_ORACLE_DIRECTORY"), true);
+}
+
+void ThemeRoomGenerationTest::CaptureCatacombsThemePass(const char *directory, bool multiplayer)
+{
 	if (directory == nullptr || !*directory)
 		GTEST_SKIP() << "Select the separate private Catacombs theme-room corpus explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
 	ASSERT_TRUE(root.is_absolute());
 	ASSERT_TRUE(std::filesystem::is_directory(root));
 	ASSERT_TRUE(std::filesystem::is_empty(root));
-	std::ofstream stream(root / "native-catacombs-theme-rooms.json", std::ios::binary | std::ios::trunc);
+	const char *fileName = multiplayer ? "native-catacombs-multiplayer-theme-rooms.json" : "native-catacombs-theme-rooms.json";
+	gbIsMultiplayer = multiplayer;
+	// Native UpdateEnemy skips a dead multiplayer player; a real level entry is alive.
+	if (multiplayer) MyPlayer->life.current = MyPlayer->life.base = MyPlayer->life.maximum = MyPlayer->life.maximumBase;
+	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	constexpr std::array<int, 16> types { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16 };
 	constexpr std::array<const char *, 6> edges {
@@ -3209,7 +3240,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 		JsonObject document(stream);
 		document.String("format", "godevilution-catacombs-theme-rooms");
 		document.Number("version", 1);
-		document.String("policy", "controlled-original-diablo-single-player-normal-catacombs-theme-branches");
+		document.String("policy", multiplayer ? "controlled-original-diablo-multiplayer-normal-catacombs-theme-branches"
+		                                      : "controlled-original-diablo-single-player-normal-catacombs-theme-branches");
 		document.Number("playerMaximumLife", 6400);
 		document.Number("playerMaximumMana", 3200);
 		document.Key("itemCatalog");
@@ -3290,7 +3322,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
 	ASSERT_TRUE(stream.good());
 	stream.close();
 	EXPECT_EQ(cases, 44);
-	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-theme-rooms.json"), 128U * 1024U * 1024U);
+	EXPECT_LE(std::filesystem::file_size(root / fileName), 128U * 1024U * 1024U);
 }
 
 // Extra public state borrowed only by the real-geometry opt-in. The underlying
@@ -4253,7 +4285,7 @@ void WriteCatacombsRngBoundary(std::ostream &out, bool &first, std::string_view 
 }
 #endif
 
-void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages)
+void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages, bool multiplayer)
 {
 	if (archivePath == nullptr || archivePath[0] == '\0' || directory == nullptr || directory[0] == '\0')
 		GTEST_SKIP() << "Set both explicit Catacombs population archive and new reference directory variables.";
@@ -4502,7 +4534,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 		LevelSeeds[spec.depth] = std::nullopt;
 		DungeonSeeds[spec.depth] = spec.seed;
 		DungeonSeeds[16] = UINT32_C(0x13579BDF);
-		gbIsMultiplayer = false;
+		gbIsMultiplayer = multiplayer;
 		gbIsSpawn = false;
 		gbIsHellfire = false;
 		gbIsHellfireSaveGame = false;
@@ -4569,7 +4601,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			JsonObject document(caseOutput);
 			document.String("format", "godevilution-catacombs-population-case");
 			document.Number("version", captureStages ? 2 : 1);
-			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
+			document.String("policy", multiplayer ? "quest-disabled-original-diablo-multiplayer-normal" : "quest-disabled-original-diablo-single-player-normal");
 			document.String("characterClass", CatacombsClassSymbol(spec.heroClass));
 			document.Number("characterClassId", spec.heroClass);
 			document.Number("characterLevel", MyPlayer->getCharacterLevel());
@@ -4721,7 +4753,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			JsonObject document(manifest);
 			document.String("format", "godevilution-native-catacombs-population");
 			document.Number("version", captureStages ? 2 : 1);
-			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
+			document.String("policy", multiplayer ? "quest-disabled-original-diablo-multiplayer-normal" : "quest-disabled-original-diablo-single-player-normal");
 			document.Number("caseCount", indexRows.size());
 			if (captureStages)
 				document.String("capturedStages", "post-InitObjects,post-InitMonsters,post-InitItems");
@@ -4788,6 +4820,14 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshPopulationStages)
 	CaptureNativeCatacombsPopulationOracle(
 	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_ARCHIVE"),
 	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_REFERENCE_DIRECTORY"), true);
+}
+
+// The staged matrix with gbIsMultiplayer: 150% scatter, full monster life, multiplayer shrines and item pools.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshMultiplayerPopulationStages)
+{
+	CaptureNativeCatacombsPopulationOracle(
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_ARCHIVE"),
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_MULTIPLAYER_POPULATION_REFERENCE_DIRECTORY"), true, true);
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshPopulation)

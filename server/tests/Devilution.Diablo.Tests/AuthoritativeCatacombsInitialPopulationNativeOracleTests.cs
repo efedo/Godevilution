@@ -14,12 +14,14 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 {
 	private const string ReferenceDirectoryVariable = "GODEVILUTION_NATIVE_CATACOMBS_POPULATION_REFERENCE_DIRECTORY";
+	private const string MultiplayerReferenceDirectoryVariable = "GODEVILUTION_NATIVE_CATACOMBS_MULTIPLAYER_POPULATION_REFERENCE_DIRECTORY";
 	private const string SourceMetadataVariable = "GODEVILUTION_NATIVE_CATACOMBS_SOURCE_METADATA";
 	private const string GlobalMetadataVariable = "GODEVILUTION_NATIVE_CATACOMBS_GLOBAL_METADATA_DIRECTORY";
 	private const string StorySourceVariable = "GODEVILUTION_NATIVE_CATACOMBS_STORY_SOURCE_TABLE";
 	private const string OracleFormat = "godevilution-native-catacombs-population";
 	private const string CaseFormat = "godevilution-catacombs-population-case";
 	private const string Policy = "quest-disabled-original-diablo-single-player-normal";
+	private const string MultiplayerPolicy = "quest-disabled-original-diablo-multiplayer-normal";
 	private const uint StorySeed = 0x1357_9BDF;
 	private const int Width = AuthoritativeCathedralPopulationGeometry.Width;
 	private const int CellCount = AuthoritativeCathedralPopulationGeometry.CellCount;
@@ -30,7 +32,8 @@ public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 	};
 	private static readonly IReadOnlyList<CaseSpec> CaseMatrix = BuildCaseMatrix();
-	private static readonly Lazy<OracleCorpus> LoadedCorpus = new(LoadCorpus);
+	private static readonly Lazy<OracleCorpus> LoadedCorpus = new(() => LoadCorpus(false));
+	private static readonly Lazy<OracleCorpus> LoadedMultiplayerCorpus = new(() => LoadCorpus(true));
 
 	public static TheoryData<string, string, int, int, string, uint, bool> Cases
 	{
@@ -129,16 +132,20 @@ public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 	}
 
 	/** Shared corpus qualification for complete-phase tests; native worlds remain comparison-only. */
-	internal static (string Directory, AuthoritativeCatacombsPopulationMetadata Metadata) QualifiedInputs()
-		=> (LoadedCorpus.Value.ReferenceDirectory, LoadedCorpus.Value.Metadata);
+	internal static (string Directory, AuthoritativeCatacombsPopulationMetadata Metadata) QualifiedInputs(bool multiplayer = false)
+		=> (Corpus(multiplayer).ReferenceDirectory, Corpus(multiplayer).Metadata);
 
-	internal static JsonDocument OpenQualifiedCase(string file)
+	internal static JsonDocument OpenQualifiedCase(string file, bool multiplayer = false)
 	{
 		if (!CaseMatrix.Any(row => row.File == file))
 			throw new InvalidDataException("A fixed Catacombs oracle matrix filename is required.");
-		return JsonDocument.Parse(ReadBoundedRegularFile(
-			Path.Combine(LoadedCorpus.Value.ReferenceDirectory, file), MaximumCaseBytes));
+		using var document = JsonDocument.Parse(ReadBoundedRegularFile(
+			Path.Combine(Corpus(multiplayer).ReferenceDirectory, file), MaximumCaseBytes));
+		Assert.Equal(multiplayer ? MultiplayerPolicy : Policy, RequiredString(document.RootElement, "policy"));
+		return JsonDocument.Parse(document.RootElement.GetRawText());
 	}
+
+	private static OracleCorpus Corpus(bool multiplayer) => multiplayer ? LoadedMultiplayerCorpus.Value : LoadedCorpus.Value;
 
 	internal static JsonDocument OpenQualifiedSource()
 		=> JsonDocument.Parse(ReadBoundedRegularFile(
@@ -396,9 +403,9 @@ public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 		return Array.AsReadOnly(populated);
 	}
 
-	private static OracleCorpus LoadCorpus()
+	private static OracleCorpus LoadCorpus(bool multiplayer)
 	{
-		var directory = RequiredDirectory(ReferenceDirectoryVariable);
+		var directory = RequiredDirectory(multiplayer ? MultiplayerReferenceDirectoryVariable : ReferenceDirectoryVariable);
 		var statusPath = Path.Combine(directory, "capture-status.json");
 		using (var status = JsonDocument.Parse(ReadBoundedRegularFile(statusPath, 4096)))
 			Assert.Equal("complete", RequiredString(status.RootElement, "status"));
@@ -407,7 +414,7 @@ public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 		var manifest = manifestDocument.RootElement;
 		Assert.Equal(OracleFormat, RequiredString(manifest, "format"));
 		Assert.Equal(2, RequiredInt(manifest, "version"));
-		Assert.Equal(Policy, RequiredString(manifest, "policy"));
+		Assert.Equal(multiplayer ? MultiplayerPolicy : Policy, RequiredString(manifest, "policy"));
 		Assert.Equal(32, RequiredInt(manifest, "caseCount"));
 		var capturedStages = RequiredString(manifest, "capturedStages");
 		Assert.Equal("post-InitObjects,post-InitMonsters,post-InitItems", capturedStages);

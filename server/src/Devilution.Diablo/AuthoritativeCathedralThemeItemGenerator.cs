@@ -1995,20 +1995,19 @@ public static class AuthoritativeCathedralThemeItemGenerator
             || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
             || !policy.LegacyLevelItemGenerationAllowed)
             throw new InvalidDataException(familyContext.IsCatacombs
-                ? "Only ordinary original-Diablo Catacombs SP Normal generation is supported."
-                : "Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
+                ? "Only ordinary original-Diablo Catacombs Normal generation is supported."
+                : "Only ordinary original-Diablo Cathedral Normal generation is supported.");
         if (policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth)
             throw new InvalidDataException(familyContext.IsCatacombs
                 ? "Current dungeon level must match the requested Catacombs depth."
                 : "Current dungeon level must match the requested Cathedral depth.");
     }
 
-    /** Cathedral generation has native multiplayer rules; Catacombs stays single-player. */
+    /** Both admitted families have native multiplayer rules (Catacombs since batch 2.2b). */
     internal static bool AdmitsGameMode(
         AuthoritativeCathedralThemeItemPolicy policy,
         AuthoritativeNativeDungeonFamilyContext familyContext)
-        => policy.GameMode == DiabloGameMode.SinglePlayer
-            || policy.GameMode == DiabloGameMode.Multiplayer && !familyContext.IsCatacombs;
+        => policy.GameMode is DiabloGameMode.SinglePlayer or DiabloGameMode.Multiplayer;
 
     private static HashSet<int> CopyFlags(IReadOnlySet<int>? flags)
         => flags is null ? [] : flags.ToHashSet();

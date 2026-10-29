@@ -108,11 +108,14 @@ public sealed partial record DiabloCohortState
             || run.Entries is null || run.InitialSpecialStand is null
             || run.Entries.Count > allowedEntries)
             throw new InvalidDataException("Native first-entry contexts require exact supported floor identities and unique history.");
-        var expectedEntryLevels = Enumerable.Range(2, run.Entries.Count).Select(value => (uint)value).ToArray();
-        if (!run.Entries.Select(entry => entry?.LevelId ?? 0U).SequenceEqual(expectedEntryLevels)
+        // Floors are captured in level order; the multiplayer Town warp may enter L5 before L2-L4.
+        var entryLevels = run.Entries.Select(entry => entry?.LevelId ?? 0U).ToArray();
+        if (!entryLevels.SequenceEqual(entryLevels.Distinct().Order())
             || run.Entries.Any(entry => entry is null || entry.LevelId < 2 || entry.LevelId > deepest || entry.Hero is null
                 || (entry.CatacombsLifeQ6 is > 0) != AuthoritativeCatacombsNativeDepths.Owns(entry.LevelId)
                 || entry.CatacombsLifeQ6 is <= 0
+                || entry.CatacombsEntry is not (null or AuthoritativeCatacombsEntry.TownWarpDown)
+                || entry.CatacombsEntry is not null && entry.LevelId != AuthoritativeCatacombsNativeDepths.FirstDepth
                 || !AuthoritativeNativeMonsterInitialization.IsFingerprint(entry.GenerationFingerprint)
                 || entry.InitialUniqueItemFlags is null
                 || entry.InitialUniqueItemFlags.Any(flag => flag is < 0 or >= 128)

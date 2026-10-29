@@ -48,6 +48,49 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.2b Multiplayer Catacombs (done)
+
+- **Player-visible outcome:** in a native multiplayer game, players of clvl 8 or
+  higher take the Town warp at (49,21) to L5; lower levels are turned back with
+  native "I can't get there from here". L5-L8 generate and play with native
+  multiplayer rules, and L5's warp-up stair returns to Town at (49,22).
+- **Native source:** `triggers.cpp` IsWarpOpen, InitTownTriggers, InitL2Triggers
+  (piece 558) and CheckTriggers (WM_DIABTOWNWARP clvl gates, WM_DIABTWARPUP);
+  `town.cpp` CreateTown warp tiles and ENTRY_TWARPUP view positions;
+  `monsters.cpp` InitMonsters (`GetMpMonsterMultiplierPercent`), InitMonster and
+  PrepareUniqueMonst life; `items.cpp` and `objects.cpp` multiplayer branches
+  (spell-book pools, unique reuse, shrine availability) for L5-L8.
+- **Files and contracts owned:**
+  - the multiplayer Town composes with its open warp tiles (Catacombs, Caves,
+    Hell drawn open; only the Catacombs warp is wired, Caves and Hell are
+    published unavailable until their families exist);
+  - Town warp and L5 warp-up routes in the native progression, with the clvl 8
+    gate and TownWarpDown first entry into L5;
+  - the single-player gates in the Catacombs population, chest, object and
+    actor owners accept multiplayer, bound to the game mode;
+  - CI-runnable multiplayer variants of the Catacombs theme-pass and chest
+    captures in `tools/run-native-oracle-parity.sh` with their consumers;
+  - a native multiplayer journey/resume that reaches L5 by the Town warp, with
+    clvl 8+ test heroes.
+- **Exit check:** the multiplayer Catacombs oracles match; server tests for the
+  warp gates, warp-up return and multiplayer L5-L8 restore;
+  `tools/test-godot-native-multiplayer.ps1` journey and fresh-host resume with
+  both players on L5; Diablo.Tests, Server.Tests, client protocol tests and the
+  oracle consumers pass.
+- **Out of scope:** the single-player Town warp unlock (`pTownWarps`, set by the
+  L5 warp-up) because it needs a cohort field; it is 2.2c after the cohort-save
+  work merges. Also rendering (2.3), monster AI and missiles (2.4), object
+  effects (2.5), Caves and Hell, quests.
+- **Size:** about five days; if the oracle variants alone exceed two, split the
+  Town warp work into its own batch.
+- **State:** done. With the Catacombs pack, multiplayer is an L1–L8 run with the
+  multiplayer Town catalog (open warp tiles); only the Catacombs warp is wired,
+  and Caves and Hell are not published as routes. The optional format-12 field
+  `CatacombsEntry` records a `TownWarpDown` entry, and floor entries may skip
+  levels. That field touches one line of `DiabloCohortCodec.IsCatacombsActorField`,
+  which the cohort-save branch also edits. The two-client L5 smoke meets and
+  resumes on L5 without fighting there (Catacombs AI is 2.4).
+
 ## Batch 2.2a Descend to L5-L8 (done)
 
 2.2 is split along its playable seam: 2.2a single-player descent and resume,

@@ -70,6 +70,12 @@ public sealed class AuthoritativeWarpTarget
 
     /** Stable content symbol retained alongside the numeric warp identity. */
     public string StableSymbol { get; init; } = string.Empty;
+
+    /** Native multiplayer WM_DIABTOWNWARP character-level gate; 0 is ungated. */
+    public uint RequiredCharacterLevel { get; init; }
+
+    /** The native entry a first visit generates with; null is the ordinary stair entry. */
+    public AuthoritativeCatacombsEntry? FirstEntry { get; init; }
 }
 
 /** Loads normalized native trigger destinations from an external content table. */

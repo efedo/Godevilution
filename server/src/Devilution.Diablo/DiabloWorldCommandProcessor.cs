@@ -482,6 +482,13 @@ public sealed class DiabloWorldCommandProcessor
             .FirstOrDefault();
         if (warp is null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        // Native multiplayer CheckTriggers turns a low-level player back one tile south (CMD_WALKXY).
+        if (player.CharacterLevel < warp.RequiredCharacterLevel) {
+            if (applyEffects)
+                CaptureNativeDestinationPath(player, new DiabloMoveToIntent(
+                    player.PositionX, player.PositionY + 1, FollowPath: true), appliedTick, players);
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
 
         return AttachPendingEntryEvents(ApplyWarpTarget(
             player,
@@ -539,7 +546,7 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var participants = players.ToArray();
         var entry = world.PrepareNativeProgressionEntry(player, warp.TargetLevelId, participants,
-            items!, spells!);
+            items!, spells!, warp.FirstEntry);
         var destinationWorld = entry?.Admission.Floor ?? world;
         var destination = DeterministicGridCrawl.FindClosestValidPosition(
             warp.TargetX,

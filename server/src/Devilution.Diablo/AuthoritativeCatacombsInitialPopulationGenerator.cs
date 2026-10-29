@@ -49,6 +49,8 @@ public sealed class AuthoritativeCatacombsInitialPopulationParameters
 	public uint PopulationSeed => ObjectTemplate.PopulationSeed;
 	public uint StorySeed => ObjectTemplate.StorySeed;
 	public AuthoritativeCathedralPopulationGeometry PreThemeGeometry => ObjectTemplate.Geometry;
+	/** Native gbIsMultiplayer for InitObjects' pre-spawned monsters. */
+	public bool Multiplayer { get; init; }
 }
 
 /** Detached L2 initial selections and population, distinct from the C1 result identity. */
@@ -119,7 +121,7 @@ public static class AuthoritativeCatacombsInitialPopulationGenerator
 			objectTemplate.TrapPercent,
 			objectTemplate.StoryMessages,
 			objectTemplate.MaximumPlacementAttempts,
-			familyContext);
+			familyContext) { Multiplayer = parameters.Multiplayer };
 		var population = AuthoritativeCathedralPopulationGenerator.Generate(objectInput, familyContext);
 		return new(bestiary, themes, selectedThemes, population);
 	}
