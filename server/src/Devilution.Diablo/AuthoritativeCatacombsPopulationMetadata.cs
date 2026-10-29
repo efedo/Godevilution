@@ -214,16 +214,39 @@ public sealed class AuthoritativeCatacombsPopulationMetadata
     /** Directory and table prefix of the optional fifth pack of an all-class native profile (batch 2.1). */
     public const string ProfileSidecarDirectory = "native_catacombs_population";
     public const string ProfileSidecarPackId = "godevilution.catacombs-native-population-metadata";
-    public const string ProfileSidecarPackVersion = "1.0.0";
+    /** 1.1.0 adds the l2.amp automap tables; 1.0.0 packs (batch 2.1) still load without them. */
+    public const string ProfileSidecarPackVersion = "1.1.0";
+    public const string LegacyProfileSidecarPackVersion = "1.0.0";
     private const string ProfileSidecarPrefix = ProfileSidecarDirectory + "/";
 
     /** The schema-neutral, prefixed profile pack, so it composes beside the Cathedral sidecars. */
-    public ContentPack ToProfileSidecar()
-        => new(ProfileSidecarPackId, ProfileSidecarPackVersion,
-            tables.Select(table => CloneTable(table) with { SourcePath = ProfileSidecarPrefix + table.SourcePath }).ToArray());
+    public ContentPack ToProfileSidecar(AuthoritativeCatacombsAutomapMetadata? automap = null)
+        => new(ProfileSidecarPackId, automap is null ? LegacyProfileSidecarPackVersion : ProfileSidecarPackVersion,
+            tables.Concat(automap?.Tables ?? [])
+                .Select(table => CloneTable(table) with { SourcePath = ProfileSidecarPrefix + table.SourcePath }).ToArray());
 
     /** The profile's Catacombs metadata, or null for a profile built before batch 2.1. */
     public static AuthoritativeCatacombsPopulationMetadata? LoadProfileSidecar(ContentManifest manifest)
+        => FindProfileSidecar(manifest) is { } tables
+            ? Load(new ContentPack(CatalogId, SchemaVersion,
+                tables.Where(table => !AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath)).ToArray(),
+                schema: new ContentSchemaIdentity(SchemaId, SchemaVersion)))
+            : null;
+
+    /** The profile's L2 automap, or null for a profile without the 1.1.0 pack. */
+    public static AuthoritativeCatacombsAutomapMetadata? LoadProfileAutomap(ContentManifest manifest)
+    {
+        var tables = FindProfileSidecar(manifest)?.Where(table =>
+            AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath)).ToArray();
+        return tables is { Length: > 0 }
+            ? AuthoritativeCatacombsAutomapMetadata.Load(new ContentPack(AuthoritativeCatacombsAutomapMetadata.CatalogId,
+                AuthoritativeCatacombsAutomapMetadata.SchemaVersion, tables,
+                schema: new ContentSchemaIdentity(AuthoritativeCatacombsAutomapMetadata.SchemaId,
+                    AuthoritativeCatacombsAutomapMetadata.SchemaVersion)))
+            : null;
+    }
+
+    private static TsvTable[]? FindProfileSidecar(ContentManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
         var packs = manifest.Packs.Where(pack => pack.Tables.Any(table =>
@@ -231,14 +254,17 @@ public sealed class AuthoritativeCatacombsPopulationMetadata
         if (packs.Length == 0)
             return null;
         var pack = packs[0];
-        if (packs.Length != 1 || pack.Id != ProfileSidecarPackId || pack.Version != ProfileSidecarPackVersion
+        if (packs.Length != 1 || pack.Id != ProfileSidecarPackId
+            || pack.Version is not (ProfileSidecarPackVersion or LegacyProfileSidecarPackVersion)
             || pack.Schema is not null || pack.Dependencies.Count != 0 || pack.DependencyConstraints.Count != 0
             || pack.Overlays.Count != 0 || pack.Assets.Count != 0
             || !pack.Tables.All(table => table.SourcePath.StartsWith(ProfileSidecarPrefix, StringComparison.Ordinal)))
             throw new InvalidDataException("Catacombs profile metadata must be one schema-neutral sidecar of prefixed tables.");
-        return Load(new ContentPack(CatalogId, SchemaVersion,
-            pack.Tables.Select(table => table with { SourcePath = table.SourcePath[ProfileSidecarPrefix.Length..] }).ToArray(),
-            schema: new ContentSchemaIdentity(SchemaId, SchemaVersion)));
+        var tables = pack.Tables.Select(table => table with { SourcePath = table.SourcePath[ProfileSidecarPrefix.Length..] }).ToArray();
+        var automapCount = tables.Count(table => AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath));
+        if (automapCount != (pack.Version == ProfileSidecarPackVersion ? AuthoritativeCatacombsAutomapMetadata.TableNames.Count : 0))
+            throw new InvalidDataException("Only a version-1.1.0 Catacombs profile pack carries the complete automap tables.");
+        return tables;
     }
 
     /** Builds the same detached schema from typed native metadata; inputs contain no generated world state. */

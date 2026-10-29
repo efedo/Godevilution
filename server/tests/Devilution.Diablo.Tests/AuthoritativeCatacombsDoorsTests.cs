@@ -176,6 +176,33 @@ public sealed class AuthoritativeCatacombsDoorsTests
             synchronized.Level.NativePieceLayer[CenterCell(synchronized.Level)]);
     }
 
+    [Fact]
+    public void RestoreReappliesSavedDoorGeometryToTheGeneratedLevel()
+    {
+        var catalog = AuthoritativeCatacombsDoorCatalog.Load(LoadMetadata());
+        var (level, raw, value) = CreateBoundDoor(
+            catalog, 42, 1, AuthoritativeCatacombsDoors.ClosedLeftPiece,
+            initialStatus: AuthoritativeCatacombsDoorStatus.Closed);
+        var initial = AuthoritativeCatacombsDoors.Bind(level, 5, catalog, raw, value);
+        var opened = AuthoritativeCatacombsDoors.Operate(level, 5, catalog, initial, occupied: false);
+        var blocked = AuthoritativeCatacombsDoors.UpdateOccupancy(opened.Door, occupied: true);
+
+        Assert.Same(level, AuthoritativeCatacombsDoors.Restore(level, 5, catalog, initial, initial));
+        foreach (var saved in new[] { opened.Door, blocked }) {
+            var restored = AuthoritativeCatacombsDoors.Restore(level, 5, catalog, initial, saved);
+            Assert.Equal(opened.Level.NativePieceLayer, restored.NativePieceLayer);
+            Assert.Equal(opened.Level.NativeSpecialLayer, restored.NativeSpecialLayer);
+            Assert.Equal(opened.Level.NativePieceCollisionCells, restored.NativePieceCollisionCells);
+            Assert.Equal(opened.Level.BlockedCells, restored.BlockedCells);
+        }
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsDoors.Restore(
+            level, 5, catalog, initial, opened.Door with { PositionX = 2 }));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsDoors.Restore(
+            level, 5, catalog, initial, opened.Door with { MissFlag = false }));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsDoors.Restore(
+            opened.Level, 5, catalog, initial, opened.Door));
+    }
+
     private static AuthoritativeCatacombsPopulationMetadata LoadMetadata()
     {
         var tables = AuthoritativeCatacombsPopulationMetadataTests.CreateCompleteTables()

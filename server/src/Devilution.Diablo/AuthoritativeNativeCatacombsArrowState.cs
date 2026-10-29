@@ -51,8 +51,8 @@ public sealed record AuthoritativeNativeCatacombsArrowState(
         ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(missile);
         ArgumentNullException.ThrowIfNull(bindings);
-        if (characterClassId is not (0 or 2))
-            throw new InvalidDataException("A native Catacombs Arrow requires a bound Warrior or Sorcerer profile.");
+        if (characterClassId is not (0 or 1 or 2))
+            throw new InvalidDataException("A native Catacombs Arrow requires a bound base-game class profile.");
         var initialization = source.NativeInitialization
             ?? throw new InvalidDataException("A native Catacombs Arrow source lost its initialization.");
         initialization.ValidateTarget(source.EntityId, source.MonsterId, source.LevelId,
@@ -108,7 +108,7 @@ public sealed record AuthoritativeNativeCatacombsArrowState(
         if (ProjectileEntityId == 0 || SourceEntityId == 0 || NativeSlot is < 0 or >= AuthoritativeCathedralThemeRoomState.MonsterCapacity
             || ContentMonsterId == 0 || NativeTypeId is < 0 or >= AuthoritativeCathedralRawMonsterDefinition.RawCatalogCount
             || LevelId == 0 || Depth is < 5 or > 8 || TargetEntityId == 0
-            || CharacterClassId is not (0 or 2)
+            || CharacterClassId is not (0 or 1 or 2)
             || NativeAi is not ("SkeletonRanged" or "GoatRanged")
             || !AuthoritativeNativeMonsterInitialization.IsFingerprint(MetadataFingerprint)
             || !AuthoritativeNativeMonsterInitialization.IsFingerprint(PopulationFingerprint)

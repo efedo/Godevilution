@@ -124,7 +124,7 @@ public sealed partial class DiabloSimulation
                 state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels, state.NativeTraps);
         }
         simulation.WorldState.ValidateNativePopulationState(players);
-        simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
+        simulation.WorldState.ConfigureRestoredCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
             candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
         simulation.ValidateCohortActorTopology(players);
         simulation.MarkCohortCandidate();
@@ -1393,6 +1393,12 @@ public sealed partial class DiabloSimulation
             NativeProgression = WorldState.HasNativeProgression ? new(
                 WorldState.NativeProgressionFingerprint!, WorldState.CaptureNativeFloorEntries()!,
                 WorldState.CaptureNativeInitialSpecialStand()) : null,
+            NativeCatacombs = WorldState.HasNativeProgression
+                && WorldState.NativeProgressionCohortFormatVersion == DiabloCohortState.NativeCatacombsProgressionFormatVersion
+                ? new(WorldState.CaptureNativeCatacombsDoorStates().SelectMany(floor => floor.Doors).ToArray(),
+                    WorldState.CaptureNativeCatacombsMonsterPhases(), WorldState.CaptureNativeCatacombsRangedActions(),
+                    WorldState.CaptureNativeCatacombsArrows())
+                : null,
         };
         state.ValidateShape();
         return state;

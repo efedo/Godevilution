@@ -161,6 +161,40 @@ public sealed class AuthoritativeCatacombsPopulationMetadataTests
                 new ContentManifest("other", "1.0.0", packs)));
     }
 
+    [Fact]
+    public void ProfileSidecarVersionCarriesTheAutomapOnlyFromOneOneZero()
+    {
+        var metadata = Load(CreateCompleteTables());
+        var words = new ushort[160];
+        var bytes = new byte[words.Length * 2];
+        var automapTables = AuthoritativeCatacombsAutomapMetadata.CreateTables(words,
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant());
+        var automap = AuthoritativeCatacombsAutomapMetadata.Load(new ContentPack(
+            AuthoritativeCatacombsAutomapMetadata.CatalogId, AuthoritativeCatacombsAutomapMetadata.SchemaVersion,
+            automapTables, schema: new ContentSchemaIdentity(AuthoritativeCatacombsAutomapMetadata.SchemaId,
+                AuthoritativeCatacombsAutomapMetadata.SchemaVersion)));
+        var other = new ContentPack("other", "1.0.0", [TsvTable.Parse("other.tsv", "id\n1\n")]);
+
+        var legacy = metadata.ToProfileSidecar();
+        Assert.Equal(AuthoritativeCatacombsPopulationMetadata.LegacyProfileSidecarPackVersion, legacy.Version);
+        Assert.Null(AuthoritativeCatacombsPopulationMetadata.LoadProfileAutomap(new ContentManifest("other", "1.0.0", [other, legacy])));
+
+        var current = metadata.ToProfileSidecar(automap);
+        Assert.Equal(AuthoritativeCatacombsPopulationMetadata.ProfileSidecarPackVersion, current.Version);
+        var manifest = new ContentManifest("other", "1.0.0", [other, current]);
+        Assert.Equal(metadata.Fingerprint, AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(manifest)!.Fingerprint);
+        Assert.Equal(automap.Fingerprint, AuthoritativeCatacombsPopulationMetadata.LoadProfileAutomap(manifest)!.Fingerprint);
+
+        // Each version requires exactly its own table set.
+        foreach (var pack in new[] {
+                     new ContentPack(current.Id, legacy.Version, current.Tables),
+                     new ContentPack(current.Id, current.Version, legacy.Tables),
+                     new ContentPack(current.Id, current.Version, current.Tables.Take(current.Tables.Count - 1).ToArray()),
+                 })
+            Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(
+                new ContentManifest("other", "1.0.0", [other, pack])));
+    }
+
     internal static IReadOnlyList<TsvTable> CreateCompleteTables()
     {
         var c1Tables = CathedralPopulationMetadataCompilerTests.CreateCompleteTables();

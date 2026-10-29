@@ -143,14 +143,24 @@ public static class CathedralNativeTownPlaytestCompiler
         RejectOutputInputOverlap(outputRoot, [classRoot, townSourceRoot, rosterPath]);
         if (options.CatacombsMetadataDirectory is not null && !options.AllClasses)
             throw new ArgumentException("Only the all-class Town profile carries Catacombs metadata.", nameof(options));
-        var catacombs = options.CatacombsMetadataDirectory is { } catacombsDirectory
-            ? AuthoritativeCatacombsPopulationMetadata.Load(new ContentPack(
-                AuthoritativeCatacombsPopulationMetadata.CatalogId, AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
-                ContentPackLoader.LoadDirectory(AuthoritativeCatacombsPopulationMetadata.CatalogId,
-                    AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
-                    RequireDirectory(catacombsDirectory, "Catacombs metadata directory")).Tables,
-                schema: new ContentSchemaIdentity(AuthoritativeCatacombsPopulationMetadata.SchemaId,
-                    AuthoritativeCatacombsPopulationMetadata.SchemaVersion)))
+        var catacombsTables = options.CatacombsMetadataDirectory is { } catacombsDirectory
+            ? ContentPackLoader.LoadDirectory(AuthoritativeCatacombsPopulationMetadata.CatalogId,
+                AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
+                RequireDirectory(catacombsDirectory, "Catacombs metadata directory")).Tables
+            : null;
+        var catacombs = catacombsTables is null ? null : AuthoritativeCatacombsPopulationMetadata.Load(new ContentPack(
+            AuthoritativeCatacombsPopulationMetadata.CatalogId, AuthoritativeCatacombsPopulationMetadata.SchemaVersion,
+            catacombsTables.Where(table => !AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath)).ToArray(),
+            schema: new ContentSchemaIdentity(AuthoritativeCatacombsPopulationMetadata.SchemaId,
+                AuthoritativeCatacombsPopulationMetadata.SchemaVersion)));
+        // Exports from batch 2.1 lack the automap; their pack stays version 1.0.0 (no Catacombs descent).
+        var catacombsAutomapTables = catacombsTables?.Where(table =>
+            AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath)).ToArray();
+        var catacombsAutomap = catacombsAutomapTables is { Length: > 0 }
+            ? AuthoritativeCatacombsAutomapMetadata.Load(new ContentPack(AuthoritativeCatacombsAutomapMetadata.CatalogId,
+                AuthoritativeCatacombsAutomapMetadata.SchemaVersion, catacombsAutomapTables,
+                schema: new ContentSchemaIdentity(AuthoritativeCatacombsAutomapMetadata.SchemaId,
+                    AuthoritativeCatacombsAutomapMetadata.SchemaVersion)))
             : null;
 
         var classProfilePath = Path.Combine(classRoot, ClassProfileFileName);
@@ -177,7 +187,7 @@ public static class CathedralNativeTownPlaytestCompiler
             WritePack(Path.Combine(stagingRoot, TownDirectoryName), townPack);
             if (catacombs is not null)
                 WritePack(Path.Combine(stagingRoot, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory),
-                    catacombs.ToProfileSidecar());
+                    catacombs.ToProfileSidecar(catacombsAutomap));
 
             var innerProfile = JsonDocument.Parse(classProfile.GetRawText());
             using (innerProfile) {

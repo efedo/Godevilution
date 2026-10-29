@@ -20,7 +20,10 @@ public sealed partial class DiabloSimulation
                 continue;
             native.ValidateTarget(target.EntityId, target.MonsterId, target.LevelId,
                 target.IsUnique, target.UniqueIdentity);
-            if (fingerprint != native.MetadataFingerprint)
+            // Catacombs actors carry their floor owner's C2 metadata identity.
+            var expected = native.CatacombsDepth == 0 ? fingerprint
+                : WorldState.NativePopulationForLevel(target.LevelId)?.MonsterMetadataFingerprint;
+            if (expected != native.MetadataFingerprint)
                 throw new InvalidDataException("Native actor initialization uses different runtime metadata.");
             if (!nativeSlots.Add((target.LevelId, native.InitialState.Slot)))
                 throw new InvalidDataException("Native actor initialization repeats a level/slot binding.");

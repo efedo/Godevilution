@@ -73,23 +73,11 @@ public sealed partial class DiabloWorldState
         if (World is null || cathedralItems is null || !HasNativePopulation
             || nativePopulationParticipantClassId != build.Policy.CharacterClassId
             || NativePopulationForLevel(levelId) is not null || !World.ContainsLevel(levelId)
-            || participants.Count != 1 || participants[0].CharacterClassId != build.Policy.CharacterClassId)
-            throw new InvalidOperationException("A new Catacombs floor requires an existing class-bound run and one participant.");
-        var player = participants[0];
-        var hero = build.Ready.Request.FreshLevel.Request.Hero;
-        if (player.Life <= 0 || player.Life != build.Ready.Player.LifeCurrentQ6
-            || player.BaseLifeMaximum != hero.MaximumLifeBase
-            || player.BaseManaMaximum != hero.MaximumManaBase || player.LightRadius != hero.LightRadius
-            || player.FuturePositionX != hero.PreEntryFuture.X || player.FuturePositionY != hero.PreEntryFuture.Y)
-            throw new InvalidDataException("The prepared Catacombs hero no longer matches the entering participant.");
-        foreach (var item in player.Inventory.Select(value => value.State)
-                .Concat(player.Equipment.Select(value => value.State))
-                .Concat(player.Belt.Select(value => value.State))
-                .Concat(player.HeldItem is { } held ? [held.State] : [])) {
-            if (!build.Items.ItemBindings.TryGetValue(item.ItemIndex, out var binding)
-                || binding.StableItemId != item.StableItemId)
-                throw new InvalidDataException("A Catacombs entry cannot admit an unbound carried item.");
-        }
+            || participants.Count > 1 || participants.Any(value => value.CharacterClassId != build.Policy.CharacterClassId))
+            throw new InvalidOperationException("A new Catacombs floor requires an existing class-bound run and at most one participant.");
+        // A cold restore regenerates a retained floor from its saved entry with no participant.
+        foreach (var player in participants)
+            RequireCatacombsEntrant(build, player);
         ValidateNativePopulationState(participants);
         if (HasEntitiesOnNativeAdmissionLevel(levelId))
             throw new InvalidDataException("A first Catacombs entry cannot replace existing floor entities.");
@@ -127,6 +115,24 @@ public sealed partial class DiabloWorldState
         return new(floor, build, combined, CaptureNativeFamilyAdmissionState(this),
             CaptureNativeFamilyAdmissionState(floor), CaptureNativeAdmissionItems(combined),
             participants.ToArray(), CaptureNativeAdmissionParticipants(participants));
+    }
+
+    private static void RequireCatacombsEntrant(AuthoritativeCatacombsNativePopulationBuild build, AuthoritativePlayerState player)
+    {
+        var hero = build.Ready.Request.FreshLevel.Request.Hero;
+        if (player.Life <= 0 || player.Life != build.Ready.Player.LifeCurrentQ6
+            || player.BaseLifeMaximum != hero.MaximumLifeBase
+            || player.BaseManaMaximum != hero.MaximumManaBase || player.LightRadius != hero.LightRadius
+            || player.FuturePositionX != hero.PreEntryFuture.X || player.FuturePositionY != hero.PreEntryFuture.Y)
+            throw new InvalidDataException("The prepared Catacombs hero no longer matches the entering participant.");
+        foreach (var item in player.Inventory.Select(value => value.State)
+                .Concat(player.Equipment.Select(value => value.State))
+                .Concat(player.Belt.Select(value => value.State))
+                .Concat(player.HeldItem is { } held ? [held.State] : [])) {
+            if (!build.Items.ItemBindings.TryGetValue(item.ItemIndex, out var binding)
+                || binding.StableItemId != item.StableItemId)
+                throw new InvalidDataException("A Catacombs entry cannot admit an unbound carried item.");
+        }
     }
 
     /** Rechecks every mutable owner and destination map before the first live write. */

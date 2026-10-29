@@ -19,6 +19,9 @@ public partial class SessionAcceptance
         string WorldHash, NativeWarriorFloor[] Floors);
 
     private const int NativeWarriorAttacksPerFloor = 160;
+    // L5-L8 are traversed only: generated, entered, retained and resumed.
+    private const uint NativeWarriorDeepestFloor = 8;
+    private const uint NativeWarriorDrawnFloor = 4;
     private const int NativeWarriorTravelAttempts = 16;
     private int nativeWarriorRouteCount;
     // One-time evidence run: clear floors as a player would and record the Warrior entering each one.
@@ -48,7 +51,7 @@ public partial class SessionAcceptance
 
         // A per-floor test descends to its target floor (default L4) with a test hero of matching strength.
         var target = uint.TryParse(System.Environment.GetEnvironmentVariable(TargetEnvironmentVariable), out var requested)
-            && requested is >= 1 and <= 4 ? requested : 4U;
+            && requested is >= 1 and <= NativeWarriorDeepestFloor ? requested : 4U;
         if (phase == "NativeDepthJourney" && System.Environment.GetEnvironmentVariable(GrindEnvironmentVariable) == "1") {
             await GrindNativeWarriorAsync(main, directory);
             return;
@@ -64,6 +67,13 @@ public partial class SessionAcceptance
             var floors = new List<NativeWarriorFloor>();
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
+                if (depth > NativeWarriorDrawnFloor) {
+                    // Catacombs floors are not drawn natively yet (2.3); their monsters' AI is 2.4.
+                    var entered = main.ObservedSnapshot!.Players.Single();
+                    floors.Add(new(depth, string.Empty, 0, entered.Experience, entered.Experience, 0));
+                    GD.Print($"Native Warrior entered L{depth}; life={entered.Life}");
+                    continue;
+                }
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
                 var floor = await DefeatNativeWarriorFloorAsync(main, directory, depth);
                 floors.Add(floor);
@@ -439,12 +449,16 @@ public partial class SessionAcceptance
     private static void VerifyNativeWarriorRetention(Main main, NativeWarriorDepthCheckpoint expected)
     {
         var snapshot = main.ObservedSnapshot!;
-        Require(expected.Floors.Length is >= 1 and <= 4
+        Require(expected.Floors.Length is >= 1 and <= (int)NativeWarriorDeepestFloor
             && expected.Floors.Select(floor => floor.LevelId).SequenceEqual(Enumerable.Range(1, expected.Floors.Length).Select(level => (uint)level)),
             "The depth checkpoint omitted or reordered a floor.");
         foreach (var floor in expected.Floors) {
             Require(HashProto(DepthGeometry(main, floor.LevelId)) == floor.GeometryHash,
                 $"Retained native floor {floor.LevelId} changed its generated geometry or door state.");
+            if (floor.LevelId > NativeWarriorDrawnFloor) {
+                Require(floor.MonsterEntityId == 0, $"Traversed native floor {floor.LevelId} recorded a kill.");
+                continue;
+            }
             Require(floor.ExperienceAfter > floor.ExperienceBefore
                 && snapshot.Corpses.Count(corpse => corpse.EntityId == floor.MonsterEntityId && corpse.LevelId == floor.LevelId) == 1
                 && !snapshot.Monsters.Any(monster => monster.EntityId == floor.MonsterEntityId && monster.Alive),

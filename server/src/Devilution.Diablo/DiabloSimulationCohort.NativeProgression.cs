@@ -6,7 +6,8 @@ public sealed partial class DiabloSimulation
         DiabloSimulationOptions options, DiabloCohortState state)
     {
         if (state.FormatVersion is not (DiabloCohortState.NativeProgressionFormatVersion
-                or DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion)) {
+                or DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion
+                or DiabloCohortState.NativeCatacombsProgressionFormatVersion)) {
             if (options.NativeProgression is not null)
                 throw new InvalidDataException("The native progression profile requires its separate cohort schema.");
             return options;
@@ -29,7 +30,16 @@ public sealed partial class DiabloSimulation
         var definition = trusted.NativeProgression!;
         if (definition.Fingerprint != state.NativeProgression.RunFingerprint)
             throw new InvalidDataException("Fresh native run activation changed its stable identity.");
+        var catacombs = new List<AuthoritativeCatacombsNativePopulationBuild>();
         foreach (var entry in state.NativeProgression.Entries) {
+            if (definition.IsCatacombs(entry.LevelId)) {
+                var build = definition.RestoreCatacombs(entry);
+                var floor = fresh.Simulation.WorldState.PrepareNativeCatacombsFloorAdmission(build,
+                    trusted.Items!, trusted.Spells!, definition.CatacombsMissiles!, []);
+                fresh.Simulation.WorldState.CommitNativeProgressionEntry(new DiabloWorldState.NativeProgressionAdmission(null, floor), entry);
+                catacombs.Add(build);
+                continue;
+            }
             var generated = definition.Restore(entry);
             var door = definition.GetDoor(entry.LevelId, trusted.CathedralDoors!);
             var admission = fresh.Simulation.WorldState.PrepareNativeFloorAdmission(generated, door,
@@ -38,7 +48,7 @@ public sealed partial class DiabloSimulation
         }
         fresh.Simulation.WorldState.RegenerateNativeTownForCohort(state.NativeTown);
         trusted.NativeTownRestore = state.NativeTown;
-        trusted.NativeProgressionRestore = fresh.Simulation.WorldState.CaptureNativeProgressionOwners();
+        trusted.NativeProgressionRestore = fresh.Simulation.WorldState.CaptureNativeProgressionOwners(catacombs);
         return trusted;
     }
 }

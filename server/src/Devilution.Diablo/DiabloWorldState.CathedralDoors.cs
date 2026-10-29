@@ -190,7 +190,8 @@ public sealed partial class DiabloWorldState
         if ((World?.Levels ?? []).Concat(projectedLevels.Values).Any(level =>
             level.NativeSpecialLayer.Count != 0
                 && cathedralDoorCatalog?.Definitions.Any(value => value.LevelId == level.LevelId) != true
-                && !IsOwnedNativeTownLevel(level)))
+                && !IsOwnedNativeTownLevel(level)
+                && FindLevelState(level.LevelId)?.CatacombsDoorOwner is null))
             throw new InvalidDataException("Special-layer persistence requires a mapped versioned capability.");
     }
 

@@ -128,6 +128,14 @@ public sealed class NativeSourceExportReferenceTests
         using (archive) {
             var assets = Path.GetDirectoryName(TextDataRoot())!;
             var tables = NativeSourceExport.CreateCatacombsTables(archive, assets, cathedral);
+            // Since 2.2a the export also carries the l2.amp automap, which the native pack does not.
+            var automap = tables.Where(table => AuthoritativeCatacombsAutomapMetadata.TableNames.Contains(table.SourcePath)).ToArray();
+            Assert.Equal(AuthoritativeCatacombsAutomapMetadata.TableNames, automap.Select(table => table.SourcePath));
+            _ = AuthoritativeCatacombsAutomapMetadata.Load(new ContentPack(AuthoritativeCatacombsAutomapMetadata.CatalogId,
+                AuthoritativeCatacombsAutomapMetadata.SchemaVersion, automap,
+                schema: new ContentSchemaIdentity(AuthoritativeCatacombsAutomapMetadata.SchemaId,
+                    AuthoritativeCatacombsAutomapMetadata.SchemaVersion)));
+            tables = tables.Except(automap).ToArray();
             Assert.Equal(AuthoritativeCatacombsPopulationMetadata.TableNames, tables.Select(table => table.SourcePath));
             foreach (var table in tables)
                 Assert.True(File.ReadAllText(Path.Combine(reference!, table.SourcePath)) == table.ToCanonicalTsv()

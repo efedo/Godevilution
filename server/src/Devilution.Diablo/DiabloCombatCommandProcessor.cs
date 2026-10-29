@@ -40,6 +40,8 @@ public sealed partial class DiabloCombatCommandProcessor
     private readonly DeterministicEntityIdAllocator projectileEntityIds = new(0x80000000);
     private DiabloCommandCallbackPhase currentCommandCallbackPhase;
     private AuthoritativePlayerState? commandCallbackPlayer;
+    /** Players whose step ended on a trigger while their native path continued this tick. */
+    private readonly HashSet<AuthoritativePlayerState> deferredLevelTriggers = new(ReferenceEqualityComparer.Instance);
 
     private const uint FastHitRecoveryFlag = 1U << 21;
     private const uint FasterHitRecoveryFlag = 1U << 22;
@@ -455,6 +457,7 @@ public sealed partial class DiabloCombatCommandProcessor
         activePlayers = players;
 
         world.AdvancePortals(tick);
+        deferredLevelTriggers.Clear();
         var events = new List<DiabloDirectedGameplayEvent>();
         var completedPriorModes = new bool[players.Count];
         for (var index = 0; index < players.Count; index++) {
@@ -476,6 +479,7 @@ public sealed partial class DiabloCombatCommandProcessor
                         completedPriorModes[index] ? 2 : 1),
                     events);
             }
+            ResolveDeferredLevelTrigger(player, tick, players, events);
         }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
@@ -501,6 +505,7 @@ public sealed partial class DiabloCombatCommandProcessor
         activePlayers = players;
 
         world.AdvancePortals(tick);
+        deferredLevelTriggers.Clear();
         var events = new List<DiabloDirectedGameplayEvent>();
         foreach (var player in players) {
             AdvancePlayerEquipmentDamage(player, tick, players, events);
@@ -536,11 +541,20 @@ public sealed partial class DiabloCombatCommandProcessor
                 AddDirectedEvents(player,
                     worldCommands.AdvanceNativeWalkContinuation(
                         player, tick, players, completedPriorMode ? 2 : 1), events);
+            ResolveDeferredLevelTrigger(player, tick, players, events);
         }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
         AdvanceProjectiles(tick, players, events);
         return events;
+    }
+
+    /** Fires a deferred stair only when the path did not continue, as native CheckTriggers does. */
+    private void ResolveDeferredLevelTrigger(AuthoritativePlayerState player, ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players, ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (deferredLevelTriggers.Remove(player) && player.CurrentAction is null && worldCommands is not null)
+            AddDirectedEvents(player, worldCommands.ExecuteLevelTrigger(player, tick, players), events);
     }
 
     private static bool IsReadyRepeat(AuthoritativePlayerState player, ulong tick)

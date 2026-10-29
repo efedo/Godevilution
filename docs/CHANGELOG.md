@@ -7,6 +7,15 @@ contracts stay in their existing guides.
 
 ## 2026-10-28
 
+- Descend to L5–L8 (batch 2.2a, server): the Catacombs pack (1.1.0) adds the `l2.amp`
+  automap; the native Town run continues by stairs to L8 under run identity
+  `native-town-l1-l8-v1`, generating Catacombs floors on first entry for all three
+  classes. Cohort format 12 saves their doors, Gargoyle phases, ranged actions and
+  Arrows. 1.0.0 profiles keep the L1–L4 run and format 11. A stair crossed mid-path
+  no longer changes level: like native CheckTriggers, it fires only once the walk
+  stops there. The protocol envelope cap is 4 MiB, since snapshots carry every
+  entered level's geometry (about 1.2 MB at L8).
+
 - Catacombs in the profile (batch 2.1): setup builds the L5–L8 metadata (L2 geometry,
   levels 5–8 rules, L8 books) from the archive into the all-class profile as a fifth
   pack; the server exposes it as `NativeCatacombsMetadata`. Older profiles still load.

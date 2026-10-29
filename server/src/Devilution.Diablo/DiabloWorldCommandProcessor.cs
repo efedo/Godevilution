@@ -566,7 +566,7 @@ public sealed class DiabloWorldCommandProcessor
 
         if (entry is { } first) {
             world.CommitNativeProgressionEntry(first.Admission, first.Entry);
-            random.Restore(first.Admission.Build.Generated.Population.FinalRandomState);
+            random.Restore(first.Admission.FinalRandomState);
         }
         var sourceLevelId = player.LevelId;
         player.NativeWalkPath = null;

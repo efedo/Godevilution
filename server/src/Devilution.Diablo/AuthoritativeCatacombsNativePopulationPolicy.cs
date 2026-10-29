@@ -35,13 +35,13 @@ internal sealed class AuthoritativeCatacombsNativePopulationPolicy
             || ready.State.ActiveMonsterCount != monsters.SharedRuntime.ActiveMonsterCount
             || ready.State.ActiveObjectCount != objects.Count
             || monsters.Depth != depth || monsters.LevelId != levelId
-            || !characterStart.HasCompiledTable || characterStart.ClassId is not (0 or 2)
+            || !characterStart.HasCompiledTable || characterStart.ClassId is not (0 or 1 or 2)
             || request.Hero.IdleFrames != characterStart.Hero.IdleFrames)
             throw new InvalidDataException("Native Catacombs ownership requires one qualified class-bound, prepared L5-L8 floor.");
 
-        var sourceClass = characterStart.ClassId == 0 ? "warrior" : "sorcerer";
+        var sourceClass = characterStart.ClassId switch { 0 => "warrior", 1 => "rogue", _ => "sorcerer" };
         if (!string.Equals(characterStart.ClassSymbol, sourceClass, StringComparison.Ordinal))
-            throw new InvalidDataException("Native Catacombs class identity must be the qualified Warrior or Sorcerer.");
+            throw new InvalidDataException("Native Catacombs class identity must be the qualified Warrior, Rogue or Sorcerer.");
 
         Depth = depth;
         LevelId = levelId;

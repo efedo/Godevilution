@@ -313,8 +313,8 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
         if (options.RequireExternalContentCatalogs && options.NativeMissileSprites is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires an external native-missile sprite catalog.");
-        if ((options.NativeTown is not null) != (options.NativeProgression?.CohortFormatVersion
-                == DiabloCohortState.NativeTownProgressionFormatVersion)
+        if ((options.NativeTown is not null) != (options.NativeProgression?.CohortFormatVersion is
+                DiabloCohortState.NativeTownProgressionFormatVersion or DiabloCohortState.NativeCatacombsProgressionFormatVersion)
             || options.NativeTown is not null && options.NativePopulationPolicy is null
             || options.NativeTownRestore is not null && options.NativeTown is null)
             throw new InvalidDataException("Native Town requires the complete explicit version-11 progression capability.");

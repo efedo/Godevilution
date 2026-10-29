@@ -118,11 +118,19 @@ public sealed partial record DiabloCohortState(
     public const int NativeProgressionFormatVersion = 9;
     public const int NativeDepthProgressionFormatVersion = 10;
     public const int NativeTownProgressionFormatVersion = 11;
+    /** Batch 2.2a: the Town run with Catacombs floors L5-L8. */
+    public const int NativeCatacombsProgressionFormatVersion = 12;
 
     /** Explicit native Town backing; absent from every earlier cohort schema. */
     public DiabloNativeTownCheckpoint? NativeTown { get; init; }
 
     public DiabloNativeProgressionCheckpoint? NativeProgression { get; init; }
+
+    /** Mutable Catacombs owner state; present only in v12. */
+    public DiabloNativeCatacombsCheckpoint? NativeCatacombs { get; init; }
+
+    /** Set only while v12 delegates its inherited rules to the v11 and v10 validators. */
+    private bool CatacombsFloorsAllowed { get; init; }
 
     /** Required in v2, optional in native-initialization v3, forbidden in v1. */
     public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
@@ -142,6 +150,17 @@ public sealed partial record DiabloCohortState(
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
+        if (FormatVersion == NativeCatacombsProgressionFormatVersion) {
+            // v12 adds floors 5-8 to the v11 run; their mutable owner state is checked here.
+            (this with { FormatVersion = NativeTownProgressionFormatVersion, NativeCatacombs = null, CatacombsFloorsAllowed = true })
+                .ValidateShape();
+            (NativeCatacombs ?? throw new InvalidDataException("Catacombs cohorts require their owner checkpoint."))
+                .ValidateShape(NativeProgression!.Entries.Select(entry => entry.LevelId)
+                    .Where(AuthoritativeCatacombsNativeDepths.Owns).ToHashSet());
+            return;
+        }
+        if (NativeCatacombs is not null)
+            throw new InvalidDataException("Catacombs owner state cannot be down-converted to an older cohort.");
         if (FormatVersion == NativeTownProgressionFormatVersion) {
             (NativeTown ?? throw new InvalidDataException("Native Town cohorts require their complete backing checkpoint."))
                 .ValidateShape();
@@ -172,7 +191,15 @@ public sealed partial record DiabloCohortState(
             or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion or NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion) {
             if (CathedralItems is null)
                 throw new InvalidDataException("Native item cohorts require their complete item pools.");
-            CathedralItems.ValidateShape();
+            if (CatacombsFloorsAllowed)
+                // v12 levels carry their family; the restored owners recheck each context.
+                AuthoritativeCathedralItemRuntime.ValidateCheckpointShape(CathedralItems, (CathedralItems.Levels ?? [])
+                    .Where(level => level is not null).DistinctBy(level => level.LevelId)
+                    .ToDictionary(level => level.LevelId, level => AuthoritativeCatacombsNativeDepths.Owns(level.LevelId)
+                        ? AuthoritativeNativeDungeonFamilyContext.Catacombs(level.Depth)
+                        : AuthoritativeNativeDungeonFamilyContext.Cathedral(level.Depth)));
+            else
+                CathedralItems.ValidateShape();
             if (Configuration.CathedralItemMetadataFingerprint != CathedralItems.MetadataFingerprint
                 || Configuration.CathedralItemGenerationFingerprint != CathedralItems.GenerationFingerprint)
                 throw new InvalidDataException("Native item cohorts have conflicting metadata or generation identities.");
@@ -249,11 +276,13 @@ public sealed partial record DiabloCohortState(
         if (CombatTargets.Any(target => target is null || target.Monster is null
             || target.Drop is not null && target.Drop.State is null))
             throw new InvalidDataException("A Diablo cohort contains an incomplete combat target.");
-        if (CombatTargets.Any(target => target.NativeInitialization is { CatacombsDepth: not 0 }
+        if (!CatacombsFloorsAllowed && CombatTargets.Any(target => target.NativeInitialization is { CatacombsDepth: not 0 }
                 or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
             || target.Monster.NativeMeleeCursor is { UsesSpecialAttack: true }))
             throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         var nativeSlots = new HashSet<(uint Level, int Slot)>();
+        // v12 Catacombs actors share one C2 metadata identity; their floor owners bind it on restore.
+        string? catacombsMetadata = null;
         foreach (var target in CombatTargets) {
             if (target.Monster.NativeInitializationPresent != (target.NativeInitialization is not null))
                 throw new InvalidDataException("Native monster policy is missing its initialization provenance.");
@@ -267,7 +296,8 @@ public sealed partial record DiabloCohortState(
                     && FormatVersion != NativeCombatFormatVersion && FormatVersion != NativeSarcophagusFormatVersion
                     && FormatVersion != NativeBarrelFormatVersion && FormatVersion != NativeTrapFormatVersion && FormatVersion != NativeProgressionFormatVersion
                     && FormatVersion != NativeDepthProgressionFormatVersion)
-                || native.MetadataFingerprint != Configuration.NativeMonsterMetadataFingerprint
+                || native.MetadataFingerprint != (native.CatacombsDepth == 0 ? Configuration.NativeMonsterMetadataFingerprint
+                    : catacombsMetadata ??= native.MetadataFingerprint)
                 || !nativeSlots.Add((target.Monster.LevelId, native.InitialState.Slot)))
                 throw new InvalidDataException("Native monster initialization conflicts with cohort metadata or slots.");
         }

@@ -158,6 +158,43 @@ public sealed partial class DiabloCohortCodecTests
         Assert.Equal(nativeCombatBaseline, codec.Serialize(explicitDefault));
     }
 
+    [Fact]
+    public void FormatTwelveAloneCarriesCatacombsFloorState()
+    {
+        var checkpoint = new DiabloNativeCatacombsCheckpoint([], [], [], []);
+        for (var formatVersion = 1; formatVersion <= DiabloCohortState.NativeTownProgressionFormatVersion; formatVersion++) {
+            var downConverted = Assert.Throws<InvalidDataException>(() => codec.Serialize(
+                CreateState() with { FormatVersion = formatVersion, NativeCatacombs = checkpoint }));
+            Assert.Equal("Catacombs floor state cannot be down-converted to an older cohort.", downConverted.Message);
+            var unknown = Assert.Throws<InvalidDataException>(() => codec.Deserialize(new JsonObject {
+                ["FormatVersion"] = formatVersion,
+                ["NativeCatacombs"] = null,
+            }.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'NativeCatacombs'.", unknown.Message);
+        }
+
+        var missing = Assert.Throws<InvalidDataException>(() => codec.Serialize(
+            CreateState() with { FormatVersion = DiabloCohortState.NativeCatacombsProgressionFormatVersion }));
+        Assert.Equal("Catacombs cohorts require complete native Town and Catacombs owners.", missing.Message);
+
+        // v12 admits the C2 owner and actor fields that every older schema refuses.
+        var owner = Assert.Throws<InvalidDataException>(() => codec.Deserialize(new JsonObject {
+            ["FormatVersion"] = DiabloCohortState.NativeCatacombsProgressionFormatVersion,
+            ["NativeCatacombs"] = new JsonObject {
+                ["Arrows"] = new JsonArray(), ["Doors"] = new JsonArray(),
+                ["MonsterPhases"] = new JsonArray(), ["RangedActions"] = new JsonArray(),
+            },
+        }.ToJsonString()));
+        Assert.Equal("The DiabloCohortState cohort object is missing required fields.", owner.Message);
+        var actor = Assert.Throws<InvalidDataException>(() => codec.Deserialize(MinimalCohort(
+            DiabloCohortState.NativeCatacombsProgressionFormatVersion, new JsonObject {
+                ["NativeInitialization"] = new JsonObject {
+                    [nameof(AuthoritativeNativeMonsterInitialization.CatacombsDepth)] = 5,
+                },
+            }).ToJsonString()));
+        Assert.Equal("The AuthoritativeNativeMonsterInitialization cohort object is missing required fields.", actor.Message);
+    }
+
     private IEnumerable<DiabloCohortState> CatacombsActorStates(int formatVersion)
     {
         var native = NativeState(0, 1) with { FormatVersion = formatVersion };

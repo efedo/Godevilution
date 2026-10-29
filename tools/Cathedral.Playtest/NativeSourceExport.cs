@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using Devilution.Data;
@@ -26,6 +27,7 @@ public static class NativeSourceExport
     public const string MetadataDirectoryName = "population-metadata";
     public const string TownSourceDirectoryName = "town";
     public const string CatacombsMetadataDirectoryName = "catacombs-population-metadata";
+    public const string CatacombsAutomapPath = "levels\\l2data\\l2.amp";
     private const string OpenTownMap = "automap.dun";
 
     /** The 19 Cathedral population metadata source tables (--compile-population-metadata input). */
@@ -52,7 +54,7 @@ public static class NativeSourceExport
 
     /**
      * The Catacombs (L5-L8) metadata tables: archive L2 geometry, the Cathedral
-     * monster, object, unique, item and shrine tables, levels 5-8 rules and the L8 books.
+     * monster, object, unique, item and shrine tables, levels 5-8 rules, the L8 books and the l2.amp automap.
      */
     public static IReadOnlyList<TsvTable> CreateCatacombsTables(MpqArchive archive, string assetsRoot,
         AuthoritativeCathedralPopulationMetadata cathedral)
@@ -61,10 +63,17 @@ public static class NativeSourceExport
         var (geometry, til, sol) = NativeSourceGeometryExport.ReadCatacombs(archive);
         var textData = Path.Combine(assetsRoot, "txtdata");
         var story = File.ReadAllBytes(Path.Combine(textData, "text", "textdat.tsv"));
-        return AuthoritativeCatacombsPopulationMetadata.CreateTables(geometry.Catalog, geometry.EffectivePieceProperties,
+        // InitAutomap, DTYPE_CATACOMBS: l2.amp holds one packed little-endian word per L2 mega tile.
+        var amp = archive.ReadFile(CatacombsAutomapPath);
+        if (amp.Length != AuthoritativeCatacombsAutomapMetadata.SourceWordCount * sizeof(ushort))
+            throw new InvalidDataException("Catacombs l2.amp must hold one word per L2 mega tile.");
+        var words = Enumerable.Range(0, amp.Length / sizeof(ushort))
+            .Select(index => BinaryPrimitives.ReadUInt16LittleEndian(amp.AsSpan(index * sizeof(ushort)))).ToArray();
+        return [.. AuthoritativeCatacombsPopulationMetadata.CreateTables(geometry.Catalog, geometry.EffectivePieceProperties,
             Sha256(til), Sha256(sol), cathedral.Population.Monsters, cathedral.Population.Objects,
             cathedral.UniqueMonsters.Definitions, cathedral.Items.Catalog, NativeSourceRuleExport.CatacombsDepthRules(textData),
-            NativeSourceRuleExport.CatacombsStoryMessages(textData), story.Length, Sha256(story), cathedral.ShrineAvailable);
+            NativeSourceRuleExport.CatacombsStoryMessages(textData), story.Length, Sha256(story), cathedral.ShrineAvailable),
+            .. AuthoritativeCatacombsAutomapMetadata.CreateTables(words, Sha256(amp))];
     }
 
     private static string Sha256(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

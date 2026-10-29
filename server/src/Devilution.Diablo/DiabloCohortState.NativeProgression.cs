@@ -6,6 +6,28 @@ public sealed record DiabloNativeProgressionCheckpoint(
     IReadOnlyList<DiabloNativeFloorEntry> Entries,
     IReadOnlyList<AuthoritativeNativeInitialSpecialStand> InitialSpecialStand);
 
+/** Mutable Catacombs owner state for the v12 run; door geometry is reapplied from Doors. */
+public sealed record DiabloNativeCatacombsCheckpoint(
+    IReadOnlyList<AuthoritativeCatacombsDoorState> Doors,
+    IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase> MonsterPhases,
+    IReadOnlyList<AuthoritativeNativeCatacombsRangedAction> RangedActions,
+    IReadOnlyList<AuthoritativeNativeCatacombsArrowState> Arrows)
+{
+    internal void ValidateShape(IReadOnlySet<uint> levels)
+    {
+        if (Doors is null || MonsterPhases is null || RangedActions is null || Arrows is null
+            || Doors.Any(value => value is null || !levels.Contains(value.LevelId))
+            || MonsterPhases.Any(value => value is null || !levels.Contains(value.LevelId))
+            || RangedActions.Any(value => value is null || !levels.Contains(value.LevelId))
+            || Arrows.Any(value => value is null || !levels.Contains(value.LevelId)))
+            throw new InvalidDataException("Catacombs owner state must belong to entered Catacombs floors.");
+        foreach (var phase in MonsterPhases)
+            phase.ValidateShape();
+        foreach (var action in RangedActions)
+            action.ValidateShape();
+    }
+}
+
 public sealed partial record DiabloCohortState
 {
     private void ValidateNativeWalkPathShape()
@@ -79,14 +101,18 @@ public sealed partial record DiabloCohortState
         }
         var run = NativeProgression
             ?? throw new InvalidDataException("A native progression cohort requires its explicit run checkpoint.");
-        var allowedEntries = nativeDepthProgression ? 3 : 1;
+        var deepest = CatacombsFloorsAllowed ? AuthoritativeCatacombsNativeDepths.LastDepth
+            : AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth;
+        var allowedEntries = nativeDepthProgression ? deepest - 1 : 1;
         if (!AuthoritativeNativeMonsterInitialization.IsFingerprint(run.RunFingerprint)
             || run.Entries is null || run.InitialSpecialStand is null
             || run.Entries.Count > allowedEntries)
             throw new InvalidDataException("Native first-entry contexts require exact supported floor identities and unique history.");
         var expectedEntryLevels = Enumerable.Range(2, run.Entries.Count).Select(value => (uint)value).ToArray();
         if (!run.Entries.Select(entry => entry?.LevelId ?? 0U).SequenceEqual(expectedEntryLevels)
-            || run.Entries.Any(entry => entry is null || entry.LevelId is < 2 or > 4 || entry.Hero is null
+            || run.Entries.Any(entry => entry is null || entry.LevelId < 2 || entry.LevelId > deepest || entry.Hero is null
+                || (entry.CatacombsLifeQ6 is > 0) != AuthoritativeCatacombsNativeDepths.Owns(entry.LevelId)
+                || entry.CatacombsLifeQ6 is <= 0
                 || !AuthoritativeNativeMonsterInitialization.IsFingerprint(entry.GenerationFingerprint)
                 || entry.InitialUniqueItemFlags is null
                 || entry.InitialUniqueItemFlags.Any(flag => flag is < 0 or >= 128)
@@ -95,7 +121,8 @@ public sealed partial record DiabloCohortState
         var owned = new[] { 1U }.Concat(run.Entries.Select(entry => entry.LevelId)).ToArray();
         if (CathedralItems is null || CathedralDoors is null
             || !CathedralItems.Levels.Select(level => level.LevelId).SequenceEqual(owned)
-            || !CathedralDoors.DoorLevels.Select(level => level.LevelId).SequenceEqual(owned))
+            || !CathedralDoors.DoorLevels.Select(level => level.LevelId)
+                .SequenceEqual(owned.Where(level => !AuthoritativeCatacombsNativeDepths.Owns(level))))
             throw new InvalidDataException("A native run must retain every visited floor's item and door owners.");
         if (run.InitialSpecialStand.Any(value => value is null)
             || !run.InitialSpecialStand.SequenceEqual(run.InitialSpecialStand
@@ -114,7 +141,8 @@ public sealed partial record DiabloCohortState
                 continue;
             }
             if (target.NativeInitialization is not { } native
-                || native.InitialState.Mode != 11 || native.InitialState.Ai != 2
+                || native.InitialState.Mode != 11
+                || native.InitialState.Ai != 2 && !(native.InitialState.Ai == 3 && AuthoritativeCatacombsNativeDepths.Owns(phase.LevelId))
                 || native.Binding.NativeSlot != phase.NativeSlot || native.Binding.LevelId != phase.LevelId
                 || target.Monster.LevelId != phase.LevelId || native.SpecialAttackEffectFrame != 0
                 || !phase.Completed && (target.Monster.Moving || target.Monster.HitPointsQ6 <= 0

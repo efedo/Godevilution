@@ -7,7 +7,8 @@ param(
     [switch]$CommandTimingTrace,
     # All-class profile only: the deepest floor this test reaches, and the played-character
     # definition that starts it (tools/native-test-heroes); a fresh Warrior when omitted.
-    [ValidateRange(1, 4)] [int]$TargetDepth = 4,
+    # L5-L8 are entered and retained but not drawn or fought natively yet.
+    [ValidateRange(1, 8)] [int]$TargetDepth = 4,
     [string]$TestParticipant,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
     [switch]$Visible
@@ -73,13 +74,15 @@ if ($allClass) {
         [string]::Join(',', [string[]]@($route.Floors | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', 1..$TargetDepth) -or
         $route.Sequence -ne $journey.Sequence -or [string]$route.PlayerPayload -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or
         [string]$route.WorldHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or
-        @($route.Floors | Where-Object { [string]$_.GeometryHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or
-            $_.MonsterEntityId -le 0 -or $_.ExperienceAfter -le $_.ExperienceBefore -or $_.Attacks -le 0 }).Count -ne 0) {
+        @($route.Floors | Where-Object { [string]$_.GeometryHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or ($_.LevelId -le 4 -and (
+            $_.MonsterEntityId -le 0 -or $_.ExperienceAfter -le $_.ExperienceBefore -or $_.Attacks -le 0)) -or
+            ($_.LevelId -gt 4 -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
     # Town, each floor on first entry, and Town again, each drawn with native scene layers.
     $draws = @($journey.NativeDraws)
-    if ([string]::Join(',', [string[]]@($draws | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', @(0) + @(1..$TargetDepth) + @(0)) -or
+    $drawnDepth = [Math]::Min($TargetDepth, 4)
+    if ([string]::Join(',', [string[]]@($draws | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', @(0) + @(1..$drawnDepth) + @(0)) -or
         @($draws | Where-Object { $_.FloorDraws -le 0 -or $_.ContentDraws -le 0 -or $_.ActorDraws -le 0 }).Count -ne 0 -or
         $journey.Visible -ne [bool]$Visible -or
         ($Visible -and @($draws | Where-Object { -not $_.Capture -or

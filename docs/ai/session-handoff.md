@@ -48,6 +48,51 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.2a Descend to L5-L8 (done)
+
+2.2 is split along its playable seam: 2.2a single-player descent and resume,
+2.2b the multiplayer rules, clvl 8 Town warp and two-client L5 smoke.
+
+- **Player-visible outcome:** on the default profile any class takes the L4 down
+  stair to L5 and on to L8 and back up; each floor generates on first entry,
+  saves, and resumes on a fresh host. L5-L8 are not drawn natively yet (2.3).
+- **Native source:** `diablo.cpp` LoadGameLevel/`CreateLevel` for DTYPE_CATACOMBS
+  (seeds from `glSeedTbl`); `drlg_l2.cpp` stair entries (`ENTRY_MAIN`/`ENTRY_PREV`);
+  `automap.cpp` InitAutomap (`l2.amp`); `items.cpp` elixir rows for L5-L8 drops.
+- **Files and contracts owned:**
+  - setup: the Catacombs pack gains the `l2.amp` automap tables and the elixir
+    item semantics (another content identity; old saves stay in their kept profile);
+  - `AuthoritativeCatacombsNativePopulationBuilder` admits Rogue;
+  - the native progression becomes family-aware through depth 8 under a new run
+    identity: Cathedral owners for 1-4, Catacombs owners for 5-8, generated
+    L4-L8 stair routes, first-entry admission through the Catacombs admission;
+  - an additive cohort format captures and restores Catacombs doors, monster
+    phases, ranged actions and arrows from the saved first-entry contexts;
+  - the client depth journey continues past L4 (no native draw check below L4)
+    with depth-8 test heroes.
+- **Compatibility:** saves in earlier formats and profiles keep loading; a
+  profile without the new tables keeps its L1-L4 run identity.
+- **Exit check:** unit tests for the family-aware progression, the Catacombs
+  cohort round trip and old-format loads; the explicit archive reference tests;
+  headless `test-godot-native-depth-progression.ps1 -TargetDepth 8` with a
+  Warrior and a fresh-host resume on L8; a Rogue and a Sorcerer reach L5 in
+  server tests; Diablo.Tests, Server.Tests, client protocol tests and the oracle
+  consumers pass.
+- **Out of scope:** multiplayer (2.2b), Town warps including the L5 warp-up
+  (2.2b), rendering (2.3), monster AI and missiles beyond what is already
+  committed (2.4), object effects (2.5), quests.
+- **Size:** three to five days.
+- **State:** server and setup work done. Format 12 (`DiabloNativeCatacombsCheckpoint`:
+  doors, Gargoyle phases, ranged actions, Arrows) restores by regenerating each
+  first entry and reapplying saved door states. The explicit
+  `AuthoritativeCatacombsNativeProgressionTests` take all three classes
+  L1→L8, save, restore cold byte-identically and climb back. A stair crossed
+  mid-path now fires only when the walk stops on it; the envelope cap is 4 MiB.
+  The headless `-TargetDepth 8` Journey passes; its fresh-host Resume needs
+  `-ServerBuildConfiguration Release`. Open limit: the host saves the whole cohort
+  on every snapshot poll, so snapshots arrive every 1–2 s; this also makes the
+  Town held-WASD step flaky. It is being handled in its own session.
+
 ## Batch 2.1 Catacombs in the profile (done)
 
 - **Player-visible outcome:** none yet; first-run setup puts the L5-L8 generation

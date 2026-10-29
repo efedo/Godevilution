@@ -55,11 +55,13 @@ to draw both players; `-Windowed` shows the clients and saves each one's
 
 The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 `tools/test-godot-native-depth-progression.ps1 -ProfileDirectory <profile>
--TargetDepth 1..4 [-TestParticipant tools/native-test-heroes/warrior-l<n>.json]`
+-TargetDepth 1..8 [-TestParticipant tools/native-test-heroes/warrior-l<n>.json]`
 runs `NativeDepthJourney` (one XP kill per floor down to the target, Town healer
 between floors, return to Town) and the fresh-host `NativeDepthResume` (exact
-cold baseline, every floor retained). Each floor test starts from a played
-hero: a new Warrior for L1, `warrior-l2`..`warrior-l4` for deeper floors. The
+cold baseline, every floor retained). L5–L8 are entered and retained only: no
+kill or native draw check until 2.3/2.4. Until the per-poll cohort save is cheaper,
+an L8 resume needs `-ServerBuildConfiguration Release`. Each floor test starts from a played
+hero: a new Warrior for L1, `warrior-l2`..`warrior-l4` and `warrior-l8` for deeper floors. The
 heroes' `basis` notes record how their level, attributes and gear were chosen.
 `--test-participant <file>` (launcher `-TestParticipantPath`, automated native
 acceptance only) replaces the class start's level, experience, attributes,

@@ -9,6 +9,25 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-28 — Descend to L5–L8 (server)
+
+The explicit `AuthoritativeCatacombsNativeProgressionTests` took a Warrior, Rogue
+and Sorcerer from L1 to L8 by stairs on the rebuilt all-class profile, saved
+format 12, restored on a fresh candidate with byte-identical recapture and climbed
+back to L1. `PathThroughTheUpStairReachesTheNextCatacombsDepth` fails without the
+mid-path stair fix. Diablo.Tests and Server.Tests pass apart from the expected
+worker-pool documentation test and a timing flake that passes alone; client
+protocol tests and the 132 oracle consumers pass (the MPQ capture needs
+`spawn.mpq`, run in CI); `NativeSourceExportReferenceTests` (explicit, 6) pass.
+
+Headless `-TargetDepth 8` with `warrior-l8` passed its Journey (Town→L8→Town) on
+the Debug server. Its fresh-host Resume was refused `TooLate` on every command with
+the Debug server and passed with `-ServerBuildConfiguration Release`. The command
+timing trace showed snapshots every 1–2 s: the host captures and saves the whole
+cohort (6.7 MB at activation, 18 MB at L8, about 0.4 s to capture and serialize in
+Debug) on every snapshot poll. The same delay makes the Town held-WASD step fail
+about half the time (commands are scheduled 1–2.4 s ahead).
+
 ### 2026-10-28 — Catacombs inputs in the profile
 
 `NativeSourceExportReferenceTests` (explicit) matched the archive-built L5–L8 tables

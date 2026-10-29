@@ -70,7 +70,7 @@ public sealed partial class DiabloWorldState
         ArgumentNullException.ThrowIfNull(missile);
         var bindings = RequireNativeCatacombsRangedBindings(source);
         if (NativeCatacombsRangedMissiles(bindings.LevelId) is null
-            || nativePopulationParticipantClassId is not (0 or 2)
+            || nativePopulationParticipantClassId is not (0 or 1 or 2)
             || Projectiles.ContainsKey(projectile.EntityId)
             || nativeCatacombsArrows.ContainsKey(projectile.EntityId)
             || projectile.LevelId != bindings.LevelId
@@ -86,6 +86,21 @@ public sealed partial class DiabloWorldState
             requireRegistered: false);
         Projectiles.Add(projectile.EntityId, projectile);
         nativeCatacombsArrows.Add(projectile.EntityId, state);
+    }
+
+    /** Rebinds saved in-flight Arrows to their restored projectiles on a configured floor. */
+    internal void RestoreNativeCatacombsArrows(AuthoritativeNativePopulationBindings bindings,
+        IReadOnlyList<AuthoritativeNativeCatacombsArrowState> saved)
+    {
+        ArgumentNullException.ThrowIfNull(bindings);
+        ArgumentNullException.ThrowIfNull(saved);
+        if (nativeCatacombsArrows.Values.Any(value => value.LevelId == bindings.LevelId))
+            throw new InvalidOperationException("Catacombs Arrows are restored once per owned floor.");
+        foreach (var state in saved) {
+            ValidateNativeCatacombsArrow(state, bindings, requireRegistered: false);
+            nativeCatacombsArrows.Add(state.ProjectileEntityId, state with { });
+        }
+        ValidateNativeCatacombsArrows(bindings);
     }
 
     internal bool TryGetNativeCatacombsArrow(

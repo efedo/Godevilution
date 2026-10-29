@@ -10,7 +10,8 @@ public sealed partial class DiabloWorldState
         => nativeProgression?.CohortFormatVersion
             ?? throw new InvalidOperationException("Native progression is not configured.");
     internal bool SupportsNativeTargetCellPathing
-        => nativeProgression?.CohortFormatVersion is DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion;
+        => nativeProgression?.CohortFormatVersion is DiabloCohortState.NativeDepthProgressionFormatVersion
+            or DiabloCohortState.NativeTownProgressionFormatVersion or DiabloCohortState.NativeCatacombsProgressionFormatVersion;
     internal int NativePopulationDepth(uint levelId)
         => NativePopulationForLevel(levelId)?.Depth
             ?? throw new InvalidDataException("Native gameplay requires its exact owned floor depth.");
@@ -26,12 +27,27 @@ public sealed partial class DiabloWorldState
     internal bool CanEnterNativePopulationLevel(uint levelId)
         => AllowsNativePopulationLevel(levelId) || nativeProgression?.Supports(levelId) == true;
 
-    internal (NativeFloorAdmission Admission, DiabloNativeFloorEntry Entry)? PrepareNativeProgressionEntry(
+    /** A prepared first entry of either native family; exactly one admission is set. */
+    internal sealed record NativeProgressionAdmission(NativeFloorAdmission? Cathedral, NativeCatacombsFloorAdmission? Catacombs)
+    {
+        internal DiabloWorldState Floor => Cathedral?.Floor ?? Catacombs!.Floor;
+        internal uint FinalRandomState => Cathedral?.Build.Generated.Population.FinalRandomState
+            ?? Catacombs!.Build.Ready.Request.FreshLevel.Population.FinalRandomState;
+        internal uint LevelId => Cathedral?.Build.Policy.LevelId ?? Catacombs!.Build.Policy.Bindings.LevelId;
+        internal string GenerationFingerprint => Cathedral?.Build.Policy.Fingerprint ?? Catacombs!.Build.Policy.Fingerprint;
+    }
+
+    internal (NativeProgressionAdmission Admission, DiabloNativeFloorEntry Entry)? PrepareNativeProgressionEntry(
         AuthoritativePlayerState player, uint levelId, IReadOnlyList<AuthoritativePlayerState> players,
         AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells)
     {
         if (OwnsNativePopulationLevel(levelId) || levelId == 0 || nativeProgression is null)
             return null;
+        if (nativeProgression.IsCatacombs(levelId)) {
+            var catacombs = nativeProgression.PrepareCatacombs(levelId, player, cathedralItems!.UniqueItemFlags);
+            return (new(null, PrepareNativeCatacombsFloorAdmission(catacombs.Build, items, spells,
+                nativeProgression.CatacombsMissiles!, players)), catacombs.Entry);
+        }
         var prepared = nativeProgression.Prepare(levelId, player, cathedralItems!.UniqueItemFlags);
         // The new floor has a complete allowlist independent of carried item state.
         foreach (var item in player.Inventory.Select(value => value.State)
@@ -43,37 +59,66 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("A native floor entry cannot admit an unbound carried item.");
         }
         var door = nativeProgression.GetDoor(levelId, cathedralDoorCatalog!);
-        return (PrepareNativeFloorAdmission(prepared.Build, door, items, spells, players), prepared.Entry);
+        return (new(PrepareNativeFloorAdmission(prepared.Build, door, items, spells, players), null), prepared.Entry);
     }
 
-    internal void CommitNativeProgressionEntry(NativeFloorAdmission admission, DiabloNativeFloorEntry entry)
+    internal void CommitNativeProgressionEntry(NativeProgressionAdmission admission, DiabloNativeFloorEntry entry)
     {
         if (nativeProgression is null || FindLevelState(entry.LevelId)?.FloorEntry is not null
-            || entry.LevelId != admission.Build.Policy.LevelId
-            || entry.GenerationFingerprint != admission.Build.Policy.Fingerprint)
+            || entry.LevelId != admission.LevelId
+            || entry.GenerationFingerprint != admission.GenerationFingerprint)
             throw new InvalidOperationException("A native floor entry lost its configured run or immutable generation identity.");
-        CommitNativeFloorAdmission(admission);
+        if (admission.Cathedral is { } cathedral)
+            CommitNativeFloorAdmission(cathedral);
+        else
+            CommitNativeCatacombsFloorAdmission(admission.Catacombs!);
         Bind(ref LevelStateFor(entry.LevelId).FloorEntry, CopyFloorEntry(entry));
     }
 
-    internal NativeProgressionRestoreContext CaptureNativeProgressionOwners()
-        => new(NativePopulationOwners.Select(owner => owner.CathedralPolicy
-                ?? throw new InvalidDataException("Legacy progression cannot capture a different native family."))
+    internal void CommitNativeProgressionEntry(NativeFloorAdmission admission, DiabloNativeFloorEntry entry)
+        => CommitNativeProgressionEntry(new NativeProgressionAdmission(admission, null), entry);
+
+    internal NativeProgressionRestoreContext CaptureNativeProgressionOwners(
+        IReadOnlyList<AuthoritativeCatacombsNativePopulationBuild>? catacombs = null)
+    {
+        var floors = (catacombs ?? []).OrderBy(build => build.Policy.Bindings.LevelId).ToArray();
+        if (!NativePopulationOwners.Where(owner => owner.Family == AuthoritativeNativePopulationFamily.Catacombs)
+                .Select(owner => owner.LevelId).Order().SequenceEqual(floors.Select(build => build.Policy.Bindings.LevelId))
+            || floors.Any(build => !ReferenceEquals(NativePopulationForLevel(build.Policy.Bindings.LevelId), build.Policy.Bindings)))
+            throw new InvalidDataException("Native progression capture requires every admitted Catacombs floor build.");
+        return new(NativePopulationOwners.Where(owner => owner.Family != AuthoritativeNativePopulationFamily.Catacombs)
+                .Select(owner => owner.CathedralPolicy
+                    ?? throw new InvalidDataException("Legacy progression cannot capture a different native family."))
                 .OrderBy(policy => policy.LevelId).ToArray(), cathedralItems!.Profile,
-            cathedralDoorCatalog!, World!.CaptureGeometryState());
+            cathedralDoorCatalog!, World!.CaptureGeometryState()) { CatacombsFloors = floors };
+    }
 
     internal void RestoreNativeProgressionOwners(NativeProgressionRestoreContext owners,
         AuthoritativeCathedralNativeProgression definition, DiabloCohortState state)
     {
-        foreach (var policy in owners.Owners) {
-            ConfigureNativeSarcophagi(policy.Bindings, state.FormatVersion,
-                state.NativeSarcophagi!.Where(value => Objects[value.EntityId].LevelId == policy.LevelId).ToArray());
-            ConfigureNativeBarrels(policy.Bindings, state.FormatVersion,
-                state.NativeBarrels!.Where(value => Objects[value.EntityId].LevelId == policy.LevelId).ToArray());
-            ConfigureNativeTraps(policy.Bindings, state.FormatVersion,
-                state.NativeTraps!.Where(value => value.Facts.LevelId == policy.LevelId).ToArray());
-            ConfigureNativeInitialSpecialStand(policy.Bindings,
-                state.NativeProgression!.InitialSpecialStand.Where(value => value.LevelId == policy.LevelId).ToArray());
+        foreach (var bindings in owners.Owners.Select(policy => policy.Bindings)
+                     .Concat(owners.CatacombsFloors.Select(build => build.Policy.Bindings))) {
+            var levelId = bindings.LevelId;
+            ConfigureNativeSarcophagi(bindings, state.FormatVersion,
+                state.NativeSarcophagi!.Where(value => Objects[value.EntityId].LevelId == levelId).ToArray());
+            ConfigureNativeBarrels(bindings, state.FormatVersion,
+                state.NativeBarrels!.Where(value => Objects[value.EntityId].LevelId == levelId).ToArray());
+            ConfigureNativeTraps(bindings, state.FormatVersion,
+                state.NativeTraps!.Where(value => value.Facts.LevelId == levelId).ToArray());
+            ConfigureNativeInitialSpecialStand(bindings,
+                state.NativeProgression!.InitialSpecialStand.Where(value => value.LevelId == levelId).ToArray());
+        }
+        // Doors rebind from the restored objects and effective geometry; the rest restores from format 12.
+        var catacombs = state.NativeCatacombs;
+        foreach (var build in owners.CatacombsFloors) {
+            var bindings = build.Policy.Bindings;
+            ConfigureNativeCatacombsDoors(bindings, build.DoorCatalog,
+                catacombs!.Doors.Where(value => value.LevelId == bindings.LevelId).ToArray());
+            ConfigureNativeCatacombsMonsterPhases(build.Monsters,
+                catacombs!.MonsterPhases.Where(value => value.LevelId == bindings.LevelId).ToArray());
+            ConfigureNativeCatacombsRangedActions(bindings, definition.CatacombsMissiles!,
+                catacombs.RangedActions.Where(value => value.LevelId == bindings.LevelId).ToArray());
+            RestoreNativeCatacombsArrows(bindings, catacombs.Arrows.Where(value => value.LevelId == bindings.LevelId).ToArray());
         }
         nativePopulationLifecycleConfigured = true;
         // Item restoration follows this method; configure the run after that boundary.

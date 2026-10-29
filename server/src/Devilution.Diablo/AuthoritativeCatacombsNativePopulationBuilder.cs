@@ -62,10 +62,10 @@ internal static class AuthoritativeCatacombsNativePopulationBuilder
             || ready.Request.FreshLevel.FullPopulationRequest.InitialPopulation.Depth != depth
             || ready.Player.Level != depth || !ready.Player.Active || !ready.Player.LevelChanging)
             throw new InvalidDataException("Catacombs population requires the matching prepared ordinary L5-L8 state.");
-        if (!characterStart.HasCompiledTable || characterStart.ClassId is not (0U or 2U))
-            throw new NotSupportedException("Native Catacombs requires an explicit compiled Warrior or Sorcerer class profile.");
+        if (!characterStart.HasCompiledTable || characterStart.ClassId is not (0U or 1U or 2U))
+            throw new NotSupportedException("Native Catacombs requires an explicit compiled Warrior, Rogue or Sorcerer class profile.");
         var playerClass = playerClasses.GetRequired(characterStart.ClassId);
-        var expectedSymbol = characterStart.ClassId == 0 ? "warrior" : "sorcerer";
+        var expectedSymbol = characterStart.ClassId switch { 0 => "warrior", 1 => "rogue", _ => "sorcerer" };
         if (playerClass.Availability != DiabloPlayerClassAvailability.BaseGame
             || !string.Equals(playerClass.Symbol, expectedSymbol, StringComparison.Ordinal)
             || !string.Equals(characterStart.ClassSymbol, playerClass.Symbol, StringComparison.Ordinal))

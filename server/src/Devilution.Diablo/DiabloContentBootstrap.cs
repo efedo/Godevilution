@@ -330,7 +330,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         AuthoritativeCathedralPopulationMetadata Population,
         AuthoritativeCathedralMonsterRuntimeCatalog Runtime,
         AuthoritativeCathedralNativeItemSidecars Items,
-        TsvTable? CharacterStartTable);
+        TsvTable? CharacterStartTable,
+        TsvTable FootprintTable,
+        TsvTable SemanticsTable);
     private readonly IDiabloSimulationFactory simulationFactory;
     private readonly AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder;
 
@@ -504,7 +506,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 ? table with { SourcePath = AuthoritativeCathedralNativeCharacterStart.TableName }
                 : null;
         return new(population, runtime,
-            AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable), characterStartTable);
+            AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable), characterStartTable,
+            footprintTable, semanticsTable);
     }
 
     private static ContentPack RequireSchemaNeutralSidecar(
@@ -568,6 +571,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 WaterQuestState: AuthoritativeTownWaterQuestState.NotAvailable })
             throw new NotSupportedException("The explicit Town profile requires its original single-player quest-disabled initial context.");
         var nativePopulationSidecars = nativePopulation ? LoadNativePopulationSidecars(content) : null;
+        // Batch 2.2a: a single-player all-class Town profile with the 1.1.0 Catacombs pack continues to L8.
+        var catacombsDepths = nativeTown && nativeClassId is not null && gameMode == DiabloGameMode.SinglePlayer
+            && AuthoritativeCatacombsPopulationMetadata.LoadProfileAutomap(content.Manifest) is { } catacombsAutomap
+                ? AuthoritativeCatacombsNativeDepths.Create(
+                    AuthoritativeCatacombsPopulationMetadata.LoadProfileSidecar(content.Manifest)!, catacombsAutomap, 0x13579BDF)
+                : null;
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
         var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
         var hasGeneratedRoutes = content.TryGetTable(AuthoritativeNativeGeneratedRouteBindings.TableName, out var generatedRoutesTable);
@@ -1235,6 +1244,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             var resolved = AuthoritativeNativeGeneratedRouteBindings.Resolve(world, town, depthGenerationPlan, warps, portals ?? [], routeBindings);
             warps = resolved.Warps;
             portals = resolved.Portals;
+            if (catacombsDepths is not null) {
+                foreach (var level in catacombsDepths.Levels)
+                    world.AddLevel(level);
+                var stairs = catacombsDepths.CreateWarps(depthGenerationPlan.Candidates
+                    .Single(candidate => candidate.Level.LevelId == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth).Routes);
+                if (stairs.Any(stair => warps.Any(warp => warp.WarpId == stair.WarpId)))
+                    throw new InvalidDataException("Catacombs stair warps collide with content-owned warp identities.");
+                warps = [.. warps, .. stairs];
+            }
             cathedralDepthIdentity = new DiabloCathedralDepthWorldIdentity(
                 depthGenerationPlan.Candidates.Select(candidate => candidate.Identity).ToArray(), resolved.RouteFingerprint);
         }
@@ -1750,6 +1768,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                         TownCatalogFingerprint = nativeTownCatalog.Fingerprint,
                     });
                 }
+                Func<DiabloNativeFloorEntry, AuthoritativeCatacombsNativePopulationBuild>? buildCatacombs = null;
+                if (catacombsDepths is not null) {
+                    depthRunFingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        RunId = "native-town-l1-l8-v1", TownDepthFingerprint = depthRunFingerprint,
+                        Catacombs = catacombsDepths.Fingerprint,
+                    });
+                    var catacombsItems = AuthoritativeCathedralNativeItemSidecars.Load(sidecars.FootprintTable,
+                        AuthoritativeCatacombsNativeItemBindings.AppendElixirSemantics(sidecars.SemanticsTable,
+                            sidecars.Population.Items.Catalog, itemCatalog,
+                            AuthoritativeCathedralNativeItemSidecars.LoadFootprints(sidecars.FootprintTable)));
+                    var catacombsStart = nativeCharacterStart
+                        ?? throw new InvalidDataException("Native Catacombs requires the bound class start.");
+                    buildCatacombs = entry => catacombsDepths.Build(entry, catacombsStart, sidecars.Runtime,
+                        playerClasses, monsterTypes, itemCatalog, spells, stock, catacombsItems);
+                }
                 nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
                     depthRunFingerprint, playerAnimations, entry => {
                         if (!candidatesByLevel.TryGetValue(entry.LevelId, out var candidate))
@@ -1763,9 +1796,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                             monsterTypes, itemCatalog, spells,
                             depthDoors.Single(definition => definition.LevelId == entry.LevelId),
                             stock, sidecars.Items, request, [], nativeCharacterStart);
-                    }, nativeProgressionMaximumDepth,
-                    nativeTown ? DiabloCohortState.NativeTownProgressionFormatVersion
-                        : DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
+                    }, buildCatacombs is null ? nativeProgressionMaximumDepth : AuthoritativeCatacombsNativeDepths.LastDepth,
+                    buildCatacombs is not null ? DiabloCohortState.NativeCatacombsProgressionFormatVersion
+                        : nativeTown ? DiabloCohortState.NativeTownProgressionFormatVersion
+                        : DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors, buildCatacombs) {
+                        CatacombsMissiles = buildCatacombs is null ? null : monsterMissiles,
                         FreshActivation = () => nativeTown
                             ? nativeClassId is { } freshClassId
                                 ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownClass(content, freshClassId, randomSeed, gameMode)

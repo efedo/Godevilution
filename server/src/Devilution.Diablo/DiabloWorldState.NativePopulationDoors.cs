@@ -35,6 +35,8 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("Native restored floor owners do not match the explicit run and item registry.");
             foreach (var owner in restored.Owners)
                 Bind(ref LevelStateFor(owner.LevelId).Population, owner.Bindings);
+            foreach (var build in restored.CatacombsFloors)
+                Bind(ref LevelStateFor(build.Policy.Bindings.LevelId).Population, build.Policy.Bindings);
         } else {
             nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
         }
@@ -101,13 +103,17 @@ public sealed partial class DiabloWorldState
         DiabloCathedralDoorCheckpoint.RequireSameGeometry(trustedCathedralDoorBackingGeometry, checkpoint.BackingGeometry);
         var backing = new AuthoritativeWorld();
         backing.RestoreGeometryState(checkpoint.BackingGeometry);
-        var owners = NativePopulationOwners.OrderBy(policy => policy.LevelId).ToArray();
+        var owners = NativePopulationOwners.Where(owner => owner.Family != AuthoritativeNativePopulationFamily.Catacombs)
+            .OrderBy(policy => policy.LevelId).ToArray();
         if (!checkpoint.DoorLevels.Select(level => level.LevelId).SequenceEqual(owners.Select(owner => owner.LevelId)))
             throw new InvalidDataException("Native doors require every retained floor owner exactly once.");
         var effective = ValidateCohortEffectiveLevels(checkpoint.EffectiveLevels).ToDictionary();
         var legitimate = BuildProjectedGeometry();
         if (!effective.Keys.Order().SequenceEqual(legitimate.Keys.Order()))
             throw new InvalidDataException("Native door checkpoint changed complete level coverage.");
+        // Catacombs floors restart from generated geometry; their door owner reapplies saved states.
+        foreach (var owner in NativePopulationOwners.Where(owner => owner.Family == AuthoritativeNativePopulationFamily.Catacombs))
+            effective[owner.LevelId] = legitimate[owner.LevelId];
         foreach (var entry in effective)
             if (!owners.Any(owner => owner.LevelId == entry.Key))
                 DiabloCathedralDoorCheckpoint.RequireSameLevels(
@@ -150,7 +156,7 @@ public sealed partial class DiabloWorldState
         }
         // Publish only after all floors pass. No scanner or operation replay is involved.
         World.RestoreGeometryState(backing.CaptureGeometryState());
-        foreach (var owner in owners)
+        foreach (var owner in NativePopulationOwners)
             World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(
                 World.Levels.Single(level => level.LevelId == owner.LevelId),
                 special: owner.InitialState.Special.Select(number => (ushort)number)));

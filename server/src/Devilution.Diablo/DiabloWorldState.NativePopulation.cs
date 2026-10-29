@@ -4,7 +4,7 @@ public sealed partial class DiabloWorldState
 {
     private AuthoritativeNativePopulationBindings? nativePopulationPolicy;
 
-    private AuthoritativeNativePopulationBindings? NativePopulationForLevel(uint levelId)
+    internal AuthoritativeNativePopulationBindings? NativePopulationForLevel(uint levelId)
         => FindLevelState(levelId)?.Population
             ?? (nativePopulationPolicy?.LevelId == levelId ? nativePopulationPolicy : null);
 

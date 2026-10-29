@@ -15,6 +15,19 @@ public sealed partial class DiabloWorldState
         AuthoritativeItemCatalog? contentItems, AuthoritativeSpellCatalog spells)
         => ConfigureCathedralItemsCore(profile, checkpoint, monsterMetadataFingerprint, contentItems, spells, null, null);
 
+    /** Cohort restore: a run with Catacombs floors binds every item level to its family owner. */
+    internal void ConfigureRestoredCathedralItems(AuthoritativeCathedralItemRuntimeProfile? profile,
+        DiabloCathedralItemCheckpoint? checkpoint, string? monsterMetadataFingerprint,
+        AuthoritativeItemCatalog? contentItems, AuthoritativeSpellCatalog spells)
+    {
+        if (profile is null || contentItems is null
+            || !NativePopulationOwners.Any(owner => owner.Family == AuthoritativeNativePopulationFamily.Catacombs))
+            ConfigureCathedralItems(profile, checkpoint, monsterMetadataFingerprint, contentItems, spells);
+        else
+            ConfigureNativeFamilyItems(profile, checkpoint,
+                NativePopulationOwners.OrderBy(owner => owner.LevelId).ToArray(), contentItems, spells);
+    }
+
     /** Mixed-family admission supplies the exact immutable owner for every item level. */
     internal void ConfigureNativeFamilyItems(AuthoritativeCathedralItemRuntimeProfile profile,
         DiabloCathedralItemCheckpoint? checkpoint, IReadOnlyList<AuthoritativeNativePopulationBindings> owners,

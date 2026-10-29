@@ -36,10 +36,15 @@ public sealed partial class DiabloCombatCommandProcessor
                             player,
                             worldCommands.ExecuteOccupancyTriggers(player, players),
                             events);
-                        AddDirectedEvents(
-                            player,
-                            worldCommands.ExecuteLevelTrigger(player, tick, players),
-                            events);
+                        // Native CheckTriggers acts only on a standing player, so a stair
+                        // crossed mid-path waits for the continuation (ResolveDeferredLevelTrigger).
+                        if (player.NativeWalkPath is { Directions.Count: > 0 } path && path.LevelId == player.LevelId)
+                            deferredLevelTriggers.Add(player);
+                        else
+                            AddDirectedEvents(
+                                player,
+                                worldCommands.ExecuteLevelTrigger(player, tick, players),
+                                events);
                     }
                 }
                 break;

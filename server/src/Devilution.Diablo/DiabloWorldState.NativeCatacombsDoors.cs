@@ -26,7 +26,8 @@ public sealed partial class DiabloWorldState
     /** Binds all L2 doors from the owner's ordered raw object pool before publishing any state. */
     internal void ConfigureNativeCatacombsDoors(
         AuthoritativeNativePopulationBindings owner,
-        AuthoritativeCatacombsDoorCatalog catalog)
+        AuthoritativeCatacombsDoorCatalog catalog,
+        IReadOnlyList<AuthoritativeCatacombsDoorState>? saved = null)
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -72,8 +73,13 @@ public sealed partial class DiabloWorldState
             if (!Objects.TryGetValue(entityId, out var value))
                 throw new InvalidDataException("A generated Catacombs door entity is missing from the world object registry.");
 
+            // A restored object carries its saved frame; bind against its generated projection.
+            var bound = saved is null ? value : new AuthoritativeWorldObject(entityId, value.ObjectId, owner.LevelId,
+                raw.Position.X, raw.Position.Y, missilePassable: raw.MissilePassable,
+                nativeObjectId: (uint)raw.Type, hideWhenActivated: false,
+                animationFrame: checked((int)raw.AnimFrame), trapArmed: raw.TrapFlag);
             var state = AuthoritativeCatacombsDoors.BindRetained(
-                currentLevel, checked((uint)owner.Depth), catalog, owner.InitialState, raw, value);
+                currentLevel, checked((uint)owner.Depth), catalog, owner.InitialState, raw, bound);
             if (state.LevelId != owner.LevelId
                 || value.LevelId != owner.LevelId
                 || value.EntityId != entityId
@@ -90,8 +96,25 @@ public sealed partial class DiabloWorldState
             || prepared.Keys.Any(nativeCatacombsDoorsByEntityId.ContainsKey))
             throw new InvalidDataException("Catacombs door rows and projected entities do not have exact coverage.");
 
+        if (saved is not null) {
+            if (saved.Count != prepared.Count
+                || !saved.SequenceEqual(saved.OrderBy(door => door.PositionY).ThenBy(door => door.PositionX)))
+                throw new InvalidDataException("Saved Catacombs doors require exact ordered floor coverage.");
+            foreach (var door in saved) {
+                if (door is null || !prepared.TryGetValue(door.EntityId, out var initial))
+                    throw new InvalidDataException("A saved Catacombs door is not a generated door on its floor.");
+                currentLevel = AuthoritativeCatacombsDoors.Restore(
+                    currentLevel, checked((uint)owner.Depth), catalog, initial, door);
+                var value = Objects[door.EntityId];
+                if (value.AnimationFrame != door.AnimationFrame || value.MissilePassable != door.MissFlag)
+                    throw new InvalidDataException("A saved Catacombs door conflicts with its restored object.");
+                prepared[door.EntityId] = door;
+            }
+        }
+
         // Publish only after every raw row, entity and geometry binding has passed.
         nativeCatacombsDoorCatalogFingerprint ??= catalog.Fingerprint;
+        projectedLevels[owner.LevelId] = currentLevel;
         var level = LevelStateFor(owner.LevelId);
         (level.CatacombsDoorOwner, level.CatacombsDoorLevel) = (owner, currentLevel);
         foreach (var (entityId, state) in prepared)

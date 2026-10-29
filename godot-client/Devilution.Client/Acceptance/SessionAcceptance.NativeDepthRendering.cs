@@ -193,6 +193,7 @@ public partial class SessionAcceptance
         // Holding a WASD key keeps walking until it is released.
         var heldKey = "none";
         var heldTiles = 0;
+        var heldTrace = new List<string>();
         foreach (var key in new[] { Key.W, Key.S, Key.A, Key.D }) {
             var start = main.ObservedSnapshot!.Players.Single();
             GetViewport().GuiReleaseFocus();
@@ -208,6 +209,7 @@ public partial class SessionAcceptance
             await Until(() => Settled(main), "The held walk did not stop after the key was released.", 5);
             var end = main.ObservedSnapshot!.Players.Single();
             var tiles = Math.Max(Math.Abs(end.PositionX - start.PositionX), Math.Abs(end.PositionY - start.PositionY));
+            heldTrace.Add($"{key} ({start.PositionX},{start.PositionY})->({end.PositionX},{end.PositionY}) {main.ObservedCommandResult?.Status}/{main.ObservedCommandResult?.RejectReason}");
             if (tiles > heldTiles) {
                 heldTiles = tiles;
                 heldKey = key.ToString();
@@ -215,7 +217,7 @@ public partial class SessionAcceptance
             if (heldTiles >= 3)
                 break;
         }
-        Require(heldTiles >= 3, $"Holding a WASD key walked at most {heldTiles} tiles.");
+        Require(heldTiles >= 3, $"Holding a WASD key walked at most {heldTiles} tiles: {string.Join("; ", heldTrace)}.");
 
         // G brightens by one native step per press and Shift+G restores the native palette.
         double? dark = null;

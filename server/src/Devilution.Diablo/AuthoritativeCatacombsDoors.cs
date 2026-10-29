@@ -150,6 +150,26 @@ public static class AuthoritativeCatacombsDoors
         return SetState(level, catalog, door, depth, open: door.Status != AuthoritativeCatacombsDoorStatus.Closed);
     }
 
+    /** Reapplies a saved state's geometry to the generated level it was bound from. */
+    internal static AuthoritativeLevel Restore(
+        AuthoritativeLevel level,
+        uint depth,
+        AuthoritativeCatacombsDoorCatalog catalog,
+        AuthoritativeCatacombsDoorState initial,
+        AuthoritativeCatacombsDoorState saved)
+    {
+        ArgumentNullException.ThrowIfNull(saved);
+        Validate(level, depth, catalog, initial);
+        if (saved with { Status = initial.Status, AnimationFrame = initial.AnimationFrame,
+                SelectionRegion = initial.SelectionRegion, PreFlag = initial.PreFlag, MissFlag = initial.MissFlag }
+            != initial)
+            throw new InvalidDataException("A saved Catacombs door changed its generated identity.");
+        var restored = saved.Status == initial.Status ? level
+            : SetState(level, catalog, saved, depth, open: saved.Status != AuthoritativeCatacombsDoorStatus.Closed).Level;
+        Validate(restored, depth, catalog, saved);
+        return restored;
+    }
+
     public static AuthoritativeCatacombsDoorState UpdateOccupancy(
         AuthoritativeCatacombsDoorState door, bool occupied)
         => door.Status == AuthoritativeCatacombsDoorStatus.Closed
