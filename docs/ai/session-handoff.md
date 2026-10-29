@@ -87,8 +87,8 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   multiplayer Town catalog (open warp tiles); only the Catacombs warp is wired,
   and Caves and Hell are not published as routes. The optional format-12 field
   `CatacombsEntry` records a `TownWarpDown` entry, and floor entries may skip
-  levels. That field touches one line of `DiabloCohortCodec.IsCatacombsActorField`,
-  which the cohort-save branch also edits. The two-client L5 smoke meets and
+  levels. The cohort checkpoint-cost work (format 13) is merged; 2.2c can start.
+  The two-client L5 smoke meets and
   resumes on L5 without fighting there (Catacombs AI is 2.4).
 
 ## Batch 2.2a Descend to L5-L8 (done)
@@ -134,7 +134,7 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   The headless `-TargetDepth 8` Journey passes; its fresh-host Resume needs
   `-ServerBuildConfiguration Release`. Open limit: the host saves the whole cohort
   on every snapshot poll, so snapshots arrive every 1–2 s; this also makes the
-  Town held-WASD step flaky. It is being handled in its own session.
+  Town held-WASD step flaky. Fixed by the merged checkpoint-cost work (2.2a+).
 
 ## Batch 2.1 Catacombs in the profile (done)
 

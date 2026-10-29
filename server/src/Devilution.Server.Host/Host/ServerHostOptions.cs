@@ -32,6 +32,12 @@ public sealed record ServerHostOptions(
     /** Dedicated-root opt-in; existing per-session saves are never migrated implicitly. */
     public bool UseCohortPersistence { get; init; }
 
+    /** Clock-gated cohort checkpoint spacing; polls between checkpoints serve the last durable tick. */
+    public uint CohortCheckpointIntervalTicks { get; init; } = DefaultCohortCheckpointIntervalTicks;
+
+    /** One second at the default 20 Hz; a checkpoint costs about 0.25 s on an L8 cohort. */
+    public const uint DefaultCohortCheckpointIntervalTicks = 20;
+
     /** Optional content level override for newly initialized participants. */
     public uint? StartingLevelId { get; init; }
 
@@ -114,6 +120,15 @@ public sealed record ServerHostOptions(
                     return false;
                 }
                 current = current with { UseClockGatedCommandScheduling = value == "clock-gated" };
+                break;
+            case "--cohort-checkpoint-interval":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var checkpointInterval)
+                    || checkpointInterval == 0) {
+                    options = current;
+                    error = $"'{value}' is not a valid cohort checkpoint interval.";
+                    return false;
+                }
+                current = current with { CohortCheckpointIntervalTicks = checkpointInterval };
                 break;
             case "--performance-output":
                 if (string.IsNullOrWhiteSpace(value)) {
@@ -384,6 +399,7 @@ public sealed record ServerHostOptions(
           --procedural-monster-level <id> Level for generated encounters (default: start level)
           --save-root <directory>      Server-owned authoritative save directory
           --persistence-mode <mode>    legacy (default) or cohort; cohort requires a dedicated root
+          --cohort-checkpoint-interval <ticks> Clock-gated cohort checkpoint spacing (default: 20)
           --performance-output <file> New diagnostic JSON file; use profile-start after warm-up, then quit
           --command-timing-trace <bool> Bounded command timing JSON lines on stdout (default: false)
         """;

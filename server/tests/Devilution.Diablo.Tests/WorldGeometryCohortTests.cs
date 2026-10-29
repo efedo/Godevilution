@@ -20,17 +20,21 @@ public sealed class WorldGeometryCohortTests
 		AssertGeometryEqual(source, restored);
 	}
 
+	/** Capture shares one read-only state per immutable level instead of copying its layers. */
 	[Fact]
-	public void CaptureDetachesLayerArraysAndPieceProperties()
+	public void CaptureSharesReadOnlyLayersAndPieceProperties()
 	{
 		var source = CreateWorld();
 		var state = source.CaptureGeometryState();
 		var level = Assert.Single(state.Levels!, candidate => candidate.LevelId == 1);
 
-		Assert.IsType<int[]>(level.BlockedCells)[0] = 777;
-		Assert.IsType<ushort[]>(level.NativePieceLayer)[4] = 0;
-		Assert.IsType<Dictionary<ushort, AuthoritativeDunTileFlags>>(
-			level.NativePieceProperties)[2] = AuthoritativeDunTileFlags.Solid;
+		Assert.IsNotType<int[]>(level.BlockedCells);
+		Assert.IsNotType<ushort[]>(level.NativePieceLayer);
+		Assert.Throws<NotSupportedException>(() => ((IList<int>)level.BlockedCells!)[0] = 777);
+		Assert.Throws<NotSupportedException>(() => ((IList<ushort>)level.NativePieceLayer!)[4] = 0);
+		Assert.Throws<NotSupportedException>(() => ((IDictionary<ushort, AuthoritativeDunTileFlags>)
+			level.NativePieceProperties!)[2] = AuthoritativeDunTileFlags.Solid);
+		Assert.Same(level, Assert.Single(source.CaptureGeometryState().Levels!, candidate => candidate.LevelId == 1));
 
 		var original = source.Levels.Single(level => level.LevelId == 1);
 		Assert.Equal(3, original.BlockedCells[0]);

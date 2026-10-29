@@ -116,29 +116,7 @@ public sealed class AuthoritativeWorld
         return new DiabloWorldGeometryState(
             levels.Values
                 .OrderBy(level => level.LevelId)
-                .Select(level => new DiabloWorldGeometryLevelState(
-                    level.LevelId,
-                    level.StableSymbol,
-                    level.Width,
-                    level.Height,
-                    level.BlockedCells.ToArray(),
-                    level.MissileBlockedCells.ToArray(),
-                    level.NativeTransparency.ToArray(),
-                    level.NativeObjectLayer.ToArray(),
-                    level.NativeMegaTileLayer.ToArray(),
-                    level.NativePieceLayer.ToArray(),
-                    level.NativePieceProperties
-                        .OrderBy(pair => pair.Key)
-                        .ToDictionary(pair => pair.Key, pair => pair.Value),
-                    level.NativePieceCollisionCells.ToArray(),
-                    level.NativeVisionBlockedCells.ToArray(),
-                    level.HasExplicitNativeVisionBlockedCells,
-                    level.NativePieceMissileBlockedCells.ToArray(),
-                    level.NativeMonsterLayer.ToArray(),
-                    level.IsDefaultStart,
-                    level.SuppressMultiplayerDeathDrops,
-                    level.StartPositionX,
-                    level.StartPositionY))
+                .Select(level => level.CaptureState())
                 .ToArray(),
             warpTargets.Values
                 .OrderBy(target => target.WarpId)
@@ -452,6 +430,7 @@ public sealed class AuthoritativeLevel
     private readonly IReadOnlyList<int> blockedCellList;
     private readonly IReadOnlyList<int> missileBlockedCellList;
     private readonly IReadOnlyList<int> nativeVisionBlockedCellList;
+    private DiabloWorldGeometryLevelState? capturedState;
 
     /** Retains the original CLR constructor for previously compiled callers. */
     public AuthoritativeLevel(uint levelId, int width, int height,
@@ -618,6 +597,35 @@ public sealed class AuthoritativeLevel
                 $"Level {levelId} contains an out-of-range native d-piece missile cell.");
         NativePieceMissileBlockedCells = Array.AsReadOnly(pieceMissileBlockedCells);
     }
+
+    /**
+     * Captured once and shared: the level is immutable and every layer is a
+     * read-only view of an owned copy, so equal levels are the same reference.
+     */
+    internal DiabloWorldGeometryLevelState CaptureState()
+        => capturedState ??= new DiabloWorldGeometryLevelState(
+            LevelId,
+            StableSymbol,
+            Width,
+            Height,
+            BlockedCells,
+            MissileBlockedCells,
+            NativeTransparency,
+            NativeObjectLayer,
+            NativeMegaTileLayer,
+            NativePieceLayer,
+            new ReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>(NativePieceProperties
+                .OrderBy(pair => pair.Key)
+                .ToDictionary(pair => pair.Key, pair => pair.Value)),
+            NativePieceCollisionCells,
+            NativeVisionBlockedCells,
+            HasExplicitNativeVisionBlockedCells,
+            NativePieceMissileBlockedCells,
+            NativeMonsterLayer,
+            IsDefaultStart,
+            SuppressMultiplayerDeathDrops,
+            StartPositionX,
+            StartPositionY);
 
     public uint LevelId { get; }
 

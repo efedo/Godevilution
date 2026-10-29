@@ -34,6 +34,26 @@ public sealed class CohortHostConfigurationTests
     }
 
     [Fact]
+    public void CohortCheckpointIntervalDefaultsToOneSecond()
+    {
+        Assert.True(ServerHostOptions.TryParse([], out var options, out var error), error);
+        Assert.Equal(20U, options.CohortCheckpointIntervalTicks);
+        Assert.True(ServerHostOptions.TryParse(["--cohort-checkpoint-interval", "1"], out options, out error), error);
+        Assert.Equal(1U, options.CohortCheckpointIntervalTicks);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("ten")]
+    [InlineData("4294967296")]
+    public void InvalidCohortCheckpointIntervalIsRejected(string value)
+    {
+        Assert.False(ServerHostOptions.TryParse(["--cohort-checkpoint-interval", value], out _, out var error));
+        Assert.Contains("cohort checkpoint interval", error);
+    }
+
+    [Fact]
     public void LegacyFilesAreRefusedWithoutMutation()
     {
         var root = Path.Combine(Path.GetTempPath(), "Godevilution-Cohort-Config-" + Guid.NewGuid().ToString("N"));

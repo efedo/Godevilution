@@ -17,6 +17,10 @@ contracts stay in their existing guides.
   Catacombs theme-pass and chest captures; `test-godot-native-multiplayer.ps1
   -TargetLevel 5 -TestParticipant` sends two clvl 8+ Warriors through the warp.
 
+- Cohort checkpoints off the poll path: clock-gated cohort polls serve the last durable
+  tick, saving every 20 ticks or on a due command; format 13 writes geometry once (24→14 MB
+  at L8). L8 poll median drops from about 1.6 s to 60 ms; older formats still load.
+
 - Descend to L5–L8 (batch 2.2a, server): the Catacombs pack (1.1.0) adds the `l2.amp`
   automap; the native Town run continues by stairs to L8 under run identity
   `native-town-l1-l8-v1`, generating Catacombs floors on first entry for all three

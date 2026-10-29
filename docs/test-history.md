@@ -23,6 +23,17 @@ takes two clvl 13 Warriors through the warp to L5 and resumes both there on a
 fresh host; the default L1 Warrior/Rogue fight and resume still pass (Release
 server). Diablo.Tests (3840), Server.Tests (1854) and client protocol tests (1213)
 pass apart from the expected worker-pool documentation test. L5 has no fight until Catacombs AI (2.4).
+After merging the checkpoint-cost work both multiplayer smokes pass on the Debug
+server; Server.Tests (1868) pass apart from `ConnectedSessionsReceiveDistinctEntityIds`,
+a load flake that passes alone.
+
+### 2026-10-28 — Cohort checkpoints off the poll path
+
+Headless `-TargetDepth 8` with `warrior-l8` passed its Journey and fresh-host Resume
+on the Debug server (checkpoint interval 20). The explicit `CohortPublicationCostTests`
+on the saved L8 cohort: poll median 55–69 ms, materialize P50 27–33 ms (was about
+1.6 s); the file is 13.7 MB (was 24.4 MB). Server and Diablo suites pass apart from
+load-only flakes that pass alone and also occur on 52500163a.
 
 ### 2026-10-28 — Descend to L5–L8 (server)
 
