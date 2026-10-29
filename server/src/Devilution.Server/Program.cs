@@ -173,6 +173,11 @@ internal static class Program
                 : commandTimingSink.Enqueue,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
             CohortStore = cohortStore,
+            // Immediate scheduling keeps its per-tick checkpoints.
+            CohortCheckpointIntervalTicks = options.UseClockGatedCommandScheduling
+                ? options.CohortCheckpointIntervalTicks : 1,
+            CohortSnapshotPollsServeDurableBoundary = options.UseClockGatedCommandScheduling
+                && options.CohortCheckpointIntervalTicks > 1,
             ClientFailureObserver = exception => Console.Error.WriteLine(
                 $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
         };
@@ -196,6 +201,8 @@ internal static class Program
         Console.WriteLine($"Game mode: {options.GameMode}");
         Console.WriteLine($"Command scheduling: {(options.UseClockGatedCommandScheduling ? "clock-gated" : "immediate")}");
         Console.WriteLine($"Persistence: {(options.UseCohortPersistence ? "complete cohort" : "legacy per-session")}");
+        if (options.UseCohortPersistence && options.UseClockGatedCommandScheduling)
+            Console.WriteLine($"Cohort checkpoint interval: {options.CohortCheckpointIntervalTicks} ticks");
         if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
             Console.WriteLine(
                 $"Procedural monsters: max {proceduralMonsterLimit}"

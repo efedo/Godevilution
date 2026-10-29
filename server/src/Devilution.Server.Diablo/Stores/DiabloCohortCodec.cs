@@ -54,7 +54,9 @@ public sealed partial class DiabloCohortCodec
         try {
             ValidateGraph(state, typeof(DiabloCohortState), new HashSet<object>(ReferenceEqualityComparer.Instance), schema);
             state.ValidateShape();
-            return JsonSerializer.Serialize(state, GetOptions(schema));
+            var encoded = schema == CodecSchema.NativeCatacombsProgression
+                && TryCompactGeometry(state, out var compact) ? compact : state;
+            return JsonSerializer.Serialize(encoded, GetOptions(schema));
         } catch (Exception exception) when (IsEncodingFailure(exception)) {
             throw new InvalidDataException("The Diablo cohort cannot be encoded without losing state.", exception);
         }
@@ -96,12 +98,14 @@ public sealed partial class DiabloCohortCodec
         try {
             StrictUtf8.GetByteCount(serializedState);
             using var document = JsonDocument.Parse(serializedState);
-            var schema = SelectDeserializationSchema(document.RootElement);
+            var schema = SelectDeserializationSchema(document.RootElement, out var version);
             ValidateJson(document.RootElement, typeof(DiabloCohortState), false, schema);
             var state = document.RootElement.Deserialize<DiabloCohortState>(GetOptions(schema))
                 ?? throw new InvalidDataException("The Diablo cohort must be an explicit object.");
-            if (state.FormatVersion != GetFormatVersion(schema))
+            if (state.FormatVersion != version)
                 throw new InvalidDataException("The Diablo cohort format version was normalized while decoding.");
+            if (version == CompactGeometryFormatVersion)
+                state = ExpandCompactGeometry(state);
             state.ValidateShape();
             return state;
         } catch (Exception exception) when (IsEncodingFailure(exception)) {
@@ -291,11 +295,11 @@ public sealed partial class DiabloCohortCodec
         };
     }
 
-    private static CodecSchema SelectDeserializationSchema(JsonElement root)
+    private static CodecSchema SelectDeserializationSchema(JsonElement root, out int version)
     {
         RequireKind(root, JsonValueKind.Object, typeof(DiabloCohortState));
         var versionCount = 0;
-        var version = 0;
+        version = 0;
         foreach (var field in root.EnumerateObject()) {
             if (!string.Equals(field.Name, "FormatVersion", StringComparison.Ordinal))
                 continue;
@@ -321,27 +325,11 @@ public sealed partial class DiabloCohortCodec
             NativeProgressionFormatVersion => CodecSchema.NativeProgression,
             NativeDepthProgressionFormatVersion => CodecSchema.NativeDepthProgression,
             NativeTownProgressionFormatVersion => CodecSchema.NativeTownProgression,
-            NativeCatacombsProgressionFormatVersion => CodecSchema.NativeCatacombsProgression,
+            NativeCatacombsProgressionFormatVersion or CompactGeometryFormatVersion => CodecSchema.NativeCatacombsProgression,
             _ => throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {version}."),
         };
     }
-
-    private static int GetFormatVersion(CodecSchema schema) => schema switch {
-        CodecSchema.Legacy => LegacyFormatVersion,
-        CodecSchema.CathedralDoors => CathedralDoorsFormatVersion,
-        CodecSchema.NativeMonsters => NativeMonsterFormatVersion,
-        CodecSchema.CathedralItems => CathedralItemFormatVersion,
-        CodecSchema.NativeCombat => NativeCombatFormatVersion,
-        CodecSchema.NativeSarcophagi => NativeSarcophagusFormatVersion,
-        CodecSchema.NativeBarrels => NativeBarrelFormatVersion,
-        CodecSchema.NativeTraps => NativeTrapFormatVersion,
-        CodecSchema.NativeProgression => NativeProgressionFormatVersion,
-        CodecSchema.NativeDepthProgression => NativeDepthProgressionFormatVersion,
-        CodecSchema.NativeTownProgression => NativeTownProgressionFormatVersion,
-        CodecSchema.NativeCatacombsProgression => NativeCatacombsProgressionFormatVersion,
-        _ => throw new ArgumentOutOfRangeException(nameof(schema)),
-    };
 
     private static DiabloCathedralDoorCheckpoint? GetCathedralDoors(DiabloCohortState state) =>
         state.CathedralDoors;

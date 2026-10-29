@@ -971,32 +971,7 @@ public sealed partial class DiabloWorldState
     }
 
     private static DiabloWorldGeometryLevelState CaptureCohortLevel(
-        AuthoritativeLevel level)
-    {
-        return new DiabloWorldGeometryLevelState(
-            level.LevelId,
-            level.StableSymbol,
-            level.Width,
-            level.Height,
-            level.BlockedCells.ToArray(),
-            level.MissileBlockedCells.ToArray(),
-            level.NativeTransparency.ToArray(),
-            level.NativeObjectLayer.ToArray(),
-            level.NativeMegaTileLayer.ToArray(),
-            level.NativePieceLayer.ToArray(),
-            level.NativePieceProperties
-                .OrderBy(pair => pair.Key)
-                .ToDictionary(pair => pair.Key, pair => pair.Value),
-            level.NativePieceCollisionCells.ToArray(),
-            level.NativeVisionBlockedCells.ToArray(),
-            level.HasExplicitNativeVisionBlockedCells,
-            level.NativePieceMissileBlockedCells.ToArray(),
-            level.NativeMonsterLayer.ToArray(),
-            level.IsDefaultStart,
-            level.SuppressMultiplayerDeathDrops,
-            level.StartPositionX,
-            level.StartPositionY);
-    }
+        AuthoritativeLevel level) => level.CaptureState();
 
     private static IReadOnlyList<int> ValidateCohortCells(
         IReadOnlyList<int>? cells,

@@ -8,7 +8,7 @@ namespace Devilution.Server.Stores;
 /** Bounded serializer cache for immutable-by-value native world geometry levels. */
 internal sealed class DiabloCohortGeometryConverter : JsonConverter<DiabloWorldGeometryLevelState>
 {
-    private const uint MaximumCachedLevelId = 4;
+    private const uint MaximumCachedLevelId = 16;
     private const int VariantsPerLevel = 2;
 
     private readonly JsonSerializerOptions uncachedOptions;

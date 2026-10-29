@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-28 — Cohort checkpoints off the poll path
+
+Headless `-TargetDepth 8` with `warrior-l8` passed its Journey and fresh-host Resume
+on the Debug server (checkpoint interval 20). The explicit `CohortPublicationCostTests`
+on the saved L8 cohort: poll median 55–69 ms, materialize P50 27–33 ms (was about
+1.6 s); the file is 13.7 MB (was 24.4 MB). Server and Diablo suites pass apart from
+load-only flakes that pass alone and also occur on 52500163a.
+
 ### 2026-10-28 — Descend to L5–L8 (server)
 
 The explicit `AuthoritativeCatacombsNativeProgressionTests` took a Warrior, Rogue

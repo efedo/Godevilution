@@ -120,6 +120,11 @@ public sealed partial record DiabloCohortState(
     public const int NativeTownProgressionFormatVersion = 11;
     /** Batch 2.2a: the Town run with Catacombs floors L5-L8. */
     public const int NativeCatacombsProgressionFormatVersion = 12;
+    /**
+     * Codec-only encoding of format 12 that stores each geometry level once.
+     * Decoding returns format 12; module state never carries this version.
+     */
+    public const int NativeCatacombsCompactGeometryFormatVersion = 13;
 
     /** Explicit native Town backing; absent from every earlier cohort schema. */
     public DiabloNativeTownCheckpoint? NativeTown { get; init; }

@@ -185,6 +185,10 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         });
     }
 
+    /** True when queued work would run at or before the boundary; read-only. */
+    public bool HasDueWork(ulong targetTick)
+        => commandServer.WithSynchronizedState(() => FindDueWorkIndex(targetTick) >= 0);
+
     /** Cancels all queued work for whole-host shutdown; connection loss is not cancellation. */
     public void Cancel()
     {
@@ -648,6 +652,20 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
     private bool TryTakeDueWork(ulong targetTick, out PendingWork work)
     {
+        var candidateIndex = FindDueWorkIndex(targetTick);
+        if (candidateIndex < 0) {
+            work = null!;
+            return false;
+        }
+
+        work = queuedWorks[candidateIndex];
+        queuedWorks.RemoveAt(candidateIndex);
+        work.IsQueued = false;
+        return true;
+    }
+
+    private int FindDueWorkIndex(ulong targetTick)
+    {
         var candidateIndex = -1;
         var selectedDueTick = ulong.MaxValue;
         for (var index = 0; index < queuedWorks.Count; index++) {
@@ -673,16 +691,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
                 selectedDueTick = candidateDueTick;
             }
         }
-
-        if (candidateIndex < 0) {
-            work = null!;
-            return false;
-        }
-
-        work = queuedWorks[candidateIndex];
-        queuedWorks.RemoveAt(candidateIndex);
-        work.IsQueued = false;
-        return true;
+        return candidateIndex;
     }
 
     private ulong NextArrivalOrder()

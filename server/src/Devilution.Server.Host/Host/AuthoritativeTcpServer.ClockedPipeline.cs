@@ -406,9 +406,12 @@ public sealed partial class AuthoritativeTcpServer
                     RequireCohortHealthy();
                     sampledClockCurrentTick = clock.CurrentTick;
                     sampledCommandServerCurrentTick = commandServer.CurrentTick;
-                    actualAdmissionTick = Math.Max(
-                        sampledClockCurrentTick,
-                        sampledCommandServerCurrentTick);
+                    // At a durable boundary nothing past the live tick has run or been
+                    // shown, so lateness is judged against it; the periodic loop then
+                    // advances through the command.
+                    actualAdmissionTick = ServesDurableCohortBoundary()
+                        ? sampledCommandServerCurrentTick
+                        : Math.Max(sampledClockCurrentTick, sampledCommandServerCurrentTick);
                     Func<string, CommandAck, bool>? commitBoundaryPublication = null;
                     if (batch.Commands.Count == 1
                         && reuseRegistration?.LinkedCandidate is null
@@ -1066,7 +1069,9 @@ public sealed partial class AuthoritativeTcpServer
                 RequireClockedTransportActive(true, cancellationToken);
                 RequireCohortHealthy();
                 try {
-                    var tick = AdvanceCurrentTickCore(currentTick);
+                    // The periodic loop owns advancement; serve the durable cohort as is.
+                    var durable = ServesDurableCohortBoundary();
+                    var tick = durable ? commandServer.CurrentTick : AdvanceCurrentTickCore(currentTick);
                     var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
                     if (events is not null)
                         AuthoritativeEventBatchValidator.Validate(events, tick);
@@ -1085,7 +1090,8 @@ public sealed partial class AuthoritativeTcpServer
                         AuthoritativeSnapshotValidator.Validate(snapshot);
                     }
 
-                    PublishCohortCore();
+                    if (!durable)
+                        PublishCohortCore();
                     return new ClockedCohortSnapshotPoll(tick, events, snapshot);
                 } catch (Exception failure) {
                     FenceCohort(failure);

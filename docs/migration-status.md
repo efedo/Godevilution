@@ -111,9 +111,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   playable Catacombs profile is active. The in-progress Magma/Acid caster chains
   are shelved. Phase 2 queues Catacombs as batches 2.1–2.6 in the work plan; since
   2.1 the default profile carries the L5–L8 inputs, and since 2.2a the server run
-  descends to L8 and saves it (format 12). The headless L8 client journey passes; its
-  fresh-host resume passes only on a Release server, because the host saves the whole
-  cohort (18 MB at L8) on every snapshot poll.
+  descends to L8 and saves it (format 12, written as compact format 13). The headless
+  L8 journey and fresh-host resume pass on the Debug server: polls serve the last
+  durable tick and the cohort saves every 20 ticks or on a due command.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 14 archive-free native oracle corpora and runs their 137
   managed comparisons. Retail-archive corpora stay local by design (public

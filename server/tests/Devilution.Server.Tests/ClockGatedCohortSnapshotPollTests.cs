@@ -16,7 +16,7 @@ using Xunit.Sdk;
 namespace Devilution.Server.Tests;
 
 /** Verifies that one clock-gated cohort snapshot poll has one durable boundary. */
-public sealed class ClockGatedCohortSnapshotPollTests
+public sealed partial class ClockGatedCohortSnapshotPollTests
 {
     private const ulong FixedTick = 111;
     private static readonly string ContentHash = new('a', 64);
@@ -1622,7 +1622,8 @@ public sealed class ClockGatedCohortSnapshotPollTests
         bool includeProjectionProviders = true,
         Func<Stream, Stream>? clockGatedTransportDecorator = null,
         HostCommandTimingRecorder? commandTimingRecorder = null,
-        Action<string, ulong>? commitBoundaryResponseReadyObserverForTests = null)
+        Action<string, ulong>? commitBoundaryResponseReadyObserverForTests = null,
+        uint checkpointIntervalTicks = 1)
     {
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
             "cohort-poll-tests",
@@ -1646,6 +1647,8 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
                 CommandTimingRecorder = commandTimingRecorder,
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
+                CohortCheckpointIntervalTicks = checkpointIntervalTicks,
+                CohortSnapshotPollsServeDurableBoundary = checkpointIntervalTicks > 1,
             }
             : new AuthoritativeTcpServer(
                 commandServer,
@@ -1662,6 +1665,8 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
                 CommandTimingRecorder = commandTimingRecorder,
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
+                CohortCheckpointIntervalTicks = checkpointIntervalTicks,
+                CohortSnapshotPollsServeDurableBoundary = checkpointIntervalTicks > 1,
             };
     }
 

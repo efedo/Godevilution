@@ -112,6 +112,11 @@ after acquiring that lock; scheduled results still cross the durable publication
 barrier before acknowledgement. Each turn ends before external diagnostics or
 network waits, preserving simulation progress under backpressure.
 
+The periodic loop advances and saves the cohort every `--cohort-checkpoint-interval`
+ticks (default 20), or sooner when a scheduled command is due, and yields once to a
+queued turn. Snapshot polls never advance or save: they serve the last durable tick.
+At that boundary, command lateness is judged against the durable tick, not the clock.
+
 Negotiated `ClockProbeRequest` replies also carry the optional
 `server_scheduling_clock_tick`, sampled from the server's scheduling clock.
 The client uses its presence (including a valid value of zero) only to anchor

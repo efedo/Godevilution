@@ -58,6 +58,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private Task? acceptLoop;
     private Task? simulationLoop;
     private ulong lastSimulationTick;
+    private uint cohortCheckpointIntervalTicks = 1;
+    private bool periodicTurnYielded;
     private long nextConnectionOrdinal;
     private long nextTimingOrdinal;
     private AuthoritativeSessionRestorePolicy sessionRestorePolicy =
@@ -178,6 +180,25 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     /** Explicit complete-cohort mode; this host owns the store's lifetime lease. */
     public AuthoritativeCohortStore? CohortStore { get; init; }
+
+    /**
+     * Clock-gated cohort hosts: the periodic loop advances and publishes once the
+     * clock is this many ticks past the durable cohort, or when queued commands are
+     * due. One (the default) publishes every tick.
+     */
+    public uint CohortCheckpointIntervalTicks
+    {
+        get => cohortCheckpointIntervalTicks;
+        init => cohortCheckpointIntervalTicks = value != 0
+            ? value : throw new ArgumentOutOfRangeException(nameof(CohortCheckpointIntervalTicks));
+    }
+
+    /**
+     * Clock-gated cohort hosts: a snapshot poll inside the checkpoint interval serves
+     * the durable cohort boundary without advancing or publishing. Off by default,
+     * where every poll advances to the clock and publishes.
+     */
+    public bool CohortSnapshotPollsServeDurableBoundary { get; init; }
 
     /** Defaults to legacy sidecar fallback; strict restore is an explicit host opt-in. */
     public AuthoritativeSessionRestorePolicy SessionRestorePolicy
@@ -534,10 +555,17 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             try {
                 if (UseClockGatedCommandScheduling && CohortStore is not null)
                     authorityTurn = await cohortAuthorityTurnGate.EnterAsync(cancellationToken);
+                // A queued turn publishes its own boundary; yield to it once.
+                if (authorityTurn is not null && !periodicTurnYielded
+                    && cohortAuthorityTurnGate.QueuedWaiterCount != 0) {
+                    periodicTurnYielded = true;
+                    continue;
+                }
+                periodicTurnYielded = false;
                 advanced = commandServer.WithSynchronizedState(() => {
                     RequireCohortHealthy();
                     var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-                    if (tick == lastSimulationTick)
+                    if (tick == lastSimulationTick || !IsCohortCheckpointDue(tick))
                         return false;
                     AdvanceCurrentTickCore();
                     lastSimulationTick = commandServer.CurrentTick;
@@ -556,6 +584,20 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceAndCheckpointMilliseconds, measurement);
         }
     }
+
+    /** Caller holds the authoritative lock. Only an interval above one defers a checkpoint. */
+    private bool IsCohortCheckpointDue(ulong tick)
+        => CohortStore is null || committedCohort is null || cohortCheckpointIntervalTicks == 1
+            || tick >= committedCohort.Tick + cohortCheckpointIntervalTicks
+            || commandScheduler?.HasDueWork(tick) == true;
+
+    /**
+     * Caller holds the authoritative lock. Every mutation publishes before it is
+     * visible, so a live tick equal to the committed one is durable state.
+     */
+    private bool ServesDurableCohortBoundary()
+        => CohortSnapshotPollsServeDurableBoundary && committedCohort is { } committed
+            && commandServer.CurrentTick == committed.Tick;
 
     /** Caller holds the authoritative lock; no pre-lock physical clock samples. */
     private ulong AdvanceCurrentTickCore(ulong legacyMinimumTick = 0)
