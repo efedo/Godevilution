@@ -19,24 +19,23 @@ internal sealed record NativeObjectPackObservation(
     IReadOnlyList<string> LoadedAtlasPaths,
     IReadOnlyList<string> MissingAtlasPaths);
 
-/** Loads the optional Cathedral object family only for its exact admitted content and level binding. */
+/**
+ * Loads the optional Cathedral object family and, since batch 2.3, its Catacombs sibling catalog. Each family
+ * activates only for its exact admitted content and level binding.
+ */
 internal sealed class NativeObjectAssets
 {
     public const string ManifestEnvironmentVariable = "GODEVILUTION_NATIVE_OBJECT_PACK";
+    /** The Catacombs catalog sits beside the configured Cathedral catalog; packs before 2.3 lack it. */
+    public const string CatacombsCatalogFileName = "native-object-catalog-catacombs.json";
 
-    private readonly Dictionary<int, Texture2D> textures = [];
-    private readonly List<string> loadedAtlasPaths = [];
-    private readonly List<string> missingAtlasPaths = [];
+    private readonly List<Family> families = [];
     private readonly string? catalogPath;
-    private readonly NativeObjectCatalog? catalog;
     private readonly string? loadDiagnostic;
+    private Family? active;
     private string? contentManifestHash;
     private uint levelId;
     private string? diagnostic;
-    private string? preflightDiagnostic;
-    private bool identityMatched;
-    private bool preflightAttempted;
-    private bool atlasesReady;
 
     public NativeObjectAssets()
     {
@@ -54,31 +53,29 @@ internal sealed class NativeObjectAssets
             loadDiagnostic = "Native object catalog was not found; using the existing object presentation.";
             return;
         }
-
-        using var file = FileAccess.Open(normalizedPath, FileAccess.ModeFlags.Read);
-        if (file is null) {
-            loadDiagnostic = "Native object catalog could not be opened; using the existing object presentation.";
+        if (!TryLoadCatalog(normalizedPath, out var cathedral, out loadDiagnostic))
             return;
+        families.Add(new Family(normalizedPath, cathedral!));
+        if (PresentationAssetPath.TryCombineResourcePath(normalizedPath, CatacombsCatalogFileName, out var siblingPath, out _)
+            && FileAccess.FileExists(siblingPath)) {
+            if (TryLoadCatalog(siblingPath, out var catacombs, out var siblingDiagnostic)
+                && catacombs!.Location == NativeObjectCatalog.CatacombsLocation)
+                families.Add(new Family(siblingPath, catacombs));
+            else
+                loadDiagnostic = siblingDiagnostic ?? "Native Catacombs object catalog does not describe the Catacombs family.";
         }
-        if (file.GetLength() > NativeObjectCatalog.MaximumDocumentCharacters) {
-            loadDiagnostic = $"Native object catalog exceeds the {NativeObjectCatalog.MaximumDocumentCharacters} character size limit.";
-            return;
-        }
-        if (!NativeObjectCatalog.TryParse(file.GetAsText(), out var loadedCatalog, out var errors))
-            loadDiagnostic = string.Join(" ", errors);
-        else
-            catalog = loadedCatalog;
     }
 
-    public NativeObjectCatalog? Catalog => catalog;
+    /** The bound family's catalog, or the Cathedral catalog while no family is bound. */
+    public NativeObjectCatalog? Catalog => (active ?? families.FirstOrDefault())?.Catalog;
 
     public bool Bind(string? admittedContentHash, uint currentLevelId)
     {
         contentManifestHash = admittedContentHash;
         levelId = currentLevelId;
-        identityMatched = catalog?.SupportsBinding(admittedContentHash, currentLevelId) == true;
-        if (!identityMatched) {
-            diagnostic = catalog is null
+        active = families.FirstOrDefault(family => family.Catalog.SupportsBinding(admittedContentHash, currentLevelId));
+        if (active is null) {
+            diagnostic = families.Count == 0
                 ? loadDiagnostic
                 : admittedContentHash is null
                     ? "Native object art is inactive because no admitted content identity was supplied."
@@ -86,90 +83,124 @@ internal sealed class NativeObjectAssets
             return false;
         }
 
-        if (!preflightAttempted) {
-            preflightAttempted = true;
-            atlasesReady = PreflightAtlases();
-            preflightDiagnostic = diagnostic;
-        }
-        diagnostic = atlasesReady ? null : preflightDiagnostic;
-        return atlasesReady;
+        active.Preflight();
+        diagnostic = active.AtlasesReady ? null : active.PreflightDiagnostic;
+        return active.AtlasesReady;
     }
 
     public bool TryGetTexture(int atlasId, out Texture2D texture)
     {
-        if (identityMatched && atlasesReady && textures.TryGetValue(atlasId, out texture!))
+        if (active is { AtlasesReady: true } family && family.Textures.TryGetValue(atlasId, out texture!))
             return true;
         texture = null!;
         return false;
     }
 
     public NativeObjectPackObservation ObservePack()
-        => new(catalogPath, catalog is not null, catalog?.PackId, contentManifestHash, levelId,
-            identityMatched, atlasesReady, diagnostic ?? loadDiagnostic,
-            loadedAtlasPaths.ToArray(), missingAtlasPaths.ToArray());
-
-    private bool PreflightAtlases()
     {
-        if (catalog!.Atlases.Count != 8) {
-            diagnostic = "Native object pack must provide the complete eight-atlas family.";
+        var family = active ?? families.FirstOrDefault();
+        return new(family?.CatalogPath ?? catalogPath, family is not null, family?.Catalog.PackId, contentManifestHash, levelId,
+            active is not null, active?.AtlasesReady == true, diagnostic ?? loadDiagnostic,
+            family?.LoadedAtlasPaths.ToArray() ?? [], family?.MissingAtlasPaths.ToArray() ?? []);
+    }
+
+    private static bool TryLoadCatalog(string path, out NativeObjectCatalog? catalog, out string? failure)
+    {
+        catalog = null;
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+        if (file is null) {
+            failure = "Native object catalog could not be opened; using the existing object presentation.";
             return false;
         }
+        if (file.GetLength() > NativeObjectCatalog.MaximumDocumentCharacters) {
+            failure = $"Native object catalog exceeds the {NativeObjectCatalog.MaximumDocumentCharacters} character size limit.";
+            return false;
+        }
+        if (!NativeObjectCatalog.TryParse(file.GetAsText(), out catalog, out var errors)) {
+            failure = string.Join(" ", errors);
+            return false;
+        }
+        failure = null;
+        return true;
+    }
 
-        var pendingTextures = new Dictionary<int, Texture2D>();
-        foreach (var atlas in catalog.Atlases) {
-            if (!PresentationAssetPath.TryCombineResourcePath(catalogPath!, atlas.Path, out var path, out var pathError)) {
-                diagnostic = $"Native object atlas path refused: {pathError}.";
-                textures.Clear();
-                return false;
-            }
+    /** One loaded catalog with its lazily preflighted atlas textures. */
+    private sealed class Family(string catalogPath, NativeObjectCatalog catalog)
+    {
+        public string CatalogPath { get; } = catalogPath;
+        public NativeObjectCatalog Catalog { get; } = catalog;
+        public Dictionary<int, Texture2D> Textures { get; } = [];
+        public List<string> LoadedAtlasPaths { get; } = [];
+        public List<string> MissingAtlasPaths { get; } = [];
+        public bool AtlasesReady { get; private set; }
+        public string? PreflightDiagnostic { get; private set; }
+        private bool attempted;
 
-            using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-            if (file is null || file.GetLength() is <= 0 or > NativeObjectCatalog.MaximumAtlasFileBytes) {
-                diagnostic = $"Native object atlas '{path}' is missing or exceeds its bounded file size.";
-                missingAtlasPaths.Add(path);
-                textures.Clear();
-                return false;
-            }
-
-            var bytes = file.GetBuffer(checked((long)file.GetLength())).ToArray();
-            if (!HasExpectedPng(bytes, atlas)) {
-                diagnostic = $"Native object atlas '{path}' hash or bounded PNG dimensions differ from its declaration.";
-                missingAtlasPaths.Add(path);
-                textures.Clear();
-                return false;
-            }
-
-            using var image = new Image();
-            if (image.LoadPngFromBuffer(bytes) != Error.Ok
-                || image.GetWidth() != atlas.Width
-                || image.GetHeight() != atlas.Height) {
-                diagnostic = $"Native object atlas '{path}' could not be decoded at its declared dimensions.";
-                missingAtlasPaths.Add(path);
-                textures.Clear();
-                return false;
-            }
-
-            try {
-                var texture = ImageTexture.CreateFromImage(image);
-                if (texture is null) {
-                    diagnostic = $"Native object atlas '{path}' could not be uploaded.";
-                    missingAtlasPaths.Add(path);
-                    textures.Clear();
-                    return false;
-                }
-                pendingTextures.Add(atlas.Id, texture);
-            } catch (Exception exception) {
-                diagnostic = $"Native object atlas '{path}' could not be uploaded: {exception.Message}";
-                missingAtlasPaths.Add(path);
-                textures.Clear();
-                return false;
-            }
-            loadedAtlasPaths.Add(path);
+        public void Preflight()
+        {
+            if (attempted)
+                return;
+            attempted = true;
+            AtlasesReady = PreflightAtlases();
         }
 
-        foreach (var entry in pendingTextures)
-            textures.Add(entry.Key, entry.Value);
-        return true;
+        private bool PreflightAtlases()
+        {
+            if (Catalog.Atlases.Count != Catalog.Sprites.Count) {
+                PreflightDiagnostic = "Native object pack must provide one atlas per source sprite.";
+                return false;
+            }
+
+            var pendingTextures = new Dictionary<int, Texture2D>();
+            foreach (var atlas in Catalog.Atlases) {
+                if (!PresentationAssetPath.TryCombineResourcePath(CatalogPath, atlas.Path, out var path, out var pathError)) {
+                    PreflightDiagnostic = $"Native object atlas path refused: {pathError}.";
+                    return false;
+                }
+
+                using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+                if (file is null || file.GetLength() is <= 0 or > NativeObjectCatalog.MaximumAtlasFileBytes) {
+                    PreflightDiagnostic = $"Native object atlas '{path}' is missing or exceeds its bounded file size.";
+                    MissingAtlasPaths.Add(path);
+                    return false;
+                }
+
+                var bytes = file.GetBuffer(checked((long)file.GetLength())).ToArray();
+                if (!HasExpectedPng(bytes, atlas)) {
+                    PreflightDiagnostic = $"Native object atlas '{path}' hash or bounded PNG dimensions differ from its declaration.";
+                    MissingAtlasPaths.Add(path);
+                    return false;
+                }
+
+                using var image = new Image();
+                if (image.LoadPngFromBuffer(bytes) != Error.Ok
+                    || image.GetWidth() != atlas.Width
+                    || image.GetHeight() != atlas.Height) {
+                    PreflightDiagnostic = $"Native object atlas '{path}' could not be decoded at its declared dimensions.";
+                    MissingAtlasPaths.Add(path);
+                    return false;
+                }
+
+                try {
+                    var texture = ImageTexture.CreateFromImage(image);
+                    if (texture is null) {
+                        PreflightDiagnostic = $"Native object atlas '{path}' could not be uploaded.";
+                        MissingAtlasPaths.Add(path);
+                        return false;
+                    }
+                    pendingTextures.Add(atlas.Id, texture);
+                } catch (Exception exception) {
+                    PreflightDiagnostic = $"Native object atlas '{path}' could not be uploaded: {exception.Message}";
+                    MissingAtlasPaths.Add(path);
+                    return false;
+                }
+                LoadedAtlasPaths.Add(path);
+            }
+
+            foreach (var entry in pendingTextures)
+                Textures.Add(entry.Key, entry.Value);
+            return true;
+        }
     }
 
     private static bool HasExpectedPng(byte[] bytes, NativeObjectAtlas atlas)

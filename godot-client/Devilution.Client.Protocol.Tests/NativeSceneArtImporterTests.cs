@@ -231,6 +231,49 @@ public sealed class NativeSceneArtImporterTests
     }
 
     [Fact]
+    public void ImportsTheCatacombsFamilyFromL2SourcesWhenProfilesBindLevelsFiveToEight()
+    {
+        using var fixture = new SceneImportFixture();
+        fixture.WriteSource("levels/l2data/l2.cel", BuildCelFile([[0x80]]));
+        fixture.WriteSource("levels/l2data/l2.min", new byte[10 * sizeof(ushort)]);
+        fixture.WriteSource("levels/l2data/l2.til", new byte[8]);
+        fixture.WriteSource("levels/l2data/l2.sol", [0]);
+        fixture.WriteSource(NativeSceneArtCompiler.CatacombsPaletteRelativePath, BuildPalette());
+        fixture.WriteSource("levels/l2data/l2s.cel", BuildSpecialCel());
+        var plain = NativeSceneArtCompiler.Import(fixture.Options(Path.Combine(fixture.Root, "plain")));
+        var loaded = NativePlayerArtProfiles.LoadDirectories([fixture.ProfileRoot]);
+        var profiles = new NativePlayerArtProfileSet(loaded.ContentManifestHashes, [
+            .. loaded.LevelBindings,
+            .. Enumerable.Range(5, 4).Select(level =>
+                new NativePlayerArtLevelBinding(fixture.ManifestHash, (uint)level, NativePlayerArtNames.CatacombsLocation)),
+        ]);
+        var output = Path.Combine(fixture.Root, "catacombs");
+        var result = NativeSceneArtCompiler.Import(fixture.Options(output), profiles);
+
+        Assert.NotEqual(plain.PackId, result.PackId);
+        using var catalog = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(output, "native-scene-catalog.json")));
+        var root = catalog.RootElement;
+        var bindings = root.GetProperty("levelBindings").EnumerateArray().ToArray();
+        Assert.Equal(9, bindings.Length);
+        Assert.Equal(new uint[] { 5, 6, 7, 8 }, bindings
+            .Where(binding => binding.GetProperty("location").GetString() == "catacombs")
+            .Select(binding => binding.GetProperty("levelId").GetUInt32()).ToArray());
+        var catacombs = root.GetProperty("families").EnumerateArray()
+            .Single(family => family.GetProperty("location").GetString() == "catacombs");
+        Assert.Equal(10, catacombs.GetProperty("microTileLength").GetInt32());
+        var sources = catacombs.GetProperty("sourceHashes").EnumerateArray().Select(source => source.GetProperty("path").GetString()).ToArray();
+        Assert.Contains("levels/l2data/l2.min", sources);
+        Assert.Contains("levels/l2data/l2s.cel", sources);
+        Assert.Contains(NativeSceneArtCompiler.CatacombsPaletteRelativePath, sources);
+        Assert.DoesNotContain(sources, source => source!.StartsWith("levels/l1data/", StringComparison.Ordinal));
+
+        File.Delete(Path.Combine(fixture.SourceRoot, "levels", "l2data", "l2.til"));
+        var failed = Path.Combine(fixture.Root, "missing-l2");
+        Assert.ThrowsAny<Exception>(() => NativeSceneArtCompiler.Import(fixture.Options(failed), profiles));
+        Assert.False(Directory.Exists(failed));
+    }
+
+    [Fact]
     public void PublishesMixedHeightSpecialSpritesBottomAlignedInTheAtlas()
     {
         using var fixture = new SceneImportFixture();
@@ -292,7 +335,7 @@ public sealed class NativeSceneArtImporterTests
         packRoot = Path.GetFullPath(packRoot!);
         using var catalog = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(packRoot, "native-scene-catalog.json")));
         var families = catalog.RootElement.GetProperty("families").EnumerateArray().ToArray();
-        Assert.Equal(new[] { "cathedral", "town" }, families.Select(family => family.GetProperty("location").GetString()).OrderBy(location => location, StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "catacombs", "cathedral", "town" }, families.Select(family => family.GetProperty("location").GetString()).OrderBy(location => location, StringComparer.Ordinal).ToArray());
 
         foreach (var familyElement in families)
             ComparePublishedFamily(referenceRoot, packRoot, familyElement);
@@ -360,6 +403,9 @@ public sealed class NativeSceneArtImporterTests
         CompareFamily(root, "cathedral", "levels/l1data/l1.cel", "levels/l1data/l1.min",
             "levels/l1data/l1.til", "levels/l1data/l1.sol", "levels/l1data/l1_1.pal", "levels/l1data/l1s.cel",
             expectedMicroTileLength: 10, allTypes);
+        CompareFamily(root, "catacombs", "levels/l2data/l2.cel", "levels/l2data/l2.min",
+            "levels/l2data/l2.til", "levels/l2data/l2.sol", "levels/l2data/l2_1.pal", "levels/l2data/l2s.cel",
+            expectedMicroTileLength: 10, allTypes);
         Assert.Equal(Enum.GetValues<NativeSceneTileType>().OrderBy(type => type), allTypes.OrderBy(type => type));
     }
 
@@ -384,7 +430,7 @@ public sealed class NativeSceneArtImporterTests
         var family = NativeSceneArtDecoder.DecodeFamily(location, cel, min, til, sol, palette);
         var specials = NativeSceneArtDecoder.DecodeSpecials(specialCel);
         Assert.Equal(min.Length / (expectedMicroTileLength * sizeof(ushort)), family.Pieces.Count);
-        var referenceDirectory = Path.Combine(root, location == "town" ? "Town" : "Cathedral");
+        var referenceDirectory = Path.Combine(root, location switch { "town" => "Town", "catacombs" => "Catacombs", _ => "Cathedral" });
         ComparePerSlotReference(family, File.ReadAllBytes(Path.Combine(referenceDirectory, "native-reference.bin")), expectedMicroTileLength);
         CompareComposedPieceReference(family, File.ReadAllBytes(Path.Combine(referenceDirectory, "native-pieces.bin")));
         CompareSpecialReference(specials, File.ReadAllBytes(Path.Combine(referenceDirectory, "native-specials.bin")));
@@ -408,12 +454,13 @@ public sealed class NativeSceneArtImporterTests
     private static void ComparePublishedFamily(string referenceRoot, string packRoot, JsonElement familyElement)
     {
         var location = familyElement.GetProperty("location").GetString()!;
-        var celPath = location == "town" ? "levels/towndata/town.cel" : "levels/l1data/l1.cel";
-        var minPath = location == "town" ? "levels/towndata/town.min" : "levels/l1data/l1.min";
-        var tilPath = location == "town" ? "levels/towndata/town.til" : "levels/l1data/l1.til";
-        var solPath = location == "town" ? "levels/towndata/town.sol" : "levels/l1data/l1.sol";
-        var palettePath = location == "town" ? "levels/towndata/town.pal" : "levels/l1data/l1_1.pal";
-        var specialPath = location == "town" ? "levels/towndata/towns.cel" : "levels/l1data/l1s.cel";
+        var dungeon = location switch { "town" => "levels/towndata/town", "catacombs" => "levels/l2data/l2", _ => "levels/l1data/l1" };
+        var celPath = $"{dungeon}.cel";
+        var minPath = $"{dungeon}.min";
+        var tilPath = $"{dungeon}.til";
+        var solPath = $"{dungeon}.sol";
+        var palettePath = location == "town" ? "levels/towndata/town.pal" : $"{dungeon}_1.pal";
+        var specialPath = $"{dungeon}s.cel";
         var cel = ReadNativeSource(referenceRoot, location, celPath, allowTownNLevels: true);
         var min = ReadNativeSource(referenceRoot, location, minPath, allowTownNLevels: true);
         var til = ReadNativeSource(referenceRoot, location, tilPath, allowTownNLevels: true);

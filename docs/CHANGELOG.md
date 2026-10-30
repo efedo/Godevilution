@@ -7,6 +7,15 @@ contracts stay in their existing guides.
 
 ## 2026-10-29
 
+- Render the Catacombs (batch 2.3): with the native packs, L5–L8 draw native L2 floors,
+  walls and specials under `l2_1.pal`, the player's dungeon animations, and chests,
+  L2 doors (42/43), traps and barrels from a new `native-object-catalog-catacombs.json`
+  beside the Cathedral object catalog. Profiles carrying the Catacombs pack bind L5–L8 to
+  the `catacombs` location; the scene pack gains a third family. Existing two-family
+  scene packs and Cathedral object catalogs still load. The native scene capture also
+  exports the L2 art. The depth journey requires native draws on every floor down to
+  its target. Lighting, palette cycling and wall blending stay open for every level.
+
 - Single-player Town warp (batch 2.2c): L5's warp-up (piece 558) returns to Town at
   (49,22) and sets the Town's `WarpUnlocks` Catacombs bit, as native `WM_DIABTWARPUP`;
   the Town is rebuilt with its warp opening (same closed-Hell choices and catalog

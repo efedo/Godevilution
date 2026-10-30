@@ -5,13 +5,15 @@ using Devilution.Tools.NativePlayerArt;
 
 namespace Devilution.Tools.NativeSceneArt;
 
-/** Imports explicitly extracted Town and Cathedral scene assets into a private, profile-bound client pack. */
+/** Imports explicitly extracted Town, Cathedral and Catacombs scene assets into a private, profile-bound client pack. */
 public static class NativeSceneArtCompiler
 {
     public const int MaximumCatalogBytes = 32 * 1024 * 1024;
     public const long MaximumPackPngBytes = 512L * 1024 * 1024;
     public const int MaximumSourceBytes = 128 * 1024 * 1024;
     public const long MaximumAggregateSourceBytes = 256L * 1024 * 1024;
+    /** Native LoadRndLvlPal picks l2_1..l2_4; the pack is fixed to palette 1, as the Cathedral is to l1_1. */
+    public const string CatacombsPaletteRelativePath = "levels/l2data/l2_1.pal";
 
     private static readonly JsonSerializerOptions JsonOptions = new() {
         WriteIndented = true,
@@ -21,13 +23,18 @@ public static class NativeSceneArtCompiler
     public static NativeSceneArtImportResult Import(NativeSceneArtImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        return Import(options, NativePlayerArtProfiles.LoadDirectories(options.ProfileDirectories));
+    }
+
+    /** Imports for an already verified profile set; tests use it to add Catacombs bindings. */
+    internal static NativeSceneArtImportResult Import(NativeSceneArtImportOptions options, NativePlayerArtProfileSet profiles)
+    {
         var sourceRoot = new SceneSource(options.Archive is null ? RequireDirectory(options.SourceRoot, "source root") : string.Empty,
             options.Archive);
         var outputRoot = Path.GetFullPath(options.OutputRoot);
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
             throw new IOException($"Output root already exists: {outputRoot}");
 
-        var profiles = NativePlayerArtProfiles.LoadDirectories(options.ProfileDirectories);
         var levelBindings = profiles.LevelBindings
             .Select(binding => new NativeSceneArtLevelBinding(binding.ContentManifestHash, binding.LevelId, binding.Location))
             .ToArray();
@@ -35,9 +42,16 @@ public static class NativeSceneArtCompiler
         long aggregateSourceBytes = 0;
         var townInputs = LoadFamilyInputs(sourceRoot, "town", options.TownPaletteRelativePath, inputFiles, ref aggregateSourceBytes);
         var cathedralInputs = LoadFamilyInputs(sourceRoot, "cathedral", options.CathedralPaletteRelativePath, inputFiles, ref aggregateSourceBytes);
+        // Profiles that carry L5-L8 (batch 2.1) bind them to the Catacombs family.
+        var catacombsInputs = levelBindings.Any(binding => binding.Location == NativePlayerArtNames.CatacombsLocation)
+            ? LoadFamilyInputs(sourceRoot, NativePlayerArtNames.CatacombsLocation, CatacombsPaletteRelativePath, inputFiles, ref aggregateSourceBytes)
+            : null;
 
         var town = DecodeFamily("town", townInputs, inputFiles);
         var cathedral = DecodeFamily("cathedral", cathedralInputs, inputFiles);
+        var decodedFamilies = catacombsInputs is null
+            ? new[] { town, cathedral }
+            : [town, cathedral, DecodeFamily(NativePlayerArtNames.CatacombsLocation, catacombsInputs, inputFiles)];
         var sourceHashes = inputFiles.Select(file => NativeSceneSourceHash.FromBytes(file.RelativePath, file.Bytes))
             .OrderBy(file => file.Path, StringComparer.Ordinal)
             .ToArray();
@@ -52,10 +66,9 @@ public static class NativeSceneArtCompiler
         Directory.CreateDirectory(staging);
         try {
             var totalPngBytes = 0L;
-            var familyCatalogs = new[] {
-                BuildFamilyCatalog(town, sourceHashes, staging, ref totalPngBytes),
-                BuildFamilyCatalog(cathedral, sourceHashes, staging, ref totalPngBytes),
-            };
+            var familyCatalogs = new List<NativeSceneArtFamilyCatalog>(decodedFamilies.Length);
+            foreach (var family in decodedFamilies)
+                familyCatalogs.Add(BuildFamilyCatalog(family, sourceHashes, staging, ref totalPngBytes));
             var catalogPayload = new NativeSceneArtCatalog(
                 1,
                 string.Empty,
@@ -73,9 +86,9 @@ public static class NativeSceneArtCompiler
             return new NativeSceneArtImportResult(
                 outputRoot,
                 packId,
-                checked(town.Decoded.Pieces.Count + cathedral.Decoded.Pieces.Count),
-                checked(town.Decoded.Frames.Count + cathedral.Decoded.Frames.Count),
-                checked(town.Decoded.Specials.Count + cathedral.Decoded.Specials.Count));
+                decodedFamilies.Sum(family => family.Decoded.Pieces.Count),
+                decodedFamilies.Sum(family => family.Decoded.Frames.Count),
+                decodedFamilies.Sum(family => family.Decoded.Specials.Count));
         } catch {
             if (Directory.Exists(staging))
                 Directory.Delete(staging, recursive: true);
@@ -332,14 +345,16 @@ public static class NativeSceneArtCompiler
         ref long aggregateSourceBytes)
     {
         var town = location == "town";
-        var cel = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.cel", sourceRoot.Exists) : "levels/l1data/l1.cel", location, sources, ref aggregateSourceBytes);
-        var min = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.min", sourceRoot.Exists) : "levels/l1data/l1.min", location, sources, ref aggregateSourceBytes);
-        var til = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.til", sourceRoot.Exists) : "levels/l1data/l1.til", location, sources, ref aggregateSourceBytes);
-        var sol = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.sol", sourceRoot.Exists) : "levels/l1data/l1.sol", location, sources, ref aggregateSourceBytes);
+        // Native LoadLvlGFX: DTYPE_CATHEDRAL reads levels/l1data/l1.*, DTYPE_CATACOMBS levels/l2data/l2.*.
+        var dungeon = location == NativePlayerArtNames.CatacombsLocation ? "levels/l2data/l2" : "levels/l1data/l1";
+        var cel = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.cel", sourceRoot.Exists) : $"{dungeon}.cel", location, sources, ref aggregateSourceBytes);
+        var min = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.min", sourceRoot.Exists) : $"{dungeon}.min", location, sources, ref aggregateSourceBytes);
+        var til = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.til", sourceRoot.Exists) : $"{dungeon}.til", location, sources, ref aggregateSourceBytes);
+        var sol = ReadRequired(sourceRoot, town ? SelectTownSourcePath("town.sol", sourceRoot.Exists) : $"{dungeon}.sol", location, sources, ref aggregateSourceBytes);
         var palette = ReadRequired(sourceRoot, paletteRelativePath, location, sources, ref aggregateSourceBytes,
             expectedLength: NativeSceneArtDecoder.PaletteByteCount);
         var specials = ReadRequired(sourceRoot,
-            location == "town" ? "levels/towndata/towns.cel" : "levels/l1data/l1s.cel", location, sources, ref aggregateSourceBytes);
+            town ? "levels/towndata/towns.cel" : $"{dungeon}s.cel", location, sources, ref aggregateSourceBytes);
         return new FamilyInputs(cel, min, til, sol, palette, specials);
     }
 

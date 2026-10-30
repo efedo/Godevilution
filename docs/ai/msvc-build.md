@@ -182,7 +182,7 @@ environment below. Set `GODEVILUTION_NATIVE_SCENE_ARCHIVE` to the explicit origi
 DIABDAT archive and `GODEVILUTION_NATIVE_SCENE_REFERENCE_DIRECTORY` to a new private
 directory, then run `native_scene_art_test.exe --gtest_filter=NativeSceneArtTest.*`.
 Restore caller environment afterward. The fixture refuses existing output and
-stays headless. It extracts base Town/Cathedral inputs, uses the bundled automap,
+stays headless. It extracts base Town/Cathedral/Catacombs inputs, uses the bundled automap,
 isolates native lookup and verifies every loaded byte before capture.
 
 Run the existing Diablo xUnit executable with `--no-ansi --parallel none

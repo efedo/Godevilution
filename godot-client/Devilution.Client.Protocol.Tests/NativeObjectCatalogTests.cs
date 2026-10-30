@@ -102,6 +102,64 @@ public sealed class NativeObjectCatalogTests
     }
 
     [Fact]
+    public void ParsesTheCatacombsFamilyForLevelsFiveToEightWithL2Doors()
+    {
+        Assert.True(NativeObjectCatalog.TryParse(NativeObjectCatalogTestData.CreateJson(catacombs: true), out var catalog, out var errors),
+            string.Join(" ", errors));
+        Assert.Equal(NativeObjectCatalog.CatacombsLocation, catalog!.Location);
+        Assert.Equal(new uint[] { 5, 6, 7, 8 }, catalog.ProfileBindings.Select(binding => binding.LevelId));
+        Assert.All(catalog.ProfileBindings, binding => Assert.Equal("catacombs", binding.Location));
+        Assert.Equal(9, catalog.SourceHashes.Count);
+        Assert.Contains(catalog.SourceHashes, source => source.Path == "levels/l2data/l2_1.pal");
+        Assert.Equal(new uint[] { 5, 6, 7, 42, 43, 53, 54, 57, 58 }, catalog.Objects.Select(item => item.NativeObjectId));
+        Assert.True(catalog.TryGetAtlas(3, out var doorAtlas));
+        Assert.Equal("sprites/catacombs/3-l2doors.png", doorAtlas.Path);
+        Assert.True(catalog.SupportsBinding(ContentHash, 5));
+        Assert.True(catalog.SupportsBinding(ContentHash, 8));
+        Assert.False(catalog.SupportsBinding(ContentHash, 1));
+        Assert.False(catalog.TryGetObject(1, out _));
+        Assert.False(catalog.TryGetObject(48, out _));
+        Assert.True(catalog.TryResolveFrame(43, 3, out var openDoor));
+        Assert.Equal((3, 64), (openDoor.AtlasId, openDoor.NativeWidth));
+
+        Assert.True(NativeObjectCatalog.TryParse(NativeObjectCatalogTestData.CreateJson(), out var cathedral, out _));
+        Assert.Equal(NativeObjectCatalog.CathedralLocation, cathedral!.Location);
+    }
+
+    [Fact]
+    public void RejectsCatacombsCatalogsWithCathedralLevelsMixedLocationsOrL1Art()
+    {
+        var cathedralLevel = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        cathedralLevel["profileBindings"]![0]!["levelId"] = 1;
+        AssertRejected(cathedralLevel, "catacombs level 5, 6, 7, 8");
+
+        var mixedLocation = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        mixedLocation["profileBindings"]![1]!["location"] = "cathedral";
+        AssertRejected(mixedLocation, "catacombs level");
+
+        var unsorted = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        var bindings = unsorted["profileBindings"]!.AsArray();
+        var first = bindings[0]!.DeepClone();
+        bindings.RemoveAt(0);
+        bindings.Add(first);
+        AssertRejected(unsorted, "unique and sorted");
+
+        var cathedralPalette = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        foreach (var source in cathedralPalette["sourceHashes"]!.AsArray())
+            if (source!["path"]!.GetValue<string>() == "levels/l2data/l2_1.pal")
+                source["path"] = "levels/l1data/l1_1.pal";
+        AssertRejected(cathedralPalette, "source-hash set is not canonical");
+
+        var cathedralAtlasDirectory = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        cathedralAtlasDirectory["atlases"]![3]!["path"] = "sprites/3-l2doors.png";
+        AssertRejected(cathedralAtlasDirectory, "canonical order");
+
+        var l1Door = NativeObjectCatalogTestData.ParseJson(catacombs: true);
+        l1Door["objects"]![3]!["nativeObjectId"] = 1;
+        AssertRejected(l1Door, "canonical base-game object identity");
+    }
+
+    [Fact]
     public void RejectsPerAtlasAndAggregateAtlasPixelOverflow()
     {
         var tooLargeAtlas = NativeObjectCatalogTestData.ParseJson();
@@ -128,18 +186,6 @@ public sealed class NativeObjectCatalogTests
 internal static class NativeObjectCatalogTestData
 {
     private const string ContentHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    private static readonly string[] Paths = [
-        "assets/txtdata/objects/objdat.tsv",
-        "levels/l1data/l1_1.pal",
-        "objects/l1doors.cel",
-        "objects/chest1.cel",
-        "objects/chest2.cel",
-        "objects/chest3.cel",
-        "objects/sarc.cel",
-        "objects/traphole.cel",
-        "objects/barrel.cel",
-        "objects/barrelex.cel",
-    ];
     private static readonly (uint Id, int SpriteId, int Delay, int Length, int Width)[] Objects = [
         (1, 0, 1, 0, 64),
         (2, 0, 2, 0, 64),
@@ -155,29 +201,58 @@ internal static class NativeObjectCatalogTestData
     private static readonly string[] Stems = ["l1doors", "chest1", "chest2", "chest3", "sarc", "traphole", "barrel", "barrelex"];
     private static readonly int[] Widths = [64, 96, 96, 96, 128, 64, 96, 96];
     private static readonly int[] MinimumFrameCounts = [4, 6, 6, 6, 5, 2, 9, 10];
+    private static readonly (uint Id, int SpriteId, int Delay, int Length, int Width)[] CatacombsObjects = [
+        (5, 0, 1, 0, 96),
+        (6, 1, 1, 0, 96),
+        (7, 2, 1, 0, 96),
+        (42, 3, 1, 0, 64),
+        (43, 3, 2, 0, 64),
+        (53, 4, 1, 0, 64),
+        (54, 4, 2, 0, 64),
+        (57, 5, 1, 9, 96),
+        (58, 6, 1, 10, 96),
+    ];
+    private static readonly string[] CatacombsStems = ["chest1", "chest2", "chest3", "l2doors", "traphole", "barrel", "barrelex"];
+    private static readonly int[] CatacombsWidths = [96, 96, 96, 64, 64, 96, 96];
+    private static readonly int[] CatacombsMinimumFrameCounts = [6, 6, 6, 4, 2, 9, 10];
 
-    public static string CreateJson()
+    public static string CreateJson(bool catacombs = false)
     {
-        var root = ParseJson();
+        var root = ParseJson(catacombs);
         return Repack(root);
     }
 
-    public static JsonObject ParseJson()
+    /** Builds a synthetic Cathedral catalog, or the batch 2.3 Catacombs catalog bound to levels 5-8. */
+    public static JsonObject ParseJson(bool catacombs = false)
     {
+        var objects = catacombs ? CatacombsObjects : Objects;
+        var stems = catacombs ? CatacombsStems : Stems;
+        var widths = catacombs ? CatacombsWidths : Widths;
+        var minimumFrameCounts = catacombs ? CatacombsMinimumFrameCounts : MinimumFrameCounts;
+        var atlasDirectory = catacombs ? "sprites/catacombs" : "sprites";
+        string[] paths = [
+            "assets/txtdata/objects/objdat.tsv",
+            catacombs ? "levels/l2data/l2_1.pal" : "levels/l1data/l1_1.pal",
+            .. stems.Select(stem => $"objects/{stem}.cel"),
+        ];
+        var bindings = new JsonArray();
+        foreach (var level in catacombs ? new[] { 5, 6, 7, 8 } : [1]) {
+            bindings.Add(new JsonObject {
+                ["contentManifestHash"] = ContentHash,
+                ["levelId"] = level,
+                ["location"] = catacombs ? "catacombs" : "cathedral",
+            });
+        }
         var root = new JsonObject {
             ["schemaVersion"] = 1,
             ["packId"] = string.Empty,
-            ["profileBindings"] = new JsonArray(new JsonObject {
-                ["contentManifestHash"] = ContentHash,
-                ["levelId"] = 1,
-                ["location"] = "cathedral",
-            }),
+            ["profileBindings"] = bindings,
             ["sourceHashes"] = new JsonArray(),
             ["atlases"] = new JsonArray(),
             ["sprites"] = new JsonArray(),
             ["objects"] = new JsonArray(),
         };
-        foreach (var path in Paths.Order(StringComparer.Ordinal)) {
+        foreach (var path in paths.Order(StringComparer.Ordinal)) {
             root["sourceHashes"]!.AsArray().Add(new JsonObject {
                 ["path"] = path,
                 ["sha256"] = path == "assets/txtdata/objects/objdat.tsv"
@@ -185,13 +260,13 @@ internal static class NativeObjectCatalogTestData
                     : new string('b', 64),
             });
         }
-        for (var id = 0; id < Stems.Length; id++) {
-            var sourceFrames = MinimumFrameCounts[id] + (id == 0 ? 1 : 0);
+        for (var id = 0; id < stems.Length; id++) {
+            var sourceFrames = minimumFrameCounts[id] + (id == 0 ? 1 : 0);
             const int cellHeight = 4;
             root["atlases"]!.AsArray().Add(new JsonObject {
                 ["id"] = id,
-                ["path"] = $"sprites/{id}-{Stems[id]}.png",
-                ["width"] = Widths[id] * sourceFrames,
+                ["path"] = $"{atlasDirectory}/{id}-{stems[id]}.png",
+                ["width"] = widths[id] * sourceFrames,
                 ["height"] = cellHeight,
                 ["sha256"] = new string('c', 64),
             });
@@ -201,21 +276,21 @@ internal static class NativeObjectCatalogTestData
                 frames.Add(new JsonObject {
                     ["nativeFrame"] = frame + 1,
                     ["atlasId"] = id,
-                    ["x"] = frame * Widths[id],
+                    ["x"] = frame * widths[id],
                     ["y"] = cellHeight - height,
-                    ["width"] = Widths[id],
+                    ["width"] = widths[id],
                     ["height"] = height,
                 });
             }
             root["sprites"]!.AsArray().Add(new JsonObject {
                 ["spriteId"] = id,
-                ["sourcePath"] = $"objects/{Stems[id]}.cel",
-                ["nativeWidth"] = Widths[id],
+                ["sourcePath"] = $"objects/{stems[id]}.cel",
+                ["nativeWidth"] = widths[id],
                 ["sourceFrameCount"] = sourceFrames,
                 ["frames"] = frames,
             });
         }
-        foreach (var item in Objects) {
+        foreach (var item in objects) {
             root["objects"]!.AsArray().Add(new JsonObject {
                 ["nativeObjectId"] = item.Id,
                 ["spriteId"] = item.SpriteId,

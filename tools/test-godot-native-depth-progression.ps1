@@ -83,11 +83,12 @@ if ($allClass) {
     if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
         throw 'The Warrior Journey did not open and take the single-player Town warp.'
     }
-    # Town, each floor on first entry, and Town again, each drawn with native scene layers.
+    # Town, each floor on first entry, and Town again, each drawn with native scene layers;
+    # L5-L8 with the Catacombs family and the native player (batch 2.3).
     $draws = @($journey.NativeDraws)
-    $drawnDepth = [Math]::Min($TargetDepth, 4)
-    if ([string]::Join(',', [string[]]@($draws | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', @(0) + @(1..$drawnDepth) + @(0)) -or
+    if ([string]::Join(',', [string[]]@($draws | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', @(0) + @(1..$TargetDepth) + @(0)) -or
         @($draws | Where-Object { $_.FloorDraws -le 0 -or $_.ContentDraws -le 0 -or $_.ActorDraws -le 0 }).Count -ne 0 -or
+        @($draws | Where-Object { $_.LevelId -ge 5 -and ($_.Location -cne 'catacombs' -or $_.NativePlayer -ne $true) }).Count -ne 0 -or
         $journey.Visible -ne [bool]$Visible -or
         ($Visible -and @($draws | Where-Object { -not $_.Capture -or
             -not (Test-Path -LiteralPath (Join-Path $sessionDirectory $_.Capture) -PathType Leaf) }).Count -ne 0)) {
@@ -252,5 +253,5 @@ foreach ($process in @($journeyProcess, $resumeProcess)) {
     }
 }
 $env:GODEVILUTION_NATIVE_DEPTH_TARGET = $previousTarget
-$summary = if ($allClass) { "Warrior kill on each of L1-L$TargetDepth, Town resume." } else { 'L1 gear/earned Gold, L2-L4 combat, Town resume.' }
+$summary = if ($allClass) { "Warrior kill on each of L1-L$([Math]::Min($TargetDepth, 4)), native draws through L$TargetDepth, Town resume." } else { 'L1 gear/earned Gold, L2-L4 combat, Town resume.' }
 Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summary"

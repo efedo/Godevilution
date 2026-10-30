@@ -19,9 +19,9 @@ public partial class SessionAcceptance
         string WorldHash, NativeWarriorFloor[] Floors);
 
     private const int NativeWarriorAttacksPerFloor = 160;
-    // L5-L8 are traversed only: generated, entered, retained and resumed.
+    // L5-L8 are drawn natively and traversed without a kill: their monsters' AI is 2.4.
     private const uint NativeWarriorDeepestFloor = 8;
-    private const uint NativeWarriorDrawnFloor = 4;
+    private const uint NativeWarriorFoughtFloor = 4;
     private const uint NativeWarriorTownWarpDepth = 5;
     private const int NativeWarriorTravelAttempts = 16;
     private int nativeWarriorRouteCount;
@@ -68,14 +68,13 @@ public partial class SessionAcceptance
             var floors = new List<NativeWarriorFloor>();
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
-                if (depth > NativeWarriorDrawnFloor) {
-                    // Catacombs floors are not drawn natively yet (2.3); their monsters' AI is 2.4.
+                draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
+                if (depth > NativeWarriorFoughtFloor) {
                     var entered = main.ObservedSnapshot!.Players.Single();
                     floors.Add(new(depth, string.Empty, 0, entered.Experience, entered.Experience, 0));
                     GD.Print($"Native Warrior entered L{depth}; life={entered.Life}");
                     continue;
                 }
-                draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
                 var floor = await DefeatNativeWarriorFloorAsync(main, directory, depth);
                 floors.Add(floor);
                 var afterKill = main.ObservedSnapshot!.Players.Single();
@@ -94,6 +93,10 @@ public partial class SessionAcceptance
             var stairsUpTo = target >= NativeWarriorTownWarpDepth ? (int)NativeWarriorTownWarpDepth : 0;
             for (var destination = (int)target - 1; destination >= stairsUpTo; destination--)
                 await TravelNativeWarriorAsync(main, directory, (uint)destination);
+            // Native Catacombs objects are seen on arrival or at an opened door (batch 2.3).
+            Require(target < NativeWarriorTownWarpDepth || nativeWarriorCatacombsDoorDraws
+                    + draws.Where(draw => draw.LevelId >= NativeWarriorTownWarpDepth).Sum(draw => draw.NativeObjects) > 0,
+                "No Catacombs object was drawn with native art on L5-L8.");
             var townWarp = target >= NativeWarriorTownWarpDepth ? await NativeWarriorTownWarpLegAsync(main, directory) : null;
             await HealNativeWarriorInTownAsync(main);
             await Until(() => Settled(main), "The four-floor journey did not settle in Town.");
@@ -111,7 +114,7 @@ public partial class SessionAcceptance
                 Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
                 NativeDraws = draws.ToArray(), NativePanels = panels, NativeControls = controls, TownWarp = townWarp,
             });
-            GD.Print($"Native Warrior Town/L1-L4 checkpoint passed; sequence={checkpoint.Sequence}");
+            GD.Print($"Native Warrior Town/L1-L{target} checkpoint passed; sequence={checkpoint.Sequence}");
             return;
         }
 
@@ -340,8 +343,9 @@ public partial class SessionAcceptance
             // The route planner decides what remains; a door is opened only while one stands in reach.
             if (door is null)
                 return;
-            await ClearNativeWarriorThreatsAsync(main, player.LevelId);
             try {
+                // Clearing can fail too when monsters crowd the door; both retry with the next plan.
+                await ClearNativeWarriorThreatsAsync(main, player.LevelId);
                 await MoveAdjacentToNativePosition(main, current => current.Objects.Single(item => item.EntityId == door.EntityId),
                     async blocked => {
                         if (!blocked)
@@ -365,6 +369,9 @@ public partial class SessionAcceptance
             await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
             await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
                 $"Native Catacombs door {door.EntityId} did not open.", 5);
+            await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
+                $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
+            nativeWarriorCatacombsDoorDraws++;
             GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
         }
         throw new InvalidOperationException($"The Warrior opened {NativeWarriorTravelAttempts} Catacombs doors without reaching the L{destination} route.");
@@ -561,7 +568,7 @@ public partial class SessionAcceptance
         foreach (var floor in expected.Floors) {
             Require(HashProto(DepthGeometry(main, floor.LevelId)) == floor.GeometryHash,
                 $"Retained native floor {floor.LevelId} changed its generated geometry or door state.");
-            if (floor.LevelId > NativeWarriorDrawnFloor) {
+            if (floor.LevelId > NativeWarriorFoughtFloor) {
                 Require(floor.MonsterEntityId == 0, $"Traversed native floor {floor.LevelId} recorded a kill.");
                 continue;
             }

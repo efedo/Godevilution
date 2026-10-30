@@ -9,6 +9,23 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-29 — Render the Catacombs
+
+The headless native scene capture now exports the L2 art; the explicit
+`NativeSceneArtImporterTests` match every Town, Cathedral and Catacombs piece, special
+and published pixel (16 of 16, scene pack imported from the capture). New unit tests
+cover the Catacombs scene family and its missing-family refusal, the Catacombs object
+catalog (levels 5–8, L2 palette and doors, refusing Cathedral levels and L1 art), its
+import beside an unchanged Cathedral catalog, L2 door presentation, and the player
+pack's dungeon mapping. A rebuilt setup writes both packs. With them,
+`test-godot-native-depth-progression.ps1 -TargetDepth 8 -TestParticipant warrior-l8`
+draws the Catacombs scene, native player and bound object catalog on each of L5–L8
+(2, 3, 3 and 9 native objects on arrival; opened L5 doors draw natively) and resumes
+(Debug server). Diablo.Tests (3841) and Server.Tests (1870) pass apart from the
+expected worker-pool documentation test; client protocol tests pass 1223, with
+`DeferredCommandTimingTests.TimingProbeCorrelationAndExpiryIgnoreOldReplies` failing
+once under full-suite load and passing 3 of 3 alone. Both multiplayer smokes pass.
+
 ### 2026-10-29 — Single-player Town warp
 
 Explicit progression tests: `SinglePlayerL5WarpUpOpensTheTownWarpAndRestoresCold`

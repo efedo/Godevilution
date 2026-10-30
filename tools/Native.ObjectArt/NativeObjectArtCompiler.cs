@@ -6,7 +6,7 @@ using Devilution.Tools.NativeTownerArt;
 
 namespace Devilution.Tools.NativeObjectArt;
 
-/** Imports the explicit original L1 object CEL family into profile-bound, client-only atlases. */
+/** Imports the original L1 and L2 object CEL families into profile-bound, client-only atlases. */
 public static class NativeObjectArtCompiler
 {
     public const int MaximumCatalogBytes = 8 * 1024 * 1024;
@@ -16,6 +16,9 @@ public static class NativeObjectArtCompiler
     public const string CatalogFileName = "native-object-catalog.json";
     public const string ObjectMetadataPath = "objects/objdat.tsv";
     public const string CathedralPalettePath = "levels/l1data/l1_1.pal";
+    /** L5-L8 objects (batch 2.3), under the Catacombs palette the scene pack uses. */
+    public const string CatacombsCatalogFileName = "native-object-catalog-catacombs.json";
+    public const string CatacombsPalettePath = "levels/l2data/l2_1.pal";
     public const string CanonicalObjectMetadataSha256 = "99ca3881bb95f5ee70a1bc811b00d11cf41e7f2a8e7defd77acc4af82e587dee";
 
     private static readonly JsonSerializerOptions JsonOptions = new() {
@@ -45,45 +48,64 @@ public static class NativeObjectArtCompiler
         new(58, "OBJ_BARRELEX", "barrelex", 1, 10, 96, false),
     ];
     private static readonly int[] MinimumFrameCounts = [4, 6, 6, 6, 5, 2, 9, 10];
+    // The Cathedral set with the L2 doors and without the L1-only sarcophagus.
+    private static readonly ExpectedObject[] CatacombsObjects = [
+        new(5, "OBJ_CHEST1", "chest1", 1, 0, 96, false),
+        new(6, "OBJ_CHEST2", "chest2", 1, 0, 96, false),
+        new(7, "OBJ_CHEST3", "chest3", 1, 0, 96, false),
+        new(42, "OBJ_L2LDOOR", "l2doors", 1, 0, 64, false),
+        new(43, "OBJ_L2RDOOR", "l2doors", 2, 0, 64, false),
+        new(53, "OBJ_TRAPL", "traphole", 1, 0, 64, false),
+        new(54, "OBJ_TRAPR", "traphole", 2, 0, 64, false),
+        new(57, "OBJ_BARREL", "barrel", 1, 9, 96, false),
+        new(58, "OBJ_BARRELEX", "barrelex", 1, 10, 96, false),
+    ];
+    private static readonly int[] CatacombsMinimumFrameCounts = [6, 6, 6, 4, 2, 9, 10];
+
+    /** One object art family: its levels, palette, objects and output catalog. */
+    private sealed record ObjectFamily(
+        string Location,
+        uint[] LevelIds,
+        string PalettePath,
+        string PaletteDescription,
+        string CatalogFile,
+        string AtlasDirectory,
+        ExpectedObject[] Objects,
+        int[] MinimumFrames);
+
+    private static readonly ObjectFamily CathedralFamily = new("cathedral", [1], CathedralPalettePath, "Cathedral palette",
+        CatalogFileName, "sprites", ExpectedObjects, MinimumFrameCounts);
+    private static readonly ObjectFamily CatacombsFamily = new(NativePlayerArtNames.CatacombsLocation, [5, 6, 7, 8],
+        CatacombsPalettePath, "Catacombs palette", CatacombsCatalogFileName, "sprites/catacombs", CatacombsObjects,
+        CatacombsMinimumFrameCounts);
 
     public static NativeObjectImportResult Import(NativeObjectImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        return Import(options, NativePlayerArtProfiles.LoadDirectories(options.ProfileDirectories));
+    }
+
+    /** Imports for an already verified profile set; tests use it to add Catacombs bindings. */
+    internal static NativeObjectImportResult Import(NativeObjectImportOptions options, NativePlayerArtProfileSet profileSet)
+    {
         var sourceRoot = options.Archive is null ? RequireDirectory(options.SourceRoot, "original source root") : string.Empty;
         var textDataRoot = RequireDirectory(options.TextDataRoot, "text-data root");
         var outputRoot = Path.GetFullPath(options.OutputRoot);
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
             throw new IOException($"Output root already exists: {outputRoot}");
 
-        var profileSet = NativePlayerArtProfiles.LoadDirectories(options.ProfileDirectories);
-        var bindings = profileSet.LevelBindings
-            .Where(binding => binding.LevelId == 1 && string.Equals(binding.Location, "cathedral", StringComparison.Ordinal))
-            .Select(binding => binding.ContentManifestHash)
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
-            .Select(hash => new NativeObjectProfileBinding(hash, 1, "cathedral"))
-            .ToArray();
+        var bindings = SelectBindings(profileSet, CathedralFamily);
         if (bindings.Length is < 1 or > 64)
             throw new InvalidDataException("Verified native profiles must provide one to 64 explicit Cathedral level-1 bindings.");
+        // Profiles that carry L5-L8 (batch 2.1) also get the Catacombs family.
+        var catacombsBindings = SelectBindings(profileSet, CatacombsFamily);
+        if (catacombsBindings.Length > 256)
+            throw new InvalidDataException("Verified native profiles provide too many Catacombs level bindings.");
 
         var metadataPath = ResolveFile(textDataRoot, ObjectMetadataPath, "native object metadata");
         var metadataBytes = ReadBoundedFile(metadataPath, 1024 * 1024, "native object metadata");
         if (Sha256Hex(metadataBytes) != CanonicalObjectMetadataSha256)
             throw new InvalidDataException("objdat.tsv does not match the canonical base-game native object definitions.");
-        var objectSpecs = ParseObjects(metadataBytes);
-        var spriteSpecs = ExpectedObjects
-            .Select(spec => spec.Stem)
-            .Distinct(StringComparer.Ordinal)
-            .Select((stem, spriteId) => new SpriteSpec(
-                spriteId,
-                $"objects/{stem}.cel",
-                ExpectedObjects.First(spec => spec.Stem == stem).AnimWidth,
-                MinimumFrameCounts[spriteId]))
-            .ToArray();
-
-        var paletteBytes = ReadSourceFile(options.Archive, sourceRoot, CathedralPalettePath,
-            NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, "Cathedral palette", "Cathedral palette");
-        var palette = NativePlayerPalette.Parse(paletteBytes, "Cathedral palette");
 
         var outputParent = Path.GetDirectoryName(outputRoot)
             ?? throw new InvalidDataException("Output root must have a parent directory.");
@@ -95,89 +117,9 @@ public static class NativeObjectArtCompiler
         Directory.CreateDirectory(staging);
 
         try {
-            var spriteDirectory = Path.Combine(staging, "sprites");
-            Directory.CreateDirectory(spriteDirectory);
-            var sourceHashes = new List<NativeObjectSourceHash>(spriteSpecs.Length + 2) {
-                new($"assets/txtdata/{ObjectMetadataPath}", Sha256Hex(metadataBytes)),
-                new(CathedralPalettePath, Sha256Hex(paletteBytes)),
-            };
-            var atlases = new List<NativeObjectAtlas>(spriteSpecs.Length);
-            var sprites = new List<NativeObjectSpriteMetadata>(spriteSpecs.Length);
-            long aggregateAtlasPixels = 0;
-            long aggregateFileBytes = 0;
-
-            foreach (var spriteSpec in spriteSpecs) {
-                var celBytes = ReadSourceFile(options.Archive, sourceRoot, spriteSpec.SourcePath, MaximumSourceBytes,
-                    "native object CEL", $"native object CEL {spriteSpec.SourcePath}");
-                sourceHashes.Add(new NativeObjectSourceHash(spriteSpec.SourcePath, Sha256Hex(celBytes)));
-                NativeTownerCelSheet sheet;
-                try {
-                    sheet = NativeTownerCelDecoder.Decode(celBytes, spriteSpec.NativeWidth, expectedGroupCount: 1, expectedFramesPerGroup: 0);
-                } catch (Exception exception) when (exception is InvalidDataException or OverflowException) {
-                    throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' is malformed: {exception.Message}", exception);
-                }
-                var frames = sheet.Directions[0];
-                if (frames.Count < spriteSpec.MinimumFrameCount)
-                    throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' must contain at least {spriteSpec.MinimumFrameCount} source frames.");
-                if (frames.Count > NativeTownerCelDecoder.MaximumFramesPerGroup)
-                    throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' exceeds the supported source-frame count.");
-                var pixels = new NativeTownerCelSheet([frames]);
-                NativeTownerAtlasPixels atlasPixels;
-                try {
-                    atlasPixels = NativeTownerArtPng.EncodeAtlas(pixels, palette);
-                } catch (Exception exception) when (exception is InvalidDataException or OverflowException) {
-                    throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' cannot be packed: {exception.Message}", exception);
-                }
-                aggregateAtlasPixels = AddAtlasPixelsToAggregate(aggregateAtlasPixels, atlasPixels.Width, atlasPixels.Height);
-                if (atlasPixels.Png.Length > MaximumAtlasFileBytes)
-                    throw new InvalidDataException($"Generated object atlas for '{spriteSpec.SourcePath}' exceeds the {MaximumAtlasFileBytes} byte file limit.");
-                aggregateFileBytes = checked(aggregateFileBytes + atlasPixels.Png.Length);
-                if (aggregateFileBytes > MaximumAtlasFileBytes)
-                    throw new InvalidDataException($"Generated native object atlas family exceeds the {MaximumAtlasFileBytes} byte aggregate file limit.");
-
-                var atlasId = spriteSpec.SpriteId;
-                var path = $"sprites/{atlasId}-{Path.GetFileNameWithoutExtension(spriteSpec.SourcePath)}.png";
-                var fullPath = ResolveOutputPath(staging, path);
-                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-                File.WriteAllBytes(fullPath, atlasPixels.Png);
-                atlases.Add(new NativeObjectAtlas(atlasId, path, atlasPixels.Width, atlasPixels.Height, Sha256Hex(atlasPixels.Png)));
-                var cellWidth = atlasPixels.Width / frames.Count;
-                var cellHeight = atlasPixels.Height;
-                var frameRegions = frames.Select((frame, index) => new NativeObjectFrameRegion(
-                    index + 1,
-                    atlasId,
-                    checked(index * cellWidth),
-                    checked(cellHeight - frame.Height),
-                    frame.Width,
-                    frame.Height)).ToArray();
-                sprites.Add(new NativeObjectSpriteMetadata(
-                    spriteSpec.SpriteId,
-                    spriteSpec.SourcePath,
-                    spriteSpec.NativeWidth,
-                    frames.Count,
-                    Array.AsReadOnly(frameRegions)));
-            }
-
-            var catalogPayload = new NativeObjectArtCatalog(
-                1,
-                string.Empty,
-                Array.AsReadOnly(bindings),
-                Array.AsReadOnly(sourceHashes.OrderBy(source => source.Path, StringComparer.Ordinal).ToArray()),
-                Array.AsReadOnly(atlases.OrderBy(atlas => atlas.Id).ToArray()),
-                Array.AsReadOnly(sprites.OrderBy(sprite => sprite.SpriteId).ToArray()),
-                Array.AsReadOnly(objectSpecs.Select(spec => new NativeObjectDefinitionMetadata(
-                    spec.Id, spec.SpriteId, spec.AnimDelay, spec.AnimLen, spec.AnimWidth, spec.Animated)).ToArray()));
-            var canonical = JsonSerializer.SerializeToUtf8Bytes(catalogPayload, new JsonSerializerOptions {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-            var digest = Sha256Hex(canonical);
-            var catalog = catalogPayload with { PackId = $"native-object-{digest[..24]}" };
-            var json = JsonSerializer.Serialize(catalog, JsonOptions);
-            json = NormalizeCrlf(json) + "\r\n";
-            var catalogBytes = new UTF8Encoding(false).GetBytes(json);
-            if (catalogBytes.Length > MaximumCatalogBytes)
-                throw new InvalidDataException($"Generated native object catalog exceeds the {MaximumCatalogBytes} byte limit.");
-            File.WriteAllBytes(Path.Combine(staging, CatalogFileName), catalogBytes);
+            var catalog = WriteFamilyCatalog(CathedralFamily, bindings, metadataBytes, options.Archive, sourceRoot, staging);
+            if (catacombsBindings.Length != 0)
+                WriteFamilyCatalog(CatacombsFamily, catacombsBindings, metadataBytes, options.Archive, sourceRoot, staging);
             Directory.Move(staging, outputRoot);
             return new NativeObjectImportResult(outputRoot, catalog.PackId, catalog.Sprites.Count, catalog.Objects.Count);
         } catch {
@@ -187,6 +129,124 @@ public static class NativeObjectArtCompiler
         }
     }
 
+    private static NativeObjectProfileBinding[] SelectBindings(NativePlayerArtProfileSet profileSet, ObjectFamily family)
+        => profileSet.LevelBindings
+            .Where(binding => family.LevelIds.Contains(binding.LevelId)
+                && string.Equals(binding.Location, family.Location, StringComparison.Ordinal))
+            .Select(binding => (binding.ContentManifestHash, binding.LevelId))
+            .Distinct()
+            .OrderBy(binding => binding.ContentManifestHash, StringComparer.Ordinal)
+            .ThenBy(binding => binding.LevelId)
+            .Select(binding => new NativeObjectProfileBinding(binding.ContentManifestHash, binding.LevelId, family.Location))
+            .ToArray();
+
+    private static NativeObjectArtCatalog WriteFamilyCatalog(
+        ObjectFamily family,
+        NativeObjectProfileBinding[] bindings,
+        byte[] metadataBytes,
+        Godevilution.Tools.Archive.NativeArchiveSource? archive,
+        string sourceRoot,
+        string staging)
+    {
+        var objectSpecs = ParseObjects(metadataBytes, family.Objects);
+        var spriteSpecs = family.Objects
+            .Select(spec => spec.Stem)
+            .Distinct(StringComparer.Ordinal)
+            .Select((stem, spriteId) => new SpriteSpec(
+                spriteId,
+                $"objects/{stem}.cel",
+                family.Objects.First(spec => spec.Stem == stem).AnimWidth,
+                family.MinimumFrames[spriteId]))
+            .ToArray();
+
+        var paletteBytes = ReadSourceFile(archive, sourceRoot, family.PalettePath,
+            NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor, family.PaletteDescription, family.PaletteDescription);
+        var palette = NativePlayerPalette.Parse(paletteBytes, family.PaletteDescription);
+
+        var sourceHashes = new List<NativeObjectSourceHash>(spriteSpecs.Length + 2) {
+            new($"assets/txtdata/{ObjectMetadataPath}", Sha256Hex(metadataBytes)),
+            new(family.PalettePath, Sha256Hex(paletteBytes)),
+        };
+        var atlases = new List<NativeObjectAtlas>(spriteSpecs.Length);
+        var sprites = new List<NativeObjectSpriteMetadata>(spriteSpecs.Length);
+        long aggregateAtlasPixels = 0;
+        long aggregateFileBytes = 0;
+
+        foreach (var spriteSpec in spriteSpecs) {
+            var celBytes = ReadSourceFile(archive, sourceRoot, spriteSpec.SourcePath, MaximumSourceBytes,
+                "native object CEL", $"native object CEL {spriteSpec.SourcePath}");
+            sourceHashes.Add(new NativeObjectSourceHash(spriteSpec.SourcePath, Sha256Hex(celBytes)));
+            NativeTownerCelSheet sheet;
+            try {
+                sheet = NativeTownerCelDecoder.Decode(celBytes, spriteSpec.NativeWidth, expectedGroupCount: 1, expectedFramesPerGroup: 0);
+            } catch (Exception exception) when (exception is InvalidDataException or OverflowException) {
+                throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' is malformed: {exception.Message}", exception);
+            }
+            var frames = sheet.Directions[0];
+            if (frames.Count < spriteSpec.MinimumFrameCount)
+                throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' must contain at least {spriteSpec.MinimumFrameCount} source frames.");
+            if (frames.Count > NativeTownerCelDecoder.MaximumFramesPerGroup)
+                throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' exceeds the supported source-frame count.");
+            var pixels = new NativeTownerCelSheet([frames]);
+            NativeTownerAtlasPixels atlasPixels;
+            try {
+                atlasPixels = NativeTownerArtPng.EncodeAtlas(pixels, palette);
+            } catch (Exception exception) when (exception is InvalidDataException or OverflowException) {
+                throw new InvalidDataException($"Native object CEL '{spriteSpec.SourcePath}' cannot be packed: {exception.Message}", exception);
+            }
+            aggregateAtlasPixels = AddAtlasPixelsToAggregate(aggregateAtlasPixels, atlasPixels.Width, atlasPixels.Height);
+            if (atlasPixels.Png.Length > MaximumAtlasFileBytes)
+                throw new InvalidDataException($"Generated object atlas for '{spriteSpec.SourcePath}' exceeds the {MaximumAtlasFileBytes} byte file limit.");
+            aggregateFileBytes = checked(aggregateFileBytes + atlasPixels.Png.Length);
+            if (aggregateFileBytes > MaximumAtlasFileBytes)
+                throw new InvalidDataException($"Generated native object atlas family exceeds the {MaximumAtlasFileBytes} byte aggregate file limit.");
+
+            var atlasId = spriteSpec.SpriteId;
+            var path = $"{family.AtlasDirectory}/{atlasId}-{Path.GetFileNameWithoutExtension(spriteSpec.SourcePath)}.png";
+            var fullPath = ResolveOutputPath(staging, path);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            File.WriteAllBytes(fullPath, atlasPixels.Png);
+            atlases.Add(new NativeObjectAtlas(atlasId, path, atlasPixels.Width, atlasPixels.Height, Sha256Hex(atlasPixels.Png)));
+            var cellWidth = atlasPixels.Width / frames.Count;
+            var cellHeight = atlasPixels.Height;
+            var frameRegions = frames.Select((frame, index) => new NativeObjectFrameRegion(
+                index + 1,
+                atlasId,
+                checked(index * cellWidth),
+                checked(cellHeight - frame.Height),
+                frame.Width,
+                frame.Height)).ToArray();
+            sprites.Add(new NativeObjectSpriteMetadata(
+                spriteSpec.SpriteId,
+                spriteSpec.SourcePath,
+                spriteSpec.NativeWidth,
+                frames.Count,
+                Array.AsReadOnly(frameRegions)));
+        }
+
+        var catalogPayload = new NativeObjectArtCatalog(
+            1,
+            string.Empty,
+            Array.AsReadOnly(bindings),
+            Array.AsReadOnly(sourceHashes.OrderBy(source => source.Path, StringComparer.Ordinal).ToArray()),
+            Array.AsReadOnly(atlases.OrderBy(atlas => atlas.Id).ToArray()),
+            Array.AsReadOnly(sprites.OrderBy(sprite => sprite.SpriteId).ToArray()),
+            Array.AsReadOnly(objectSpecs.Select(spec => new NativeObjectDefinitionMetadata(
+                spec.Id, spec.SpriteId, spec.AnimDelay, spec.AnimLen, spec.AnimWidth, spec.Animated)).ToArray()));
+        var canonical = JsonSerializer.SerializeToUtf8Bytes(catalogPayload, new JsonSerializerOptions {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
+        var digest = Sha256Hex(canonical);
+        var catalog = catalogPayload with { PackId = $"native-object-{digest[..24]}" };
+        var json = JsonSerializer.Serialize(catalog, JsonOptions);
+        json = NormalizeCrlf(json) + "\r\n";
+        var catalogBytes = new UTF8Encoding(false).GetBytes(json);
+        if (catalogBytes.Length > MaximumCatalogBytes)
+            throw new InvalidDataException($"Generated native object catalog exceeds the {MaximumCatalogBytes} byte limit.");
+        File.WriteAllBytes(Path.Combine(staging, family.CatalogFile), catalogBytes);
+        return catalog;
+    }
+
     public static IReadOnlyList<NativeObjectDefinitionMetadata> ReadBaseObjectDefinitions(string textDataRoot)
     {
         var root = RequireDirectory(textDataRoot, "text-data root");
@@ -194,7 +254,7 @@ public static class NativeObjectArtCompiler
         var bytes = ReadBoundedFile(metadataPath, 1024 * 1024, "native object metadata");
         if (Sha256Hex(bytes) != CanonicalObjectMetadataSha256)
             throw new InvalidDataException("objdat.tsv does not match the canonical base-game native object definitions.");
-        return Array.AsReadOnly(ParseObjects(bytes).Select(spec => new NativeObjectDefinitionMetadata(
+        return Array.AsReadOnly(ParseObjects(bytes, ExpectedObjects).Select(spec => new NativeObjectDefinitionMetadata(
             spec.Id, spec.SpriteId, spec.AnimDelay, spec.AnimLen, spec.AnimWidth, spec.Animated)).ToArray());
     }
 
@@ -226,7 +286,7 @@ public static class NativeObjectArtCompiler
     private sealed record SpriteSpec(int SpriteId, string SourcePath, int NativeWidth, int MinimumFrameCount);
     private sealed record ParsedObject(uint Id, int SpriteId, int AnimDelay, int AnimLen, int AnimWidth, bool Animated, string SourcePath);
 
-    private static IReadOnlyList<ParsedObject> ParseObjects(byte[] bytes)
+    private static IReadOnlyList<ParsedObject> ParseObjects(byte[] bytes, ExpectedObject[] expectedObjects)
     {
         string text;
         try {
@@ -239,9 +299,9 @@ public static class NativeObjectArtCompiler
         if (lines.Length < 2 || !lines[0].Split('\t').SequenceEqual(expectedHeader, StringComparer.Ordinal))
             throw new InvalidDataException("objdat.tsv has an unexpected ordered header.");
 
-        var result = new List<ParsedObject>(ExpectedObjects.Length);
+        var result = new List<ParsedObject>(expectedObjects.Length);
         var spriteIdsByPath = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var expected in ExpectedObjects) {
+        foreach (var expected in expectedObjects) {
             var rowIndex = checked((int)expected.Id + 1);
             if (rowIndex >= lines.Length)
                 throw new InvalidDataException($"objdat.tsv is missing canonical row {expected.Symbol}.");
@@ -268,8 +328,8 @@ public static class NativeObjectArtCompiler
             }
             result.Add(new ParsedObject(expected.Id, spriteId, animDelay, animLen, animWidth, expected.Animated, sourcePath));
         }
-        if (spriteIdsByPath.Count != 8)
-            throw new InvalidDataException("The selected native L1 object family must resolve to exactly eight source CEL files.");
+        if (spriteIdsByPath.Count != expectedObjects.Select(expected => expected.Stem).Distinct(StringComparer.Ordinal).Count())
+            throw new InvalidDataException("The selected native object family must resolve to its distinct source CEL files.");
         return result.AsReadOnly();
     }
 

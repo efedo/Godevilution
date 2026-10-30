@@ -182,7 +182,7 @@ void Pixels(std::ostream &out, int width, int height, const std::function<void(c
 
 void CaptureArt(const std::filesystem::path &root, const std::string &family, const std::string &base, int blocks)
 {
-	levelType() = family == "Town" ? DTYPE_TOWN : DTYPE_CATHEDRAL;
+	levelType() = family == "Town" ? DTYPE_TOWN : family == "Catacombs" ? DTYPE_CATACOMBS : DTYPE_CATHEDRAL;
 	std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
 	ASSERT_TRUE(LoadLevelSOLData().has_value());
 	size_t words = 0;
@@ -413,12 +413,12 @@ TEST(NativeSceneArtTest, CaptureOriginalTownAndCathedral)
 	ASSERT_FALSE(std::filesystem::exists(root));
 	std::unique_ptr<mpqfs_archive_t, decltype(&mpqfs_close)> archive(mpqfs_open(archivePath), mpqfs_close);
 	ASSERT_NE(archive, nullptr) << mpqfs_last_error();
-	for (const std::string &base : { std::string("levels/towndata/town"), std::string("levels/l1data/l1") }) {
+	for (const std::string &base : { std::string("levels/towndata/town"), std::string("levels/l1data/l1"), std::string("levels/l2data/l2") }) {
 		for (const char *ext : { ".cel", ".min", ".til", ".sol", "s.cel" })
 			Extract(archive.get(), root, base + ext);
 	}
 	for (const char *name : { "levels/towndata/sector1s.dun", "levels/towndata/sector2s.dun", "levels/towndata/sector3s.dun",
-	         "levels/towndata/sector4s.dun", "levels/towndata/town.pal", "levels/l1data/l1_1.pal" })
+	         "levels/towndata/sector4s.dun", "levels/towndata/town.pal", "levels/l1data/l1_1.pal", "levels/l2data/l2_1.pal" })
 		Extract(archive.get(), root, name);
 	ASSERT_FALSE(::testing::Test::HasFatalFailure());
 	// Automap is a bundled production asset, absent from the original archive.
@@ -448,6 +448,8 @@ TEST(NativeSceneArtTest, CaptureOriginalTownAndCathedral)
 	CaptureTown(root);
 	CaptureArt(root, "Town", "levels/towndata/town", 16);
 	CaptureArt(root, "Cathedral", "levels/l1data/l1", 10);
+	// Batch 2.3: Catacombs use 10 micro-tiles and no SOL patches (dungeon_common.cpp).
+	CaptureArt(root, "Catacombs", "levels/l2data/l2", 10);
 }
 
 } // namespace

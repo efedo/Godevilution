@@ -81,9 +81,32 @@ public sealed class NativeSceneCatalogTests
         Assert.False(NativeSceneCatalog.TryParse(unlisted, out _, out var unlistedDiagnostics));
         Assert.Contains(unlistedDiagnostics, diagnostic => diagnostic.Contains("unlisted content hash", StringComparison.Ordinal));
 
-        var invalidLocation = CreateCatalogJson().Replace("\"location\":\"town\"", "\"location\":\"catacombs\"", StringComparison.Ordinal);
+        var invalidLocation = CreateCatalogJson().Replace("\"location\":\"town\"", "\"location\":\"caves\"", StringComparison.Ordinal);
         Assert.False(NativeSceneCatalog.TryParse(invalidLocation, out _, out var locationDiagnostics));
-        Assert.Contains(locationDiagnostics, diagnostic => diagnostic.Contains("location must be town or cathedral", StringComparison.Ordinal));
+        Assert.Contains(locationDiagnostics, diagnostic => diagnostic.Contains("location must be town, cathedral or catacombs", StringComparison.Ordinal));
+
+        var missingFamily = CreateCatalogJson().Replace(
+            "\"levelId\":18,\"location\":\"cathedral\"", "\"levelId\":18,\"location\":\"catacombs\"", StringComparison.Ordinal);
+        Assert.False(NativeSceneCatalog.TryParse(missingFamily, out _, out var missingFamilyDiagnostics));
+        Assert.Contains(missingFamilyDiagnostics, diagnostic => diagnostic.Contains("names a missing catacombs family", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ParsesTheOptionalCatacombsFamilyAndResolvesItsBoundLevels()
+    {
+        Assert.True(NativeSceneCatalog.TryParse(CreateCatalogJson(catacombs: true), out var catalog, out var diagnostics),
+            string.Join(" ", diagnostics));
+        Assert.True(catalog!.TryResolveFamily(ContentHash, 21, out var catacombs));
+        Assert.Equal(NativeSceneLocation.Catacombs, catacombs.Location);
+        Assert.Equal(10, catacombs.MicroTileLength);
+        Assert.True(catalog.TryResolveFamily(ContentHash, 18, out var cathedral));
+        Assert.Equal(NativeSceneLocation.Cathedral, cathedral.Location);
+        Assert.Equal("catacombs", NativeSceneCatalog.FormatLocation(NativeSceneLocation.Catacombs));
+
+        var townMicroTiles = CreateCatalogJson(catacombs: true).Replace(
+            "\"location\":\"catacombs\",\"microTileLength\":10", "\"location\":\"catacombs\",\"microTileLength\":16", StringComparison.Ordinal);
+        Assert.False(NativeSceneCatalog.TryParse(townMicroTiles, out _, out var microTileDiagnostics));
+        Assert.Contains(microTileDiagnostics, diagnostic => diagnostic.Contains("microTileLength", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -192,20 +215,26 @@ public sealed class NativeSceneCatalogTests
         Assert.Equal("content", catalog.Families[NativeSceneLocation.Cathedral].DPieces[0].FloorClass);
     }
 
-    private static string CreateCatalogJson(byte solFlags = 1)
+    private static string CreateCatalogJson(byte solFlags = 1, bool catacombs = false)
     {
+        var levelBindings = new[] {
+            new { contentManifestHash = ContentHash, levelId = 7, location = "town" },
+            new { contentManifestHash = ContentHash, levelId = 18, location = "cathedral" },
+        };
+        var families = new[] {
+            CreateFamily("town", 16, "-32", "-1", solFlags),
+            CreateFamily("cathedral", 10, "0", "0", solFlags),
+        };
+        if (catacombs) {
+            levelBindings = [.. levelBindings, new { contentManifestHash = ContentHash, levelId = 21, location = "catacombs" }];
+            families = [.. families, CreateFamily("catacombs", 10, "0", "0", solFlags)];
+        }
         var document = new {
             schemaVersion = 1,
             packId = string.Empty,
             contentManifestHashes = new[] { ContentHash },
-            levelBindings = new[] {
-                new { contentManifestHash = ContentHash, levelId = 7, location = "town" },
-                new { contentManifestHash = ContentHash, levelId = 18, location = "cathedral" },
-            },
-            families = new[] {
-                CreateFamily("town", 16, "-32", "-1", solFlags),
-                CreateFamily("cathedral", 10, "0", "0", solFlags),
-            },
+            levelBindings,
+            families,
         };
         var json = JsonSerializer.Serialize(document);
         var packId = NativeSceneCatalog.CalculatePackId(json);

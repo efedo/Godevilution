@@ -60,8 +60,9 @@ The all-class profile's four-floor proof is a Warrior journey by ordinary melee:
 -TargetDepth 1..8 [-TestParticipant tools/native-test-heroes/warrior-l<n>.json]`
 runs `NativeDepthJourney` (one XP kill per floor down to the target, Town healer
 between floors, return to Town) and the fresh-host `NativeDepthResume` (exact
-cold baseline, every floor retained). L5–L8 are entered and retained only: no
-kill or native draw check until 2.3/2.4. Until the per-poll cohort save is cheaper,
+cold baseline, every floor retained). Every floor must draw its native scene and
+player; L5–L8 must use the Catacombs family and object catalog, with at least one
+native Catacombs object seen. L5–L8 have no kill check until 2.4. Until the per-poll cohort save is cheaper,
 an L8 resume needs `-ServerBuildConfiguration Release`. At `-TargetDepth` 5 or deeper
 the Journey climbs back to L5, opens its doors to the warp-up, returns to Town at (49,22),
 takes the opened Town warp to L5 and back, and the resume requires the warp still open. Each floor test starts from a played
@@ -110,7 +111,7 @@ continuity and an unchanged full persisted Town checkpoint. Earlier profile/save
 formats remain supported. Complete native NPC/object/effect art, scene phases,
 lighting/palette/transparency and matched rendered qualification remain open.
 
-## Optional original Cathedral object art
+## Optional original Cathedral and Catacombs object art
 
 `tools/Native.ObjectArt` imports the original eight CEL files under `objects/`
 (`l1doors`, `chest1`–`chest3`, `sarc`, `traphole`, `barrel`, `barrelex`),
@@ -124,7 +125,11 @@ $env:GODEVILUTION_NATIVE_OBJECT_PACK = 'res://assets/native-objects/local/native
 ```
 
 The catalog binds exact admitted content hashes at Cathedral L1. It covers raw
-native IDs 1, 2, 5, 6, 7, 48, 53, 54, 57 and 58. Ordinary chest IDs 5–7 can
+native IDs 1, 2, 5, 6, 7, 48, 53, 54, 57 and 58. When the profiles bind L5–L8
+(the Catacombs pack), `native-object-catalog-catacombs.json` is written beside it:
+IDs 5–7, 42, 43, 53, 54, 57 and 58 from `l2doors` and the shared sprites, under
+`levels/l2data/l2_1.pal`, in `sprites/catacombs`. The client loads that sibling
+when present and binds the catalog whose levels match. Ordinary chest IDs 5–7 can
 have linked wall traps; later-level `TCHEST` IDs 68–70 remain outside this family.
 Every source frame is retained, including all door/chest variants. An incomplete
 lifecycle sheet refuses import and catalog admission. All eight atlas hashes,

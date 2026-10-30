@@ -124,6 +124,52 @@ public sealed class NativeObjectArtImporterTests
     }
 
     [Fact]
+    public void ImportsTheCatacombsSiblingCatalogForLevelsFiveToEightAndKeepsTheCathedralCatalogUnchanged()
+    {
+        using var profile = new NativeObjectProfileFixture();
+        var sourceRoot = Path.Combine(profile.Root, "source");
+        WriteSyntheticOriginalFiles(sourceRoot);
+        WriteSyntheticCatacombsFiles(sourceRoot);
+        var cathedralOnly = Path.Combine(profile.Root, "cathedral-only");
+        var withCatacombs = Path.Combine(profile.Root, "with-catacombs");
+        NativeObjectArtCompiler.Import(new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], cathedralOnly));
+        Assert.False(File.Exists(Path.Combine(cathedralOnly, NativeObjectArtCompiler.CatacombsCatalogFileName)));
+
+        var loaded = NativePlayerArtProfiles.LoadDirectories([profile.ProfileDirectory]);
+        var hash = Assert.Single(loaded.ContentManifestHashes);
+        var profileSet = new NativePlayerArtProfileSet(loaded.ContentManifestHashes, [
+            .. loaded.LevelBindings,
+            .. Enumerable.Range(5, 4).Select(level => new NativePlayerArtLevelBinding(hash, (uint)level, NativePlayerArtNames.CatacombsLocation)),
+        ]);
+        var result = NativeObjectArtCompiler.Import(
+            new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], withCatacombs), profileSet);
+
+        Assert.Equal(8, result.SpriteCount);
+        Assert.Equal(File.ReadAllBytes(Path.Combine(cathedralOnly, NativeObjectArtCompiler.CatalogFileName)),
+            File.ReadAllBytes(Path.Combine(withCatacombs, NativeObjectArtCompiler.CatalogFileName)));
+        var json = File.ReadAllText(Path.Combine(withCatacombs, NativeObjectArtCompiler.CatacombsCatalogFileName), Encoding.UTF8);
+        Assert.True(NativeObjectCatalog.TryParse(json, out var catalog, out var errors), string.Join(" ", errors));
+        Assert.Equal("catacombs", catalog!.Location);
+        Assert.Equal(new uint[] { 5, 6, 7, 8 }, catalog.ProfileBindings.Select(binding => binding.LevelId));
+        Assert.Equal(new uint[] { 5, 6, 7, 42, 43, 53, 54, 57, 58 }, catalog.Objects.Select(item => item.NativeObjectId));
+        Assert.Contains(catalog.SourceHashes, source => source.Path == NativeObjectArtCompiler.CatacombsPalettePath);
+        Assert.All(catalog.Atlases, atlas =>
+            Assert.True(File.Exists(Path.Combine(withCatacombs, atlas.Path.Replace('/', Path.DirectorySeparatorChar))), atlas.Path));
+        // The L2 palette, not the L1 palette, colors the Catacombs atlases.
+        var doorPng = DecodePng(File.ReadAllBytes(Path.Combine(withCatacombs, "sprites", "catacombs", "3-l2doors.png")));
+        Assert.Equal(new byte[] { 255, 0, 0, 255 }, doorPng.Rgba[..4]);
+        var cathedralChest = File.ReadAllBytes(Path.Combine(withCatacombs, "sprites", "1-chest1.png"));
+        var catacombsChest = File.ReadAllBytes(Path.Combine(withCatacombs, "sprites", "catacombs", "0-chest1.png"));
+        Assert.NotEqual(cathedralChest, catacombsChest);
+
+        File.Delete(Path.Combine(sourceRoot, "objects", "l2doors.cel"));
+        var failed = Path.Combine(profile.Root, "failed-catacombs");
+        Assert.ThrowsAny<Exception>(() => NativeObjectArtCompiler.Import(
+            new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], failed), profileSet));
+        Assert.False(Directory.Exists(failed));
+    }
+
+    [Fact]
     public void RejectsEveryLifecycleSourceBelowItsMinimumFrameCount()
     {
         using var profile = new NativeObjectProfileFixture();
@@ -166,6 +212,17 @@ public sealed class NativeObjectArtImporterTests
             var sourceFrames = minimumFrames[sprite.SpriteId] + (sprite.SpriteId == 0 ? 1 : 0);
             File.WriteAllBytes(path, BuildCel(sprite.NativeWidth, sourceFrames));
         }
+    }
+
+    /** The L2 palette maps index 0 to pure red so its atlases differ from the synthetic L1 ones. */
+    private static void WriteSyntheticCatacombsFiles(string sourceRoot)
+    {
+        var palettePath = Path.Combine(sourceRoot, NativeObjectArtCompiler.CatacombsPalettePath.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(Path.GetDirectoryName(palettePath)!);
+        var palette = new byte[NativePlayerPalette.ColorCount * NativePlayerPalette.BytesPerColor];
+        palette[0] = 255;
+        File.WriteAllBytes(palettePath, palette);
+        File.WriteAllBytes(Path.Combine(sourceRoot, "objects", "l2doors.cel"), BuildCel(64, 4));
     }
 
     private static byte[] BuildCel(int width, int frameCount)

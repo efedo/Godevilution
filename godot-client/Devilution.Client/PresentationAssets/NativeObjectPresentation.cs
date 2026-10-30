@@ -3,7 +3,7 @@ using Devilution.Protocol.V1;
 
 namespace Devilution.Client.PresentationAssets;
 
-/** Resolves only the current server-authored L1 object frame; this type owns no animation clock. */
+/** Resolves only the current server-authored L1 or L2 object frame; this type owns no animation clock. */
 public static class NativeObjectPresentation
 {
     public static bool TryResolve(
@@ -19,13 +19,12 @@ public static class NativeObjectPresentation
             diagnostic = "Native object art is unavailable for this snapshot.";
             return false;
         }
-        if (currentLevelId != 1 || state.LevelId != currentLevelId
-            || !catalog.SupportsBinding(contentManifestHash, currentLevelId)) {
-            diagnostic = "Native object art is not bound to this content profile and Cathedral level.";
+        if (state.LevelId != currentLevelId || !catalog.SupportsBinding(contentManifestHash, currentLevelId)) {
+            diagnostic = "Native object art is not bound to this content profile and level.";
             return false;
         }
         if (!catalog.TryGetObject(state.NativeObjectId, out _)) {
-            diagnostic = $"Native object ID {state.NativeObjectId} is not in the supported L1 art family.";
+            diagnostic = $"Native object ID {state.NativeObjectId} is not in the supported {catalog.Location} art family.";
             return false;
         }
         if (state.NativeObjectId is 1 or 2) {
@@ -39,6 +38,12 @@ public static class NativeObjectPresentation
                 || door.AnimationFrame != state.AnimationFrame
                 || !AuthoritativeObjectSelector.HasAuthoritativeInteraction(state)) {
                 diagnostic = "Native Cathedral door art requires a consistent authoritative door snapshot.";
+                return false;
+            }
+        } else if (state.NativeObjectId is 42 or 43) {
+            // Catacombs doors carry no door record; their frame alone is server-authored (batch 2.2c).
+            if (state.CathedralDoor is not null || !AuthoritativeObjectSelector.HasAuthoritativeInteraction(state)) {
+                diagnostic = "Native Catacombs door art requires an authoritative door snapshot without Cathedral state.";
                 return false;
             }
         } else if (state.CathedralDoor is not null) {

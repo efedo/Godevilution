@@ -292,7 +292,24 @@ public sealed class NativeCl2AtlasImporterTests
             [new NativePlayerArtLevelBinding(admitted, 0, "town"), new NativePlayerArtLevelBinding(admitted, 0, "cathedral")]));
         Assert.Throws<InvalidDataException>(() => NativePlayerArtCompiler.ValidateLevelBindings(
             [admitted],
-            [new NativePlayerArtLevelBinding(admitted, 0, "catacombs")]));
+            [new NativePlayerArtLevelBinding(admitted, 0, "caves")]));
+    }
+
+    [Fact]
+    public void BindsCatacombsLevelsToTheSharedDungeonAnimations()
+    {
+        var admitted = new string('a', 64);
+        var bindings = NativePlayerArtCompiler.ValidateLevelBindings([admitted], [
+            new NativePlayerArtLevelBinding(admitted, 1, "cathedral"),
+            new NativePlayerArtLevelBinding(admitted, 5, "catacombs"),
+            new NativePlayerArtLevelBinding(admitted, 8, "catacombs"),
+        ]);
+        Assert.Equal(new uint[] { 1, 5, 8 }, bindings.Select(binding => binding.LevelId));
+        Assert.All(bindings, binding => Assert.Equal("cathedral", binding.Location));
+        Assert.Throws<InvalidDataException>(() => NativePlayerArtCompiler.ValidateLevelBindings([admitted], [
+            new NativePlayerArtLevelBinding(admitted, 5, "cathedral"),
+            new NativePlayerArtLevelBinding(admitted, 5, "catacombs"),
+        ]));
     }
 
     [Fact(Explicit = true)]

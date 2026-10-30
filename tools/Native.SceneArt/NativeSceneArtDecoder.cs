@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 
 namespace Devilution.Tools.NativeSceneArt;
 
-/** Strict decoder for the original Town and Cathedral CEL/MIN/TIL/SOL source formats. */
+/** Strict decoder for the original Town, Cathedral and Catacombs CEL/MIN/TIL/SOL source formats. */
 public static class NativeSceneArtDecoder
 {
     public const int NativePieceCount = 1379;
@@ -32,8 +32,8 @@ public static class NativeSceneArtDecoder
         ReadOnlyMemory<byte> sol,
         ReadOnlyMemory<byte> palette)
     {
-        if (location is not "town" and not "cathedral")
-            throw new ArgumentException("Native scene location must be 'town' or 'cathedral'.", nameof(location));
+        if (location is not "town" and not "cathedral" and not "catacombs")
+            throw new ArgumentException("Native scene location must be 'town', 'cathedral' or 'catacombs'.", nameof(location));
 
         ValidateInputLength(cel.Length, MaximumCelFileBytes, "Dungeon CEL");
         var microTileLength = checked((byte)(location == "town" ? 16 : 10));

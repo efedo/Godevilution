@@ -54,7 +54,10 @@ public sealed record NativeObjectDefinition(
     int AnimWidth,
     bool Animated);
 
-/** Immutable, strict catalog for the original L1 door, chest, sarcophagus, trap-hole and barrel art. */
+/**
+ * Immutable, strict catalog for one original object art family: the Cathedral (L1 doors, chests, sarcophagus,
+ * trap holes and barrels on level 1) or, since batch 2.3, the Catacombs (L2 doors and the shared sprites on L5-L8).
+ */
 public sealed class NativeObjectCatalog
 {
     public const int CurrentSchemaVersion = 1;
@@ -74,31 +77,62 @@ public sealed class NativeObjectCatalog
     private static readonly string[] FrameProperties = ["nativeFrame", "atlasId", "x", "y", "width", "height"];
     private static readonly string[] ObjectProperties = ["nativeObjectId", "spriteId", "animDelay", "animLen", "animWidth", "animated"];
 
-    private static readonly string[] SpritePaths = [
-        "objects/l1doors.cel",
-        "objects/chest1.cel",
-        "objects/chest2.cel",
-        "objects/chest3.cel",
-        "objects/sarc.cel",
-        "objects/traphole.cel",
-        "objects/barrel.cel",
-        "objects/barrelex.cel",
-    ];
-    private static readonly int[] SpriteWidths = [64, 96, 96, 96, 128, 64, 96, 96];
-    private static readonly int[] SpriteMinimumFrameCounts = [4, 6, 6, 6, 5, 2, 9, 10];
-    private static readonly string[] SpriteStems = ["l1doors", "chest1", "chest2", "chest3", "sarc", "traphole", "barrel", "barrelex"];
-    private static readonly (uint Id, int SpriteId, int Delay, int Length, int Width, bool Animated)[] ExpectedObjects = [
-        (1, 0, 1, 0, 64, false),
-        (2, 0, 2, 0, 64, false),
-        (5, 1, 1, 0, 96, false),
-        (6, 2, 1, 0, 96, false),
-        (7, 3, 1, 0, 96, false),
-        (48, 4, 1, 5, 128, false),
-        (53, 5, 1, 0, 64, false),
-        (54, 5, 2, 0, 64, false),
-        (57, 6, 1, 9, 96, false),
-        (58, 7, 1, 10, 96, false),
-    ];
+    public const string CathedralLocation = "cathedral";
+    public const string CatacombsLocation = "catacombs";
+
+    private sealed record FamilySpec(
+        string Location,
+        uint[] LevelIds,
+        string PalettePath,
+        string AtlasDirectory,
+        string[] SpriteStems,
+        int[] SpriteWidths,
+        int[] SpriteMinimumFrameCounts,
+        (uint Id, int SpriteId, int Delay, int Length, int Width, bool Animated)[] Objects)
+    {
+        public string SpritePath(int index) => $"objects/{SpriteStems[index]}.cel";
+    }
+
+    private static readonly FamilySpec Cathedral = new(
+        CathedralLocation,
+        [1],
+        "levels/l1data/l1_1.pal",
+        "sprites",
+        ["l1doors", "chest1", "chest2", "chest3", "sarc", "traphole", "barrel", "barrelex"],
+        [64, 96, 96, 96, 128, 64, 96, 96],
+        [4, 6, 6, 6, 5, 2, 9, 10],
+        [
+            (1, 0, 1, 0, 64, false),
+            (2, 0, 2, 0, 64, false),
+            (5, 1, 1, 0, 96, false),
+            (6, 2, 1, 0, 96, false),
+            (7, 3, 1, 0, 96, false),
+            (48, 4, 1, 5, 128, false),
+            (53, 5, 1, 0, 64, false),
+            (54, 5, 2, 0, 64, false),
+            (57, 6, 1, 9, 96, false),
+            (58, 7, 1, 10, 96, false),
+        ]);
+
+    private static readonly FamilySpec Catacombs = new(
+        CatacombsLocation,
+        [5, 6, 7, 8],
+        "levels/l2data/l2_1.pal",
+        "sprites/catacombs",
+        ["chest1", "chest2", "chest3", "l2doors", "traphole", "barrel", "barrelex"],
+        [96, 96, 96, 64, 64, 96, 96],
+        [6, 6, 6, 4, 2, 9, 10],
+        [
+            (5, 0, 1, 0, 96, false),
+            (6, 1, 1, 0, 96, false),
+            (7, 2, 1, 0, 96, false),
+            (42, 3, 1, 0, 64, false),
+            (43, 3, 2, 0, 64, false),
+            (53, 4, 1, 0, 64, false),
+            (54, 4, 2, 0, 64, false),
+            (57, 5, 1, 9, 96, false),
+            (58, 6, 1, 10, 96, false),
+        ]);
 
     private readonly IReadOnlySet<(string Hash, uint LevelId)> bindings;
     private readonly IReadOnlyDictionary<uint, NativeObjectDefinition> objectsById;
@@ -106,6 +140,7 @@ public sealed class NativeObjectCatalog
     private readonly IReadOnlyDictionary<int, NativeObjectAtlas> atlasesById;
 
     private NativeObjectCatalog(
+        string location,
         string packId,
         IReadOnlyList<NativeObjectProfileBinding> profileBindings,
         IReadOnlyList<NativeObjectSourceHash> sourceHashes,
@@ -113,6 +148,7 @@ public sealed class NativeObjectCatalog
         IReadOnlyList<NativeObjectSprite> sprites,
         IReadOnlyList<NativeObjectDefinition> objects)
     {
+        Location = location;
         PackId = packId;
         ProfileBindings = Array.AsReadOnly(profileBindings.ToArray());
         SourceHashes = Array.AsReadOnly(sourceHashes.ToArray());
@@ -125,6 +161,8 @@ public sealed class NativeObjectCatalog
         atlasesById = Atlases.ToFrozenDictionary(item => item.Id);
     }
 
+    /** The family location every binding names: cathedral or catacombs. */
+    public string Location { get; }
     public string PackId { get; }
     public IReadOnlyList<NativeObjectProfileBinding> ProfileBindings { get; }
     public IReadOnlyList<NativeObjectSourceHash> SourceHashes { get; }
@@ -213,43 +251,58 @@ public sealed class NativeObjectCatalog
         if (packId != prefix + CalculateDigest(root)[..24])
             throw new InvalidDataException("The native object catalog packId does not match its content.");
 
-        var profileBindings = ParseBindings(RequiredArray(root, "profileBindings"));
-        var sourceHashes = ParseSourceHashes(RequiredArray(root, "sourceHashes"));
-        var atlases = ParseAtlases(RequiredArray(root, "atlases"));
-        var sprites = ParseSprites(RequiredArray(root, "sprites"), atlases);
-        var objects = ParseObjects(RequiredArray(root, "objects"));
-        return new NativeObjectCatalog(packId, profileBindings, sourceHashes, atlases, sprites, objects);
+        var bindingEntries = RequiredArray(root, "profileBindings");
+        var family = SelectFamily(bindingEntries);
+        var profileBindings = ParseBindings(bindingEntries, family);
+        var sourceHashes = ParseSourceHashes(RequiredArray(root, "sourceHashes"), family);
+        var atlases = ParseAtlases(RequiredArray(root, "atlases"), family);
+        var sprites = ParseSprites(RequiredArray(root, "sprites"), atlases, family);
+        var objects = ParseObjects(RequiredArray(root, "objects"), family);
+        return new NativeObjectCatalog(family.Location, packId, profileBindings, sourceHashes, atlases, sprites, objects);
     }
 
-    private static IReadOnlyList<NativeObjectProfileBinding> ParseBindings(JsonElement entries)
+    private static FamilySpec SelectFamily(JsonElement bindingEntries)
     {
-        if (entries.GetArrayLength() is < 1 or > 64)
-            throw new InvalidDataException("The native object catalog must bind one to 64 Cathedral profiles.");
+        foreach (var entry in bindingEntries.EnumerateArray()) {
+            if (entry.ValueKind == JsonValueKind.Object && entry.TryGetProperty("location", out var location)
+                && location.ValueKind == JsonValueKind.String && location.GetString() == CatacombsLocation)
+                return Catacombs;
+            break;
+        }
+        return Cathedral;
+    }
+
+    private static IReadOnlyList<NativeObjectProfileBinding> ParseBindings(JsonElement entries, FamilySpec family)
+    {
+        var maximum = 64 * family.LevelIds.Length;
+        if (entries.GetArrayLength() < 1 || entries.GetArrayLength() > maximum)
+            throw new InvalidDataException($"The native object catalog must bind one to {maximum} {family.Location} profile levels.");
         var result = new List<NativeObjectProfileBinding>(entries.GetArrayLength());
-        string? previousHash = null;
+        (string Hash, uint LevelId)? previous = null;
         foreach (var entry in entries.EnumerateArray()) {
             RequireObject(entry, "profile binding", BindingProperties);
             var hash = ReadString(entry, "contentManifestHash");
-            if (!IsSha256(hash) || ReadUInt32(entry, "levelId") != 1 || ReadString(entry, "location") != "cathedral")
-                throw new InvalidDataException("Native object art bindings must identify lowercase SHA-256 Cathedral level 1.");
-            if (previousHash is not null && string.CompareOrdinal(previousHash, hash) >= 0)
-                throw new InvalidDataException("Native object art profile bindings must be unique and sorted by content hash.");
-            result.Add(new NativeObjectProfileBinding(hash, 1, "cathedral"));
-            previousHash = hash;
+            var levelId = ReadUInt32(entry, "levelId");
+            if (!IsSha256(hash) || !family.LevelIds.Contains(levelId) || ReadString(entry, "location") != family.Location)
+                throw new InvalidDataException($"Native object art bindings must identify lowercase SHA-256 {family.Location} level {string.Join(", ", family.LevelIds)}.");
+            if (previous is { } last && (string.CompareOrdinal(last.Hash, hash) is var order && (order > 0 || order == 0 && last.LevelId >= levelId)))
+                throw new InvalidDataException("Native object art profile bindings must be unique and sorted by content hash and level.");
+            result.Add(new NativeObjectProfileBinding(hash, levelId, family.Location));
+            previous = (hash, levelId);
         }
         return result.AsReadOnly();
     }
 
-    private static IReadOnlyList<NativeObjectSourceHash> ParseSourceHashes(JsonElement entries)
+    private static IReadOnlyList<NativeObjectSourceHash> ParseSourceHashes(JsonElement entries, FamilySpec family)
     {
         string[] expectedPaths = [
             "assets/txtdata/objects/objdat.tsv",
-            "levels/l1data/l1_1.pal",
-            .. SpritePaths,
+            family.PalettePath,
+            .. family.SpriteStems.Select((_, index) => family.SpritePath(index)),
         ];
         Array.Sort(expectedPaths, StringComparer.Ordinal);
         if (entries.GetArrayLength() != expectedPaths.Length)
-            throw new InvalidDataException("The native object catalog must hash objdat.tsv, the L1 palette and all eight source CEL files.");
+            throw new InvalidDataException($"The native object catalog must hash objdat.tsv, the {family.Location} palette and all {family.SpriteStems.Length} source CEL files.");
         var result = new List<NativeObjectSourceHash>(entries.GetArrayLength());
         string? previousPath = null;
         var observed = new HashSet<string>(StringComparer.Ordinal);
@@ -272,10 +325,10 @@ public sealed class NativeObjectCatalog
         return result.AsReadOnly();
     }
 
-    private static IReadOnlyList<NativeObjectAtlas> ParseAtlases(JsonElement entries)
+    private static IReadOnlyList<NativeObjectAtlas> ParseAtlases(JsonElement entries, FamilySpec family)
     {
-        if (entries.GetArrayLength() != SpritePaths.Length)
-            throw new InvalidDataException("The native object catalog must contain exactly eight source atlases.");
+        if (entries.GetArrayLength() != family.SpriteStems.Length)
+            throw new InvalidDataException($"The native object catalog must contain exactly {family.SpriteStems.Length} source atlases.");
         var result = new List<NativeObjectAtlas>(entries.GetArrayLength());
         var paths = new HashSet<string>(StringComparer.Ordinal);
         long aggregatePixels = 0;
@@ -287,7 +340,7 @@ public sealed class NativeObjectCatalog
             var width = ReadInt32(entry, "width");
             var height = ReadInt32(entry, "height");
             var sha256 = ReadString(entry, "sha256");
-            var expectedPath = $"sprites/{index}-{SpriteStems[index]}.png";
+            var expectedPath = $"{family.AtlasDirectory}/{index}-{family.SpriteStems[index]}.png";
             if (id != index || path != expectedPath || !paths.Add(path)
                 || width is < 1 or > MaximumAtlasDimension || height is < 1 or > MaximumAtlasDimension
                 || !IsSha256(sha256))
@@ -304,10 +357,10 @@ public sealed class NativeObjectCatalog
         return result.AsReadOnly();
     }
 
-    private static IReadOnlyList<NativeObjectSprite> ParseSprites(JsonElement entries, IReadOnlyList<NativeObjectAtlas> atlases)
+    private static IReadOnlyList<NativeObjectSprite> ParseSprites(JsonElement entries, IReadOnlyList<NativeObjectAtlas> atlases, FamilySpec family)
     {
-        if (entries.GetArrayLength() != SpritePaths.Length)
-            throw new InvalidDataException("The native object catalog must contain exactly eight source sprite definitions.");
+        if (entries.GetArrayLength() != family.SpriteStems.Length)
+            throw new InvalidDataException($"The native object catalog must contain exactly {family.SpriteStems.Length} source sprite definitions.");
         var result = new List<NativeObjectSprite>(entries.GetArrayLength());
         var totalFrames = 0;
         var index = 0;
@@ -317,8 +370,8 @@ public sealed class NativeObjectCatalog
             var sourcePath = ReadString(entry, "sourcePath");
             var nativeWidth = ReadInt32(entry, "nativeWidth");
             var sourceFrameCount = ReadInt32(entry, "sourceFrameCount");
-            if (id != index || sourcePath != SpritePaths[index] || nativeWidth != SpriteWidths[index]
-                || sourceFrameCount < SpriteMinimumFrameCounts[index] || sourceFrameCount > MaximumSpriteFrames)
+            if (id != index || sourcePath != family.SpritePath(index) || nativeWidth != family.SpriteWidths[index]
+                || sourceFrameCount < family.SpriteMinimumFrameCounts[index] || sourceFrameCount > MaximumSpriteFrames)
                 throw new InvalidDataException($"Native object sprite[{index}] metadata does not match its canonical source.");
             var atlas = atlases[index];
             if (atlas.Width != checked(nativeWidth * sourceFrameCount))
@@ -358,15 +411,15 @@ public sealed class NativeObjectCatalog
         return result.AsReadOnly();
     }
 
-    private static IReadOnlyList<NativeObjectDefinition> ParseObjects(JsonElement entries)
+    private static IReadOnlyList<NativeObjectDefinition> ParseObjects(JsonElement entries, FamilySpec family)
     {
-        if (entries.GetArrayLength() != ExpectedObjects.Length)
-            throw new InvalidDataException("The native object catalog must contain the ten supported base-game L1 object IDs.");
+        if (entries.GetArrayLength() != family.Objects.Length)
+            throw new InvalidDataException($"The native object catalog must contain the {family.Objects.Length} supported base-game {family.Location} object IDs.");
         var result = new List<NativeObjectDefinition>(entries.GetArrayLength());
         var index = 0;
         foreach (var entry in entries.EnumerateArray()) {
             RequireObject(entry, $"object[{index}]", ObjectProperties);
-            var expected = ExpectedObjects[index];
+            var expected = family.Objects[index];
             var item = new NativeObjectDefinition(
                 ReadUInt32(entry, "nativeObjectId"),
                 ReadInt32(entry, "spriteId"),

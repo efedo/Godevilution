@@ -8,6 +8,8 @@ public static class NativePlayerArtNames
     public static readonly string[] WeaponNames = ["unarmed", "unarmed-shield", "sword", "sword-shield", "bow", "axe", "mace", "mace-shield", "staff"];
     public const string TownLocation = "town";
     public const string CathedralLocation = "cathedral";
+    /** Scene and object art location of L5-L8; players use the dungeon (Cathedral) animations there. */
+    public const string CatacombsLocation = "catacombs";
 }
 
 public sealed record NativePlayerClipMetadata(

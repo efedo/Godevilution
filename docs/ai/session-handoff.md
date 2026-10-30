@@ -48,6 +48,46 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.3 Render the Catacombs (done)
+
+- **Player-visible outcome:** with the native packs, L5–L8 draw with native
+  Catacombs art: floors, walls and `l2s` specials under `l2_1.pal`, the player's
+  dungeon animations, and the Catacombs objects (doors open and closed, plus the
+  other object kinds the L5–L8 populations place). Parity matches the Cathedral's
+  today; lighting, palette cycling and wall blending stay as open for every level.
+- **Native source:** `diablo.cpp` LoadLvlGFX (`DTYPE_CATACOMBS`: `l2.cel`, `l2.til`,
+  `l2s`); `dungeon_common.cpp` (`l2.min`, `l2.sol`); `palette.cpp` LoadRndLvlPal
+  (fixed to palette 1, as `l1_1.pal` is for the Cathedral); `objdat`/`objects.cpp`
+  for the L2 object sprites.
+- **Files and contracts owned:**
+  - `tools/Native.SceneArt`: a third `catacombs` family from `levels/l2data`; the
+    catalog gains the family and existing packs still load;
+  - profile level bindings: levels 5–8 map to `catacombs` for scene, player
+    (dungeon art) and object packs;
+  - `tools/Native.ObjectArt`: Catacombs object sprites under the L2 palette;
+  - client `NativeSceneCatalog`, `NativeObjectCatalog` and `WorldPresentation`:
+    a Catacombs location;
+  - `test/native_scene_art_test.cpp` captures the L2 art for the existing decode
+    comparison;
+  - the depth journey checks native draws on every floor down to the target.
+    Setup rebuilds the packs by itself, because its fingerprint covers the tools.
+- **Exit check:** scene and object importer/catalog tests with the Catacombs family;
+  the native L2 art capture matches its managed decode; a fresh setup builds the
+  packs; `test-godot-native-depth-progression.ps1 -TargetDepth 8` with `warrior-l8`
+  (headless) requires native scene, player and object draws on L5–L8 and resumes;
+  Diablo, Server and client suites pass. A visible capture run only with approval.
+- **Out of scope:** native lighting and light radius, random palettes 2–4, palette
+  cycling and transparency blending (open for L1 too), monster art (no level has
+  native monster art yet), set levels, Caves and Hell, Catacombs AI (2.4).
+- **Size:** three to five days.
+- **State (2026-10-29):** done headless; the visible capture awaits approval. Profiles
+  with the Catacombs sidecar bind L5–L8 to `catacombs`; the player pack maps them to
+  its shared dungeon animations. The scene pack gains a third family; the object pack
+  writes `native-object-catalog-catacombs.json` beside the Cathedral catalog (byte
+  identical to before) with chests, L2 doors (42/43), traps and barrels under the L2
+  palette. Older two-family scene packs and Cathedral-only object packs still load.
+  The door step now retries a failed threat clear too (monsters crowd L5's doors).
+
 ## Batch 2.2c Single-player Town warp (done)
 
 - **Player-visible outcome:** in single-player, stepping on L5's warp-up (piece

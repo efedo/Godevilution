@@ -9,6 +9,8 @@ public enum NativeSceneLocation
 {
     Town,
     Cathedral,
+    /** L5-L8 under the L2 art (batch 2.3); packs built before 2.3 lack this family. */
+    Catacombs,
 }
 
 public enum NativeSceneTileType
@@ -95,7 +97,7 @@ public sealed record NativeSceneSpecial(
     int SourceTileOffsetX,
     int SourceTileOffsetY);
 
-/** Complete validated Town or Cathedral CEL/MIN/TIL scene family. */
+/** Complete validated Town, Cathedral or Catacombs CEL/MIN/TIL scene family. */
 public sealed class NativeSceneFamily
 {
     private readonly IReadOnlyDictionary<uint, NativeSceneDPiece> piecesById;
@@ -352,8 +354,8 @@ public sealed class NativeSceneCatalog
             var families = new Dictionary<NativeSceneLocation, NativeSceneFamily>();
             if (!TryGetArray(root, "families", out var familiesElement)) {
                 errors.Add("The native scene catalog must contain a families array.");
-            } else if (familiesElement.GetArrayLength() != 2) {
-                errors.Add("The native scene catalog must contain exactly the Town and Cathedral families.");
+            } else if (familiesElement.GetArrayLength() is < 2 or > 3) {
+                errors.Add("The native scene catalog must contain the Town and Cathedral families and at most a Catacombs family.");
             } else {
                 var index = 0;
                 foreach (var entry in familiesElement.EnumerateArray()) {
@@ -367,6 +369,10 @@ public sealed class NativeSceneCatalog
                 if (!families.ContainsKey(NativeSceneLocation.Town)
                     || !families.ContainsKey(NativeSceneLocation.Cathedral))
                     errors.Add("The native scene catalog must include one Town and one Cathedral family.");
+                foreach (var (key, location) in bindings) {
+                    if (!families.ContainsKey(location))
+                        errors.Add($"Native scene level binding {key.ContentManifestHash}/{key.LevelId} names a missing {FormatLocation(location)} family.");
+                }
             }
 
             if (errors.Count > 0) {
@@ -469,7 +475,7 @@ public sealed class NativeSceneCatalog
             return false;
         }
         if (!TryGetLocation(entry, "location", out location)) {
-            error = $"Native scene {path} location must be town or cathedral.";
+            error = $"Native scene {path} location must be town, cathedral or catacombs.";
             return false;
         }
         key = new NativeSceneLevelBindingKey(hash!, levelId);
@@ -492,7 +498,7 @@ public sealed class NativeSceneCatalog
         if (!ValidateProperties(entry, path, FamilyProperties, out error))
             return false;
         if (!TryGetLocation(entry, "location", out var location)) {
-            error = $"Native scene {path} location must be town or cathedral.";
+            error = $"Native scene {path} location must be town, cathedral or catacombs.";
             return false;
         }
         if (!TryGetByte(entry, "microTileLength", out var microTileLength)
@@ -1179,9 +1185,10 @@ public sealed class NativeSceneCatalog
         location = value switch {
             "town" => NativeSceneLocation.Town,
             "cathedral" => NativeSceneLocation.Cathedral,
+            "catacombs" => NativeSceneLocation.Catacombs,
             _ => default,
         };
-        return value is "town" or "cathedral";
+        return value is "town" or "cathedral" or "catacombs";
     }
 
     private static bool TryGetTileType(JsonElement element, string name, out NativeSceneTileType type)
@@ -1234,6 +1241,10 @@ public sealed class NativeSceneCatalog
         => value is { Length: 64 }
             && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 
-    private static string FormatLocation(NativeSceneLocation location)
-        => location == NativeSceneLocation.Town ? "town" : "cathedral";
+    internal static string FormatLocation(NativeSceneLocation location)
+        => location switch {
+            NativeSceneLocation.Town => "town",
+            NativeSceneLocation.Catacombs => "catacombs",
+            _ => "cathedral",
+        };
 }

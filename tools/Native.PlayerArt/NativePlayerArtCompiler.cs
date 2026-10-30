@@ -313,6 +313,9 @@ public static class NativePlayerArtCompiler
         var normalizedHashes = ValidateContentManifestHashes(admittedHashes);
         if (bindings is null || bindings.Count is < 1 or > 4096)
             throw new InvalidDataException("One to 4096 explicit content level bindings are required.");
+        // Native players draw every dungeon type with the same animations.
+        bindings = bindings.Select(binding => binding.Location == NativePlayerArtNames.CatacombsLocation
+            ? binding with { Location = NativePlayerArtNames.CathedralLocation } : binding).ToArray();
         var admitted = normalizedHashes.ToHashSet(StringComparer.Ordinal);
         var seen = new HashSet<(string Hash, uint LevelId)>();
         foreach (var binding in bindings) {

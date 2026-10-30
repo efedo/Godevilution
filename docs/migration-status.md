@@ -118,6 +118,8 @@ Passing a scoped test or adding a schema version does not close a milestone.
   clvl 8+ players reach L5 by the Town warp; two headless clients meet on L5 and
   resume there. Since 2.2c single-player L5's warp-up opens the Catacombs Town warp
   (kept in the save); the headless journey opens L5's doors, takes both warps and resumes.
+  Since 2.3 setup also imports the L2 tiles, specials and objects under `l2_1.pal`,
+  and the client draws L5–L8 natively (headless journey checks every floor).
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 17 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases). Retail-archive corpora stay local by design (public

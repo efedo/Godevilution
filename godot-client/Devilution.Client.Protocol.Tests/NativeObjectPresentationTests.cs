@@ -67,6 +67,26 @@ public sealed class NativeObjectPresentationTests
         Assert.Contains("consistent authoritative door", invalidDoor, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void DrawsCatacombsObjectsOnlyOnTheirBoundLevelsAndL2DoorsWithoutCathedralState()
+    {
+        Assert.True(NativeObjectCatalog.TryParse(NativeObjectCatalogTestData.CreateJson(catacombs: true), out var catalog, out var errors),
+            string.Join(" ", errors));
+        var door = new ObjectSnapshot { EntityId = 4, LevelId = 6, NativeObjectId = 42, AnimationFrame = 3, MissilePassable = true };
+        Assert.True(NativeObjectPresentation.TryResolve(catalog, door, ContentHash, 6, out var frame, out var diagnostic), diagnostic);
+        Assert.Equal((3, 3U, 64), (frame!.AtlasId, frame.NativeFrame, frame.NativeWidth));
+
+        Assert.False(NativeObjectPresentation.TryResolve(catalog, door, ContentHash, 1, out _, out var wrongLevel));
+        Assert.Contains("not bound", wrongLevel, StringComparison.Ordinal);
+        door.CathedralDoor = new CathedralDoorSnapshot { EntityId = 4, LevelId = 6, NativeObjectId = 42, AnimationFrame = 3 };
+        Assert.False(NativeObjectPresentation.TryResolve(catalog, door, ContentHash, 6, out _, out var cathedralState));
+        Assert.Contains("without Cathedral state", cathedralState, StringComparison.Ordinal);
+
+        var sarcophagus = new ObjectSnapshot { EntityId = 5, LevelId = 5, NativeObjectId = 48, AnimationFrame = 1 };
+        Assert.False(NativeObjectPresentation.TryResolve(catalog, sarcophagus, ContentHash, 5, out _, out var unsupported));
+        Assert.Contains("supported catacombs art family", unsupported, StringComparison.Ordinal);
+    }
+
     private static ObjectSnapshot CreateValidOpenDoor()
         => new() {
             EntityId = 11,

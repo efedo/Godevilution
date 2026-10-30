@@ -37,6 +37,7 @@ public static class NativePlayerArtProfiles
     public const string AllClassPolicy = "original-diablo-single-player-normal-all-classes-town-l1-l4";
 
     private enum ProfileWrapper { None, Town }
+    private const int FirstCatacombsLevel = 5;
     public const int MaximumProfileBytes = 1024 * 1024;
 
     private static readonly Regex Sha256Pattern = new("^[0-9a-f]{64}$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -92,8 +93,11 @@ public static class NativePlayerArtProfiles
                     && !string.Equals(existingFingerprint, normalizedFingerprint, StringComparison.Ordinal))
                     throw new InvalidDataException("Repeated native Town profiles disagree on their catalog fingerprint.");
                 townCatalogFingerprints[townProfile.ContentManifestHash] = normalizedFingerprint;
-                foreach (var binding in ReadLevelBindings(baseProfile.ContentPack,
-                    townProfile.ContentManifestHash, townPath)) {
+                var townBindings = ReadLevelBindings(baseProfile.ContentPack, townProfile.ContentManifestHash, townPath);
+                if (townProfile.Catacombs)
+                    townBindings = [.. townBindings, .. Enumerable.Range(FirstCatacombsLevel, 4)
+                        .Select(level => new NativePlayerArtLevelBinding(townProfile.ContentManifestHash, (uint)level, NativePlayerArtNames.CatacombsLocation))];
+                foreach (var binding in townBindings) {
                     var key = (binding.ContentManifestHash, binding.LevelId);
                     if (bindings.TryGetValue(key, out var existingLocation) && existingLocation != binding.Location)
                         throw new InvalidDataException($"Native Cathedral profiles disagree on level {binding.LevelId} for content hash {binding.ContentManifestHash}.");
@@ -132,7 +136,8 @@ public static class NativePlayerArtProfiles
         ContentPack PopulationPack,
         ContentPack RuntimePack);
 
-    private sealed record VerifiedTownProfile(string ContentManifestHash, string CatalogFingerprint);
+    /** Catacombs: the profile carries the L5-L8 pack (batch 2.1), so levels 5-8 bind to the Catacombs art. */
+    private sealed record VerifiedTownProfile(string ContentManifestHash, string CatalogFingerprint, bool Catacombs);
 
     private static VerifiedBaseProfile ValidateBaseProfile(
         string root,
@@ -230,7 +235,8 @@ public static class NativePlayerArtProfiles
 
         ContentPack[] packs = [baseProfile.ContentPack, baseProfile.PopulationPack, baseProfile.RuntimePack, townPack];
         // Since batch 2.1 an all-class profile may carry its Catacombs metadata as a fifth pack.
-        if (allClass && Directory.Exists(Path.Combine(root, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory)))
+        var catacombs = allClass && Directory.Exists(Path.Combine(root, AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory));
+        if (catacombs)
             packs = [.. packs, ContentPackLoader.LoadManifestDirectory(ResolveProfileDirectory(root,
                 AuthoritativeCatacombsPopulationMetadata.ProfileSidecarDirectory, profilePath))];
         var manifest = new ContentManifest(baseProfile.ContentPack.Id, baseProfile.ContentPack.Version, packs);
@@ -241,7 +247,7 @@ public static class NativePlayerArtProfiles
         var catalog = AuthoritativeNativeTownCatalog.Load(ComposedContent.Compose(manifest));
         if (!string.Equals(catalog.Fingerprint, catalogFingerprint, StringComparison.Ordinal))
             throw new InvalidDataException($"Town profile '{profilePath}' catalog fingerprint does not match its compiled Town semantics.");
-        return new VerifiedTownProfile(declaredHash, catalogFingerprint);
+        return new VerifiedTownProfile(declaredHash, catalogFingerprint, catacombs);
     }
 
     private static JsonDocument ReadProfile(string path)

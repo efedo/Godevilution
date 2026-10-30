@@ -37,7 +37,7 @@ public partial class WorldPresentation
         var size = nativeSceneViewport is { } viewport
             ? new Vector2(viewport.ViewportWidth, viewport.ViewportHeight) : GetViewportRect().Size;
         var pack = nativeObjectAssets.ObservePack();
-        var diagnostic = pack.Diagnostic ?? "Native object art requires an active native Cathedral scene.";
+        var diagnostic = pack.Diagnostic ?? "Native object art requires an active native dungeon scene.";
         NativeObjectFrame? frame = null;
         if (nativeSceneViewport is not null && nativeObjectArtReady
             && NativeObjectPresentation.TryResolve(nativeObjectAssets.Catalog, state, nativeObjectContentIdentity,

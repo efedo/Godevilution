@@ -660,7 +660,7 @@ public partial class WorldPresentation
                 pack.IdentityMatched,
                 contentManifestHash,
                 levelId,
-                family.Location == NativeSceneLocation.Town ? "town" : "cathedral",
+                NativeSceneCatalog.FormatLocation(family.Location),
                 family.MicroTileLength,
                 FloorRasterDrawCount,
                 ContentRasterDrawCount,

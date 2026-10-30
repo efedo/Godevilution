@@ -11,6 +11,8 @@ public partial class SessionAcceptance
         int ActorDraws, bool NativePlayer, int NativeResidents, int NativeObjects, string? Capture);
 
     private int nativeWarriorCaptureCount;
+    private int nativeWarriorCatacombsDoorDraws;
+    private static readonly uint[] NativeCatacombsObjectIds = [5, 6, 7, 42, 43, 53, 54, 57, 58];
 
     private static bool NativeWarriorVisible => DisplayServer.GetName() != "headless";
 
@@ -33,9 +35,14 @@ public partial class SessionAcceptance
             && main.ObservedNativeSceneDrawing is { NativeSceneActive: true } draw && draw.LevelId == levelId
             && draw.FloorRasterDrawCount > 0 && draw.ContentRasterDrawCount > 0 && draw.ActorDrawCount > 0
             && draw.MissingAtlasPaths.Count == 0
-            && (!playerArt || main.ObservedNativePlayerDrawing is { IsLoaded: true, UsedFallback: false }),
+            && (!playerArt || main.ObservedNativePlayerDrawing is { IsLoaded: true, UsedFallback: false })
+            && (levelId < NativeWarriorTownWarpDepth || CatacombsDrawReady(main)),
             $"L{levelId} did not draw its native scene layers and player.", 15);
         var scene = main.ObservedNativeSceneDrawing!;
+        if (levelId >= NativeWarriorTownWarpDepth)
+            Require(!main.ObservedNativeObjectDrawing.Any(item => item.LevelId == levelId && item.GenericFallback
+                    && NativeCatacombsObjectIds.Contains(item.NativeObjectId)),
+                $"L{levelId} drew a supported Catacombs object without native art.");
         var residents = main.ObservedNativeTownerDrawing.Count(resident => resident.NativeArt);
         string? capture = null;
         if (NativeWarriorVisible) {
@@ -49,6 +56,12 @@ public partial class SessionAcceptance
         GD.Print($"Native Warrior L{levelId} drew natively: {result}");
         return result;
     }
+
+    /** L5-L8 use the Catacombs scene family and the bound Catacombs object catalog (batch 2.3). */
+    private static bool CatacombsDrawReady(Main main)
+        => main.ObservedNativeSceneDrawing is { Location: "catacombs" }
+            && (string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_OBJECT_PACK"))
+                || main.ObservedNativeObjectPack is { IdentityMatched: true, AtlasesReady: true });
 
     private sealed record NativeWarriorPanels(string Attributes, string SkillSource, uint WeaponSeed,
         uint? SmithItemSeed, uint SmithPrice, uint GoldBefore, uint GoldAfterBuy, uint GoldAfterSell, int NativeResidents,
