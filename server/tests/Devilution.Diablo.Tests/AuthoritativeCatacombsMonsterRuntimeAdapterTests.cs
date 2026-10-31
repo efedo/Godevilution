@@ -583,7 +583,7 @@ public sealed class AuthoritativeCatacombsMonsterRuntimeAdapterTests
             },
         ]);
 
-    private static AuthoritativeCathedralThemeRoomState CreateState(
+    internal static AuthoritativeCathedralThemeRoomState CreateState(
         params AuthoritativeCathedralPopulationMonsterState[] activeMonsters)
     {
         ArgumentNullException.ThrowIfNull(activeMonsters);

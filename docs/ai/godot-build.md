@@ -62,8 +62,8 @@ runs `NativeDepthJourney` (one XP kill per floor down to the target, Town healer
 between floors, return to Town) and the fresh-host `NativeDepthResume` (exact
 cold baseline, every floor retained). Every floor must draw its native scene and
 player; L5–L8 must use the Catacombs family and object catalog, with at least one
-native Catacombs object seen. L5–L8 have no kill check until 2.4. Until the per-poll cohort save is cheaper,
-an L8 resume needs `-ServerBuildConfiguration Release`. At `-TargetDepth` 5 or deeper
+native Catacombs object seen. `-FirstFightDepth <n>` (development runs only) traverses
+the floors above L<n> without a kill; acceptance evidence keeps the default of 1. At `-TargetDepth` 5 or deeper
 the Journey climbs back to L5, opens its doors to the warp-up, returns to Town at (49,22),
 takes the opened Town warp to L5 and back, and the resume requires the warp still open. Each floor test starts from a played
 hero: a new Warrior for L1, `warrior-l2`..`warrior-l4` and `warrior-l8` for deeper floors. The

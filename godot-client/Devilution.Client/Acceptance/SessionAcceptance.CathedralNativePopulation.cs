@@ -1602,10 +1602,12 @@ public partial class SessionAcceptance
             || geometry.WarpTriggers.Any(route => route.TriggerX == x && route.TriggerY == y))
             return false;
         var cell = checked(y * geometry.Width + x);
+        // An open Cathedral door, or an open Catacombs door (native 42/43), can be walked through.
         var passableDoor = snapshot.Objects.FirstOrDefault(@object => @object.LevelId == player.LevelId
             && @object.PositionX == x && @object.PositionY == y
-            && @object.CathedralDoor is { DoorState: 1 or 2 }
-            && AuthoritativeObjectSelector.HasAuthoritativeInteraction(@object));
+            && (@object.CathedralDoor is { DoorState: 1 or 2 }
+                    && AuthoritativeObjectSelector.HasAuthoritativeInteraction(@object)
+                || @object.NativeObjectId is 42 or 43 && @object.MissilePassable));
         if (passableDoor is null
             && (geometry.BlockedCells.Contains(cell)
                 || geometry.StaticObjectBlockedCells.Contains(cell)
@@ -1894,6 +1896,12 @@ public partial class SessionAcceptance
             + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}.");
         var expectedSequence = checked(sequence + 1);
         await Click(useButton.GetGlobalRect().GetCenter());
+        // A press can be lost while the HUD rebuilds under heavy combat; press again only if nothing queued.
+        for (var retry = 0; retry < 3 && main.ObservedLastQueuedSequence == sequence && main.ObservedPendingCommandCount == 0; retry++) {
+            await Frame();
+            if (main.ObservedLastQueuedSequence == sequence && useButton.Visible && !useButton.Disabled)
+                await Click(useButton.GetGlobalRect().GetCenter());
+        }
         Require(main.ObservedLastQueuedSequence == expectedSequence
             && (main.ObservedPendingCommandCount > 0
                 || main.ObservedCommandResult?.ClientSequence == expectedSequence),
@@ -1922,8 +1930,8 @@ public partial class SessionAcceptance
         var after = main.ObservedSnapshot!.Players.Single();
         var progressionCombat = IsNativeProgressionCombatFloor(main);
         var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        // Both four-floor journeys (Rogue depth profile, Warrior default profile) fight while drinking.
-        var depthProgressionCombat = player.LevelId is >= 1 and <= 4
+        // The depth journeys (Rogue to L4, Warrior to L8) fight while drinking.
+        var depthProgressionCombat = player.LevelId is >= 1 and <= 8
             && (IsNativeDepthProgressionPhase(phase) || phase is "NativeDepthJourney" or "NativeDepthResume");
         var concurrentCombat = progressionCombat || depthProgressionCombat;
         var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;

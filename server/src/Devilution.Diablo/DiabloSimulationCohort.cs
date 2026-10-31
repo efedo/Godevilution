@@ -584,6 +584,7 @@ public sealed partial class DiabloSimulation
         target.RestoreCohortFallenRallyAttackPending(state.FallenRallyAttackPending);
         target.RestoreNativeMeleeCursor(monster.NativeMeleeCursor);
         target.RestoreNativeWalkCursor(monster.NativeWalkCursor);
+        target.RestoreNativeSneakState(monster.NativeSneak);
         RequireExactActor(state,
             new DiabloCohortCombatTargetState(target.CaptureCohortState(),
                 CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending) {

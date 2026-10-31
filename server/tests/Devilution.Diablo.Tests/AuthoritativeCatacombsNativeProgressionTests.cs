@@ -245,6 +245,37 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         Assert.Contains(archer.EntityId, candidate.Simulation.WorldState.Corpses.Keys);
     }
 
+    /** Special attacks and Sneak fades are bounded by the Special graphic, not the normal attack, on restore. */
+    [Fact(Explicit = true)]
+    public void SpecialGraphicCursorsRestoreOnAFreshHost()
+    {
+        var (activation, runtime, _) = DescendToL5("native-special-cursor");
+        var simulation = activation.Simulation;
+        var actor = simulation.WorldState.CombatTargets.Values
+            .Where(target => target.LevelId == 5 && !target.IsMoving && target.NativeMeleeCursor is null
+                && target.NativeInitialization is { } native && native.NativeSpecialAttackFrameCount > native.NativeAttackFrameCount)
+            .OrderBy(target => target.EntityId).First();
+        var codec = new DiabloCohortCodec();
+        foreach (var cursor in new[] {
+                     new AuthoritativeNativeMeleeCursor(actor.NativeInitialization!.NativeSpecialAttackFrameCount - 1, 0) {
+                         Fade = AuthoritativeNativeFade.Out,
+                     },
+                     new AuthoritativeNativeMeleeCursor(actor.NativeInitialization.NativeSpecialAttackFrameCount - 1, 0) {
+                         UsesSpecialAttack = true,
+                     },
+                 }) {
+            actor.RestoreNativeMeleeCursor(cursor);
+            actor.RestoreNativeSneakState(new AuthoritativeNativeSneakState(9, 3, true, 2));
+            var bytes = codec.Serialize(simulation.CaptureCohortState(runtime));
+            var candidate = activation.CohortCandidateFactory!(codec.Deserialize(bytes));
+            var restoredRuntime = candidate.CreateRuntime();
+            Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+            var restored = candidate.Simulation.WorldState.CombatTargets[actor.EntityId];
+            Assert.Equal(cursor, restored.NativeMeleeCursor);
+            Assert.Equal(new AuthoritativeNativeSneakState(9, 3, true, 2), restored.NativeSneak);
+        }
+    }
+
     private static (int X, int Y) AdjacentWalkable(DiabloSimulation simulation, int x, int y)
     {
         return new[] { (1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1) }

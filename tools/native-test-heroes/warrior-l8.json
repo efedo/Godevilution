@@ -1,17 +1,17 @@
 {
-  "basis": "Native Warrior entering L8, from native Diablo progression on top of warrior-l4: clvl 13 at its XP threshold, 5 points per level into Strength/Vitality, ordinary Cathedral and Catacombs gear, a belt of healing potions and Gold from selling L4-L7 finds.",
+  "basis": "Native Warrior entering L8, from native Diablo progression on top of warrior-l4: clvl 18 at its XP threshold (a full L5-L7 clear), 5 points per level into Strength/Vitality, ordinary Catacombs plate bought or found by L7, a belt of healing potions and Gold from selling L4-L7 finds. clvl 13 in breast plate ran out of potions against L6-L8 packs.",
   "classSymbol": "warrior",
-  "characterLevel": 13,
-  "experience": 138544,
-  "strength": 60,
+  "characterLevel": 18,
+  "experience": 571190,
+  "strength": 80,
   "magic": 10,
   "dexterity": 30,
-  "vitality": 60,
+  "vitality": 65,
   "equipment": {
-    "0": "full_helm",
+    "0": "great_helm",
     "4": "bastard_sword",
-    "5": "large_shield",
-    "6": "breast_plate"
+    "5": "tower_shield",
+    "6": "gothic_plate"
   },
   "belt": {
     "0": "potion_healing",

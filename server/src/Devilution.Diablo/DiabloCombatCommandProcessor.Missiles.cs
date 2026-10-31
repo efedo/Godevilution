@@ -1645,6 +1645,9 @@ public sealed partial class DiabloCombatCommandProcessor
                     monster.EntityId)) {
                 monster.ApplyKnockback(previousX, previousY);
                 world.Projectiles.Remove(projectile.EntityId);
+                // Native MissToMonst: startHit(0) plays the Hit sound, choosing its variant.
+                if (IsNativeCatacombsActor(monster))
+                    random.AdvanceRndSeed();
                 return;
             }
 

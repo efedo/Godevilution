@@ -19,24 +19,44 @@ public partial class SessionAcceptance
         string WorldHash, NativeWarriorFloor[] Floors);
 
     private const int NativeWarriorAttacksPerFloor = 160;
-    // L5-L8 are drawn natively and traversed without a kill: their monsters' AI is 2.4.
+    // L5-L8 melee families fight as native since batch 2.4a, so every floor records a kill.
     private const uint NativeWarriorDeepestFloor = 8;
-    private const uint NativeWarriorFoughtFloor = 4;
+    private const uint NativeWarriorFoughtFloor = 8;
     private const uint NativeWarriorTownWarpDepth = 5;
     private const int NativeWarriorTravelAttempts = 16;
     private int nativeWarriorRouteCount;
     // One-time evidence run: clear floors as a player would and record the Warrior entering each one.
     private const string GrindEnvironmentVariable = "GODEVILUTION_NATIVE_DEPTH_GRIND";
     private const string TargetEnvironmentVariable = "GODEVILUTION_NATIVE_DEPTH_TARGET";
+    // Development runs may fight only from this floor down; shallower floors are traversed without a kill.
+    private const string FirstFightEnvironmentVariable = "GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT";
+
+    private static uint NativeWarriorFirstFightFloor
+        => uint.TryParse(System.Environment.GetEnvironmentVariable(FirstFightEnvironmentVariable), out var first)
+            && first is >= 1 and <= NativeWarriorDeepestFloor ? first : 1U;
     private const int NativeWarriorGrindKillsPerFloor = 40;
     // Single ordinary steps toward the nearest reachable monster on a whole floor.
     private const int NativeWarriorSearchMoves = 200;
     private const int NativeWarriorDoorOperations = 16;
+    private const int NativeWarriorDoorApproachAttempts = 3;
+    private const int NativeWarriorDoorObstructionTries = 6;
+    private const int NativeWarriorPackRadius = 6;
+    // Below this many potions the Warrior restocks in Town before the next floor.
+    private const int NativeWarriorPotionRestock = 6;
+    private const int NativeWarriorTargetApproaches = 8;
+    // An L6-L8 kill can cost a dozen potions, so the Catacombs restock comes back with a near-full stock.
+    private const int NativeWarriorCatacombsPotionRestock = 12;
+    private const int NativeWarriorPackSize = 3;
     // Surrounded, hurt and out of potions, a player walks back to the Town healer and returns.
-    private const int NativeWarriorRetreats = 4;
+    private const int NativeWarriorRetreats = 8;
     // A full belt plus a row of inventory; the retreat keeps a reserve for the walk out.
     private const int NativeWarriorPotionSupply = 16;
     private const int NativeWarriorPotionReserve = 2;
+    // L5-L8 packs pin the Warrior for longer, so the walk out keeps more.
+    private const int NativeWarriorCatacombsPotionReserve = 6;
+
+    private static int NativeWarriorPotionReserveOn(uint levelId)
+        => levelId >= NativeWarriorTownWarpDepth ? NativeWarriorCatacombsPotionReserve : NativeWarriorPotionReserve;
 
     private sealed class NativeWarriorRetreatException(string message) : InvalidOperationException(message);
 
@@ -69,7 +89,7 @@ public partial class SessionAcceptance
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
-                if (depth > NativeWarriorFoughtFloor) {
+                if (depth > NativeWarriorFoughtFloor || depth < NativeWarriorFirstFightFloor) {
                     var entered = main.ObservedSnapshot!.Players.Single();
                     floors.Add(new(depth, string.Empty, 0, entered.Experience, entered.Experience, 0));
                     GD.Print($"Native Warrior entered L{depth}; life={entered.Life}");
@@ -79,8 +99,10 @@ public partial class SessionAcceptance
                 floors.Add(floor);
                 var afterKill = main.ObservedSnapshot!.Players.Single();
                 GD.Print($"Native Warrior L{depth} kill; XP={floor.ExperienceBefore}->{floor.ExperienceAfter}; life={afterKill.Life}");
-                if (depth < target && (long)afterKill.Life * 2 < afterKill.LifeMaximum) {
-                    // Back up to the Town healer, then down again; the retained floors keep their state.
+                if (depth < target && ((long)afterKill.Life * 2 < afterKill.LifeMaximum
+                        || NativeHealingSupply(afterKill) < (depth >= NativeWarriorTownWarpDepth
+                            ? NativeWarriorCatacombsPotionRestock : NativeWarriorPotionRestock))) {
+                    // Back up to the Town healer and potion stock, then down again; the retained floors keep their state.
                     for (var up = (int)depth - 1; up >= 0; up--)
                         await TravelNativeWarriorAsync(main, directory, (uint)up);
                     await VisitNativeWarriorTownAsync(main);
@@ -288,6 +310,9 @@ public partial class SessionAcceptance
     private async Task TravelNativeWarriorAsync(Main main, string directory, uint destination, bool flee = false)
     {
         for (var attempt = 0; attempt < NativeWarriorTravelAttempts; attempt++) {
+            // An interrupted walk can still finish on the trigger; let a pending transition land first.
+            for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
+                await Frame();
             var player = main.ObservedSnapshot!.Players.Single();
             if (player.LevelId == destination)
                 return;
@@ -296,12 +321,19 @@ public partial class SessionAcceptance
             await UseNativeHealingPotionIfNeeded(main);
             if (player.LevelId >= NativeWarriorTownWarpDepth)
                 await OpenNativeWarriorCatacombsDoorsAsync(main, destination);
+            for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
+                await Frame();
+            if (main.ObservedSnapshot!.Players.Single().LevelId != player.LevelId)
+                continue; // Clearing finished an interrupted walk onto a trigger.
             // Journey and resume run in separate processes, so the phase keeps their route evidence apart.
             var routeDirectory = System.IO.Path.Combine(directory, "native-warrior-routes",
                 System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") ?? "phase",
                 $"{++nativeWarriorRouteCount:D4}-{player.LevelId}-to-{destination}");
             System.IO.Directory.CreateDirectory(routeDirectory);
             var route = DepthGeometry(main, player.LevelId).WarpTriggers.Single(item => item.Available && item.TargetLevelId == destination);
+            var position = main.ObservedSnapshot!.Players.Single();
+            GD.Print($"Native Warrior route L{player.LevelId}->L{destination} attempt {attempt + 1} from ({position.PositionX},{position.PositionY}) "
+                + $"to ({route.TriggerX},{route.TriggerY})");
             try {
                 // Walking continuity is the route tests' concern; the journey needs only the transition.
                 await TravelCathedralRoute(main, routeDirectory, route.WarpId, destination, stopEarly: false,
@@ -314,8 +346,14 @@ public partial class SessionAcceptance
                 && alive.LevelId == player.LevelId) {
                 GD.Print($"Native Warrior travel to L{destination} interrupted ({failure.Message}); clearing and retrying; "
                     + DescribeNativeWarriorSurroundings(main));
-                await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled && Settled(main),
-                    "Interrupted native Warrior travel did not settle.", 15);
+                await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled,
+                    "Interrupted native Warrior travel did not stop.", 15);
+                // Repeated hits can hold the Warrior out of Stand; the retry's clearing fights them.
+                for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
+                    await Frame();
+                // Give the interrupted walk's last queued command time to return its receipt.
+                for (var frame = 0; frame < 120 && main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence; frame++)
+                    await Frame();
             }
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
@@ -327,16 +365,22 @@ public partial class SessionAcceptance
      */
     private async Task OpenNativeWarriorCatacombsDoorsAsync(Main main, uint destination)
     {
+        var refusals = new Dictionary<uint, int>();
         for (var opened = 0; opened < NativeWarriorTravelAttempts; opened++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var geometry = DepthGeometryFromSnapshot(snapshot, player.LevelId);
-            var route = geometry.WarpTriggers.Single(item => item.Available && item.TargetLevelId == destination);
+            // A walk interrupted on its trigger can arrive while clearing.
+            if (player.LevelId == destination
+                || geometry.WarpTriggers.SingleOrDefault(item => item.Available && item.TargetLevelId == destination) is not { } route)
+                return;
             var reach = NativeWarriorReach(geometry, player, route.TriggerX, route.TriggerY);
             if (reach.Contains((route.TriggerX, route.TriggerY)))
                 return;
             var door = snapshot.Objects
+                // The server refuses trapped Catacombs doors until their traps fire natively (batch 2.5).
                 .Where(item => item.LevelId == player.LevelId && item.NativeObjectId is 42 or 43 && !item.MissilePassable
+                    && !item.TrapArmed && refusals.GetValueOrDefault(item.EntityId) < 3
                     && reach.Any(cell => Math.Abs(cell.X - item.PositionX) + Math.Abs(cell.Y - item.PositionY) == 1))
                 .OrderBy(item => NativeDistance(item.PositionX, item.PositionY, route.TriggerX, route.TriggerY))
                 .ThenBy(item => item.EntityId).FirstOrDefault();
@@ -347,12 +391,7 @@ public partial class SessionAcceptance
                 // Clearing can fail too when monsters crowd the door; both retry with the next plan.
                 await ClearNativeWarriorThreatsAsync(main, player.LevelId);
                 await MoveAdjacentToNativePosition(main, current => current.Objects.Single(item => item.EntityId == door.EntityId),
-                    async blocked => {
-                        if (!blocked)
-                            return false;
-                        await ClearNativeWarriorThreatsAsync(main, player.LevelId);
-                        return main.ObservedSnapshot!.Monsters.Any(monster => monster.Alive && monster.LevelId == player.LevelId);
-                    });
+                    NativeWarriorDoorObstruction(main, player.LevelId));
             } catch (InvalidOperationException failure) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
                 && alive.LevelId == player.LevelId) {
                 // A monster stepped into the walk or kept hitting the Warrior; fight it and plan again.
@@ -364,17 +403,131 @@ public partial class SessionAcceptance
                 await UseNativeHealingPotionIfNeeded(main);
                 continue;
             }
-            var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-            await ClickWorld(main, door.PositionX, door.PositionY);
-            await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
-            await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
-                $"Native Catacombs door {door.EntityId} did not open.", 5);
-            await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
-                $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
-            nativeWarriorCatacombsDoorDraws++;
+            try {
+                await OperateNativeWarriorCatacombsDoorAsync(main, door);
+            } catch (InvalidOperationException refused) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                && alive.LevelId == player.LevelId) {
+                // A hit or a monster in the doorway can refuse the operate; retry it, then skip it.
+                refusals[door.EntityId] = refusals.GetValueOrDefault(door.EntityId) + 1;
+                GD.Print($"Native Warrior door {door.EntityId} refused ({refused.Message[..Math.Min(refused.Message.Length, 120)]}); "
+                    + DescribeNativeWarriorSurroundings(main));
+                await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
+                    "The refused native Catacombs door operate did not settle.", 15);
+                continue;
+            }
             GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
         }
         throw new InvalidOperationException($"The Warrior opened {NativeWarriorTravelAttempts} Catacombs doors without reaching the L{destination} route.");
+    }
+
+    /**
+     * A door walk is blocked by monsters on its path: fight those nearby, then the nearest one, and
+     * stop after a bounded number of tries rather than waiting on a monster that never moves.
+     */
+    private Func<bool, Task<bool>> NativeWarriorDoorObstruction(Main main, uint levelId)
+    {
+        var tries = 0;
+        return async blocked => {
+            if (!blocked)
+                return false;
+            Require(++tries <= NativeWarriorDoorObstructionTries,
+                $"The Warrior's L{levelId} door walk stayed blocked; " + DescribeNativeWarriorSurroundings(main));
+            var startTick = main.ObservedSnapshot!.Tick;
+            await UseNativeHealingPotionIfNeeded(main);
+            await ClearNativeWarriorThreatsAsync(main, levelId);
+            var snapshot = main.ObservedSnapshot!;
+            var player = snapshot.Players.Single();
+            var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId
+                    && !monster.SneakHidden)
+                .OrderBy(monster => NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY))
+                .ThenBy(monster => monster.EntityId).FirstOrDefault();
+            if (nearest is null)
+                return false;
+            try {
+                await AttackNativeWarriorTargetAsync(main, levelId, nearest.EntityId, NativeWarriorAttacksPerFloor / 4);
+            } catch (NativeWarriorRetreatException) {
+                await UseNativeHealingPotionIfNeeded(main);
+            }
+            // Nothing could act: let the world run until the blocking monsters move or reach the Warrior.
+            var waitLife = main.ObservedSnapshot!.Players.Single().Life;
+            var waitTick = main.ObservedSnapshot!.Tick;
+            for (var frame = 0; frame < 240 && main.ObservedSnapshot!.Tick < Math.Max(startTick + 40, waitTick + 10); frame++) {
+                var current = main.ObservedSnapshot!;
+                var warrior = current.Players.Single();
+                if (warrior.Life < waitLife || current.Tick >= waitTick + 10 && current.Monsters.Any(monster => monster.Alive && !monster.IsPlayerMinion
+                        && monster.LevelId == levelId
+                        && NativeDistance(warrior.PositionX, warrior.PositionY, monster.PositionX, monster.PositionY) <= 1))
+                    break;
+                await Frame();
+            }
+            return true;
+        };
+    }
+
+    private async Task OperateNativeWarriorCatacombsDoorAsync(Main main, ObjectSnapshot door)
+    {
+        var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+        await ClickWorld(main, door.PositionX, door.PositionY);
+        await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
+        await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
+            $"Native Catacombs door {door.EntityId} did not open.", 5);
+        await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
+            $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
+        nativeWarriorCatacombsDoorDraws++;
+    }
+
+    /**
+     * L5-L8 kill search: opens the closed Catacombs door nearest the Warrior within its walking reach,
+     * preferring doors without a pack behind them (several attackers stun-lock a lone Warrior, as native
+     * hit recovery does). An approach a monster interrupts is retried a few times before that door is given up.
+     */
+    private async Task<bool> OpenNearestNativeWarriorCatacombsDoorAsync(Main main, uint levelId, HashSet<uint> operated,
+        Dictionary<uint, int> approaches)
+    {
+        var snapshot = main.ObservedSnapshot!;
+        var player = snapshot.Players.Single();
+        var reach = NativeWarriorReach(DepthGeometryFromSnapshot(snapshot, levelId), player, -1, -1);
+        var door = snapshot.Objects
+            .Where(item => item.LevelId == levelId && item.NativeObjectId is 42 or 43 && !item.MissilePassable
+                && !item.TrapArmed && !operated.Contains(item.EntityId)
+                && reach.Any(cell => Math.Abs(cell.X - item.PositionX) + Math.Abs(cell.Y - item.PositionY) == 1))
+            .OrderBy(item => snapshot.Monsters.Count(monster => monster.Alive && !monster.IsPlayerMinion
+                    && monster.LevelId == levelId
+                    && NativeDistance(item.PositionX, item.PositionY, monster.PositionX, monster.PositionY) <= NativeWarriorPackRadius)
+                >= NativeWarriorPackSize ? 1 : 0)
+            .ThenBy(item => NativeDistance(player.PositionX, player.PositionY, item.PositionX, item.PositionY))
+            .ThenBy(item => item.EntityId).FirstOrDefault();
+        if (door is null)
+            return false;
+        var attempts = approaches[door.EntityId] = approaches.GetValueOrDefault(door.EntityId) + 1;
+        if (attempts >= NativeWarriorDoorApproachAttempts)
+            operated.Add(door.EntityId);
+        try {
+            await MoveAdjacentToNativePosition(main, current => current.Objects.Single(item => item.EntityId == door.EntityId),
+                NativeWarriorDoorObstruction(main, levelId));
+        } catch (InvalidOperationException failure) {
+            GD.Print($"Native Warrior L{levelId} door approach interrupted ({failure.Message[..Math.Min(failure.Message.Length, 120)]}); "
+                + DescribeNativeWarriorSurroundings(main) + $"; mode={main.ObservedSnapshot!.Players.Single().CombatMode}; "
+                + $"pending={main.ObservedPendingCommandCount}; queued={main.ObservedLastQueuedSequence}; "
+                + $"result={main.ObservedCommandResult?.ClientSequence}/{main.ObservedCommandResult?.Status}");
+            if (main.ObservedSnapshot!.Players.Single() is not { Life: > 0 } alive || alive.LevelId != levelId)
+                throw;
+            // Monsters pouring through an opened door block the walk; the kill loop fights them (and may retreat).
+            await UseNativeHealingPotionIfNeeded(main);
+            return true;
+        }
+        operated.Add(door.EntityId);
+        try {
+            await OperateNativeWarriorCatacombsDoorAsync(main, door);
+        } catch (InvalidOperationException failure) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+            && alive.LevelId == levelId) {
+            // The server refuses some door operations (for example an occupied doorway); try another door.
+            GD.Print($"Native Warrior L{levelId} door {door.EntityId} refused ({failure.Message[..Math.Min(failure.Message.Length, 120)]}); "
+                + DescribeNativeWarriorSurroundings(main));
+            return true;
+        }
+        GD.Print($"Native Warrior opened L{levelId} Catacombs door {door.EntityId} to reach a monster");
+        return true;
     }
 
     /** Cardinal walking reach over the projected blocked cells; the goal trigger counts as reached. */
@@ -428,7 +581,11 @@ public partial class SessionAcceptance
             try {
                 (killed, _) = await AttackNativeWarriorTargetAsync(main, levelId, threat.EntityId, NativeWarriorAttacksPerFloor);
             } catch (NativeWarriorRetreatException) {
-                return; // Walk on instead; the route itself is the way out.
+                // Walking on through a pack only takes more hits: drink and fight on while potions last.
+                if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0)
+                    return;
+                await UseNativeHealingPotionIfNeeded(main);
+                continue;
             }
             if (killed is null)
                 skipped.Add(threat.EntityId);
@@ -446,13 +603,21 @@ public partial class SessionAcceptance
         var doorCommands = new Dictionary<uint, int>();
         var work = new NativeCombatWorkBudget();
         while (attacks < NativeWarriorAttacksPerFloor) {
-            await UseNativeHealingPotionIfNeeded(main);
+            if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > NativeWarriorPotionReserveOn(levelId))
+                await UseNativeHealingPotionIfNeeded(main);
             MonsterSnapshot target;
             try {
                 target = await FindNativeClassTargetAsync(main, ranged: false, levelId, NativeWarriorSearchMoves);
             } catch (InvalidOperationException) when (main.ObservedSnapshot!.Players.Single().Life > 0
                 && doors.Count < NativeWarriorDoorOperations) {
                 // Every nearby monster is behind a closed door: open the nearest reachable one and search again.
+                if (levelId >= NativeWarriorTownWarpDepth) {
+                    await ClearNativeWarriorThreatsAsync(main, levelId);
+                    await UseNativeHealingPotionIfNeeded(main);
+                    if (!await OpenNearestNativeWarriorCatacombsDoorAsync(main, levelId, doors, doorCommands))
+                        throw;
+                    continue;
+                }
                 var opened = doors.Count;
                 do {
                     await ClearNativeWarriorThreatsAsync(main, levelId);
@@ -466,12 +631,21 @@ public partial class SessionAcceptance
             uint? killed;
             int used;
             try {
-                (killed, used) = await AttackNativeWarriorTargetAsync(main, levelId, target.EntityId, NativeWarriorAttacksPerFloor - attacks);
+                (killed, used) = await AttackNativeWarriorTargetAsync(main, levelId, target.EntityId, NativeWarriorAttacksPerFloor - attacks,
+                    NativeWarriorPotionReserveOn(levelId));
             } catch (NativeWarriorRetreatException retreat) when (retreats < NativeWarriorRetreats) {
                 retreats++;
                 GD.Print($"Native Warrior retreating from L{levelId} ({retreat.Message})");
-                for (var up = (int)levelId - 1; up >= 0; up--)
-                    await TravelNativeWarriorAsync(main, directory, (uint)up, flee: up == (int)levelId - 1);
+                try {
+                    await TravelNativeWarriorAsync(main, directory, levelId - 1, flee: true);
+                } catch (InvalidOperationException blocked) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                    && alive.LevelId == levelId) {
+                    // The pack holds the way up; stand and fight instead.
+                    GD.Print($"Native Warrior retreat from L{levelId} blocked ({blocked.Message[..Math.Min(blocked.Message.Length, 120)]})");
+                    continue;
+                }
+                for (var up = (int)levelId - 2; up >= 0; up--)
+                    await TravelNativeWarriorAsync(main, directory, (uint)up);
                 await VisitNativeWarriorTownAsync(main);
                 for (uint down = 1; down <= levelId; down++)
                     await TravelNativeWarriorAsync(main, directory, down);
@@ -488,16 +662,22 @@ public partial class SessionAcceptance
     /**
      * Ordinary right-click melee: always strike the weakest monster already adjacent (the ones
      * hitting the Warrior), and otherwise close in on the target. In melee below 60% life with
-     * only the potion reserve left, it throws NativeWarriorRetreatException. Returns the
+     * only `reserve` potions left (kept undrunk for the walk out), or below 70% surrounded by three
+     * or more attackers, it throws NativeWarriorRetreatException. Returns the
      * first attacked monster that dies, or null when the target escapes, is unreachable, or the
      * budget ends.
      */
-    private async Task<(uint? Killed, int Attacks)> AttackNativeWarriorTargetAsync(Main main, uint levelId, uint targetId, int budget)
+    private async Task<(uint? Killed, int Attacks)> AttackNativeWarriorTargetAsync(Main main, uint levelId, uint targetId, int budget,
+        int reserve = 0)
     {
         var attacks = 0;
+        var approaches = 0;
         var attacked = new HashSet<uint>();
+        // Monsters whose click queued nothing or was refused, for example diagonally past a door corner.
+        var unattackable = new HashSet<uint>();
         var swings = new List<string>();
-        while (attacks < budget) {
+        // Approaches are bounded so a fading, retreating or unreachable monster cannot hold the loop.
+        while (attacks < budget && approaches < NativeWarriorTargetApproaches) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0, $"The Warrior died on L{levelId} during combat; last swings [{string.Join("; ", swings.TakeLast(12))}]; "
@@ -510,16 +690,23 @@ public partial class SessionAcceptance
             var adjacentMonsters = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId
                     && NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 1).ToArray();
             // Focus the weakest attacker so a pack loses members before its regeneration catches up.
-            var adjacent = adjacentMonsters.OrderBy(monster => monster.HitPointsQ6)
+            var adjacent = adjacentMonsters.Where(monster => !unattackable.Contains(monster.EntityId))
+                .OrderBy(monster => monster.HitPointsQ6)
                 .ThenBy(monster => monster.EntityId == targetId ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
             if (adjacentMonsters.Length >= 1 && (long)player.Life * 5 < (long)player.LifeMaximum * 3
-                && NativeHealingSupply(player) <= NativeWarriorPotionReserve)
+                    && NativeHealingSupply(player) <= reserve
+                || adjacentMonsters.Length >= 3 && (long)player.Life * 10 < (long)player.LifeMaximum * 7)
                 throw new NativeWarriorRetreatException(
                     $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, potions {NativeHealingSupply(player)}");
+            // Every pass drinks, including those that only approach or skip a monster that cannot be struck;
+            // the reserve is kept for the retreat walk, which the 60% rule above starts.
+            if (NativeHealingSupply(player) > reserve)
+                await UseNativeHealingPotionIfNeeded(main);
             if (adjacent is null) {
                 var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
                 if (target is null)
                     return (null, attacks);
+                approaches++;
                 MonsterSnapshot approached;
                 try {
                     approached = await FindNativeClassTargetAsync(main, ranged: false, levelId);
@@ -531,7 +718,6 @@ public partial class SessionAcceptance
                     return (null, attacks);
                 continue;
             }
-            await UseNativeHealingPotionIfNeeded(main);
             attacks++;
             attacked.Add(adjacent.EntityId);
             var sequence = main.ObservedLastQueuedSequence;
@@ -539,8 +725,10 @@ public partial class SessionAcceptance
             // A monster that stepped off the clicked tile yields no attack command; re-observe and retry.
             for (var frame = 0; frame < 3 && main.ObservedLastQueuedSequence == sequence; frame++)
                 await Frame();
-            if (main.ObservedLastQueuedSequence == sequence)
+            if (main.ObservedLastQueuedSequence == sequence) {
+                unattackable.Add(adjacent.EntityId);
                 continue;
+            }
             await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
                 && main.ObservedSnapshot!.Tick >= result.AppliedTick,
                 "Native Warrior melee did not reach its authoritative receipt.", 15);
@@ -551,10 +739,12 @@ public partial class SessionAcceptance
             swings.Add($"{adjacent.EntityId}:hp{adjacent.HitPoints}->{after.Monsters.SingleOrDefault(monster => monster.EntityId == adjacent.EntityId)?.HitPoints}"
                 + $":{receipt.Status}/{receipt.RejectReason}:life{after.Players.Single().Life}");
             // A live monster can move or recover before the clocked attack applies; re-observe and retry.
-            if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt))
+            if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)) {
                 Require(receipt.Status == CommandStatus.Rejected
                     && receipt.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget,
                     $"Unexpected native Warrior attack refusal: {receipt.Status}/{receipt.RejectReason}.");
+                unattackable.Add(adjacent.EntityId);
+            }
         }
         return (null, attacks);
     }
@@ -568,7 +758,7 @@ public partial class SessionAcceptance
         foreach (var floor in expected.Floors) {
             Require(HashProto(DepthGeometry(main, floor.LevelId)) == floor.GeometryHash,
                 $"Retained native floor {floor.LevelId} changed its generated geometry or door state.");
-            if (floor.LevelId > NativeWarriorFoughtFloor) {
+            if (floor.LevelId > NativeWarriorFoughtFloor || floor.LevelId < NativeWarriorFirstFightFloor) {
                 Require(floor.MonsterEntityId == 0, $"Traversed native floor {floor.LevelId} recorded a kill.");
                 continue;
             }

@@ -120,9 +120,13 @@ Passing a scoped test or adding a schema version does not close a milestone.
   (kept in the save); the headless journey opens L5's doors, takes both warps and resumes.
   Since 2.3 setup also imports the L2 tiles, specials and objects under `l2_1.pal`,
   and the client draws L5–L8 natively (headless journey checks every floor).
+  Since 2.4a the L5–L8 melee families fight with native AI (per-tick native traces)
+  and the headless Warrior journey kills on every floor to L8; ranged and missile
+  families are 2.4b.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
-- CI now regenerates 17 archive-free native oracle corpora and runs their
-  managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases). Retail-archive corpora stay local by design (public
+- CI now regenerates 18 archive-free native oracle corpora and runs their
+  managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;
+  2.4a the ten-lane melee AI trace). Retail-archive corpora stay local by design (public
   repository), so those comparisons still skip in CI.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.

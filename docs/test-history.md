@@ -9,6 +9,22 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-31 — Catacombs melee monsters
+
+`ThemeRoomGenerationTest.CaptureNativeCatacombsMeleeAi`, now in
+`tools/run-native-oracle-parity.sh`, free-runs ten lanes (Zombie, Fallen, Skeleton,
+Scavenger, Sneak, Goat melee, Fat, Bat, Gargoyle, Horned Demon) for 300 ticks;
+`AuthoritativeCatacombsMeleeAiNativeOracleTests` admits each actor through the
+production Catacombs adapter and matches RNG, player life, tile, hit points and the
+hidden flag every tick (10 of 10). New codec tests refuse Fade and Sneak state in
+older cohort formats; the mapper, host
+validator and client model keep the Acid missile identity. With the native packs,
+`test-godot-native-depth-progression.ps1 -TargetDepth 8 -TestParticipant warrior-l8`
+(clvl 18) kills on each of L1–L8, draws natively through L8 and resumes (Debug
+server). All ten explicit progression tests pass; Diablo.Tests (3841), Server.Tests
+(1872) and client protocol tests (1224) pass apart from the expected worker-pool
+documentation test. Both multiplayer smokes pass with resume.
+
 ### 2026-10-29 — Render the Catacombs
 
 The headless native scene capture now exports the L2 art; the explicit

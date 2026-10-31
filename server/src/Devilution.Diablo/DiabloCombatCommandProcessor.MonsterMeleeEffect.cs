@@ -199,8 +199,17 @@ public sealed partial class DiabloCombatCommandProcessor
                 tick,
                 players,
                 PlayerDeathReason.MonsterOrTrap);
-        else if (damage > 0 && target.HitPointsQ6 > 0)
-            ApplyMonsterKnockback(target, victim, players);
+        else {
+            if (IsNativeCatacombsActor(target)) {
+                // Native startHit: Say(ArghClang) picks a voice variant, then hit recovery.
+                random.AdvanceRndSeed();
+                var victimClass = GetPlayerClass(victim);
+                if (ShouldStartHit(victim, victimClass, damageResult.IncomingDamageQ6))
+                    StartHit(victim, victimClass, tick);
+            }
+            if (damage > 0 && target.HitPointsQ6 > 0)
+                ApplyMonsterKnockback(target, victim, players);
+        }
         var batTuning = GetBatAttackTuning(target);
         if (target.HitPointsQ6 > 0 && batTuning.HasValue)
             target.StartBatRetreat(

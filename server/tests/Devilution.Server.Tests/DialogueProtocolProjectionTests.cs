@@ -3150,6 +3150,34 @@ public sealed class DialogueProtocolProjectionTests
         }));
     }
 
+    /** The native C2 Acid owner projects and restores identity "Acid" on the travelling Acid only. */
+    [Fact]
+    public void ProjectsAndRestoresNativeCatacombsAcidIdentity()
+    {
+        var player = new StorePlayerSnapshot(0, null, [], 0, 64, 0, 0, PlayerAttributesState.Zero, [], [], []) {
+            EntityId = 1,
+            LevelId = 6,
+        };
+        var source = new DiabloSimulationSnapshot(1, player, [], [], [], [],
+            [new DiabloProjectileState(2, 1, 0, 6, 1, 4, 4, 4, 4, 0, AuthoritativeDamageType.Acid, 0, 3) {
+                Behavior = AuthoritativeProjectileBehavior.Acid,
+                NativeMissileId = "Acid",
+            }],
+            null);
+
+        var projectile = Assert.Single(DiabloProtocolMapper.ToProtocolSnapshot(source).Projectiles);
+        Assert.Equal(NativeProjectileVisual.Acid, projectile.NativeVisual);
+        Assert.Equal("Acid", projectile.NativeMissileId);
+        Assert.Equal("Acid", Assert.Single(DiabloProtocolMapper.FromProtocolSnapshot(
+            DiabloProtocolMapper.ToProtocolSnapshot(source)).Projectiles).NativeMissileId);
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Projectiles = [source.Projectiles[0] with { NativeMissileId = "Arrow" }],
+        }));
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Projectiles = [source.Projectiles[0] with { Behavior = AuthoritativeProjectileBehavior.AcidSplat }],
+        }));
+    }
+
     [Fact]
     public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()
     {

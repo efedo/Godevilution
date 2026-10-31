@@ -48,6 +48,7 @@ captures=(
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsMultiplayerChestOperations|GODEVILUTION_CATACOMBS_MULTIPLAYER_CHEST_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsRangedReleases|GODEVILUTION_CATACOMBS_RANGED_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsArrowFlightAndImpact|GODEVILUTION_CATACOMBS_ARROW_FLIGHT_ORACLE_DIRECTORY"
+	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsMeleeAi|GODEVILUTION_CATACOMBS_MELEE_AI_ORACLE_DIRECTORY"
 	# Reads spawn.mpq from the build directory, or GODEVILUTION_MPQ_ORACLE_ARCHIVE when set.
 	"native_mpq_oracle_test|NativeMpqOracle.CaptureReaderDigests|GODEVILUTION_MPQ_ORACLE_DIRECTORY"
 )
@@ -69,6 +70,7 @@ diablo_classes=(
 	AuthoritativeCatacombsChestNativeOracleTests
 	AuthoritativeNativeCatacombsRangedNativeOracleTests
 	AuthoritativeNativeCatacombsArrowNativeOracleTests
+	AuthoritativeCatacombsMeleeAiNativeOracleTests
 )
 client_classes=(NativeArchiveOracleTests)
 

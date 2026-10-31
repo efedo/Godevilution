@@ -85,6 +85,39 @@ public sealed partial class DiabloCohortCodecTests
     }
 
     [Fact]
+    public void OlderFormatsRejectExplicitDefaultSneakFadeAndStateFields()
+    {
+        for (var formatVersion = DiabloCohortState.NativeCombatFormatVersion;
+             formatVersion <= DiabloCohortState.NativeTownProgressionFormatVersion; formatVersion++) {
+            var fade = MinimalCohort(formatVersion, new JsonObject {
+                ["Monster"] = new JsonObject {
+                    ["NativeMeleeCursor"] = new JsonObject {
+                        ["FrameIndex"] = 0,
+                        ["TickCounter"] = 0,
+                        [nameof(AuthoritativeNativeMeleeCursor.Fade)] = 0,
+                    },
+                },
+            });
+            var fadeError = Assert.Throws<InvalidDataException>(() => codec.Deserialize(fade.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'Fade'.", fadeError.Message);
+        }
+        for (var formatVersion = 1; formatVersion <= DiabloCohortState.NativeTownProgressionFormatVersion; formatVersion++) {
+            var sneak = MinimalCohort(formatVersion, new JsonObject {
+                ["Monster"] = new JsonObject {
+                    [nameof(DiabloMonsterState.NativeSneak)] = new JsonObject {
+                        ["PreviousMode"] = 0,
+                        ["IdleTicks"] = 0,
+                        ["Retreat"] = false,
+                        ["WalkCount"] = 0,
+                    },
+                },
+            });
+            var sneakError = Assert.Throws<InvalidDataException>(() => codec.Deserialize(sneak.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'NativeSneak'.", sneakError.Message);
+        }
+    }
+
+    [Fact]
     public void ValidNativeMonsterAndCombatBaselinesDecodeBeforeDefaultC2FieldsAreRefused()
     {
         var nativeMonster = codec.Serialize(NativeState(0, 1));
@@ -224,6 +257,22 @@ public sealed partial class DiabloCohortCodecTests
                     NativeMeleeCursor = new AuthoritativeNativeMeleeCursor(0, 0) {
                         UsesSpecialAttack = true,
                     },
+                },
+            }],
+        };
+        yield return legacy with {
+            CombatTargets = [legacyTarget with {
+                Monster = legacyTarget.Monster with {
+                    NativeMeleeCursor = new AuthoritativeNativeMeleeCursor(0, 0) {
+                        Fade = AuthoritativeNativeFade.Out,
+                    },
+                },
+            }],
+        };
+        yield return legacy with {
+            CombatTargets = [legacyTarget with {
+                Monster = legacyTarget.Monster with {
+                    NativeSneak = new AuthoritativeNativeSneakState(0, 0, false, 0),
                 },
             }],
         };

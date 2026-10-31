@@ -954,11 +954,18 @@ public sealed class AuthoritativeSnapshotValidatorTests
             oversizedMissileIdentity,
             Arrow(59, "Lightning"),
             Arrow(58, "Arrow"),
+            Arrow(51, "Arrow"),
+            Arrow(52, "Acid"),
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
         // The native C2 Arrow owner (MonsterArrow) keeps identity "Arrow".
         AuthoritativeSnapshotValidator.Validate(Arrow(59, "Arrow"));
+        // The native C2 Acid owner (Acid) keeps identity "Acid".
+        var acid = Arrow(51, "Acid");
+        acid.Projectiles[0].NativeVisual = NativeProjectileVisual.Acid;
+        acid.Projectiles[0].SpellId = 1;
+        AuthoritativeSnapshotValidator.Validate(acid);
     }
 
     [Fact]

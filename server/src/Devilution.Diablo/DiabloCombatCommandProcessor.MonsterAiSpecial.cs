@@ -413,6 +413,9 @@ public sealed partial class DiabloCombatCommandProcessor
             1,
             sneakTuning.Value.DistanceBase
                 - (target.Intelligence * sneakTuning.Value.DistanceIntelligenceScale));
+        if (IsNativeCatacombsActor(target))
+            return TryAdvanceNativeSneakAi(target, victim, players, distance, preferredDistance,
+                sneakTuning.Value.RetreatReleaseDistance);
         // Initialized single-player targets retain the native InitMonster AI
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
@@ -486,6 +489,76 @@ public sealed partial class DiabloCombatCommandProcessor
             && actionRoll >= Math.Min(100, 4 * target.Intelligence + 10))
             return true;
         return false;
+    }
+
+    private const int NativeHitRecoveryMode = 5;
+    private const int NativeUnseenMonsterId = 31;
+
+    /**
+     * Native SneakAi for L5-L8 actors: hit recovery starts a Retreat goal, the
+     * preferred band starts FadeIn/FadeOut, and walks follow the var1/var2
+     * stand rules. Returns false only when the source would StartAttack.
+     */
+    private bool TryAdvanceNativeSneakAi(
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance,
+        int preferredDistance,
+        int retreatReleaseDistance)
+    {
+        var state = target.NativeSneak ?? new AuthoritativeNativeSneakState(0, 0, false, 0);
+        var retreat = state.Retreat;
+        var walkCount = state.WalkCount;
+        if (state.PreviousMode == NativeHitRecoveryMode) {
+            retreat = true;
+            walkCount = 0;
+        } else if (distance >= preferredDistance + retreatReleaseDistance || walkCount > 8) {
+            retreat = false;
+            walkCount = 0;
+        }
+        var direction = GetDirection(target.PositionX, target.PositionY, victim.PositionX, victim.PositionY);
+        if (retreat) {
+            direction = (direction + 4) % 8;
+            // Native PickRandomlyAmong({ Right(md), Left(md) }).
+            if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+                && definition.NativeMonsterId == NativeUnseenMonsterId)
+                direction = random.RandomIntLessThan(2) == 0 ? (direction + 1) % 8 : (direction + 7) % 8;
+        }
+        var roll = random.RandomIntLessThan(100);
+        var standing = true;
+        if (distance < preferredDistance && target.SneakHidden) {
+            target.SetSneakHidden(false);
+            BeginNativeFade(target, AuthoritativeNativeFade.In);
+            standing = false;
+        } else if (distance >= preferredDistance + 1 && !target.SneakHidden) {
+            BeginNativeFade(target, AuthoritativeNativeFade.Out);
+            standing = false;
+        } else if (retreat
+            || distance >= 2
+                && (state.IdleTicks > 20 && roll < 4 * target.Intelligence + 14
+                    || state.PreviousMode is >= 1 and <= 3 && state.IdleTicks == 0
+                        && roll < 4 * target.Intelligence + 64)) {
+            walkCount++;
+            if (FindNativeRandomWalkStepFromRandom(target, direction, players) is { } step) {
+                target.BeginMovement(step.X, step.Y);
+                standing = false;
+            }
+        }
+        var attacks = standing && distance < 2 && roll < 4 * target.Intelligence + 10;
+        // Native MonsterIdle counts stand updates after the AI leaves the monster standing.
+        var idleTicks = standing && !attacks ? Math.Min(short.MaxValue, state.IdleTicks + 1) : state.IdleTicks;
+        target.RestoreNativeSneakState(new AuthoritativeNativeSneakState(state.PreviousMode, idleTicks, retreat, walkCount));
+        return !attacks;
+    }
+
+    /** Native startStand records the completed mode in var1 and clears var2. */
+    private static void RecordNativeSneakStand(AuthoritativeCombatTarget target, int previousMode)
+    {
+        if (!IsNativeCatacombsActor(target) || target.NativeAi != "Sneak")
+            return;
+        var state = target.NativeSneak ?? new AuthoritativeNativeSneakState(0, 0, false, 0);
+        target.RestoreNativeSneakState(state with { PreviousMode = previousMode, IdleTicks = 0 });
     }
 
     private (int DistanceBase, int DistanceIntelligenceScale, int RetreatReleaseDistance, int RetreatTicks)?
@@ -655,6 +728,11 @@ public sealed partial class DiabloCombatCommandProcessor
     /** FallenAi delegates its normal state to the native SkeletonAi controller. */
     private bool UsesNativeSkeletonAi(AuthoritativeCombatTarget target)
     {
+        // Native FallenAi (normal goal) and ScavengerAi (not healing) end in
+        // SkeletonAi; their complete family tuning does not replace it on L5-L8.
+        if (target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
+            && (UsesNativeAi(target, "Fallen") || UsesNativeAi(target, "Scavenger")))
+            return true;
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
             // Validated controller tuples take precedence over a legacy label
             // when a compatibility target carries both. Unique encounters

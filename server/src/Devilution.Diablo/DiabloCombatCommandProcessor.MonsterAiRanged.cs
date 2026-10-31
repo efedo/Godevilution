@@ -90,7 +90,11 @@ public sealed partial class DiabloCombatCommandProcessor
         }
 
         var hasMoveGoal = monster.AvoidanceMovementTicks >= 0;
-        var startsMoveGoal = distance >= movementMinimumDistance
+        // Native AiAvoidance tests goal == Move before rolling FlipCoin(4);
+        // L5-L8 actors keep that short circuit.
+        var nativeCatacombs = IsNativeCatacombsActor(monster);
+        var startsMoveGoal = !(nativeCatacombs && hasMoveGoal)
+            && distance >= movementMinimumDistance
             && random.FlipCoin((uint)movementChanceModulo);
         if (!hasMoveGoal && !startsMoveGoal)
             return false;
@@ -122,7 +126,8 @@ public sealed partial class DiabloCombatCommandProcessor
         var roundWalkChance = Math.Min(
             100,
             roundWalkChanceIntelligenceScale * (monster.Intelligence + roundWalkChanceBase));
-        if (actionRoll >= roundWalkChance)
+        // Native AiAvoidance round-walks every Move-goal update without a roll.
+        if (!nativeCatacombs && actionRoll >= roundWalkChance)
             return true;
 
         var roundWalk = FindNativeStatefulRoundWalkStepFromRandom(

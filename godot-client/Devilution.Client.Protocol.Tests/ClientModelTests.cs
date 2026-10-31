@@ -2712,6 +2712,16 @@ public sealed class ClientModelTests
         monsterArrow.Projectiles[0].NativeMissileId = "Arrow";
         model.Apply(new AuthoritativeClientMessage(Snapshot: monsterArrow));
         Assert.Equal("Arrow", Assert.Single(model.Snapshot!.Projectiles).NativeMissileId);
+
+        // Acid (51) accepts only the native C2 Acid identity.
+        var acid = invalidNativeMissile.Clone();
+        acid.Projectiles[0].Behavior = 51;
+        acid.Projectiles[0].NativeMissileId = "Arrow";
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: acid)));
+        acid.Projectiles[0].NativeMissileId = "Acid";
+        model.Apply(new AuthoritativeClientMessage(Snapshot: acid));
+        Assert.Equal("Acid", Assert.Single(model.Snapshot!.Projectiles).NativeMissileId);
     }
 
     [Fact]

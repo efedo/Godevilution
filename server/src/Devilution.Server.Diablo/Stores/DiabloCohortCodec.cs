@@ -215,7 +215,8 @@ public sealed partial class DiabloCohortCodec
     {
         if (!catacombsActors && state.CombatTargets?.Any(target => target?.NativeInitialization is { CatacombsDepth: not 0 }
                 or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
-            || target?.Monster?.NativeMeleeCursor is { UsesSpecialAttack: true }) == true)
+            || target?.Monster?.NativeMeleeCursor is { UsesSpecialAttack: true } or { Fade: not AuthoritativeNativeFade.None }
+            || target?.Monster?.NativeSneak is not null) == true)
             throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         if (state.FormatVersion == NativeTownProgressionFormatVersion) {
             if (state.NativeTown is null
@@ -353,7 +354,9 @@ public sealed partial class DiabloCohortCodec
         type == typeof(DiabloCohortState) && name == nameof(DiabloCohortState.NativeCatacombs)
         || type == typeof(DiabloNativeFloorEntry)
             && name is nameof(DiabloNativeFloorEntry.CatacombsLifeQ6) or nameof(DiabloNativeFloorEntry.CatacombsEntry)
-        ||         type == typeof(AuthoritativeNativeMeleeCursor) && name == nameof(AuthoritativeNativeMeleeCursor.UsesSpecialAttack)
+        || type == typeof(AuthoritativeNativeMeleeCursor)
+            && name is nameof(AuthoritativeNativeMeleeCursor.UsesSpecialAttack) or nameof(AuthoritativeNativeMeleeCursor.Fade)
+        || type == typeof(DiabloMonsterState) && name == nameof(DiabloMonsterState.NativeSneak)
         || type == typeof(AuthoritativeNativeMonsterInitialization)
             && name is nameof(AuthoritativeNativeMonsterInitialization.CatacombsDepth)
                 or nameof(AuthoritativeNativeMonsterInitialization.NativeSpecialAttackFrameCount)

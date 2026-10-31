@@ -6,6 +6,13 @@ namespace Devilution.Diablo;
 /** Monster turn loop and melee family AI (native monster.cpp ProcessMonsters and AI routines). */
 public sealed partial class DiabloCombatCommandProcessor
 {
+    /** L5-L8 actors whose AI draws the shared native stream, including audio-variant picks. */
+    private static bool IsNativeCatacombsActor(AuthoritativeCombatTarget target)
+        => target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 } && target.UsesNativeRandomSeeds;
+
+    /** The L5-L8 skeleton-family actor whose native Delay expired this update (SkeletonAi's var1 == Delay). */
+    private uint? nativeSkeletonDelayExpired;
+
     private void AdvanceMonsters(
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players,
@@ -14,6 +21,7 @@ public sealed partial class DiabloCombatCommandProcessor
         foreach (var target in world.CombatTargets.Values
                      .OrderBy(target => target.EntityId)
                      .ToArray()) {
+            nativeSkeletonDelayExpired = null;
             // Native inactive levels do not process their monster or RNG state.
             if (OwnsNativeMonsterTiming(target)
                 && !players.Any(player => player.LevelId == target.LevelId))
@@ -103,6 +111,7 @@ public sealed partial class DiabloCombatCommandProcessor
             if (OwnsNativeMonsterTiming(target) && target.NativeMeleeCursor is not null) {
                 var currentEnemy = players.Where(player => player.Life > 0 && player.LevelId == target.LevelId)
                     .OrderBy(player => player.EntityId).FirstOrDefault();
+                var completedCursor = target.NativeMeleeCursor;
                 var animation = AdvanceNativeMelee(target);
                 if (animation.EffectFrame && currentEnemy is not null
                     && DeterministicGridMetrics.ChebyshevDistance(target.PositionX, target.PositionY,
@@ -111,8 +120,23 @@ public sealed partial class DiabloCombatCommandProcessor
                     ResolveMonsterMeleeEffect(target, currentEnemy, players, tick, events,
                         currentEnemy.ArmorClass, unchecked((uint)tick ^ target.EntityId ^ currentEnemy.EntityId),
                         usesSpecialAttack: animation.UsesSpecialAttack);
+                // Native MonsterAttack plays the attack sound, choosing its
+                // variant, on every normal effect frame, hit or miss.
+                if (animation.EffectFrame && !animation.UsesSpecialAttack && IsNativeCatacombsActor(target)
+                    && !UsesNativeAi(target, "Snake"))
+                    random.AdvanceRndSeed();
                 if (!animation.Completed || target.HitPointsQ6 <= 0)
                     continue;
+                // Native MonsterFadeout sets MFLAG_HIDDEN as it enters Stand.
+                if (completedCursor!.Fade == AuthoritativeNativeFade.Out)
+                    target.SetSneakHidden(true);
+                RecordNativeSneakStand(target, completedCursor switch {
+                    { Fade: AuthoritativeNativeFade.In } => 8,
+                    { Fade: AuthoritativeNativeFade.Out } => 9,
+                    { HitRecovery: true } => NativeHitRecoveryMode,
+                    { UsesSpecialAttack: true } => 7,
+                    _ => 4,
+                });
                 ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
                 if (target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
                     && target.ActiveForTicks == 0)
@@ -259,10 +283,12 @@ public sealed partial class DiabloCombatCommandProcessor
                 // stream is authoritative. Zero-seed fixtures and legacy
                 // multiplayer snapshots keep the compatibility controller.
                 var usesNativeAiStream = target.UsesNativeRandomSeeds;
-                var attackRoll = skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
+                var delayExpired = nativeSkeletonDelayExpired == target.EntityId;
+                var attackRoll = delayExpired ? 0
+                    : skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
-                if (skeletonMeleeAttackTuning.HasValue
+                if (skeletonMeleeAttackTuning.HasValue && !delayExpired
                     && attackRoll >= Math.Min(
                         100,
                         skeletonMeleeAttackTuning.Value.ChanceBase
@@ -723,7 +749,15 @@ public sealed partial class DiabloCombatCommandProcessor
     {
         if (monster.FallenRallyAttackPending)
             return false;
-        if (monster.AdvanceSkeletonMeleeDelay())
+        if (monster.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 } && monster.UsesNativeRandomSeeds
+            && monster.SkeletonMeleeDelayTicks > 0) {
+            // Native MonsterDelay spends its first count in the update that
+            // starts it and reruns SkeletonAi, without its roll, when it expires.
+            _ = monster.AdvanceSkeletonMeleeDelay();
+            if (monster.SkeletonMeleeDelayTicks > 0)
+                return true;
+            nativeSkeletonDelayExpired = monster.EntityId;
+        } else if (monster.AdvanceSkeletonMeleeDelay())
             return true;
 
         var skeletonTuning = GetSkeletonMeleeDelayTuning(monster);
@@ -740,7 +774,9 @@ public sealed partial class DiabloCombatCommandProcessor
             0,
             skeletonTuning.Value.ChanceBase
                 - (skeletonTuning.Value.IntelligenceScale * monster.Intelligence));
-        var actionRoll = usesNativeAiStream
+        var delayExpired = nativeSkeletonDelayExpired == monster.EntityId;
+        var actionRoll = delayExpired ? int.MaxValue
+            : usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
         if (actionRoll < delayBand) {

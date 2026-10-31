@@ -7,8 +7,10 @@ param(
     [switch]$CommandTimingTrace,
     # All-class profile only: the deepest floor this test reaches, and the played-character
     # definition that starts it (tools/native-test-heroes); a fresh Warrior when omitted.
-    # L5-L8 are entered and retained but not drawn or fought natively yet.
     [ValidateRange(1, 8)] [int]$TargetDepth = 4,
+    # All-class profile only, for development runs: floors above this one are traversed without a
+    # kill. Acceptance evidence uses the default of 1 (a kill on every floor).
+    [ValidateRange(1, 8)] [int]$FirstFightDepth = 1,
     [string]$TestParticipant,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
     [switch]$Visible
@@ -54,6 +56,8 @@ if ($allClass) {
 } else { $arguments.CathedralNativeDepthProgressionProfileDirectory = $profileRoot }
 $previousTarget = $env:GODEVILUTION_NATIVE_DEPTH_TARGET
 $env:GODEVILUTION_NATIVE_DEPTH_TARGET = [string]$TargetDepth
+$previousFirstFight = $env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT
+$env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT = [string]$FirstFightDepth
 $journeyPhase = if ($allClass) { 'NativeDepthJourney' } else { 'CathedralNativeDepthProgressionJourney' }
 $resumePhase = if ($allClass) { 'NativeDepthResume' } else { 'CathedralNativeDepthProgressionResume' }
 $contentManifestHash = [string]$profileMetadata.contentManifestHash
@@ -74,9 +78,9 @@ if ($allClass) {
         [string]::Join(',', [string[]]@($route.Floors | ForEach-Object { $_.LevelId })) -cne [string]::Join(',', 1..$TargetDepth) -or
         $route.Sequence -ne $journey.Sequence -or [string]$route.PlayerPayload -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or
         [string]$route.WorldHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or
-        @($route.Floors | Where-Object { [string]$_.GeometryHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or ($_.LevelId -le 4 -and (
+        @($route.Floors | Where-Object { [string]$_.GeometryHash -cnotmatch '^[0-9A-Fa-f]{64}$' -or ($_.LevelId -ge $FirstFightDepth -and (
             $_.MonsterEntityId -le 0 -or $_.ExperienceAfter -le $_.ExperienceBefore -or $_.Attacks -le 0)) -or
-            ($_.LevelId -gt 4 -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
+            ($_.LevelId -lt $FirstFightDepth -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
     # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
@@ -253,5 +257,6 @@ foreach ($process in @($journeyProcess, $resumeProcess)) {
     }
 }
 $env:GODEVILUTION_NATIVE_DEPTH_TARGET = $previousTarget
-$summary = if ($allClass) { "Warrior kill on each of L1-L$([Math]::Min($TargetDepth, 4)), native draws through L$TargetDepth, Town resume." } else { 'L1 gear/earned Gold, L2-L4 combat, Town resume.' }
+$env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT = $previousFirstFight
+$summary = if ($allClass) { "Warrior kill on each of L$FirstFightDepth-L$TargetDepth, native draws through L$TargetDepth, Town resume." } else { 'L1 gear/earned Gold, L2-L4 combat, Town resume.' }
 Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summary"

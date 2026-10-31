@@ -32,6 +32,20 @@ public sealed partial class DiabloCombatCommandProcessor
 		});
 	}
 
+	/** Starts a native Sneak fade on the Special graphic and applies this update's processAnimation. */
+	internal static void BeginNativeFade(AuthoritativeCombatTarget target, AuthoritativeNativeFade fade)
+	{
+		ArgumentNullException.ThrowIfNull(target);
+		if (fade == AuthoritativeNativeFade.None)
+			throw new ArgumentOutOfRangeException(nameof(fade));
+		if ((target.NativeInitialization?.NativeSpecialAttackFrameCount ?? 0) <= 0)
+			throw new InvalidOperationException("Native fade animation metadata is unavailable.");
+		if (target.NativeMeleeCursor is not null)
+			throw new InvalidOperationException("A native animation is already active.");
+		target.RestoreNativeMeleeCursor(new AuthoritativeNativeMeleeCursor(0, 0) { Fade = fade });
+		_ = AdvanceNativeMelee(target);
+	}
+
 	/** Starts the imported hit-recovery animation after native hard-hit admission. */
 	internal static void BeginNativeHitRecovery(AuthoritativeCombatTarget target)
 	{
@@ -60,14 +74,17 @@ public sealed partial class DiabloCombatCommandProcessor
 			?? throw new InvalidDataException("A native melee cursor lost its initialization metadata.");
 		if (cursor.HitRecovery && cursor.UsesSpecialAttack)
 			throw new InvalidDataException("Native hit recovery cannot retain a special attack cursor.");
+		// Fades use the Special graphic. FadeOut runs it backwards from the last
+		// frame to frame 0; counting forwards gives the same completion tick.
+		var special = cursor.UsesSpecialAttack || cursor.Fade != AuthoritativeNativeFade.None;
 		var frameCount = cursor.HitRecovery
 			? initialization.NativeHitRecoveryFrameCount
-			: cursor.UsesSpecialAttack
+			: special
 				? initialization.NativeSpecialAttackFrameCount
 				: initialization.NativeAttackFrameCount;
 		var sourceTicksPerFrame = cursor.HitRecovery
 			? initialization.NativeHitRecoveryTicksPerFrame
-			: cursor.UsesSpecialAttack
+			: special
 				? initialization.NativeSpecialAttackTicksPerFrame
 				: initialization.NativeAttackTicksPerFrame;
 		if (frameCount <= 0)
@@ -94,7 +111,7 @@ public sealed partial class DiabloCombatCommandProcessor
 		var effectFrameIndex = cursor.UsesSpecialAttack
 			? initialization.SpecialAttackEffectFrame
 			: initialization.AttackEffectFrame;
-		var effectFrame = !cursor.HitRecovery
+		var effectFrame = !cursor.HitRecovery && cursor.Fade == AuthoritativeNativeFade.None
 			&& cursor.FrameIndex == effectFrameIndex - 1;
 		if (cursor.FrameIndex == frameCount - 1) {
 			// Native enters Stand before processAnimation when already on the last frame.
@@ -116,6 +133,7 @@ public sealed partial class DiabloCombatCommandProcessor
 		target.RestoreNativeMeleeCursor(new AuthoritativeNativeMeleeCursor(nextFrameIndex, nextTickCounter) {
 			HitRecovery = cursor.HitRecovery,
 			UsesSpecialAttack = cursor.UsesSpecialAttack,
+			Fade = cursor.Fade,
 		});
 		return new AuthoritativeNativeMeleeStep(
 			cursor.FrameIndex,

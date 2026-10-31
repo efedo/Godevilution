@@ -53,6 +53,9 @@ public sealed record DiabloMonsterState(
     public AuthoritativeNativeMeleeCursor? NativeMeleeCursor { get; init; }
     public AuthoritativeNativeWalkCursor? NativeWalkCursor { get; init; }
 
+    /** L5-L8 native SneakAi state; absent before Catacombs cohorts. */
+    public AuthoritativeNativeSneakState? NativeSneak { get; init; }
+
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; init; }
 
@@ -773,6 +776,7 @@ public sealed partial class DiabloSimulation
                     NativeInitializationPresent = target.NativeInitializationPresent,
                     NativeMeleeCursor = target.NativeMeleeCursor,
                     NativeWalkCursor = target.NativeWalkCursor,
+                    NativeSneak = target.NativeSneak,
                     DialogueMessageId = target.DialogueMessageId,
                     DialogueState = target.DialogueState,
                     Petrified = target.IsPetrified,

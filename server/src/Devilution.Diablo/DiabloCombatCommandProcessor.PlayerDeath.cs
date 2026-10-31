@@ -828,6 +828,7 @@ public sealed partial class DiabloCombatCommandProcessor
         if (wasAlive
             && target.HitPointsQ6 > 0
             && damageQ6 > 0 && !nativeTrapResisted
+            && !IsNativeCatacombsActor(target)
             && GetSneakTuning(target) is { } sneakTuning) {
             target.StartSneakRetreat(sneakTuning.RetreatTicks);
         }

@@ -283,7 +283,8 @@ public sealed partial record DiabloCohortState(
             throw new InvalidDataException("A Diablo cohort contains an incomplete combat target.");
         if (!CatacombsFloorsAllowed && CombatTargets.Any(target => target.NativeInitialization is { CatacombsDepth: not 0 }
                 or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
-            || target.Monster.NativeMeleeCursor is { UsesSpecialAttack: true }))
+            || target.Monster.NativeMeleeCursor is { UsesSpecialAttack: true } or { Fade: not AuthoritativeNativeFade.None }
+            || target.Monster.NativeSneak is not null))
             throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         var nativeSlots = new HashSet<(uint Level, int Slot)>();
         // v12 Catacombs actors share one C2 metadata identity; their floor owners bind it on restore.
@@ -334,9 +335,14 @@ public sealed partial record DiabloCohortState(
                     || native.NativeHitRecoveryFrameCount <= 0 || native.NativeHitRecoveryTicksPerFrame < 0
                     || native.NativeWalkFrameCount <= 0 || native.NativeWalkTicksPerFrame < 0)
                     throw new InvalidDataException("Native combat cohorts require imported attack animation timing.");
+                // Special attacks and Sneak fades run on the Special graphic.
                 if (target.Monster.NativeMeleeCursor is { } cursor
-                    && (cursor.FrameIndex < 0 || cursor.FrameIndex >= (cursor.HitRecovery ? native.NativeHitRecoveryFrameCount : native.NativeAttackFrameCount)
-                        || cursor.TickCounter < 0 || cursor.TickCounter >= Math.Max(1, cursor.HitRecovery ? native.NativeHitRecoveryTicksPerFrame : native.NativeAttackTicksPerFrame)
+                    && (cursor.FrameIndex < 0 || cursor.FrameIndex >= (cursor.HitRecovery ? native.NativeHitRecoveryFrameCount
+                            : cursor.UsesSpecialAttack || cursor.Fade != AuthoritativeNativeFade.None ? native.NativeSpecialAttackFrameCount
+                            : native.NativeAttackFrameCount)
+                        || cursor.TickCounter < 0 || cursor.TickCounter >= Math.Max(1, cursor.HitRecovery ? native.NativeHitRecoveryTicksPerFrame
+                            : cursor.UsesSpecialAttack || cursor.Fade != AuthoritativeNativeFade.None ? native.NativeSpecialAttackTicksPerFrame
+                            : native.NativeAttackTicksPerFrame)
                         || target.Monster.HitPointsQ6 <= 0 || target.Monster.Moving))
                     throw new InvalidDataException("A native melee cursor is outside its owned animation.");
                 if (target.Monster.Moving != (target.Monster.NativeWalkCursor is not null))

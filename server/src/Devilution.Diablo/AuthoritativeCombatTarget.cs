@@ -14,7 +14,25 @@ public sealed record AuthoritativeNativeMeleeCursor(int FrameIndex, int TickCoun
     /** Special attacks are admitted only by the additive family runtime. */
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool UsesSpecialAttack { get; init; }
+
+    /** L5-L8 Sneak FadeIn/FadeOut on the Special graphic; frames always count towards completion. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public AuthoritativeNativeFade Fade { get; init; }
 }
+
+/** Native Sneak fade modes carried by the shared animation cursor. */
+public enum AuthoritativeNativeFade
+{
+    None = 0,
+    In = 1,
+    Out = 2,
+}
+
+/**
+ * Native SneakAi var1 (previous mode), var2 (stand ticks since startStand),
+ * Retreat goal and goalVar1 walk count for L5-L8 actors.
+ */
+public sealed record AuthoritativeNativeSneakState(int PreviousMode, int IdleTicks, bool Retreat, int WalkCount);
 
 /** Minimal server-owned combat target used by the initial combat boundary. */
 public sealed class AuthoritativeCombatTarget
@@ -442,6 +460,19 @@ public sealed class AuthoritativeCombatTarget
     /** Native walk cursor retains both current and future occupancy until completion. */
     public AuthoritativeNativeWalkCursor? NativeWalkCursor { get; private set; }
 
+    /** Native SneakAi state for L5-L8 actors; null before their first native Sneak update. */
+    public AuthoritativeNativeSneakState? NativeSneak { get; private set; }
+
+    internal void RestoreNativeSneakState(AuthoritativeNativeSneakState? state)
+    {
+        if (state is not null
+            && (state.PreviousMode is < 0 or > 17
+                || state.IdleTicks is < 0 or > short.MaxValue
+                || state.WalkCount is < 0 or > 9))
+            throw new InvalidDataException("Native Sneak state is outside the source AI's ranges.");
+        NativeSneak = state;
+    }
+
     /** Older callers retain their existing nonzero AI-seed compatibility marker. */
     public bool UsesNativeRandomSeeds => NativeInitializationPresent || MonsterAiSeed != 0;
 
@@ -467,17 +498,20 @@ public sealed class AuthoritativeCombatTarget
 
         var initialization = NativeInitialization
             ?? throw new InvalidDataException("A native melee cursor requires native monster initialization.");
+        var special = cursor.UsesSpecialAttack || cursor.Fade != AuthoritativeNativeFade.None;
         var frameCount = cursor.HitRecovery
             ? initialization.NativeHitRecoveryFrameCount
-            : cursor.UsesSpecialAttack ? initialization.NativeSpecialAttackFrameCount
+            : special ? initialization.NativeSpecialAttackFrameCount
             : initialization.NativeAttackFrameCount;
         var ticksPerFrame = cursor.HitRecovery
             ? initialization.NativeHitRecoveryTicksPerFrame
-            : cursor.UsesSpecialAttack ? initialization.NativeSpecialAttackTicksPerFrame
+            : special ? initialization.NativeSpecialAttackTicksPerFrame
             : initialization.NativeAttackTicksPerFrame;
         var effectiveTicksPerFrame = Math.Max(1, ticksPerFrame);
         if (HitPointsQ6 <= 0
             || cursor.HitRecovery && cursor.UsesSpecialAttack
+            || cursor.Fade is not (AuthoritativeNativeFade.None or AuthoritativeNativeFade.In or AuthoritativeNativeFade.Out)
+            || cursor.Fade != AuthoritativeNativeFade.None && (cursor.HitRecovery || cursor.UsesSpecialAttack)
             || frameCount <= 0
             || cursor.FrameIndex < 0
             || cursor.FrameIndex >= frameCount
@@ -783,6 +817,7 @@ public sealed class AuthoritativeCombatTarget
             NativeInitializationPresent = NativeInitializationPresent,
             NativeMeleeCursor = NativeMeleeCursor,
             NativeWalkCursor = NativeWalkCursor,
+            NativeSneak = NativeSneak,
             DialogueMessageId = DialogueMessageId,
             DialogueState = DialogueState,
             Petrified = IsPetrified,

@@ -5,6 +5,19 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-31
+
+- Catacombs melee monsters (batch 2.4a): on L5–L8 Zombie, Fallen, Skeleton, Scavenger,
+  Sneak (Stalker/Unseen), Goat melee, Fat, Bat, Gargoyle and Horned Demon fight with
+  native AI: Sneak fade in/out and its Retreat goal, Delay timing, var1/var2 stand
+  records, and the hit and attack sound draws. Fade and Sneak state are saved only in
+  the Catacombs cohort format; older formats refuse them. Live Acid flights keep their
+  native missile identity in the mapper, validator and client. A ten-lane native AI
+  trace joins `tools/run-native-oracle-parity.sh`. The depth journey kills on every
+  floor to L8 (trapped Catacombs doors are skipped until 2.5) and gains
+  `-FirstFightDepth` for development runs. `warrior-l8` is now clvl 18 in Catacombs
+  plate: in breast plate it ran out of potions against L6–L8 packs.
+
 ## 2026-10-29
 
 - Render the Catacombs (batch 2.3): with the native packs, L5–L8 draw native L2 floors,

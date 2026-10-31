@@ -20,6 +20,7 @@
 #include "application/diablo.h"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
+#include "utils/endian/endian_write.hpp"
 #include "engine/assets.hpp"
 #include "engine/audio/sound.h"
 #include "engine/cursor.h"
@@ -1708,6 +1709,8 @@ protected:
 		}
 		CurrentLightManager.MakeLightTable();
 	}
+
+	Monster *PrepareCatacombsActor(int depth, _monster_id nativeType, const UniqueMonsterData *unique, int actorX = 50);
 
 	void PrepareRoom(int depth, int itemCount = 2, int objectCount = 0, int monsterCount = 4, bool trapWall = true)
 	{
@@ -5275,6 +5278,83 @@ void WriteRangedMissile(std::ostream &out, const Missile &missile)
 	WriteArray(out, missile.raw, [&](int value) { out << value; });
 }
 
+/** One headless Catacombs actor facing a level-1 Warrior on an open floor (shared by the ranged and AI captures). */
+Monster *ThemeRoomGenerationTest::PrepareCatacombsActor(int depth, _monster_id nativeType, const UniqueMonsterData *unique, int actorX)
+{
+	PrepareRoom(depth, 0, 0, 0, false);
+	currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
+	std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
+	for (Tile &tile : tiles()) {
+		tile.setPiece(0);
+		tile.setTransVal(0);
+		tile.setFlags(DungeonFlag::None);
+		tile.setPlayer(0);
+		tile.setMonster(0);
+		tile.setObject(0);
+		tile.setItem(0);
+		tile.setCorpse(0);
+		tile.setLight(0);
+		tile.setPreLight(0);
+	}
+	LevelBestiary.init();
+	const auto typeIndex = LevelBestiary.addType(nativeType, PLACE_SCATTER);
+	if (!typeIndex) return nullptr;
+	Player hero {}; // Value-initialized: item effects such as Reflect and GetHit start at zero.
+	hero._pClass = HeroClass::Warrior;
+	hero.setCharacterLevel(1);
+	const ClassAttributes &attributes = hero.getClassAttributes();
+	hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
+	hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
+	hero.attributes.dexterity.base = hero.attributes.dexterity.current = attributes.baseDex;
+	hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
+	const int life = hero.calculateBaseLife();
+	const int mana = hero.calculateBaseMana();
+	hero.life = { life, life, life, life, 100 };
+	hero.mana = { mana, mana, mana, mana, 100 };
+	hero.setAnimations();
+	*MyPlayer = std::move(hero);
+	MyPlayer->plractive = true;
+	MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+	MyPlayer->plrIsOnSetLevel = false;
+	MyPlayer->_pLvlChanging = false;
+	MyPlayer->pLvlLoad = 1;
+	MyPlayer->_pInvincible = false;
+	MyPlayer->_pBlockFlag = false;
+	MyPlayer->_pmode = PM_STAND;
+	const Point playerPosition { 60, 50 };
+	MyPlayer->position.tile = playerPosition;
+	MyPlayer->position.future = playerPosition;
+	MyPlayer->position.old = playerPosition;
+	tileAt(playerPosition).setPlayer(1);
+	CurrentLightManager.Init();
+	SetRndSeed(2588);
+	Monster *actor = AddMonster({ actorX, 50 }, Direction::SouthEast, *typeIndex, true);
+	if (actor == nullptr) return nullptr;
+	actor->activeForTicks = UINT8_MAX;
+	actor->enemy = 0;
+	actor->enemyPosition = playerPosition;
+	actor->position.last = playerPosition;
+	actor->position.future = actor->position.tile;
+	actor->goal = MonsterGoal::Normal;
+	actor->goalVar1 = 0;
+	actor->goalVar2 = 0;
+	actor->goalVar3 = 0;
+	actor->flags &= ~(MFLAG_NO_ENEMY | MFLAG_TARGETS_MONSTER | MFLAG_SEARCH | MFLAG_HIDDEN);
+	tileAt(actor->position.tile).addFlags(DungeonFlag::Visible);
+	if (unique != nullptr) {
+		const size_t uniqueIndex = static_cast<size_t>(unique - UniqueMonstersData.data());
+		actor->uniqueType = static_cast<UniqueMonsterType>(uniqueIndex);
+		actor->ai = unique->mAi;
+		actor->intelligence = unique->mint;
+		actor->minDamage = actor->minDamageSpecial = unique->mMinDamage;
+		actor->maxDamage = actor->maxDamageSpecial = unique->mMaxDamage;
+		actor->maxHitPoints = std::max<int>(unique->mmaxhp / 2, 1) << 6;
+		actor->hitPoints = actor->maxHitPoints;
+		actor->uniqTrans = 0;
+	}
+	return actor;
+}
+
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 {
 	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_RANGED_ORACLE_DIRECTORY");
@@ -5343,78 +5423,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
 			stream << ']';
 		};
 		auto prepareActor = [&](int depth, _monster_id nativeType, const UniqueMonsterData *unique) -> Monster * {
-			PrepareRoom(depth, 0, 0, 0, false);
-			currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
-			std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
-			for (Tile &tile : tiles()) {
-				tile.setPiece(0);
-				tile.setTransVal(0);
-				tile.setFlags(DungeonFlag::None);
-				tile.setPlayer(0);
-				tile.setMonster(0);
-				tile.setObject(0);
-				tile.setItem(0);
-				tile.setCorpse(0);
-				tile.setLight(0);
-				tile.setPreLight(0);
-			}
-			LevelBestiary.init();
-			const auto typeIndex = LevelBestiary.addType(nativeType, PLACE_SCATTER);
-			if (!typeIndex) return nullptr;
-			Player hero;
-			hero._pClass = HeroClass::Warrior;
-			hero.setCharacterLevel(1);
-			const ClassAttributes &attributes = hero.getClassAttributes();
-			hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
-			hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
-			hero.attributes.dexterity.base = hero.attributes.dexterity.current = attributes.baseDex;
-			hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
-			const int life = hero.calculateBaseLife();
-			const int mana = hero.calculateBaseMana();
-			hero.life = { life, life, life, life, 100 };
-			hero.mana = { mana, mana, mana, mana, 100 };
-			hero.setAnimations();
-			*MyPlayer = std::move(hero);
-			MyPlayer->plractive = true;
-			MyPlayer->plrlevel = static_cast<uint8_t>(depth);
-			MyPlayer->plrIsOnSetLevel = false;
-			MyPlayer->_pLvlChanging = false;
-			MyPlayer->pLvlLoad = 1;
-			MyPlayer->_pInvincible = false;
-			MyPlayer->_pBlockFlag = false;
-			MyPlayer->_pmode = PM_STAND;
-			const Point playerPosition { 60, 50 };
-			MyPlayer->position.tile = playerPosition;
-			MyPlayer->position.future = playerPosition;
-			MyPlayer->position.old = playerPosition;
-			tileAt(playerPosition).setPlayer(1);
-			CurrentLightManager.Init();
-			SetRndSeed(2588);
-			Monster *actor = AddMonster({ 50, 50 }, Direction::SouthEast, *typeIndex, true);
-			if (actor == nullptr) return nullptr;
-			actor->activeForTicks = UINT8_MAX;
-			actor->enemy = 0;
-			actor->enemyPosition = playerPosition;
-			actor->position.last = playerPosition;
-			actor->position.future = actor->position.tile;
-			actor->goal = MonsterGoal::Normal;
-			actor->goalVar1 = 0;
-			actor->goalVar2 = 0;
-			actor->goalVar3 = 0;
-			actor->flags &= ~(MFLAG_NO_ENEMY | MFLAG_TARGETS_MONSTER | MFLAG_SEARCH | MFLAG_HIDDEN);
-			tileAt(actor->position.tile).addFlags(DungeonFlag::Visible);
-			if (unique != nullptr) {
-				const size_t uniqueIndex = static_cast<size_t>(unique - UniqueMonstersData.data());
-				actor->uniqueType = static_cast<UniqueMonsterType>(uniqueIndex);
-				actor->ai = unique->mAi;
-				actor->intelligence = unique->mint;
-				actor->minDamage = actor->minDamageSpecial = unique->mMinDamage;
-				actor->maxDamage = actor->maxDamageSpecial = unique->mMaxDamage;
-				actor->maxHitPoints = std::max<int>(unique->mmaxhp / 2, 1) << 6;
-				actor->hitPoints = actor->maxHitPoints;
-				actor->uniqTrans = 0;
-			}
-			return actor;
+			return PrepareCatacombsActor(depth, nativeType, unique);
 		};
 		auto specialSeed = [&](const Monster &actor) {
 			const int shift = actor.ai == MonsterAIID::Acid ? 1 : 0;
@@ -6750,6 +6759,186 @@ TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 	ASSERT_TRUE(stream.good());
 	stream.close();
 	EXPECT_EQ(count, 720);
+}
+
+/** A CLX list of one-pixel sprites, enough for code that reads monster sprites without drawing them. */
+std::unique_ptr<uint8_t[]> MakePlaceholderClxList(uint32_t spriteCount)
+{
+	constexpr uint32_t SpriteHeaderSize = 6;
+	constexpr uint32_t SpriteSize = SpriteHeaderSize + 1;
+	const uint32_t tableSize = 4 + 4 * (spriteCount + 1);
+	const uint32_t dataSize = tableSize + SpriteSize * spriteCount;
+	auto data = std::make_unique<uint8_t[]>(dataSize);
+	std::fill_n(data.get(), dataSize, 0);
+	WriteLE32(data.get(), spriteCount);
+	for (uint32_t index = 0; index <= spriteCount; ++index)
+		WriteLE32(&data[4 + index * 4], tableSize + index * SpriteSize);
+	for (uint32_t index = 0; index < spriteCount; ++index) {
+		const uint32_t offset = tableSize + index * SpriteSize;
+		WriteLE16(&data[offset], SpriteHeaderSize);
+		WriteLE16(&data[offset + 2], 1);
+		WriteLE16(&data[offset + 4], 1);
+		data[offset + SpriteHeaderSize] = 1;
+	}
+	return data;
+}
+
+/**
+ * Batch 2.4a: free-running native AI for the L5-L8 melee families. One prepared actor
+ * per lane approaches a stationary, durable level-1 Warrior; every tick records the
+ * actor, the Warrior's life and the shared RNG after ProcessMonsters and ProcessMissiles
+ * (the Bat swoop and Horned charge move the actor through a missile). The Gargoyle starts
+ * beside the Warrior so it wakes from its perch. Familiar lightning belongs to batch 2.4b.
+ * Every tile is visible, so the active window never lapses.
+ */
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_MELEE_AI_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the explicit Catacombs melee AI oracle directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native AI evidence.";
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode, missilePreFlag = MissilePreFlag;
+		uint32_t random = GetLCGEngineState();
+		std::list<Missile> savedMissiles = std::move(Missiles);
+		ScopedMissileDataForTest missileData;
+		~ExecutionGuard()
+		{
+			Missiles = std::move(savedMissiles);
+			MissilePreFlag = missilePreFlag;
+			gbSndInited = sound;
+			HeadlessMode = headless;
+			SetRndSeed(random);
+		}
+	} guard;
+	HeadlessMode = true;
+	gbSndInited = false;
+	LoadPlayerDataFiles();
+	LoadMissileData();
+
+	struct Lane {
+		const char *name;
+		int depth;
+		_monster_id type;
+		int x = 50;
+	};
+	const std::array<Lane, 10> lanes { {
+		{ "zombie", 5, MT_YZOMBIE },
+		{ "fallen", 5, MT_BFALLSP },
+		{ "skeleton", 5, MT_XSKELAX },
+		{ "scavenger", 6, MT_YSCAV },
+		{ "sneak", 6, MT_STALKER },
+		{ "goat-melee", 6, MT_BGOATMC },
+		{ "fat", 6, MT_FAT },
+		{ "bat", 5, MT_GLOOM },
+		{ "gargoyle", 6, MT_WINGED, 59 },
+		{ "rhino", 7, MT_HORNED },
+	} };
+	constexpr int TickCount = 300;
+	constexpr int DurableLife = 2000 << 6;
+	const std::unique_ptr<uint8_t[]> placeholderSprites = MakePlaceholderClxList(32);
+	std::ofstream stream(root / "native-catacombs-melee-ai.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-melee-ai");
+		document.Number("version", 1);
+		document.String("policy", "prepared-original-diablo-catacombs-melee-ai-free-run");
+		document.Number("caseCount", lanes.size());
+		document.Number("tickCount", TickCount);
+		document.Key("cases");
+		stream << '[';
+		bool firstCase = true;
+		for (const Lane &lane : lanes) {
+			Monster *actor = PrepareCatacombsActor(lane.depth, lane.type, nullptr, lane.x);
+			ASSERT_NE(actor, nullptr) << lane.name;
+			for (AnimStruct &anim : const_cast<CMonster &>(actor->type()).anims) {
+				if (!anim.sprites) anim.sprites = ClxSpriteListOrSheet { placeholderSprites.get(), 0 };
+			}
+			actor->packSize = 0; // AddMonster keeps the reused slot's pack size; this actor leads no pack.
+			actor->var1 = actor->var2 = actor->var3 = 0; // ClrAllMonsters/ClearMVars state of a freshly loaded level.
+			actor->position.temp = { 0, 0 };
+			// An open, fully visible arena keeps the actor awake wherever it moves.
+			for (Tile &tile : tiles()) tile.addFlags(DungeonFlag::Visible);
+			Missiles.clear();
+			MissilePreFlag = false;
+			MyPlayer->life = { DurableLife, DurableLife, DurableLife, DurableLife, 100 };
+			MyPlayer->pLvlLoad = 0; // Live play: monster sound effects draw their variant.
+			SetRndSeed(2588);
+			if (!firstCase) stream << ',';
+			firstCase = false;
+			JsonObject row(stream);
+			row.String("name", lane.name);
+			row.Number("depth", lane.depth);
+			row.Number("nativeType", lane.type);
+			const MonsterData &data = actor->data();
+			row.Key("monsterData");
+			{
+				JsonObject json(stream);
+				json.String("name", data.name);
+				json.Number("level", data.level);
+				json.Number("ai", data.ai);
+				json.Number("intelligence", data.intelligence);
+				json.Number("abilityFlags", data.abilityFlags);
+				json.Number("toHit", data.toHit);
+				json.Number("animFrameNum", data.animFrameNum);
+				json.Number("toHitSpecial", data.toHitSpecial);
+				json.Number("animFrameNumSpecial", data.animFrameNumSpecial);
+				json.Number("minDamage", data.minDamage);
+				json.Number("maxDamage", data.maxDamage);
+				json.Number("minDamageSpecial", data.minDamageSpecial);
+				json.Number("maxDamageSpecial", data.maxDamageSpecial);
+				json.Number("armorClass", data.armorClass);
+				json.Number("monsterClass", data.monsterClass);
+				json.Number("resistance", data.resistance);
+				json.Number("resistanceHell", data.resistanceHell);
+				json.Number("selectionRegion", data.selectionRegion);
+				json.Number("treasure", data.treasure);
+				json.Number("exp", data.exp);
+				json.Number("width", data.width);
+				json.Boolean("hasSpecial", data.hasSpecial);
+				json.Key("frames");
+				stream << '[';
+				for (size_t index = 0; index < 6; ++index) stream << (index != 0 ? "," : "") << static_cast<int>(data.frames[index]);
+				stream << ']';
+				json.Key("rates");
+				stream << '[';
+				for (size_t index = 0; index < 6; ++index) stream << (index != 0 ? "," : "") << static_cast<int>(data.rate[index]);
+				stream << ']';
+			}
+			row.Number("toHit", actor->toHit(sgGameInitInfo.nDifficulty));
+			row.Number("toHitSpecial", actor->toHitSpecial(sgGameInitInfo.nDifficulty));
+			row.Number("level", actor->level(sgGameInitInfo.nDifficulty));
+			row.Key("initialActor");
+			WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+			row.Key("initialPlayer");
+			WriteRangedPlayer(stream, *MyPlayer);
+			row.Number("initialPlayerLife", MyPlayer->life.current);
+			row.Number("playerArmor", MyPlayer->GetArmor());
+			row.Number("playerBlockChance", MyPlayer->GetBlockChance());
+			row.Number("playerGetHit", MyPlayer->_pIGetHit);
+			row.Number("initialRandom", GetLCGEngineState());
+			row.Key("ticks");
+			stream << '[';
+			for (int tick = 0; tick < TickCount; ++tick) {
+				ProcessMonsters();
+				ProcessMissiles();
+				if (tick != 0) stream << ',';
+				JsonObject state(stream);
+				state.Number("random", GetLCGEngineState());
+				state.Number("playerLife", MyPlayer->life.current);
+				state.Number("playerLifeMaximum", MyPlayer->life.maximum);
+				state.Number("playerMode", MyPlayer->_pmode);
+				state.Number("missileCount", Missiles.size());
+				state.Key("actor");
+				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+			}
+			stream << ']';
+		}
+		stream << ']';
+	}
+	ASSERT_TRUE(stream.good());
 }
 
 } // namespace

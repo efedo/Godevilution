@@ -48,6 +48,59 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.4a Catacombs monsters in play: melee families (done)
+
+- **Player-visible outcome:** on L5–L8 the melee families fight as native: Sneak
+  (Stalker/Unseen), Gargoyle (wake, perch, special), Goat melee (circling charge),
+  Fat (Overlord/Mud Man), Bat (Blink/Gloom/Familiar swoop and retreat), plus the
+  C1 families (Zombie, Fallen, Skeleton, Scavenger) at their L5–L8 variants. The
+  Warrior kills one monster per floor on L5–L8 in the headless journey, as on L1–L4.
+- **Native source:** `monster.cpp` MAI_Sneak, MAI_Garg, MAI_GoatMc (MAI_Round),
+  MAI_Fat, MAI_Bat, and the shared walk/attack/hit/death paths they call
+  (M_StartAttack, M_StartSpAttack, M_TryH2HHit, MonsterAttackPlayer).
+- **Files and contracts owned:**
+  - audit each family's existing managed AI (`DiabloCombatCommandProcessor.MonsterAi*`)
+    against native, in native call and RNG order; port what differs, delete what
+    no family uses;
+  - lift the Catacombs runtime admission so every L5–L8 monster ticks through the
+    shared processor with its native AI (today only Gargoyle phases and the ranged
+    owners are Catacombs-specific);
+  - one archive-free native per-tick AI trace per family (seeded floor, scripted
+    player, N ticks of mode/position/RNG/HP) added to
+    `tools/run-native-oracle-parity.sh`, with its managed consumer;
+  - the depth journey's per-floor kill extends to L5–L8 (`NativeWarriorFoughtFloor`
+    = 8), with resume checking the retained corpses.
+- **Exit check:** the family traces match in CI; the headless
+  `test-godot-native-depth-progression.ps1 -TargetDepth 8` with `warrior-l8` kills on
+  every floor and resumes; Diablo, Server and client suites pass.
+- **Out of scope (2.4b):** ranged and missile families: Skeleton and Goat archers'
+  release/flight already exist and are only rechecked; Acid spit and puddles, Magma
+  bolts, the shelved Magma/Acid chains, Familiar lightning. Monster art, lighting,
+  uniques' quest behaviour (set levels), multiplayer AI differences beyond the
+  existing per-monster seeds.
+- **Size:** four to five days; 2.4b follows at a similar size.
+- **State:** `ThemeRoomGenerationTest.CaptureNativeCatacombsMeleeAi` (registered in
+  `tools/run-native-oracle-parity.sh`) free-runs ten lanes for 300 ticks of
+  ProcessMonsters + ProcessMissiles against a passive, durable Warrior on a fully
+  visible open floor (fresh-level ClearMVars state, live `pLvlLoad = 0`, placeholder
+  sprites for the charge missile). `AuthoritativeCatacombsMeleeAiNativeOracleTests`
+  admits each actor through the production Catacombs adapter with the shipped
+  monster-type, monster-missile and combat tables and compares RNG, player life,
+  tile and hit points every tick. Zombie, Fallen, Skeleton, Scavenger, Goat melee,
+  Fat, Bat (Gloom), Gargoyle and Horned Demon match all 300 ticks. Ported for L5-L8
+  native actors: Fallen/Scavenger delegate to SkeletonAi; Delay spends its first
+  count on the starting update and reruns without the roll on expiry; the Warrior's
+  hit cry, the normal-attack sound and the charge-collision hit sound draw their
+  variants; walk completion records var1 = walk mode, var2 = 0 for Bat,
+  AiAvoidance, Overlord and Rhino; AiAvoidance short-circuits FlipCoin(4) in its
+  Move goal and round-walks without a roll. Native SneakAi is ported (fade in/out
+  on the Special graphic, hidden flag, Retreat goal, var1/var2); the fade cursor and
+  `NativeSneak` state persist only in the Catacombs cohort format. All ten lanes match.
+- **State (2026-10-31):** done. The full headless journey with `warrior-l8` (now
+  clvl 18 in Catacombs plate) kills on each of L1–L8 and resumes; the harness drinks
+  through packs, keeps a potion reserve for the walk out and skips trapped doors,
+  which the server refuses until 2.5. Next: 2.4b.
+
 ## Batch 2.3 Render the Catacombs (done)
 
 - **Player-visible outcome:** with the native packs, L5–L8 draw with native
