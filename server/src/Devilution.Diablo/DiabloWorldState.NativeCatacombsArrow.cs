@@ -49,8 +49,10 @@ public sealed partial class DiabloWorldState
         foreach (var arrow in nativeCatacombsArrows.Values.Where(value => value.LevelId == bindings.LevelId))
             ValidateNativeCatacombsArrow(arrow, bindings);
 
+        // Native monster missiles carry their own state; only C2 Arrow flights need the floor owner.
         foreach (var projectile in Projectiles.Values.Where(value => value.LevelId == bindings.LevelId
-                     && value.Behavior == AuthoritativeProjectileBehavior.MonsterArrow)) {
+                     && value.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                     && value.NativeMonsterMissile is null)) {
             if (!nativeCatacombsArrows.TryGetValue(projectile.EntityId, out var arrow)
                 || arrow.SourceEntityId != projectile.SourceEntityId)
                 throw new InvalidDataException("A Catacombs MonsterArrow projectile has no exact private flight owner.");

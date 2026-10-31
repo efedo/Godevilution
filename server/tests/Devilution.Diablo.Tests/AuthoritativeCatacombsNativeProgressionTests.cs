@@ -276,6 +276,40 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         }
     }
 
+    /** Native ranged AI vars, a ranged cursor and a projectile-owned Acid puddle restore on a fresh host. */
+    [Fact(Explicit = true)]
+    public void NativeRangedStateRestoresOnAFreshHost()
+    {
+        var (activation, runtime, _) = DescendToL5("native-ranged-state");
+        var simulation = activation.Simulation;
+        var actor = simulation.WorldState.CombatTargets.Values
+            .Where(target => target.LevelId == 5 && !target.IsMoving && target.NativeMeleeCursor is null
+                && target.NativeInitialization is { NativeSpecialAttackFrameCount: > 1 })
+            .OrderBy(target => target.EntityId).First();
+        var vars = new AuthoritativeNativeAiVars(10, 3, true, 4, 7, 1);
+        var cursor = new AuthoritativeNativeMeleeCursor(0, 0) { RangedMissile = "Acid", UsesSpecialAttack = true };
+        actor.RestoreNativeAiVars(vars);
+        actor.RestoreNativeMeleeCursor(cursor);
+        var puddle = new AuthoritativeProjectile(0x8000F001, actor.EntityId, 0, 0, 5, actor.PositionX, actor.PositionY,
+            actor.PositionX, actor.PositionY, 2, AuthoritativeDamageType.Acid, 0, 40, allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.AcidPuddle,
+            NativeMissileId = "AcidPuddle",
+            ImpactLifetime = 0,
+            NativeMonsterMissile = AuthoritativeNativeMonsterMissileState.Create(
+                AuthoritativeNativeMonsterMissileKind.AcidPuddle, actor) with { Ending = true, LastCollisionTargetHash = -2 },
+        };
+        simulation.WorldState.Projectiles.Add(puddle.EntityId, puddle);
+        var codec = new DiabloCohortCodec();
+        var bytes = codec.Serialize(simulation.CaptureCohortState(runtime));
+        var candidate = activation.CohortCandidateFactory!(codec.Deserialize(bytes));
+        var restoredRuntime = candidate.CreateRuntime();
+        Assert.Equal(bytes, codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        var restored = candidate.Simulation.WorldState.CombatTargets[actor.EntityId];
+        Assert.Equal(vars, restored.NativeAiVars);
+        Assert.Equal(cursor, restored.NativeMeleeCursor);
+        Assert.Equal(puddle.NativeMonsterMissile, candidate.Simulation.WorldState.Projectiles[puddle.EntityId].NativeMonsterMissile);
+    }
+
     private static (int X, int Y) AdjacentWalkable(DiabloSimulation simulation, int x, int y)
     {
         return new[] { (1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1) }

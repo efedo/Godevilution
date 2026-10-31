@@ -2722,6 +2722,18 @@ public sealed class ClientModelTests
         acid.Projectiles[0].NativeMissileId = "Acid";
         model.Apply(new AuthoritativeClientMessage(Snapshot: acid));
         Assert.Equal("Acid", Assert.Single(model.Snapshot!.Projectiles).NativeMissileId);
+
+        // AcidSplat (52) and AcidPuddle (53) accept only their own native identities.
+        foreach (var (behavior, missileId, other) in new[] { (52, "AcidSplat", "AcidPuddle"), (53, "AcidPuddle", "AcidSplat") }) {
+            var stage = invalidNativeMissile.Clone();
+            stage.Projectiles[0].Behavior = behavior;
+            stage.Projectiles[0].NativeMissileId = other;
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: stage)));
+            stage.Projectiles[0].NativeMissileId = missileId;
+            model.Apply(new AuthoritativeClientMessage(Snapshot: stage));
+            Assert.Equal(missileId, Assert.Single(model.Snapshot!.Projectiles).NativeMissileId);
+        }
     }
 
     [Fact]

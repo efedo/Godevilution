@@ -51,6 +51,10 @@ public sealed partial class DiabloCombatCommandProcessor
     {
         var mode = NativeMovementMode(
             target.FuturePositionX - target.PositionX, target.FuturePositionY - target.PositionY);
+        if (IsNativeCatacombsRangedFamily(target)) {
+            StartNativeStand(target, mode);
+            return;
+        }
         switch (target.NativeAi) {
         case "Bat":
             target.RestoreBatMovementState(0, mode);

@@ -3178,6 +3178,35 @@ public sealed class DialogueProtocolProjectionTests
         }));
     }
 
+    /** Native Acid splats, puddles and magma explosions (batch 2.4b) project and restore their identities. */
+    [Theory]
+    [InlineData(AuthoritativeProjectileBehavior.AcidSplat, "AcidSplat", NativeProjectileVisual.AcidSplat)]
+    [InlineData(AuthoritativeProjectileBehavior.AcidPuddle, "AcidPuddle", NativeProjectileVisual.AcidPuddle)]
+    [InlineData(AuthoritativeProjectileBehavior.MonsterMagic, "MagmaBallExplosion", NativeProjectileVisual.Unspecified)]
+    public void ProjectsAndRestoresNativeMonsterMissileStageIdentities(
+        AuthoritativeProjectileBehavior behavior, string missileId, NativeProjectileVisual visual)
+    {
+        var player = new StorePlayerSnapshot(0, null, [], 0, 64, 0, 0, PlayerAttributesState.Zero, [], [], []) {
+            EntityId = 1,
+            LevelId = 6,
+        };
+        var source = new DiabloSimulationSnapshot(1, player, [], [], [], [],
+            [new DiabloProjectileState(2, 1, 0, 6, 1, 4, 4, 4, 4, 0, AuthoritativeDamageType.Acid, 0, 3) {
+                Behavior = behavior,
+                NativeMissileId = missileId,
+            }],
+            null);
+
+        var projectile = Assert.Single(DiabloProtocolMapper.ToProtocolSnapshot(source).Projectiles);
+        Assert.Equal(visual, projectile.NativeVisual);
+        Assert.Equal(missileId, projectile.NativeMissileId);
+        Assert.Equal(missileId, Assert.Single(DiabloProtocolMapper.FromProtocolSnapshot(
+            DiabloProtocolMapper.ToProtocolSnapshot(source)).Projectiles).NativeMissileId);
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Projectiles = [source.Projectiles[0] with { NativeMissileId = "Acid" }],
+        }));
+    }
+
     [Fact]
     public void ProjectsLightningWallSegmentsAsLightningInsteadOfFire()
     {

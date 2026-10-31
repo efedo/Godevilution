@@ -397,6 +397,14 @@ public sealed partial class DiabloWorldState
             || objectRefs.Any(reference => reference != 0 && !definition.ObjectBindings.Any(
                 value => value.NativeObjectSlot == Math.Abs(reference) - 1)))
             throw new InvalidDataException("Native item placement has an unbound object or signed footprint.");
+        var (playerRefs, monsterRefs) = BuildNativeActorRefs(levelId, players);
+        return new(playerRefs, monsterRefs, objectRefs, solid, definition.SetPieceTiles, objectSolid, objectInteractive);
+    }
+
+    /** Native dPlayer and dMonster for one level: index + 1 on the tile, negated on a walk's future tile. */
+    private (int[] PlayerRefs, int[] MonsterRefs) BuildNativeActorRefs(
+        uint levelId, IReadOnlyList<AuthoritativePlayerState> players)
+    {
         var playerRefs = new int[112 * 112];
         var monsterRefs = new int[112 * 112];
         void Mark(int[] grid, int x, int y, int marker) {
@@ -425,7 +433,7 @@ public sealed partial class DiabloWorldState
             Mark(monsterRefs, monster.PositionX, monster.PositionY, marker);
             if (monster.IsMoving) Mark(monsterRefs, monster.FuturePositionX, monster.FuturePositionY, -marker);
         }
-        return new(playerRefs, monsterRefs, objectRefs, solid, definition.SetPieceTiles, objectSolid, objectInteractive);
+        return (playerRefs, monsterRefs);
     }
 
     private static AuthoritativeWorldItem ToWorldItem(uint levelId, AuthoritativeCathedralNativeItemProjection value)

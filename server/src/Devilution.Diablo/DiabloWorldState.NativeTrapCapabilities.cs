@@ -26,12 +26,22 @@ public sealed partial class DiabloWorldState
     {
         if (cathedralItems is null || !OwnsNativePopulationLevel(levelId))
             throw new InvalidDataException("Native trap collision requires its exact item/population owner.");
+        // Validates the owned floor's object and geometry projection before reading actors.
+        _ = BuildCathedralItemOccupancy(cathedralItems.Profile, levelId, players);
+        return NativeActorOccupants(levelId, x, y, players);
+    }
+
+    /** The native monster and player on a tile, with the signed dMonster ^ dPlayer collision hash. */
+    internal (AuthoritativeCombatTarget? Monster, AuthoritativePlayerState? Player, short Hash)
+        NativeActorOccupants(uint levelId, int x, int y,
+            IReadOnlyList<AuthoritativePlayerState> players)
+    {
         if ((uint)x >= 112 || (uint)y >= 112)
             return (null, null, 0);
-        var occupancy = BuildCathedralItemOccupancy(cathedralItems.Profile, levelId, players);
+        var (playerRefs, monsterRefs) = BuildNativeActorRefs(levelId, players);
         var index = y * 112 + x;
-        var monsterRef = occupancy.MonsterRefs[index];
-        var playerRef = occupancy.PlayerRefs[index];
+        var monsterRef = monsterRefs[index];
+        var playerRef = playerRefs[index];
         var monster = monsterRef != 0 ? CombatTargets.Values.SingleOrDefault(value =>
             value.LevelId == levelId && value.NativeInitialization?.Binding.NativeSlot == Math.Abs(monsterRef) - 1
             && (monsterRef > 0 || value.IsPetrified)) : null;

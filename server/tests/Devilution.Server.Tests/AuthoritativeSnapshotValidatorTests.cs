@@ -956,6 +956,8 @@ public sealed class AuthoritativeSnapshotValidatorTests
             Arrow(58, "Arrow"),
             Arrow(51, "Arrow"),
             Arrow(52, "Acid"),
+            Arrow(52, "AcidPuddle"),
+            Arrow(53, "AcidSplat"),
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));
@@ -966,6 +968,14 @@ public sealed class AuthoritativeSnapshotValidatorTests
         acid.Projectiles[0].NativeVisual = NativeProjectileVisual.Acid;
         acid.Projectiles[0].SpellId = 1;
         AuthoritativeSnapshotValidator.Validate(acid);
+        // Its native splat (AcidSplat) and puddle (AcidPuddle) keep theirs.
+        foreach (var (behavior, missileId, visual) in new[] {
+                     (52, "AcidSplat", NativeProjectileVisual.AcidSplat), (53, "AcidPuddle", NativeProjectileVisual.AcidPuddle) }) {
+            var stage = Arrow(behavior, missileId);
+            stage.Projectiles[0].NativeVisual = visual;
+            stage.Projectiles[0].SpellId = 1;
+            AuthoritativeSnapshotValidator.Validate(stage);
+        }
     }
 
     [Fact]

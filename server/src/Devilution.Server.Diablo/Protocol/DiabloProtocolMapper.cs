@@ -1232,12 +1232,12 @@ internal static class DiabloProtocolMapper
         IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
     {
         foreach (var projectile in projectiles) {
-            // The C2 Arrow and Acid owners keep native identities "Arrow" and "Acid"; other ids name monster magic.
+            // Native Arrow and Acid-family missiles keep their behavior's identity; other ids name monster magic.
+            // MagmaBallExplosion has no native visual yet and draws as generic monster magic.
             if (projectile.NativeMissileId is not null
-                && !(projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
-                    && projectile.NativeMissileId == "Arrow")
-                && !(projectile.Behavior == AuthoritativeProjectileBehavior.Acid
-                    && projectile.NativeMissileId == "Acid")
+                && NativeMissileIdentityOf(projectile.Behavior) != projectile.NativeMissileId
+                && !(projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic
+                    && projectile.NativeMissileId == "MagmaBallExplosion")
                 && (projectile.Behavior != AuthoritativeProjectileBehavior.MonsterMagic
                     || ResolveNativeProjectileVisual(
                         projectile.Behavior,
@@ -1286,6 +1286,16 @@ internal static class DiabloProtocolMapper
             }
         }
     }
+
+    /** The one native missile identity a non-magic behavior may carry, or null. */
+    private static string? NativeMissileIdentityOf(AuthoritativeProjectileBehavior behavior)
+        => behavior switch {
+            AuthoritativeProjectileBehavior.MonsterArrow => "Arrow",
+            AuthoritativeProjectileBehavior.Acid => "Acid",
+            AuthoritativeProjectileBehavior.AcidSplat => "AcidSplat",
+            AuthoritativeProjectileBehavior.AcidPuddle => "AcidPuddle",
+            _ => null,
+        };
 
     private static bool UsesDirectionalPresentation(DiabloProjectileState projectile)
     {
@@ -2678,10 +2688,8 @@ internal static class DiabloProtocolMapper
                     ? string.IsNullOrEmpty(projectile.NativeMissileId)
                         ? ResolveNativeMonsterMissileId(projectile.NativeVisual)
                         : projectile.NativeMissileId
-                    : (AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
-                        && projectile.NativeMissileId == "Arrow" ? "Arrow"
-                    : (AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.Acid
-                        && projectile.NativeMissileId == "Acid" ? "Acid" : null,
+                    : NativeMissileIdentityOf((AuthoritativeProjectileBehavior)projectile.Behavior) is { } identity
+                        && projectile.NativeMissileId == identity ? identity : null,
                 Phase = (AuthoritativeProjectilePhase)projectile.Phase,
                 StartX = projectile.StartX,
                 StartY = projectile.StartY,

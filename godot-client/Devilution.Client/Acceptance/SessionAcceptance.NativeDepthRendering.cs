@@ -30,6 +30,7 @@ public partial class SessionAcceptance
      */
     private async Task<NativeWarriorFloorDraw> VerifyNativeWarriorFloorDrawAsync(Main main, string directory, uint levelId)
     {
+        using var timed = NativeWarriorStep("checks", $"L{levelId} draw");
         var playerArt = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_PLAYER_PACK"));
         await Until(() => Settled(main) && main.ObservedSnapshot!.Players.Single().LevelId == levelId
             && main.ObservedNativeSceneDrawing is { NativeSceneActive: true } draw && draw.LevelId == levelId
@@ -74,6 +75,7 @@ public partial class SessionAcceptance
      */
     private async Task<NativeWarriorPanels> VerifyNativeWarriorPanelsAsync(Main main, string directory)
     {
+        using var timed = NativeWarriorStep("checks", "panels");
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var captures = new List<string>();
         async Task Snap(string name)
@@ -177,6 +179,7 @@ public partial class SessionAcceptance
      */
     private async Task<NativeWarriorControls> VerifyNativeWarriorControlsAsync(Main main, string directory)
     {
+        using var timed = NativeWarriorStep("checks", "controls");
         Require(main.ObservedSpellSourceArmed, "Picking a Hero spell source did not arm left-click casting.");
         await PressAcceptanceKey(Key.Escape);
         Require(!main.ObservedSpellSourceArmed, "Escape did not return left click to walking.");

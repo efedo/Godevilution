@@ -48,6 +48,52 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch 2.4b Catacombs ranged and missile monsters (done)
+
+- **Player-visible outcome:** on L5–L8 the ranged families fight as native: Skeleton
+  archers (Burning Dead/Horror), Goat archers (four clans), Acid Beast and Poison
+  Spitter (acid bolt, splat, puddle), Magma Demon and Blood Stone (magma ball), and
+  the Familiar's lightning. The Warrior journey fights through them on every floor.
+- **Native source:** `monsters.cpp` AiRanged, AiRangedAvoidance, SkeletonBowAi and
+  BatAi's Familiar branch, StartRangedAttack/StartRangedSpecialAttack and the ranged
+  mode updates; `missiles.cpp` AddArrow/ProcessArrow, AddAcid/ProcessGenericProjectile,
+  ProcessAcidSplate, AddAcidPuddle/ProcessAcidPuddle, AddMagmaBall, AddLightning/
+  ProcessLightning, and the monster-missile hit path.
+- **Files and contracts owned:**
+  - port the three ranged AI functions for L5–L8 native actors into the shared
+    processor (`DiabloCombatCommandProcessor.MonsterAi*`), retiring the tuning-based
+    ranged controllers for those actors; reuse the existing C2 release clocks and
+    Arrow flight where they already match;
+  - Acid, splat, puddle, magma ball and lightning flights in the shared projectile
+    state; additive cohort fields only where new state must persist;
+  - the shelved `wip/phase0-shelf` caster chains are read for reference, not merged;
+  - `ThemeRoomGenerationTest.CaptureNativeCatacombsRangedAi` (archive-free, in
+    `tools/run-native-oracle-parity.sh`) free-runs one lane per family as 2.4a does,
+    recording actor, player life, RNG and missile count each tick, with its managed
+    consumer.
+- **Exit check:** the ranged lanes match every tick in CI; the headless
+  `test-godot-native-depth-progression.ps1 -TargetDepth 8` with `warrior-l8` kills on
+  every floor and resumes; Diablo, Server and client suites and both smokes pass.
+- **Out of scope:** monster missile art and sounds beyond their RNG draws, lighting
+  from missiles, Red Death/Storm (not spawned), uniques' AcidUnique branch unless an
+  L5–L8 unique uses it, Caves families, multiplayer AI differences.
+- **Size:** four to five days.
+- **State:** `CaptureNativeCatacombsRangedAi` shares one lane runner with the melee
+  capture and records seven lanes with their missiles; all seven match every tick
+  (`AuthoritativeCatacombsRangedAiNativeOracleTests`) and the ten melee lanes still
+  do. Decision taken: ranged modes live on the actor (`NativeAiVars` and the native
+  cursor's `RangedMissile`/`RangedDamage`, in `DiabloCombatCommandProcessor.NativeRangedAi`)
+  and missiles on their projectiles (`AuthoritativeNativeMonsterMissileState`, processed
+  in `DiabloCombatCommandProcessor.NativeMonsterMissiles`). Native ProcessMissiles
+  reaches a missile created during the pass in the same pass. Saved C2 ranged
+  actions and Arrow flights still finish under their floor-owned controllers; new
+  ones are no longer started for these families. Gloom keeps the legacy Bat path
+  (its Rhino charge is untranslated). Verified with the `-FirstFightDepth 5` journey
+  (kills on L5–L8, resume) and both smokes; the depth journey now writes
+  `<phase>-timing.json` and showed a fully clock-bound run (clock share 1.00), so a
+  test-only `--tick-rate` passthrough is the next lever for run time.
+  `DiabloSimulationSnapshot.cs` (3,400+ lines) still needs its zero-behaviour split.
+
 ## Batch 2.4a Catacombs monsters in play: melee families (done)
 
 - **Player-visible outcome:** on L5–L8 the melee families fight as native: Sneak

@@ -585,6 +585,7 @@ public sealed partial class DiabloSimulation
         target.RestoreNativeMeleeCursor(monster.NativeMeleeCursor);
         target.RestoreNativeWalkCursor(monster.NativeWalkCursor);
         target.RestoreNativeSneakState(monster.NativeSneak);
+        target.RestoreNativeAiVars(monster.NativeAiVars);
         RequireExactActor(state,
             new DiabloCohortCombatTargetState(target.CaptureCohortState(),
                 CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending) {
@@ -752,6 +753,7 @@ public sealed partial class DiabloSimulation
             AttackHit = state.AttackHit,
             NativeWeaponArrow = state.NativeWeaponArrow,
             NativeTrapArrow = state.NativeTrapArrow,
+            NativeMonsterMissile = state.NativeMonsterMissile,
             PerilSelfDamageQ6 = state.PerilSelfDamageQ6,
             DoppelgangerProc = state.DoppelgangerProc,
             ActivationDelayTicks = state.ActivationDelayTicks,
@@ -1728,6 +1730,7 @@ public sealed partial class DiabloSimulation
             AttackHit = projectile.AttackHit,
             NativeWeaponArrow = projectile.NativeWeaponArrow,
             NativeTrapArrow = projectile.NativeTrapArrow,
+            NativeMonsterMissile = projectile.NativeMonsterMissile,
             PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
             DoppelgangerProc = projectile.DoppelgangerProc,
             ActivationDelayTicks = projectile.ActivationDelayTicks,

@@ -1961,11 +1961,17 @@ public sealed class AuthoritativeClientModel
     {
         if (string.IsNullOrEmpty(projectile.NativeMissileId))
             return true;
-        // Native C2 Arrow and Acid owners keep their missile identity.
-        if ((AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow)
+        // Native Arrow and Acid-family missiles keep their behavior's identity.
+        switch ((AuthoritativeProjectileBehavior)projectile.Behavior) {
+        case AuthoritativeProjectileBehavior.MonsterArrow:
             return projectile.NativeMissileId == "Arrow";
-        if ((AuthoritativeProjectileBehavior)projectile.Behavior == AuthoritativeProjectileBehavior.Acid)
+        case AuthoritativeProjectileBehavior.Acid:
             return projectile.NativeMissileId == "Acid";
+        case AuthoritativeProjectileBehavior.AcidSplat:
+            return projectile.NativeMissileId == "AcidSplat";
+        case AuthoritativeProjectileBehavior.AcidPuddle:
+            return projectile.NativeMissileId == "AcidPuddle";
+        }
         if ((AuthoritativeProjectileBehavior)projectile.Behavior
                 != AuthoritativeProjectileBehavior.MonsterMagic
             || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(projectile.NativeMissileId)

@@ -22,6 +22,10 @@ public sealed partial class DiabloCombatCommandProcessor
                         out var projectile)) {
                     continue;
                 }
+                if (projectile.NativeMonsterMissile is not null) {
+                    AdvanceNativeMonsterMissile(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.ChargedBolt) {
                     AdvanceChargedBolt(tick, projectile, players, events);
                     continue;

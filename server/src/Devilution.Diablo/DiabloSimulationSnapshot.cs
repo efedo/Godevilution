@@ -56,6 +56,9 @@ public sealed record DiabloMonsterState(
     /** L5-L8 native SneakAi state; absent before Catacombs cohorts. */
     public AuthoritativeNativeSneakState? NativeSneak { get; init; }
 
+    /** L5-L8 native ranged-AI var1/var2 and goal; absent before Catacombs ranged cohorts. */
+    public AuthoritativeNativeAiVars? NativeAiVars { get; init; }
+
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; init; }
 
@@ -501,6 +504,9 @@ public sealed record DiabloProjectileState(
     /** Present only for an exact owned L1 wall-trap Arrow. */
     public AuthoritativeNativeTrapArrowState? NativeTrapArrow { get; init; }
 
+    /** Present only for a native L5-L8 monster Arrow. */
+    public AuthoritativeNativeMonsterMissileState? NativeMonsterMissile { get; init; }
+
     public int PerilSelfDamageQ6 { get; init; }
 
     public bool DoppelgangerProc { get; init; }
@@ -777,6 +783,7 @@ public sealed partial class DiabloSimulation
                     NativeMeleeCursor = target.NativeMeleeCursor,
                     NativeWalkCursor = target.NativeWalkCursor,
                     NativeSneak = target.NativeSneak,
+                    NativeAiVars = target.NativeAiVars,
                     DialogueMessageId = target.DialogueMessageId,
                     DialogueState = target.DialogueState,
                     Petrified = target.IsPetrified,
@@ -1003,6 +1010,7 @@ public sealed partial class DiabloSimulation
                     AttackHit = projectile.AttackHit,
                     NativeWeaponArrow = projectile.NativeWeaponArrow,
                     NativeTrapArrow = projectile.NativeTrapArrow,
+                    NativeMonsterMissile = projectile.NativeMonsterMissile,
                     PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                     DoppelgangerProc = projectile.DoppelgangerProc,
                     ActivationDelayTicks = projectile.ActivationDelayTicks,
@@ -2026,6 +2034,7 @@ public sealed partial class DiabloSimulation
                 AttackHit = projectile.AttackHit,
                 NativeWeaponArrow = projectile.NativeWeaponArrow,
                 NativeTrapArrow = projectile.NativeTrapArrow,
+                NativeMonsterMissile = projectile.NativeMonsterMissile,
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,

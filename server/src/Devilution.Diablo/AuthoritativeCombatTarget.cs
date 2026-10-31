@@ -6,7 +6,7 @@ using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
-/** Mutable native attack or hit-recovery cursor; the current enemy is resolved separately each tick. */
+/** Mutable native attack, ranged attack or hit-recovery cursor; the current enemy is resolved separately each tick. */
 public sealed record AuthoritativeNativeMeleeCursor(int FrameIndex, int TickCounter)
 {
     public bool HitRecovery { get; init; }
@@ -18,6 +18,14 @@ public sealed record AuthoritativeNativeMeleeCursor(int FrameIndex, int TickCoun
     /** L5-L8 Sneak FadeIn/FadeOut on the Special graphic; frames always count towards completion. */
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public AuthoritativeNativeFade Fade { get; init; }
+
+    /** L5-L8 RangedAttack or SpecialRangedAttack: the native missile (var1) released on the effect frame. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? RangedMissile { get; init; }
+
+    /** Damage passed to AddMissile (native var2, or var3 for a special ranged attack). */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int RangedDamage { get; init; }
 }
 
 /** Native Sneak fade modes carried by the shared animation cursor. */
@@ -33,6 +41,13 @@ public enum AuthoritativeNativeFade
  * Retreat goal and goalVar1 walk count for L5-L8 actors.
  */
 public sealed record AuthoritativeNativeSneakState(int PreviousMode, int IdleTicks, bool Retreat, int WalkCount);
+
+/**
+ * Native var1, var2 and Move goal read by the L5-L8 ranged AIs (AiRanged, AiRangedAvoidance,
+ * SkeletonBowAi). Standing, Var1 is the completed mode and Var2 counts stand updates; while
+ * Delaying, Var2 is the remaining wait. GoalVar2 is RoundWalk's turn side.
+ */
+public sealed record AuthoritativeNativeAiVars(int Var1, int Var2, bool Delaying, int Goal, int GoalVar1, int GoalVar2);
 
 /** Minimal server-owned combat target used by the initial combat boundary. */
 public sealed class AuthoritativeCombatTarget
@@ -463,6 +478,21 @@ public sealed class AuthoritativeCombatTarget
     /** Native SneakAi state for L5-L8 actors; null before their first native Sneak update. */
     public AuthoritativeNativeSneakState? NativeSneak { get; private set; }
 
+    /** Native ranged-AI var1/var2 and goal for L5-L8 actors; null until their first native ranged AI update. */
+    public AuthoritativeNativeAiVars? NativeAiVars { get; private set; }
+
+    internal void RestoreNativeAiVars(AuthoritativeNativeAiVars? state)
+    {
+        if (state is not null
+            && (state.Var1 is < 0 or > 17
+                || state.Var2 is < 0 or > short.MaxValue
+                || state.Goal is not (1 or 2 or 4)
+                || state.GoalVar1 is < 0 or > short.MaxValue
+                || state.GoalVar2 is not (0 or 1)))
+            throw new InvalidDataException("Native ranged AI state is outside the source AI's ranges.");
+        NativeAiVars = state;
+    }
+
     internal void RestoreNativeSneakState(AuthoritativeNativeSneakState? state)
     {
         if (state is not null
@@ -512,6 +542,11 @@ public sealed class AuthoritativeCombatTarget
             || cursor.HitRecovery && cursor.UsesSpecialAttack
             || cursor.Fade is not (AuthoritativeNativeFade.None or AuthoritativeNativeFade.In or AuthoritativeNativeFade.Out)
             || cursor.Fade != AuthoritativeNativeFade.None && (cursor.HitRecovery || cursor.UsesSpecialAttack)
+            || cursor.RangedMissile is not null
+                && (cursor.HitRecovery || cursor.Fade != AuthoritativeNativeFade.None
+                    || cursor.RangedMissile.Length is 0 or > 64)
+            || cursor.RangedMissile is null && cursor.RangedDamage != 0
+            || cursor.RangedDamage is < 0 or > 10_000
             || frameCount <= 0
             || cursor.FrameIndex < 0
             || cursor.FrameIndex >= frameCount
@@ -818,6 +853,7 @@ public sealed class AuthoritativeCombatTarget
             NativeMeleeCursor = NativeMeleeCursor,
             NativeWalkCursor = NativeWalkCursor,
             NativeSneak = NativeSneak,
+            NativeAiVars = NativeAiVars,
             DialogueMessageId = DialogueMessageId,
             DialogueState = DialogueState,
             Petrified = IsPetrified,

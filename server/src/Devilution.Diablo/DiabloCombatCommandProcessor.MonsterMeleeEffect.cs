@@ -211,7 +211,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 ApplyMonsterKnockback(target, victim, players);
         }
         var batTuning = GetBatAttackTuning(target);
-        if (target.HitPointsQ6 > 0 && batTuning.HasValue)
+        if (target.HitPointsQ6 > 0 && batTuning.HasValue && !IsNativeCatacombsRangedFamily(target))
             target.StartBatRetreat(
                 GetDirection(
                     target.PositionX,
@@ -219,7 +219,8 @@ public sealed partial class DiabloCombatCommandProcessor
                     victim.PositionX,
                     victim.PositionY),
                 batTuning.Value.RetreatDurationTicks);
-        if (target.HitPointsQ6 > 0
+        // Native L5-L8 Familiars cast Lightning and retreat from their BatAi.
+        if (target.HitPointsQ6 > 0 && !IsNativeCatacombsRangedFamily(target)
             && TryGetMonsterMissile(target, out var postMeleeMissile)
             && IsFamiliarLightningMissile(postMeleeMissile))
             CreateFamiliarLightningProjectile(target, victim, postMeleeMissile);

@@ -32,6 +32,31 @@ public sealed partial class DiabloCombatCommandProcessor
 		});
 	}
 
+	/**
+	 * Native StartRangedAttack (Attack graphic) or StartRangedSpecialAttack (Special graphic):
+	 * the cursor releases missile with damage on its effect frame.
+	 */
+	internal static void BeginNativeRangedAttack(
+		AuthoritativeCombatTarget target,
+		string missile,
+		int damage,
+		bool special)
+	{
+		ArgumentNullException.ThrowIfNull(target);
+		ArgumentException.ThrowIfNullOrEmpty(missile);
+		if (target.NativeMeleeCursor is not null)
+			throw new InvalidOperationException("A native animation is already active.");
+		var initialization = target.NativeInitialization
+			?? throw new InvalidOperationException("A native ranged attack requires native monster initialization.");
+		if ((special ? initialization.NativeSpecialAttackFrameCount : initialization.NativeAttackFrameCount) <= 0)
+			throw new InvalidOperationException("Native ranged attack animation metadata is unavailable.");
+		target.RestoreNativeMeleeCursor(new AuthoritativeNativeMeleeCursor(0, 0) {
+			UsesSpecialAttack = special,
+			RangedMissile = missile,
+			RangedDamage = damage,
+		});
+	}
+
 	/** Starts a native Sneak fade on the Special graphic and applies this update's processAnimation. */
 	internal static void BeginNativeFade(AuthoritativeCombatTarget target, AuthoritativeNativeFade fade)
 	{
@@ -111,8 +136,10 @@ public sealed partial class DiabloCombatCommandProcessor
 		var effectFrameIndex = cursor.UsesSpecialAttack
 			? initialization.SpecialAttackEffectFrame
 			: initialization.AttackEffectFrame;
+		// MonsterRangedSpecialAttack also requires the frame's first tick.
 		var effectFrame = !cursor.HitRecovery && cursor.Fade == AuthoritativeNativeFade.None
-			&& cursor.FrameIndex == effectFrameIndex - 1;
+			&& cursor.FrameIndex == effectFrameIndex - 1
+			&& !(cursor.RangedMissile is not null && cursor.UsesSpecialAttack && cursor.TickCounter != 0);
 		if (cursor.FrameIndex == frameCount - 1) {
 			// Native enters Stand before processAnimation when already on the last frame.
 			target.RestoreNativeMeleeCursor(null);
@@ -130,11 +157,7 @@ public sealed partial class DiabloCombatCommandProcessor
 			nextTickCounter = 0;
 			nextFrameIndex++;
 		}
-		target.RestoreNativeMeleeCursor(new AuthoritativeNativeMeleeCursor(nextFrameIndex, nextTickCounter) {
-			HitRecovery = cursor.HitRecovery,
-			UsesSpecialAttack = cursor.UsesSpecialAttack,
-			Fade = cursor.Fade,
-		});
+		target.RestoreNativeMeleeCursor(cursor with { FrameIndex = nextFrameIndex, TickCounter = nextTickCounter });
 		return new AuthoritativeNativeMeleeStep(
 			cursor.FrameIndex,
 			effectFrame,

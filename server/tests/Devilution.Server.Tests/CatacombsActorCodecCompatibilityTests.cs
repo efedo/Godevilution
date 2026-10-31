@@ -118,6 +118,38 @@ public sealed partial class DiabloCohortCodecTests
     }
 
     [Fact]
+    public void OlderFormatsRejectNativeRangedAiAndMonsterMissileFields()
+    {
+        for (var formatVersion = DiabloCohortState.NativeCombatFormatVersion;
+             formatVersion <= DiabloCohortState.NativeTownProgressionFormatVersion; formatVersion++) {
+            var ranged = MinimalCohort(formatVersion, new JsonObject {
+                ["Monster"] = new JsonObject {
+                    ["NativeMeleeCursor"] = new JsonObject {
+                        ["FrameIndex"] = 0,
+                        ["TickCounter"] = 0,
+                        [nameof(AuthoritativeNativeMeleeCursor.RangedMissile)] = "Arrow",
+                    },
+                },
+            });
+            var rangedError = Assert.Throws<InvalidDataException>(() => codec.Deserialize(ranged.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'RangedMissile'.", rangedError.Message);
+        }
+        for (var formatVersion = 1; formatVersion <= DiabloCohortState.NativeTownProgressionFormatVersion; formatVersion++) {
+            var vars = MinimalCohort(formatVersion, new JsonObject {
+                ["Monster"] = new JsonObject { [nameof(DiabloMonsterState.NativeAiVars)] = null },
+            });
+            var varsError = Assert.Throws<InvalidDataException>(() => codec.Deserialize(vars.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'NativeAiVars'.", varsError.Message);
+            var missile = new JsonObject {
+                ["FormatVersion"] = formatVersion,
+                ["Projectiles"] = new JsonArray(new JsonObject { [nameof(DiabloProjectileState.NativeMonsterMissile)] = null }),
+            };
+            var missileError = Assert.Throws<InvalidDataException>(() => codec.Deserialize(missile.ToJsonString()));
+            Assert.Equal("Unknown or duplicate cohort field 'NativeMonsterMissile'.", missileError.Message);
+        }
+    }
+
+    [Fact]
     public void ValidNativeMonsterAndCombatBaselinesDecodeBeforeDefaultC2FieldsAreRefused()
     {
         var nativeMonster = codec.Serialize(NativeState(0, 1));
@@ -273,6 +305,20 @@ public sealed partial class DiabloCohortCodecTests
             CombatTargets = [legacyTarget with {
                 Monster = legacyTarget.Monster with {
                     NativeSneak = new AuthoritativeNativeSneakState(0, 0, false, 0),
+                },
+            }],
+        };
+        yield return legacy with {
+            CombatTargets = [legacyTarget with {
+                Monster = legacyTarget.Monster with {
+                    NativeMeleeCursor = new AuthoritativeNativeMeleeCursor(0, 0) { RangedMissile = "Arrow" },
+                },
+            }],
+        };
+        yield return legacy with {
+            CombatTargets = [legacyTarget with {
+                Monster = legacyTarget.Monster with {
+                    NativeAiVars = new AuthoritativeNativeAiVars(0, 0, false, 1, 0, 0),
                 },
             }],
         };

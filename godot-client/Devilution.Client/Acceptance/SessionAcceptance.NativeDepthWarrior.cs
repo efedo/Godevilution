@@ -62,6 +62,23 @@ public partial class SessionAcceptance
 
     private async Task VerifyNativeWarriorDepthsAsync(Main main, string directory, string phase, Evidence? previous)
     {
+        nativeWarriorTiming = new(main);
+        var passed = false;
+        try {
+            await RunNativeWarriorDepthsAsync(main, directory, phase, previous);
+            passed = true;
+        } finally {
+            try {
+                nativeWarriorTiming.Write(directory, phase, passed);
+            } catch (Exception exception) when (!passed) {
+                GD.PrintErr($"Native Warrior timing was not written: {exception.Message}");
+            }
+            nativeWarriorTiming = null;
+        }
+    }
+
+    private async Task RunNativeWarriorDepthsAsync(Main main, string directory, string phase, Evidence? previous)
+    {
         var identity = main.ObservedIdentity!;
         var profilePath = System.Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_NATIVE_PROFILE");
         using var profileDocument = JsonDocument.Parse(System.IO.File.ReadAllText(profilePath
@@ -145,7 +162,8 @@ public partial class SessionAcceptance
         using var saved = JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(directory, "nativedepthjourney.json")));
         var expected = saved.RootElement.GetProperty("NativeDepthWarrior").Deserialize<NativeWarriorDepthCheckpoint>()!;
         Require(expected.Floors.Length == target, "The resume targets a different floor than its journey.");
-        await AwaitNativeTownerColdReadinessAsync(main);
+        using (NativeWarriorStep("checks", "cold Town readiness"))
+            await AwaitNativeTownerColdReadinessAsync(main);
         var initial = main.ObservedSnapshot!;
         var hello = main.ObservedInitialConnection?.ServerHello;
         Require(Convert.ToBase64String(initial.Players.Single().ToByteArray()) == expected.PlayerPayload
@@ -186,6 +204,7 @@ public partial class SessionAcceptance
      */
     private async Task<object> NativeWarriorTownWarpLegAsync(Main main, string directory)
     {
+        using var timed = NativeWarriorStep("travel", "Town warp leg");
         Require(main.ObservedSnapshot!.Players.Single().LevelId == NativeWarriorTownWarpDepth && !NativeWarriorTownWarpOpen(main),
             "The Town warp leg must start on L5 with the Town warp closed.");
         await TravelNativeWarriorAsync(main, directory, 0);
@@ -239,6 +258,7 @@ public partial class SessionAcceptance
     /** Pepin's healing; a refusal while the Warrior is still entering Town changes nothing, so it is repeated. */
     private async Task HealNativeWarriorInTownAsync(Main main)
     {
+        using var timed = NativeWarriorStep("town", "healer");
         for (var attempt = 1; ; attempt++) {
             try {
                 await UseNativeTownHealer(main);
@@ -256,6 +276,7 @@ public partial class SessionAcceptance
     /** A player's Town stop: Pepin heals, then his cheapest healing potion is bought up to the supply. */
     private async Task VisitNativeWarriorTownAsync(Main main)
     {
+        using var timed = NativeWarriorStep("town", "healer and restock");
         await HealNativeWarriorInTownAsync(main);
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var openSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
@@ -309,6 +330,8 @@ public partial class SessionAcceptance
     /** Ordinary route travel; an interrupted walk clears the nearby attackers and retries. */
     private async Task TravelNativeWarriorAsync(Main main, string directory, uint destination, bool flee = false)
     {
+        var origin = main.ObservedSnapshot!.Players.Single().LevelId;
+        using var timed = NativeWarriorStep("travel", $"L{origin}->L{destination}");
         for (var attempt = 0; attempt < NativeWarriorTravelAttempts; attempt++) {
             // An interrupted walk can still finish on the trigger; let a pending transition land first.
             for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
@@ -316,6 +339,12 @@ public partial class SessionAcceptance
             var player = main.ObservedSnapshot!.Players.Single();
             if (player.LevelId == destination)
                 return;
+            if (player.LevelId != origin) {
+                // Fighting a pack stepped onto the floor's other stairs: walk back and go on.
+                GD.Print($"Native Warrior stepped from L{origin} to L{player.LevelId} while clearing; returning");
+                await TravelNativeWarriorAsync(main, directory, origin, flee);
+                continue;
+            }
             if (player.LevelId != 0 && !flee)
                 await ClearNativeWarriorThreatsAsync(main, player.LevelId);
             await UseNativeHealingPotionIfNeeded(main);
@@ -570,6 +599,9 @@ public partial class SessionAcceptance
         for (var kills = 0; kills < 12; kills++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
+            // Fighting can step onto stairs; the caller's travel loop takes the Warrior back.
+            if (player.LevelId != levelId)
+                return;
             var threat = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId
                     && !skipped.Contains(monster.EntityId)
                     && NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 4)
@@ -580,6 +612,9 @@ public partial class SessionAcceptance
             uint? killed;
             try {
                 (killed, _) = await AttackNativeWarriorTargetAsync(main, levelId, threat.EntityId, NativeWarriorAttacksPerFloor);
+            } catch (InvalidOperationException) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                && alive.LevelId != levelId) {
+                return;
             } catch (NativeWarriorRetreatException) {
                 // Walking on through a pack only takes more hits: drink and fight on while potions last.
                 if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0)
@@ -595,6 +630,7 @@ public partial class SessionAcceptance
     /** One generated kill that earns XP on the current floor. */
     private async Task<NativeWarriorFloor> DefeatNativeWarriorFloorAsync(Main main, string directory, uint levelId)
     {
+        using var timed = NativeWarriorStep("fight", $"L{levelId}");
         var retreats = 0;
         var experienceBefore = main.ObservedSnapshot!.Players.Single().Experience;
         var attacks = 0;

@@ -216,7 +216,9 @@ public sealed partial class DiabloCohortCodec
         if (!catacombsActors && state.CombatTargets?.Any(target => target?.NativeInitialization is { CatacombsDepth: not 0 }
                 or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
             || target?.Monster?.NativeMeleeCursor is { UsesSpecialAttack: true } or { Fade: not AuthoritativeNativeFade.None }
-            || target?.Monster?.NativeSneak is not null) == true)
+                or { RangedMissile: not null } or { RangedDamage: not 0 }
+            || target?.Monster?.NativeSneak is not null || target?.Monster?.NativeAiVars is not null) == true
+            || !catacombsActors && state.Projectiles?.Any(projectile => projectile?.NativeMonsterMissile is not null) == true)
             throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         if (state.FormatVersion == NativeTownProgressionFormatVersion) {
             if (state.NativeTown is null
@@ -356,7 +358,10 @@ public sealed partial class DiabloCohortCodec
             && name is nameof(DiabloNativeFloorEntry.CatacombsLifeQ6) or nameof(DiabloNativeFloorEntry.CatacombsEntry)
         || type == typeof(AuthoritativeNativeMeleeCursor)
             && name is nameof(AuthoritativeNativeMeleeCursor.UsesSpecialAttack) or nameof(AuthoritativeNativeMeleeCursor.Fade)
-        || type == typeof(DiabloMonsterState) && name == nameof(DiabloMonsterState.NativeSneak)
+                or nameof(AuthoritativeNativeMeleeCursor.RangedMissile) or nameof(AuthoritativeNativeMeleeCursor.RangedDamage)
+        || type == typeof(DiabloMonsterState)
+            && name is nameof(DiabloMonsterState.NativeSneak) or nameof(DiabloMonsterState.NativeAiVars)
+        || type == typeof(DiabloProjectileState) && name == nameof(DiabloProjectileState.NativeMonsterMissile)
         || type == typeof(AuthoritativeNativeMonsterInitialization)
             && name is nameof(AuthoritativeNativeMonsterInitialization.CatacombsDepth)
                 or nameof(AuthoritativeNativeMonsterInitialization.NativeSpecialAttackFrameCount)
@@ -702,7 +707,7 @@ public sealed partial class DiabloCohortCodec
                         : IsOptionalNativeWalkPathField(typeof(T), field.Name, schema) ? null
                         : IsOptionalNativeQueuedRangedAttackField(typeof(T), field.Name, schema) ? null
                         : IsOptionalCatacombsActorField(typeof(T), field.Name, schema)
-                            ? Activator.CreateInstance(field.PropertyType)
+                            ? field.PropertyType.IsValueType ? Activator.CreateInstance(field.PropertyType) : null
                         : throw new InvalidDataException($"Missing cohort field '{field.Name}'."),
                 StringComparer.Ordinal);
             var parameters = constructor.GetParameters();

@@ -210,6 +210,12 @@ public sealed record AuthoritativeNativeCatacombsArrowState(
             source.IsUnique, source.UniqueIdentity);
     }
 
+    /** The flight clock and source facts shared with per-projectile monster Arrows. */
+    internal AuthoritativeNativeMonsterMissileState ToMonsterMissile()
+        => new(AuthoritativeNativeMonsterMissileKind.Arrow, MissileDistance, LastCollisionTargetHash, false,
+            SourcePositionX, SourcePositionY, SourceMonsterLevel, SourceToHit, SourceMinimumDamage,
+            SourceMaximumDamage, 0, SourceIsPlayerMinion, SourceIsBerserked);
+
     internal AuthoritativeNativeCatacombsArrowState RefreshSource(AuthoritativeCombatTarget source)
     {
         ArgumentNullException.ThrowIfNull(source);

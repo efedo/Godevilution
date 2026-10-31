@@ -92,7 +92,9 @@ public sealed partial class DiabloCombatCommandProcessor
                     && !world.HasNativeCatacombsMonsterPhase(target.EntityId)
                     && !world.HasNativeCatacombsRangedAction(target.EntityId)
                     && !(target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
-                        && target.NativeMeleeCursor is not null))
+                        && target.NativeMeleeCursor is not null)
+                    // Native still runs UpdateModeStance, counting Stand and Delay, for an idle ranged actor.
+                    && !IsNativeCatacombsRangedFamily(target))
                     continue;
             } else if (world.World is not null && players.Count > 0) {
                 // Native ProcessMonsters wakes visible monsters for the full
@@ -107,6 +109,10 @@ public sealed partial class DiabloCombatCommandProcessor
                 if (!AdvanceNativeWalk(target, tick))
                     continue;
                 ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
+            }
+            if (IsNativeCatacombsRangedFamily(target)) {
+                AdvanceNativeCatacombsRangedFamily(target, players, tick, events);
+                continue;
             }
             if (OwnsNativeMonsterTiming(target) && target.NativeMeleeCursor is not null) {
                 var currentEnemy = players.Where(player => player.Life > 0 && player.LevelId == target.LevelId)

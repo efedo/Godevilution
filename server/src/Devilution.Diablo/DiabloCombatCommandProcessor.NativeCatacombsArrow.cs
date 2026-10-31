@@ -25,11 +25,12 @@ public sealed partial class DiabloCombatCommandProcessor
         var visitedTiles = MoveNativeProjectile(projectile);
         short finalCollisionHash = state.LastCollisionTargetHash;
 
+        var facts = state.ToMonsterMissile();
         if (visitedTiles.Count == 0) {
             var occupants = world.NativeTrapArrowOccupants(projectile.LevelId,
                 projectile.PositionX, projectile.PositionY, players);
             if (state.LastCollisionTargetHash != occupants.Hash
-                && ResolveNativeCatacombsArrowTile(tick, projectile, state, nextDistance, players, events)) {
+                && ResolveNativeCatacombsArrowTile(tick, projectile, facts, nextDistance, players, events)) {
                 world.RemoveNativeCatacombsArrow(projectile.EntityId);
                 return;
             }
@@ -42,7 +43,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 projectile.TraveledY = tile.TraveledY;
                 if (tile.X == projectile.StartX && tile.Y == projectile.StartY)
                     continue;
-                if (ResolveNativeCatacombsArrowTile(tick, projectile, state, nextDistance, players, events)) {
+                if (ResolveNativeCatacombsArrowTile(tick, projectile, facts, nextDistance, players, events)) {
                     world.RemoveNativeCatacombsArrow(projectile.EntityId);
                     return;
                 }
@@ -65,11 +66,91 @@ public sealed partial class DiabloCombatCommandProcessor
         world.UpdateNativeCatacombsArrow(state.Advance(nextDistance, finalCollisionHash), projectile);
     }
 
+    /** ProcessArrow for a native L5-L8 monster Arrow carried on its projectile. */
+    private void AdvanceNativeMonsterArrow(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!players.Any(player => player.LevelId == projectile.LevelId))
+            return;
+        var state = projectile.NativeMonsterMissile!;
+        if (world.CombatTargets.TryGetValue(projectile.SourceEntityId, out var liveSource))
+            state = state.Refresh(liveSource);
+        state.ValidateShape(projectile);
+        projectile.RemainingTicks--;
+        var nextDistance = checked(state.MissileDistance + 1);
+        var visitedTiles = MoveNativeProjectile(projectile);
+        var finalCollisionHash = state.LastCollisionTargetHash;
+        if (visitedTiles.Count == 0) {
+            var occupants = world.NativeActorOccupants(projectile.LevelId,
+                projectile.PositionX, projectile.PositionY, players);
+            if (state.LastCollisionTargetHash != occupants.Hash
+                && ResolveNativeCatacombsArrowTile(tick, projectile, state, nextDistance, players, events)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            finalCollisionHash = occupants.Hash;
+        } else {
+            foreach (var tile in visitedTiles) {
+                projectile.PositionX = tile.X;
+                projectile.PositionY = tile.Y;
+                projectile.TraveledX = tile.TraveledX;
+                projectile.TraveledY = tile.TraveledY;
+                if (tile.X == projectile.StartX && tile.Y == projectile.StartY)
+                    continue;
+                if (ResolveNativeCatacombsArrowTile(tick, projectile, state, nextDistance, players, events)) {
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
+            }
+            finalCollisionHash = world.NativeActorOccupants(projectile.LevelId,
+                projectile.PositionX, projectile.PositionY, players).Hash;
+        }
+        // PutMissile deletes a missile whose tile left the dungeon; duration 0 deletes it too.
+        if (!world.ContainsPosition(projectile.LevelId, projectile.PositionX, projectile.PositionY)
+            || projectile.RemainingTicks == 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+        projectile.NativeMonsterMissile = state with {
+            MissileDistance = nextDistance,
+            LastCollisionTargetHash = finalCollisionHash,
+        };
+    }
+
+    /** AddArrow for a monster: a 256-tick, speed-32 flight towards dst, stepped once if dst is the source tile. */
+    private void CreateNativeMonsterArrow(AuthoritativeCombatTarget monster, uint targetEntityId, int targetX, int targetY)
+    {
+        var destination = AuthoritativeNativeCatacombsArrowState.ResolveEffectiveDestination(
+            monster.PositionX, monster.PositionY, targetX, targetY, monster.Direction);
+        var direction16 = AuthoritativeNativeCatacombsArrowState.ResolveDirection16(
+            monster.PositionX, monster.PositionY, destination.X, destination.Y);
+        var velocity = CalculateVelocity(monster.PositionX, monster.PositionY, destination.X, destination.Y, 32);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(), monster.EntityId, targetEntityId, 0,
+            monster.LevelId, monster.PositionX, monster.PositionY, destination.X, destination.Y,
+            0, AuthoritativeDamageType.Physical, 0, AuthoritativeNativeMonsterMissileState.ArrowFlightDuration,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+            NativeMissileId = "Arrow",
+            Speed = 32,
+            ImpactLifetime = 0,
+            VelocityX = velocity.X,
+            VelocityY = velocity.Y,
+            OriginalDirection = direction16 / 2,
+            NativeMonsterMissile = AuthoritativeNativeMonsterMissileState.Create(AuthoritativeNativeMonsterMissileKind.Arrow, monster),
+        };
+        projectile.NativeMonsterMissile.ValidateShape(projectile);
+        world.Projectiles.Add(projectile.EntityId, projectile);
+    }
+
     /** Native CheckMissileCol order: monster, player, then tile/object blocker. */
     private bool ResolveNativeCatacombsArrowTile(
         ulong tick,
         AuthoritativeProjectile projectile,
-        AuthoritativeNativeCatacombsArrowState state,
+        AuthoritativeNativeMonsterMissileState state,
         uint distance,
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
@@ -78,15 +159,16 @@ public sealed partial class DiabloCombatCommandProcessor
         // dungeon; the caller removes the missile after PutMissile marks it.
         if (!world.ContainsPosition(projectile.LevelId, projectile.PositionX, projectile.PositionY))
             return false;
-        var occupants = world.NativeTrapArrowOccupants(projectile.LevelId,
+        var occupants = world.NativeActorOccupants(projectile.LevelId,
             projectile.PositionX, projectile.PositionY, players);
         var stopped = false;
         var observer = players.First(player => player.LevelId == projectile.LevelId);
         if (occupants.Monster is { } monster)
-            stopped |= ResolveNativeCatacombsArrowMonsterHit(state, monster,
+            stopped |= ResolveNativeCatacombsArrowMonsterHit(state, projectile.SourceEntityId, monster,
                 checked((int)distance), observer, events);
         if (occupants.Player is { } player)
-            stopped |= ResolveNativeCatacombsArrowPlayerHit(tick, state, player, players, events);
+            stopped |= ResolveNativeCatacombsArrowPlayerHit(tick, state, projectile.SourceEntityId,
+                checked((int)distance), player, players, events);
         if (world.IsMissileBlocked(projectile.LevelId, projectile.PositionX, projectile.PositionY)) {
             BreakMissileBlockingObject(projectile.LevelId, projectile.PositionX, projectile.PositionY);
             stopped = true;
@@ -95,7 +177,8 @@ public sealed partial class DiabloCombatCommandProcessor
     }
 
     private bool ResolveNativeCatacombsArrowMonsterHit(
-        AuthoritativeNativeCatacombsArrowState state,
+        AuthoritativeNativeMonsterMissileState state,
+        uint sourceEntityId,
         AuthoritativeCombatTarget target,
         int distance,
         AuthoritativePlayerState observer,
@@ -107,7 +190,7 @@ public sealed partial class DiabloCombatCommandProcessor
             || target.NativeAi == "Rhino" && target.RhinoMovementTicks >= 0)
             return false;
 
-        var source = world.CombatTargets.GetValueOrDefault(state.SourceEntityId);
+        var source = world.CombatTargets.GetValueOrDefault(sourceEntityId);
         var sourceIsMinion = source?.IsPlayerMinion ?? state.SourceIsPlayerMinion;
         var sourceIsBerserked = source?.IsBerserked ?? state.SourceIsBerserked;
         if (sourceIsMinion == target.IsPlayerMinion && !sourceIsBerserked && !target.IsBerserked)
@@ -141,7 +224,7 @@ public sealed partial class DiabloCombatCommandProcessor
             random.AdvanceRndSeed();
         foreach (var gameplayEvent in nativeEvents) {
             var forwarded = gameplayEvent.Kind == DiabloGameplayEventKind.Damage
-                ? gameplayEvent with { SourceEntityId = state.SourceEntityId }
+                ? gameplayEvent with { SourceEntityId = sourceEntityId }
                 : gameplayEvent;
             events.Add(new DiabloDirectedGameplayEvent(observer, forwarded));
         }
@@ -149,7 +232,7 @@ public sealed partial class DiabloCombatCommandProcessor
     }
 
     private (int Minimum, int Maximum) ResolveNativeCatacombsArrowDamageRange(
-        AuthoritativeNativeCatacombsArrowState state,
+        AuthoritativeNativeMonsterMissileState state,
         AuthoritativeCombatTarget? source)
     {
         if (source is not null)
@@ -161,7 +244,9 @@ public sealed partial class DiabloCombatCommandProcessor
 
     private bool ResolveNativeCatacombsArrowPlayerHit(
         ulong tick,
-        AuthoritativeNativeCatacombsArrowState state,
+        AuthoritativeNativeMonsterMissileState state,
+        uint sourceEntityId,
+        int distance,
         AuthoritativePlayerState target,
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
@@ -169,7 +254,7 @@ public sealed partial class DiabloCombatCommandProcessor
         if (target.Life < 64 || IsPlayerProtectedByFlash(target) || IsPlayerEtherealized(target))
             return false;
 
-        var source = world.CombatTargets.GetValueOrDefault(state.SourceEntityId);
+        var source = world.CombatTargets.GetValueOrDefault(sourceEntityId);
         var sourceLevel = source is null
             ? checked(state.SourceMonsterLevel + GetDifficultyLevelOffset())
             : GetEffectiveMonsterLevel(source);
@@ -183,7 +268,6 @@ public sealed partial class DiabloCombatCommandProcessor
                 rules.HellfireArmorBonusAgainstDemons, rules.HellfireArmorBonusAgainstUndead);
         }
 
-        var distance = checked((int)state.MissileDistance + 1);
         var hitChance = checked(sourceToHit
             + (sourceLevel - checked((int)target.CharacterLevel)) * rules.MonsterToHitLevelScale
             + rules.MonsterToHitBaseBonus
@@ -223,14 +307,14 @@ public sealed partial class DiabloCombatCommandProcessor
         if (result.IncomingDamageQ6 > 0) {
             events.Add(new DiabloDirectedGameplayEvent(target,
                 new DiabloGameplayEvent(DiabloGameplayEventKind.Damage,
-                    state.SourceEntityId, target.EntityId,
+                    sourceEntityId, target.EntityId,
                     DeterministicFixedPointQ6.ToWholeTruncated(result.IncomingDamageQ6)) {
                     AmountQ6 = result.IncomingDamageQ6,
                 }));
         }
         if (target.Life < 64) {
             target.Life = 0;
-            StartPlayerDeath(target, state.SourceEntityId, tick, players,
+            StartPlayerDeath(target, sourceEntityId, tick, players,
                 PlayerDeathReason.MonsterOrTrap);
         } else {
             // Native Say(ArghClang) chooses a voice variant from the shared

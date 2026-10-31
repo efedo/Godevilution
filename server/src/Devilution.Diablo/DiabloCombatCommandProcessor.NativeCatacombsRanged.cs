@@ -129,6 +129,15 @@ public sealed partial class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativeNativeCatacombsRangedAction action,
         AuthoritativeMonsterMissileDefinition missile)
+        => CreateNativeCatacombsMappedRangedProjectile(monster, action.TargetEntityId, action.TargetX, action.TargetY, missile);
+
+    /** AddAcid / AddMagmaBall: the cast sound, then the monster damage roll, towards (targetX, targetY). */
+    private void CreateNativeCatacombsMappedRangedProjectile(
+        AuthoritativeCombatTarget monster,
+        uint targetEntityId,
+        int targetX,
+        int targetY,
+        AuthoritativeMonsterMissileDefinition missile)
     {
         if (missile.ProjectileBehavior is not (AuthoritativeProjectileBehavior.Acid
             or AuthoritativeProjectileBehavior.MonsterMagic)
@@ -149,9 +158,9 @@ public sealed partial class DiabloCombatCommandProcessor
         var damageType = missile.DamageType
             ?? spell?.DamageType
             ?? (missile.MissileId == "MagmaBall" ? AuthoritativeDamageType.Fire : AuthoritativeDamageType.Acid);
-        var direction = GetDirection(monster.PositionX, monster.PositionY, action.TargetX, action.TargetY);
+        var direction = GetDirection(monster.PositionX, monster.PositionY, targetX, targetY);
         var (velocityX, velocityY) = CalculateVelocity(
-            monster.PositionX, monster.PositionY, action.TargetX, action.TargetY, speed);
+            monster.PositionX, monster.PositionY, targetX, targetY, speed);
         var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
         // Native AddAcid/AddMagmaBall call ProjectileMonsterDamage while
         // constructing their missile, using the shared source RNG stream.
@@ -165,13 +174,13 @@ public sealed partial class DiabloCombatCommandProcessor
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(reuseReleasedId: true),
             monster.EntityId,
-            action.TargetEntityId,
+            targetEntityId,
             missile.SpellId,
             monster.LevelId,
             monster.PositionX,
             monster.PositionY,
-            action.TargetX,
-            action.TargetY,
+            targetX,
+            targetY,
             damage,
             damageType,
             0,

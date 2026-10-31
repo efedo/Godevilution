@@ -284,7 +284,9 @@ public sealed partial record DiabloCohortState(
         if (!CatacombsFloorsAllowed && CombatTargets.Any(target => target.NativeInitialization is { CatacombsDepth: not 0 }
                 or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
             || target.Monster.NativeMeleeCursor is { UsesSpecialAttack: true } or { Fade: not AuthoritativeNativeFade.None }
-            || target.Monster.NativeSneak is not null))
+                or { RangedMissile: not null }
+            || target.Monster.NativeSneak is not null || target.Monster.NativeAiVars is not null)
+            || !CatacombsFloorsAllowed && Projectiles.Any(projectile => projectile?.NativeMonsterMissile is not null))
             throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         var nativeSlots = new HashSet<(uint Level, int Slot)>();
         // v12 Catacombs actors share one C2 metadata identity; their floor owners bind it on restore.

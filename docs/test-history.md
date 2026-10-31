@@ -9,6 +9,25 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-31 — Catacombs ranged and missile monsters
+
+`ThemeRoomGenerationTest.CaptureNativeCatacombsRangedAi`, now in
+`tools/run-native-oracle-parity.sh`, free-runs seven lanes (Skeleton and Goat archers,
+Acid Beast, Poison Spitter, Magma Demon, Blood Stone, Familiar) for 300 ticks;
+`AuthoritativeCatacombsRangedAiNativeOracleTests` matches RNG, player life, tile, hit
+points and every live missile each tick (7 of 7), and the ten melee lanes still match.
+The full parity script passes locally against `build/x64-Debug` (19 captures; the MPQ
+digest read a private archive through `GODEVILUTION_MPQ_ORACLE_ARCHIVE`). New tests
+bound the actor AI vars, ranged cursor and missile state, refuse them in older cohort
+formats, restore them on a fresh host, and keep the AcidSplat, AcidPuddle and
+MagmaBallExplosion identities through the mapper, validator and client. A replay of a
+stalled L6 save captured the cohort on all 1,174 ticks with a native Arrow in flight.
+With the native packs, the `-FirstFightDepth 5` Warrior journey kills on each of L5–L8
+and resumes (Debug server); its new timing shows 2,142 s for 42,823 ticks, clock share
+1.00. Diablo.Tests (3850), Server.Tests (1876) and client protocol tests pass apart
+from the expected worker-pool documentation test. Both multiplayer smokes pass with
+resume.
+
 ### 2026-10-31 — Catacombs melee monsters
 
 `ThemeRoomGenerationTest.CaptureNativeCatacombsMeleeAi`, now in

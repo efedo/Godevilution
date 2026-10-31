@@ -64,10 +64,29 @@ $contentManifestHash = [string]$profileMetadata.contentManifestHash
 if ($GodotExecutable) { $arguments.GodotExecutable = $GodotExecutable }
 if ($CommandTimingTrace) { $arguments.CommandTimingTrace = $true }
 
+# Times one launcher run and prints where it went: process startup, shared session checks and
+# teardown outside the journey, then the Warrior journey's own <phase>-timing.json (wall time against server ticks).
+function Invoke-TimedLauncher([string]$directory, [string]$phase, [hashtable]$launcherArguments) {
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    try { & $launcher @launcherArguments -AcceptancePhase $phase }
+    finally {
+        $launcherSeconds = [math]::Round($clock.Elapsed.TotalSeconds, 1)
+        $timingPath = Join-Path $directory ($phase.ToLowerInvariant() + '-timing.json')
+        if (Test-Path -LiteralPath $timingPath -PathType Leaf) {
+            $timing = Get-Content -LiteralPath $timingPath -Raw | ConvertFrom-Json
+            $kinds = [string]::Join('; ', @($timing.Kinds | ForEach-Object {
+                '{0} x{1} {2:0.0}s clock {3:0.00}' -f $_.Kind, $_.Count, $_.WallSeconds, $_.ClockShare }))
+            Write-Output ("$phase timing: launcher {0:0.0}s, outside the journey {1:0.0}s, journey {2:0.0}s for {3} ticks at {4} Hz (clock share {5:0.00}); {6}; untimed {7:0.0}s" -f
+                $launcherSeconds, ($launcherSeconds - $timing.WallSeconds), $timing.WallSeconds, $timing.Ticks,
+                $timing.TickRateHz, $timing.ClockShare, $kinds, $timing.UntimedSeconds)
+        } else { Write-Output "$phase timing: launcher ${launcherSeconds}s (no acceptance timing written)" }
+    }
+}
+
 Write-Output "Native Town/L1-L4 Journey session: $sessionDirectory"
 $journeyArguments = $arguments.Clone()
 if ($Visible) { $journeyArguments.Headless = $false }
-& $launcher @journeyArguments -AcceptancePhase $journeyPhase
+Invoke-TimedLauncher $sessionDirectory $journeyPhase $journeyArguments
 if ($LASTEXITCODE -ne 0) { throw "Native Town/L1-L4 Journey failed with exit $LASTEXITCODE." }
 $journeyPath = Join-Path $sessionDirectory ($journeyPhase.ToLowerInvariant() + '.json')
 $journey = Get-Content -LiteralPath $journeyPath -Raw -ErrorAction Stop | ConvertFrom-Json
@@ -189,7 +208,7 @@ $resumeDirectory = Join-Path $profileRoot ('sessions/depth-progression-resume-' 
 Copy-Item -LiteralPath $sessionDirectory -Destination $resumeDirectory -Recurse -ErrorAction Stop
 $arguments.SessionDirectory = $resumeDirectory
 Write-Output "Native Town/L1-L4 Resume session: $resumeDirectory"
-& $launcher @arguments -AcceptancePhase $resumePhase
+Invoke-TimedLauncher $resumeDirectory $resumePhase $arguments
 if ($LASTEXITCODE -ne 0) { throw "Native Town/L1-L4 Resume failed with exit $LASTEXITCODE." }
 $resume = Get-Content -LiteralPath (Join-Path $resumeDirectory ($resumePhase.ToLowerInvariant() + '.json')) -Raw -ErrorAction Stop | ConvertFrom-Json
 if ($allClass) {

@@ -6783,21 +6783,24 @@ std::unique_ptr<uint8_t[]> MakePlaceholderClxList(uint32_t spriteCount)
 	return data;
 }
 
+/** One prepared L5-L8 actor of a native type, free-running against a passive Warrior. */
+struct CatacombsAiLane {
+	const char *name;
+	int depth;
+	_monster_id type;
+	int x = 50;
+};
+
 /**
- * Batch 2.4a: free-running native AI for the L5-L8 melee families. One prepared actor
- * per lane approaches a stationary, durable level-1 Warrior; every tick records the
- * actor, the Warrior's life and the shared RNG after ProcessMonsters and ProcessMissiles
- * (the Bat swoop and Horned charge move the actor through a missile). The Gargoyle starts
- * beside the Warrior so it wakes from its perch. Familiar lightning belongs to batch 2.4b.
- * Every tile is visible, so the active window never lapses.
+ * Free-running native AI for prepared L5-L8 actors. One actor per lane approaches a
+ * stationary, durable level-1 Warrior; every tick records the actor, the Warrior's life
+ * and the shared RNG after ProcessMonsters and ProcessMissiles, and with recordMissiles
+ * every live missile. Every tile is visible, so the active window never lapses.
  */
-TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
+template <size_t LaneCount, typename PrepareActor>
+void CaptureNativeCatacombsAiLanes(PrepareActor prepareActor, const std::filesystem::path &root, const char *fileName,
+    const char *format, const char *policy, const std::array<CatacombsAiLane, LaneCount> &lanes, bool recordMissiles)
 {
-	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_MELEE_AI_ORACLE_DIRECTORY");
-	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the explicit Catacombs melee AI oracle directory.";
-	const std::filesystem::path root = std::filesystem::absolute(directory);
-	ASSERT_TRUE(std::filesystem::is_directory(root));
-	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native AI evidence.";
 	struct ExecutionGuard {
 		bool sound = gbSndInited, headless = HeadlessMode, missilePreFlag = MissilePreFlag;
 		uint32_t random = GetLCGEngineState();
@@ -6817,41 +6820,23 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
 	LoadPlayerDataFiles();
 	LoadMissileData();
 
-	struct Lane {
-		const char *name;
-		int depth;
-		_monster_id type;
-		int x = 50;
-	};
-	const std::array<Lane, 10> lanes { {
-		{ "zombie", 5, MT_YZOMBIE },
-		{ "fallen", 5, MT_BFALLSP },
-		{ "skeleton", 5, MT_XSKELAX },
-		{ "scavenger", 6, MT_YSCAV },
-		{ "sneak", 6, MT_STALKER },
-		{ "goat-melee", 6, MT_BGOATMC },
-		{ "fat", 6, MT_FAT },
-		{ "bat", 5, MT_GLOOM },
-		{ "gargoyle", 6, MT_WINGED, 59 },
-		{ "rhino", 7, MT_HORNED },
-	} };
 	constexpr int TickCount = 300;
 	constexpr int DurableLife = 2000 << 6;
 	const std::unique_ptr<uint8_t[]> placeholderSprites = MakePlaceholderClxList(32);
-	std::ofstream stream(root / "native-catacombs-melee-ai.json", std::ios::binary | std::ios::trunc);
+	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc);
 	ASSERT_TRUE(stream.good());
 	{
 		JsonObject document(stream);
-		document.String("format", "godevilution-catacombs-melee-ai");
+		document.String("format", format);
 		document.Number("version", 1);
-		document.String("policy", "prepared-original-diablo-catacombs-melee-ai-free-run");
+		document.String("policy", policy);
 		document.Number("caseCount", lanes.size());
 		document.Number("tickCount", TickCount);
 		document.Key("cases");
 		stream << '[';
 		bool firstCase = true;
-		for (const Lane &lane : lanes) {
-			Monster *actor = PrepareCatacombsActor(lane.depth, lane.type, nullptr, lane.x);
+		for (const CatacombsAiLane &lane : lanes) {
+			Monster *actor = prepareActor(lane);
 			ASSERT_NE(actor, nullptr) << lane.name;
 			for (AnimStruct &anim : const_cast<CMonster &>(actor->type()).anims) {
 				if (!anim.sprites) anim.sprites = ClxSpriteListOrSheet { placeholderSprites.get(), 0 };
@@ -6931,6 +6916,17 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
 				state.Number("playerLifeMaximum", MyPlayer->life.maximum);
 				state.Number("playerMode", MyPlayer->_pmode);
 				state.Number("missileCount", Missiles.size());
+				if (recordMissiles) {
+					state.Key("missiles");
+					stream << '[';
+					bool firstMissile = true;
+					for (const Missile &missile : Missiles) {
+						if (!firstMissile) stream << ',';
+						firstMissile = false;
+						WriteRangedMissile(stream, missile);
+					}
+					stream << ']';
+				}
 				state.Key("actor");
 				WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
 			}
@@ -6939,6 +6935,61 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
 		stream << ']';
 	}
 	ASSERT_TRUE(stream.good());
+}
+
+/**
+ * Batch 2.4a: the L5-L8 melee families. The Bat swoop and Horned charge move the actor
+ * through a missile; the Gargoyle starts beside the Warrior so it wakes from its perch.
+ */
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsMeleeAi)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_MELEE_AI_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the explicit Catacombs melee AI oracle directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native AI evidence.";
+	const std::array<CatacombsAiLane, 10> lanes { {
+		{ "zombie", 5, MT_YZOMBIE },
+		{ "fallen", 5, MT_BFALLSP },
+		{ "skeleton", 5, MT_XSKELAX },
+		{ "scavenger", 6, MT_YSCAV },
+		{ "sneak", 6, MT_STALKER },
+		{ "goat-melee", 6, MT_BGOATMC },
+		{ "fat", 6, MT_FAT },
+		{ "bat", 5, MT_GLOOM },
+		{ "gargoyle", 6, MT_WINGED, 59 },
+		{ "rhino", 7, MT_HORNED },
+	} };
+	CaptureNativeCatacombsAiLanes(
+	    [this](const CatacombsAiLane &lane) { return PrepareCatacombsActor(lane.depth, lane.type, nullptr, lane.x); },
+	    root, "native-catacombs-melee-ai.json", "godevilution-catacombs-melee-ai",
+	    "prepared-original-diablo-catacombs-melee-ai-free-run", lanes, false);
+}
+
+/**
+ * Batch 2.4b: the L5-L8 ranged families (AiRanged, AiRangedAvoidance, SkeletonBowAi and
+ * the Familiar's BatAi lightning), recording each tick's missiles as well.
+ */
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedAi)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_RANGED_AI_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the explicit Catacombs ranged AI oracle directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native AI evidence.";
+	const std::array<CatacombsAiLane, 7> lanes { {
+		{ "skeleton-archer", 5, MT_XSKELBW },
+		{ "goat-archer", 6, MT_BGOATBW },
+		{ "acid", 7, MT_NACID },
+		{ "poison-spitter", 8, MT_RACID },
+		{ "magma", 8, MT_NMAGMA },
+		{ "blood-stone", 8, MT_YMAGMA },
+		{ "familiar", 7, MT_FAMILIAR },
+	} };
+	CaptureNativeCatacombsAiLanes(
+	    [this](const CatacombsAiLane &lane) { return PrepareCatacombsActor(lane.depth, lane.type, nullptr, lane.x); },
+	    root, "native-catacombs-ranged-ai.json", "godevilution-catacombs-ranged-ai",
+	    "prepared-original-diablo-catacombs-ranged-ai-free-run", lanes, true);
 }
 
 } // namespace

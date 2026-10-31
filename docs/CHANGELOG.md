@@ -7,6 +7,24 @@ contracts stay in their existing guides.
 
 ## 2026-10-31
 
+- Catacombs ranged and missile monsters (batch 2.4b): on L5–L8 Skeleton and Goat
+  archers, Acid Beast and Poison Spitter, Magma Demon and Blood Stone, and the
+  Familiar run the native SkeletonBowAi, AiRanged, AiRangedAvoidance and BatAi with
+  their Stand, Delay and ranged-attack modes. Their AI state (var1/var2, goal) lives on
+  the actor and the ranged attack on its native animation cursor; Arrow, Acid,
+  AcidSplat, AcidPuddle, MagmaBall, MagmaBallExplosion and Lightning are native
+  missiles on their projectiles, with native CheckMissileCol, PlayerMHit and
+  MonsterTrapHit. The new state is saved only in the Catacombs cohort format; saved C2
+  ranged actions and Arrow flights still finish under their old owners. A seven-lane
+  native ranged AI trace joins `tools/run-native-oracle-parity.sh`. The mapper,
+  validator and client keep the AcidSplat and AcidPuddle identities; MagmaBallExplosion
+  draws as generic monster magic until its art lands. Cohort capture no longer asks a
+  native monster Arrow for a C2 flight owner.
+- Depth journey timing: `test-godot-native-depth-progression.ps1` prints, per launcher
+  run, the time outside the Warrior journey and the journey's wall time against server
+  ticks by step kind (travel, fight, Town, checks), from a `<phase>-timing.json` the
+  acceptance writes even on failure. The first L5–L8 runs were fully clock-bound (clock
+  share 1.00). A Warrior that steps onto stairs while clearing a pack now walks back.
 - Catacombs melee monsters (batch 2.4a): on L5–L8 Zombie, Fallen, Skeleton, Scavenger,
   Sneak (Stalker/Unseen), Goat melee, Fat, Bat, Gargoyle and Horned Demon fight with
   native AI: Sneak fade in/out and its Retreat goal, Delay timing, var1/var2 stand

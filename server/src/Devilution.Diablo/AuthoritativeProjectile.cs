@@ -87,6 +87,9 @@ public sealed class AuthoritativeProjectile
     /** Native wall-trap source and flight clock, separate from player bow authority. */
     public AuthoritativeNativeTrapArrowState? NativeTrapArrow { get; set; }
 
+    /** Native L5-L8 monster Arrow flight clock and impact-time source facts. */
+    public AuthoritativeNativeMonsterMissileState? NativeMonsterMissile { get; set; }
+
     /** Deferred Hellfire Peril self-damage for a weapon arrow. */
     public int PerilSelfDamageQ6 { get; init; }
 
