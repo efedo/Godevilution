@@ -6071,7 +6071,8 @@ public sealed partial class LiveAuthoritativeServerTests
             string? gameAdapterId = null,
             string? performanceOutput = null,
             CommandSchedulingMode? commandSchedulingMode = null,
-            string? persistenceMode = null)
+            string? persistenceMode = null,
+            uint? tickRateHz = null)
         {
             if (commandSchedulingMode.HasValue
                 && commandSchedulingMode.Value is not (CommandSchedulingMode.Immediate or CommandSchedulingMode.ClockGated)) {
@@ -6118,6 +6119,11 @@ public sealed partial class LiveAuthoritativeServerTests
             if (persistenceMode is not null) {
                 startInfo.ArgumentList.Add("--persistence-mode");
                 startInfo.ArgumentList.Add(persistenceMode);
+            }
+            if (tickRateHz.HasValue) {
+                startInfo.ArgumentList.Add("--tick-rate");
+                startInfo.ArgumentList.Add(tickRateHz.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");

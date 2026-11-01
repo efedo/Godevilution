@@ -93,8 +93,10 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   `<phase>-timing.json` and showed a fully clock-bound run (clock share 1.00). The
   `-TickRateHz` passthrough exists; the command lead now uses the recent maximum
   probe round trip (melee 36 → 10 ticks at 20 Hz). Open: a 40 Hz journey froze its
-  L6 snapshot view for about 23 minutes with no command pending; trace it with
-  `-CommandTimingTrace -TickRateHz 40` before relying on faster rates.
+  L6 snapshot view for about 23 minutes with no command pending; a traced 60 Hz run
+  reproduced it: the client's poll task stops completing (likely a socket write blocked
+  while the host's bounded per-connection response queue waits on its writer). At
+  60 Hz the 20-tick cohort checkpoint also saturates the host (probe p90 325 ms).
   `DiabloSimulationSnapshot.cs` (3,400+ lines) still needs its zero-behaviour split.
 
 ## Batch 2.4a Catacombs monsters in play: melee families (done)

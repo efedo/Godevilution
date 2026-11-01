@@ -9,6 +9,16 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-01 — Tick-rate synchronization and rates above 40 Hz
+
+`ClockGatedPlayStaysSynchronizedAtTheHostTickRate` passes at 9, 20 and 41 Hz (about
+17 s); a one-off run also passed at 60, 80, 100, 150 and 200 Hz. A traced 60 Hz
+`-TargetDepth 5` journey failed: probe round trips rose to 325 ms at p90 (15 ms at
+20 Hz) as the 20-tick cohort checkpoint ran three times a second, melee reactions
+averaged 69 ticks, and after 205 s the client stopped polling (no probe, snapshot or
+command afterwards) while its view froze, as in the earlier 40 Hz L6 run. Journeys
+above 20 Hz are not yet reliable.
+
 ### 2026-11-01 — Clock-gated command lead
 
 `ClockGatedRoundTripWindowTests` (7) and `AcceptanceTickBudgetTests` (16) cover the

@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-11-01
 
+- Tick-rate synchronization test: `ClockGatedPlayStaysSynchronizedAtTheHostTickRate`
+  plays three clock-gated steps against a live host at 9, 20 and 41 Hz and checks the
+  advertised rate, the host clock and that each step lands on its scheduled tick.
 - Clock-gated command lead: the client schedules each command ahead by the largest
   timing-probe round trip of the last 10 s (at least 100 ms) instead of the largest
   ever seen, so one server stall (1.3 s while L5 generated) no longer delays every
