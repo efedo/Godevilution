@@ -55,6 +55,10 @@ public partial class Main : Node2D
     internal bool ObservedClockGatedScheduling => client?.IsClockGatedCommandScheduling == true;
     internal bool TransportConnected => client?.IsConnected == true;
     internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
+    // The tick the next clock-gated command would be scheduled for, for acceptance diagnostics.
+    internal ulong? ObservedSuggestedCommandTick
+        => client is null || model.Snapshot is not { } current ? null : client.SuggestedCommandTick(current.Tick);
+    internal double? ObservedRoundTripMilliseconds => client?.RoundTripMilliseconds;
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal ulong ObservedLastQueuedSequence { get; private set; }

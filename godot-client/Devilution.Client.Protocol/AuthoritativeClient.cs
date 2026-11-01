@@ -43,7 +43,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long negotiatedPostAckSnapshotGeneration;
     private ulong? negotiatedPostAckSnapshotAppliedTick;
     private long? negotiatedPostAckSnapshotObservedMs;
-    private double roundTripMilliseconds = 100;
+    private double roundTripMilliseconds = ClockGatedRoundTripWindow.DefaultFloorMilliseconds;
+    private readonly ClockGatedRoundTripWindow clockGatedRoundTrip = new();
+    // Retransmission stays on the largest round trip seen, so an ack slowed by a
+    // checkpoint is waited for rather than answered with a duplicate send.
+    private double retryRoundTripMilliseconds = ClockGatedRoundTripWindow.DefaultFloorMilliseconds;
     private string effectiveContentManifestHash;
     private string effectiveRulesetIdentityHash;
     private TimingProbe? timingProbe;
@@ -140,8 +144,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
+    /** The measured command round trip that sets the clock-gated command lead. */
+    public double RoundTripMilliseconds => Volatile.Read(ref roundTripMilliseconds);
+
     public TimeSpan RetryTimeout => TimeSpan.FromMilliseconds(Math.Clamp(
-        Volatile.Read(ref roundTripMilliseconds) * 4,
+        Volatile.Read(ref retryRoundTripMilliseconds) * 4,
         options.MinimumRetryTimeout.TotalMilliseconds,
         options.MaximumRetryTimeout.TotalMilliseconds));
 
@@ -1179,11 +1186,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             timingCalibrationProbeAttempts = 0;
             lastTimingProbeRequestMs = null;
             var sample = Math.Max(0, now - probe.SentAtMs);
-            var prior = Volatile.Read(ref roundTripMilliseconds);
-            // Gated admission waits on the full measured round trip. Keep the
-            // estimate conservative so a later short probe cannot lower the
-            // lead below an earlier valid sample.
-            Volatile.Write(ref roundTripMilliseconds, Math.Max(prior, sample));
+            // Gated admission waits on the full measured round trip. The lead keeps
+            // the largest recent sample, so one server stall ages out of it.
+            Volatile.Write(ref roundTripMilliseconds, clockGatedRoundTrip.Observe(now, sample));
+            Volatile.Write(ref retryRoundTripMilliseconds, Math.Max(Volatile.Read(ref retryRoundTripMilliseconds), sample));
             if (recorder is not null)
                 outcome = new AuthoritativeClientProbeOutcomeTiming(
                     probe.RequestId,
@@ -1275,6 +1281,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     // An ACK after retransmission cannot identify which send it times.
                     Volatile.Write(ref roundTripMilliseconds,
                         (roundTripMilliseconds * 0.75) + (commandRoundTrip * 0.25));
+                    Volatile.Write(ref retryRoundTripMilliseconds, roundTripMilliseconds);
                 }
             }
             if (recorder is not null)

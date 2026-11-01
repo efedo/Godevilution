@@ -13,7 +13,9 @@ param(
     [ValidateRange(1, 8)] [int]$FirstFightDepth = 1,
     [string]$TestParticipant,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
-    [switch]$Visible
+    [switch]$Visible,
+    # Development runs: server simulation rate for both phases; acceptance evidence uses the default 20 Hz.
+    [ValidateRange(1, 200)] [int]$TickRateHz = 20
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,7 +47,7 @@ $launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $arguments = @{
     PersistenceMode = 'cohort'; Headless = $true; Automated = $true
     SessionDirectory = $sessionDirectory; QuitAfterSeconds = $QuitAfterSeconds
-    ServerBuildConfiguration = $ServerBuildConfiguration
+    ServerBuildConfiguration = $ServerBuildConfiguration; TickRateHz = $TickRateHz
 }
 if (-not $allClass -and ($TestParticipant -or $TargetDepth -ne 4 -or $Visible)) {
     throw '-TestParticipant, -TargetDepth and -Visible apply only to the all-class Town profile.'

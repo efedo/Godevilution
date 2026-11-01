@@ -6,7 +6,8 @@ namespace Devilution.Client.Acceptance;
  * Wall time against server ticks for the Warrior depth journey, written as
  * <phase>-timing.json even when the phase fails. A clock share near 1 means the
  * leg waited on the server's real-time tick clock; lower values point at client,
- * checkpoint or rendering cost instead.
+ * checkpoint or rendering cost instead. Melee reactions record the ticks from the
+ * snapshot a swing was decided on to the tick it applied.
  */
 public partial class SessionAcceptance
 {
@@ -17,6 +18,7 @@ public partial class SessionAcceptance
         private readonly Stopwatch total = Stopwatch.StartNew();
         private readonly ulong startTick = main.ObservedSnapshot!.Tick;
         private readonly List<NativeWarriorTimingSegment> segments = [];
+        private readonly List<ulong> reactions = [];
         private int depth;
 
         /** Times one journey step until the returned scope is disposed; nested steps keep their own entries. */
@@ -32,9 +34,11 @@ public partial class SessionAcceptance
             });
         }
 
+        public void Reaction(ulong ticks) => reactions.Add(ticks);
+
         public void Write(string directory, string phase, bool passed)
         {
-            var rate = main.ObservedIdentity?.TickRateHz ?? 20;
+            var rate = AcceptanceTickBudget.EffectiveRate(main.ObservedIdentity?.TickRateHz);
             double Share(double seconds, ulong ticks) => seconds <= 0 ? 0 : Math.Round(ticks / (double)rate / seconds, 3);
             var wall = total.Elapsed.TotalSeconds;
             var ticks = main.ObservedSnapshot!.Tick - startTick;
@@ -49,7 +53,7 @@ public partial class SessionAcceptance
                 Phase = phase, Passed = passed, TickRateHz = rate, WallSeconds = Math.Round(wall, 3), Ticks = ticks,
                 ClockShare = Share(wall, ticks),
                 UntimedSeconds = Math.Round(wall - kinds.Sum(kind => kind.WallSeconds), 3),
-                Kinds = kinds, Segments = segments.ToArray(),
+                Kinds = kinds, MeleeReactions = AcceptanceTickBudget.Summarize(reactions), Segments = segments.ToArray(),
             });
         }
 
@@ -62,4 +66,16 @@ public partial class SessionAcceptance
     private NativeWarriorTiming? nativeWarriorTiming;
 
     private IDisposable? NativeWarriorStep(string kind, string label) => nativeWarriorTiming?.Step(kind, label);
+
+    /** Waits while `waiting` holds, for at most `referenceSeconds` of game time at 20 Hz; never fails. */
+    private async Task WaitTicksWhile(Main main, Func<bool> waiting, double referenceSeconds)
+    {
+        var budget = AcceptanceTickBudget.Ticks(referenceSeconds);
+        var start = main.ObservedSnapshot!.Tick;
+        var wallLimit = AcceptanceTickBudget.WallBackstopSeconds(budget, AcceptanceTickBudget.EffectiveRate(main.ObservedIdentity?.TickRateHz));
+        var backstop = Stopwatch.StartNew();
+        while (waiting() && !AcceptanceTickBudget.Expired(main.ObservedSnapshot!.Tick, start, budget)
+            && backstop.Elapsed.TotalSeconds < wallLimit)
+            await Frame();
+    }
 }

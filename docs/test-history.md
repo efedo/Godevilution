@@ -9,6 +9,17 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-01 — Clock-gated command lead
+
+`ClockGatedRoundTripWindowTests` (7) and `AcceptanceTickBudgetTests` (16) cover the
+recent-maximum lead and the tick budgets; the client protocol suites, including the
+live-server tests, pass (185, 4 skipped), and the launcher contract tests pass (48).
+A traced 20 Hz `-TargetDepth 5 -FirstFightDepth 5` journey and resume pass: melee
+reactions average 9.9 ticks (36.4 before), with no retransmission or TooLate in 177
+commands. Before the fix, one 1,320 ms probe during L5 generation held the lead at
+about 36 ticks for the rest of the session. A 40 Hz journey with tick-counted waits
+froze its L6 view for about 23 minutes with no command pending; that remains open.
+
 ### 2026-10-31 — Catacombs ranged and missile monsters
 
 `ThemeRoomGenerationTest.CaptureNativeCatacombsRangedAi`, now in

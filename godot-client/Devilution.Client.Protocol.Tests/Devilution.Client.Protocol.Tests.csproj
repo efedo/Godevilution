@@ -28,6 +28,8 @@
              Link="Acceptance/PerformanceResumeStateContract.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceAckLossRelay.cs"
              Link="Acceptance/AcceptanceAckLossRelay.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/AcceptanceTickBudget.cs"
+             Link="Acceptance/AcceptanceTickBudget.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/Native*.cs"
              Link="PresentationAssets/%(Filename)%(Extension)" />
     <Compile Include="../../tools/Native.PlayerArt/*.cs"

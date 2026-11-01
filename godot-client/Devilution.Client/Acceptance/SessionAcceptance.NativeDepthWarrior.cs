@@ -334,8 +334,7 @@ public partial class SessionAcceptance
         using var timed = NativeWarriorStep("travel", $"L{origin}->L{destination}");
         for (var attempt = 0; attempt < NativeWarriorTravelAttempts; attempt++) {
             // An interrupted walk can still finish on the trigger; let a pending transition land first.
-            for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
-                await Frame();
+            await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
             var player = main.ObservedSnapshot!.Players.Single();
             if (player.LevelId == destination)
                 return;
@@ -350,8 +349,7 @@ public partial class SessionAcceptance
             await UseNativeHealingPotionIfNeeded(main);
             if (player.LevelId >= NativeWarriorTownWarpDepth)
                 await OpenNativeWarriorCatacombsDoorsAsync(main, destination);
-            for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
-                await Frame();
+            await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
             if (main.ObservedSnapshot!.Players.Single().LevelId != player.LevelId)
                 continue; // Clearing finished an interrupted walk onto a trigger.
             // Journey and resume run in separate processes, so the phase keeps their route evidence apart.
@@ -378,11 +376,9 @@ public partial class SessionAcceptance
                 await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled,
                     "Interrupted native Warrior travel did not stop.", 15);
                 // Repeated hits can hold the Warrior out of Stand; the retry's clearing fights them.
-                for (var frame = 0; frame < 600 && !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0; frame++)
-                    await Frame();
+                await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
                 // Give the interrupted walk's last queued command time to return its receipt.
-                for (var frame = 0; frame < 120 && main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence; frame++)
-                    await Frame();
+                await WaitTicksWhile(main, () => main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence, 2);
             }
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
@@ -765,9 +761,19 @@ public partial class SessionAcceptance
                 unattackable.Add(adjacent.EntityId);
                 continue;
             }
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
-                && main.ObservedSnapshot!.Tick >= result.AppliedTick,
-                "Native Warrior melee did not reach its authoritative receipt.", 15);
+            const string receiptFailure = "Native Warrior melee did not reach its authoritative receipt.";
+            var clickTick = main.ObservedSnapshot!.Tick;
+            var clickClock = System.Diagnostics.Stopwatch.StartNew();
+            try {
+                await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
+                    && main.ObservedSnapshot!.Tick >= result.AppliedTick, receiptFailure, 15);
+            } catch (InvalidOperationException exception) when (exception.Message == receiptFailure) {
+                var last = main.ObservedCommandResult;
+                throw new InvalidOperationException($"{receiptFailure} Clicked at tick {clickTick}; now tick {main.ObservedSnapshot!.Tick} "
+                    + $"after {clickClock.Elapsed.TotalSeconds:0.0}s at {main.ObservedIdentity?.TickRateHz} Hz; queued {main.ObservedLastQueuedSequence} "
+                    + $"pending {main.ObservedPendingCommandCount}; next command tick {main.ObservedSuggestedCommandTick} (round trip {main.ObservedRoundTripMilliseconds:0} ms); last receipt "
+                    + $"{last?.ClientSequence}/{last?.AppliedTick}/{last?.Status}/{last?.RejectReason}.", exception);
+            }
             await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
                 "Native Warrior melee did not reach its action boundary.", 30);
             var receipt = main.ObservedCommandResult!;
@@ -775,6 +781,12 @@ public partial class SessionAcceptance
             swings.Add($"{adjacent.EntityId}:hp{adjacent.HitPoints}->{after.Monsters.SingleOrDefault(monster => monster.EntityId == adjacent.EntityId)?.HitPoints}"
                 + $":{receipt.Status}/{receipt.RejectReason}:life{after.Players.Single().Life}");
             // A live monster can move or recover before the clocked attack applies; re-observe and retry.
+            if (Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)
+                && receipt.AppliedTick >= snapshot.Tick)
+                nativeWarriorTiming?.Reaction(receipt.AppliedTick - snapshot.Tick);
+            // A clocked swing that reaches the host after its tick changes nothing; swing again.
+            if (receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.TooLate })
+                continue;
             if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)) {
                 Require(receipt.Status == CommandStatus.Rejected
                     && receipt.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget,

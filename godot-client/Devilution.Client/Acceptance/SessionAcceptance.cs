@@ -506,9 +506,11 @@ public partial class SessionAcceptance : Node
         System.IO.File.Move(staging, path);
     }
 
+    /** Polls each frame; `stageSeconds` is game time at 20 Hz on a faster or slower test server (AcceptanceTickBudget). */
     private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null)
     {
         var stage = Stopwatch.StartNew();
+        var stageTick = timingObservedMain?.ObservedSnapshot?.Tick;
         while (!condition()) {
             var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
             var sessionMenuPhase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1"
@@ -537,7 +539,8 @@ public partial class SessionAcceptance : Node
             if (sessionMenuPhase)
                 seconds = 170;
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
-            Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
+            Require(stageSeconds is null || !AcceptanceTickBudget.StageExpired(stageSeconds.Value, stage.Elapsed.TotalSeconds,
+                timingObservedMain?.ObservedIdentity?.TickRateHz, stageTick, timingObservedMain?.ObservedSnapshot?.Tick), failure);
             await Frame();
         }
     }

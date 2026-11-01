@@ -90,8 +90,11 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   ones are no longer started for these families. Gloom keeps the legacy Bat path
   (its Rhino charge is untranslated). Verified with the `-FirstFightDepth 5` journey
   (kills on L5–L8, resume) and both smokes; the depth journey now writes
-  `<phase>-timing.json` and showed a fully clock-bound run (clock share 1.00), so a
-  test-only `--tick-rate` passthrough is the next lever for run time.
+  `<phase>-timing.json` and showed a fully clock-bound run (clock share 1.00). The
+  `-TickRateHz` passthrough exists; the command lead now uses the recent maximum
+  probe round trip (melee 36 → 10 ticks at 20 Hz). Open: a 40 Hz journey froze its
+  L6 snapshot view for about 23 minutes with no command pending; trace it with
+  `-CommandTimingTrace -TickRateHz 40` before relying on faster rates.
   `DiabloSimulationSnapshot.cs` (3,400+ lines) still needs its zero-behaviour split.
 
 ## Batch 2.4a Catacombs monsters in play: melee families (done)

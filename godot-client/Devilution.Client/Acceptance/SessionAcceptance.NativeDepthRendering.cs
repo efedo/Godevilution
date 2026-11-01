@@ -16,6 +16,18 @@ public partial class SessionAcceptance
 
     private static bool NativeWarriorVisible => DisplayServer.GetName() != "headless";
 
+    /** The draw-check inputs when the check times out, for the failure message. */
+    private static string DescribeNativeWarriorDraw(Main main, bool playerArt)
+    {
+        var draw = main.ObservedNativeSceneDrawing;
+        var player = main.ObservedNativePlayerDrawing;
+        return $"settled {Settled(main)}, player L{main.ObservedSnapshot?.Players.Single().LevelId}, scene "
+            + (draw is null ? "none" : $"active {draw.NativeSceneActive} L{draw.LevelId} floor {draw.FloorRasterDrawCount} "
+                + $"content {draw.ContentRasterDrawCount} actors {draw.ActorDrawCount} missing {draw.MissingAtlasPaths.Count} "
+                + $"pack {draw.PackId} matched {draw.IdentityMatched} diagnostic '{draw.Diagnostic}'")
+            + (playerArt ? $", player art loaded {player?.IsLoaded} fallback {player?.UsedFallback}" : "");
+    }
+
     private void StartNativeWarriorDrawCapture(Main main)
     {
         StartNativePlayerArtCapture(main);
@@ -32,13 +44,18 @@ public partial class SessionAcceptance
     {
         using var timed = NativeWarriorStep("checks", $"L{levelId} draw");
         var playerArt = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_PLAYER_PACK"));
-        await Until(() => Settled(main) && main.ObservedSnapshot!.Players.Single().LevelId == levelId
-            && main.ObservedNativeSceneDrawing is { NativeSceneActive: true } draw && draw.LevelId == levelId
-            && draw.FloorRasterDrawCount > 0 && draw.ContentRasterDrawCount > 0 && draw.ActorDrawCount > 0
-            && draw.MissingAtlasPaths.Count == 0
-            && (!playerArt || main.ObservedNativePlayerDrawing is { IsLoaded: true, UsedFallback: false })
-            && (levelId < NativeWarriorTownWarpDepth || CatacombsDrawReady(main)),
-            $"L{levelId} did not draw its native scene layers and player.", 15);
+        var failure = $"L{levelId} did not draw its native scene layers and player.";
+        try {
+            await Until(() => Settled(main) && main.ObservedSnapshot!.Players.Single().LevelId == levelId
+                && main.ObservedNativeSceneDrawing is { NativeSceneActive: true } draw && draw.LevelId == levelId
+                && draw.FloorRasterDrawCount > 0 && draw.ContentRasterDrawCount > 0 && draw.ActorDrawCount > 0
+                && draw.MissingAtlasPaths.Count == 0
+                && (!playerArt || main.ObservedNativePlayerDrawing is { IsLoaded: true, UsedFallback: false })
+                && (levelId < NativeWarriorTownWarpDepth || CatacombsDrawReady(main)),
+                failure, 15);
+        } catch (InvalidOperationException exception) when (exception.Message == failure) {
+            throw new InvalidOperationException($"{failure} State: {DescribeNativeWarriorDraw(main, playerArt)}.", exception);
+        }
         var scene = main.ObservedNativeSceneDrawing!;
         if (levelId >= NativeWarriorTownWarpDepth)
             Require(!main.ObservedNativeObjectDrawing.Any(item => item.LevelId == levelId && item.GenericFallback
@@ -214,13 +231,8 @@ public partial class SessionAcceptance
             var start = main.ObservedSnapshot!.Players.Single();
             GetViewport().GuiReleaseFocus();
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
-            var holding = System.Diagnostics.Stopwatch.StartNew();
-            while (holding.Elapsed.TotalSeconds < 3) {
-                await Frame();
-                var held = main.ObservedSnapshot!.Players.Single();
-                if (Math.Max(Math.Abs(held.PositionX - start.PositionX), Math.Abs(held.PositionY - start.PositionY)) >= 3)
-                    break;
-            }
+            await WaitTicksWhile(main, () => main.ObservedSnapshot!.Players.Single() is { } held
+                && Math.Max(Math.Abs(held.PositionX - start.PositionX), Math.Abs(held.PositionY - start.PositionY)) < 3, 3);
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
             await Until(() => Settled(main), "The held walk did not stop after the key was released.", 5);
             var end = main.ObservedSnapshot!.Players.Single();

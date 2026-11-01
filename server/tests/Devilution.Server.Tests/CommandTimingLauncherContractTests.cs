@@ -7,7 +7,7 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot-client/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory,NativeDepthEntryBaselinePath,SessionMenuAcceptance,CathedralNativeClassProfileDirectory,CathedralNativeTownProfileDirectory,TestParticipantPath")]
+    [InlineData("godot-client/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory,NativeDepthEntryBaselinePath,SessionMenuAcceptance,CathedralNativeClassProfileDirectory,CathedralNativeTownProfileDirectory,TestParticipantPath,TickRateHz")]
     [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PresentationPackProfile,CommandTimingTrace,Cooperative", "CathedralNativeChest,CathedralNativeChestSessionDirectory,CathedralNativeSarcophagus,CathedralNativeSarcophagusSessionDirectory,CathedralNativeBarrel,CathedralNativeBarrelSessionDirectory,CathedralNativeTrap,CathedralNativeTrapSessionDirectory,SessionMenu")]
     public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {
@@ -42,6 +42,19 @@ public sealed class CommandTimingLauncherContractTests
         Assert.Contains("if ($CommandTimingTrace) { $clientEnvironment['GODEVILUTION_COMMAND_TIMING_TRACE'] = '1' }", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($CommandTimingTrace -and $performance)", launcher, StringComparison.Ordinal);
         Assert.Contains("Command timing diagnostics cannot be combined with performance measurement.", launcher, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TickRateDefaultsToRealTimeAndIsLimitedToAutomatedAcceptance()
+    {
+        var launcher = ReadSource("godot-client/run-local-client.ps1");
+        Assert.Contains("[ValidateRange(1, 200)] [int]$TickRateHz = 20", launcher, StringComparison.Ordinal);
+        Assert.Contains("if ($TickRateHz -ne 20 -and (-not $Automated -or [string]::IsNullOrWhiteSpace($AcceptancePhase) -or $AcceptancePhase -like 'Performance*'))", launcher, StringComparison.Ordinal);
+        Assert.Contains("--tick-rate {8}'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$testParticipantArguments, $TickRateHz", launcher, StringComparison.Ordinal);
+        var depth = ReadSource("tools/test-godot-native-depth-progression.ps1");
+        Assert.Contains("[ValidateRange(1, 200)] [int]$TickRateHz = 20", depth, StringComparison.Ordinal);
+        Assert.Contains("TickRateHz = $TickRateHz", depth, StringComparison.Ordinal);
     }
 
     [Fact]

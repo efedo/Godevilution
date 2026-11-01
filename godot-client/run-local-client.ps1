@@ -29,7 +29,10 @@ param(
     [string]$CathedralNativeClassProfileDirectory,
     [string]$CathedralNativeTownProfileDirectory,
     # Acceptance only: start new participants as this played-character definition (native profiles).
-    [string]$TestParticipantPath
+    [string]$TestParticipantPath,
+    # Automated acceptance only: server simulation rate. Above 20 Hz runs the game faster than real time
+    # to shorten clock-bound journeys; the cohort identity records it, so a resume must use the same rate.
+    [ValidateRange(1, 200)] [int]$TickRateHz = 20
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,6 +45,9 @@ if ($SessionMenuAcceptance -and ([string]::IsNullOrWhiteSpace($SessionDirectory)
 if ($TestParticipantPath -and (-not $Automated -or [string]::IsNullOrWhiteSpace($AcceptancePhase) -or
         [string]::IsNullOrWhiteSpace($CathedralNativeTownProfileDirectory) -or -not (Test-Path -LiteralPath $TestParticipantPath -PathType Leaf))) {
     throw 'A test participant requires an automated acceptance phase on a native Town profile and an existing definition file.'
+}
+if ($TickRateHz -ne 20 -and (-not $Automated -or [string]::IsNullOrWhiteSpace($AcceptancePhase) -or $AcceptancePhase -like 'Performance*')) {
+    throw 'A non-default tick rate applies only to automated non-performance acceptance phases.'
 }
 if ($Automated -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
     throw 'Automated launches require an explicit isolated -SessionDirectory.'
@@ -2128,7 +2134,7 @@ try {
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }
         $testParticipantArguments = if ($TestParticipantPath) { '--test-participant "{0}"' -f [IO.Path]::GetFullPath($TestParticipantPath) } else { '' }
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6} {7}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments, $testParticipantArguments
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6} {7} --tick-rate {8}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments, $testParticipantArguments, $TickRateHz
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru

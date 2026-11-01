@@ -5,6 +5,20 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-01
+
+- Clock-gated command lead: the client schedules each command ahead by the largest
+  timing-probe round trip of the last 10 s (at least 100 ms) instead of the largest
+  ever seen, so one server stall (1.3 s while L5 generated) no longer delays every
+  later input. Retransmission keeps the largest round trip, so slow acks are still
+  waited for. The Warrior's L5 melee went from 36 to 10 ticks per swing at 20 Hz;
+  a TooLate swing is retried.
+- Depth journey speed-up: `test-godot-native-depth-progression.ps1 -TickRateHz` runs
+  the server faster than real time (automated non-performance phases only).
+  Acceptance waits count game ticks when the rate is not 20 Hz, with a wall-clock
+  backstop, and the timing file records melee reactions. Draw and melee-receipt
+  failures now report their state.
+
 ## 2026-10-31
 
 - Catacombs ranged and missile monsters (batch 2.4b): on L5–L8 Skeleton and Goat
