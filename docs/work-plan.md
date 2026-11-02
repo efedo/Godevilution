@@ -32,6 +32,10 @@ playable floor). CI had been red since 2026-08-01.
    before further dungeon families, then grows floor by floor.
 5. **Unfinished work.** Pre-reset drafts are shelved on `wip/phase0-shelf` and
    recovered piecemeal only when a batch needs them.
+6. **Crash durability (2026-11-01).** A host crash may lose play since the last
+   timed checkpoint; acknowledgements do not imply a disk write. Cohort format 1
+   saves are discarded, not migrated (a user exception to save compatibility).
+   Debug builds keep append-only command logs so crashes can be replayed.
 
 ## Phases
 
@@ -105,6 +109,24 @@ play needs. Quests and set levels stay out until their own phase.
 | 2.4b Catacombs ranged and missile monsters | Acid spit and puddles, Magma bolts, the shelved Magma/Acid chains and Familiar lightning fight as native; archers rechecked. | CI-run native comparisons for each family; journey fights against them. | Done |
 | 2.5 Catacombs objects and loot | L2 objects, shrines, traps, chests and drops behave natively with live effects and item levels. | CI-run comparisons for the ported object/item paths; journey interactions on each floor. | Pending |
 | 2.6 Catacombs exit | A human plays Town→L8→Town in a window with any class, saves and resumes; two players fight on L5. | User playtest report; windowed two-client run with approval. | Pending |
+
+#### Persistence queue (before 2.5)
+
+Clock-gated cohort hosts rewrite the whole 9–14 MB cohort every 20 ticks and on
+every due command, and only advance the world at a save. At 60 Hz this saturates
+the host. These batches run in order before 2.5; legacy per-session persistence
+and immediate scheduling are unchanged.
+
+| Batch | Player-visible outcome | Exit | State |
+| --- | --- | --- | --- |
+| P1 Live world, timed checkpoints | The host advances every tick in memory, serves snapshots from live state and acknowledges commands without a disk write. It checkpoints every `--checkpoint-interval-seconds` (default 30), on clean shutdown and when the last player leaves. Cohort format 2 keeps each participant's highest acknowledged client sequence plus a bounded recent receipt window; format 1 files are refused at startup with a message naming the folder (never deleted automatically). The handshake carries a host restart epoch; on a new epoch the client drops pending commands and resyncs from a full snapshot. | Killed-host test: restart from the last checkpoint, client reconnects to the rolled-back state and plays on. L5 journey and resume at 20 Hz and 60 Hz with probe p90 near the 20 Hz figure (a remaining 60 Hz poll stall is fixed here or split out). Server/client suites green. | Pending |
+| P2 Background checkpoint writes | Capture stays under the state lock; serialization of the captured document, hashing, staging and rename run on a writer thread. One write in flight; a due checkpoint while busy is skipped. A failed write is logged and retried next interval without fencing the host. | Lock hold per checkpoint and its write time recorded by the performance recorder on the saved L8 cohort; interrupted-write and failure tests; journey and resume. | Pending |
+| P3 Server command log (Debug) | Debug server builds (or `--command-log`) append every admitted command, its applied tick and result, joins/leaves and checkpoint markers to a per-run length-delimited protobuf log through a background appender (flushed at least every 100 ms and on unhandled exceptions). A replay tool loads a checkpoint and applies the logged commands from its tick. | Replaying a recorded L5 journey from a mid-run checkpoint reproduces its final checkpoint bytes; the appender never blocks the simulation thread. | Pending |
+| P4 Client command log (Debug) | Debug client builds append each queued and sent command (client sequence, requested tick, payload) and each receipt to a per-run log through the same background appender. | A journey's client log matches the server log's sequences, payloads and results. | Pending |
+| P5 Cheaper capture (only if P2 shows a hitch) | Capture under the lock drops below one tick at 60 Hz on L8. | Measured on the saved L8 cohort. | Conditional |
+
+Known gap: a crash can undo one side of a multiplayer trade or drop; forcing a
+checkpoint on those is left for Phase 4.
 
 ### Phase 3: Complete client
 

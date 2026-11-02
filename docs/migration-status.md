@@ -113,7 +113,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   2.1 the default profile carries the L5–L8 inputs, and since 2.2a the server run
   descends to L8 and saves it (format 12, written as compact format 13). The headless
   L8 journey and fresh-host resume pass on the Debug server: polls serve the last
-  durable tick and the cohort saves every 20 ticks or on a due command.
+  durable tick and the cohort saves every 20 ticks or on a due command. That
+  saturates the host at 60 Hz; the persistence queue (P1–P5) replaces it with
+  timed background checkpoints and Debug command logs.
   Since 2.2b native multiplayer also runs L1–L8 with native multiplayer rules, and
   clvl 8+ players reach L5 by the Town warp; two headless clients meet on L5 and
   resume there. Since 2.2c single-player L5's warp-up opens the Catacombs Town warp
