@@ -1624,7 +1624,9 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
         HostCommandTimingRecorder? commandTimingRecorder = null,
         Action<string, ulong>? commitBoundaryResponseReadyObserverForTests = null,
         TimeSpan? checkpointInterval = null,
-        TimeProvider? checkpointTime = null)
+        TimeProvider? checkpointTime = null,
+        HostPerformanceRecorder? performanceRecorder = null,
+        Action<Exception>? checkpointFailureObserver = null)
     {
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
             "cohort-poll-tests",
@@ -1650,6 +1652,8 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
                 CohortCheckpointInterval = checkpointInterval,
                 CheckpointTimeProvider = checkpointTime ?? TimeProvider.System,
+                PerformanceRecorder = performanceRecorder,
+                CheckpointFailureObserver = checkpointFailureObserver,
             }
             : new AuthoritativeTcpServer(
                 commandServer,
@@ -1668,6 +1672,8 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
                 CohortCheckpointInterval = checkpointInterval,
                 CheckpointTimeProvider = checkpointTime ?? TimeProvider.System,
+                PerformanceRecorder = performanceRecorder,
+                CheckpointFailureObserver = checkpointFailureObserver,
             };
     }
 

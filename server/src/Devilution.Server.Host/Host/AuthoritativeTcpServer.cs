@@ -252,6 +252,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     public Action<Exception>? ClientFailureObserver { get; init; }
 
+    /** A failed timed checkpoint write, called on the writer; the host keeps running. */
+    public Action<Exception>? CheckpointFailureObserver { get; init; }
+
     /** Combined identity hash advertised by the current handshake. */
     public string ActiveRulesetIdentityHash => handshake.Identity.RulesetIdentityHash;
 
@@ -449,6 +452,12 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 WithCohortBarrier(() => PublishCohortCore(force: true));
         } catch (Exception exception) {
             RecordShutdownFailure(exception, "final-publication");
+        }
+        try {
+            // A fenced host skips the final publication; its write still owns the store.
+            WithCohortBarrier(() => SettleCohortWriteCore(wait: true));
+        } catch (Exception exception) {
+            RecordShutdownFailure(exception, "checkpoint-write");
         }
         try {
             if (gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter)

@@ -181,6 +181,8 @@ internal static class Program
                 ? TimeSpan.FromSeconds(options.CohortCheckpointIntervalSeconds) : null,
             ClientFailureObserver = exception => Console.Error.WriteLine(
                 $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
+            CheckpointFailureObserver = exception => Console.Error.WriteLine(
+                $"Cohort checkpoint write failed; retrying next interval: {exception.GetType().Name}: {exception.Message}"),
         };
         server.Start();
         commandTimingPublisher = commandTimingSink?.RunAsync();

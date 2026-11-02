@@ -90,11 +90,73 @@ public sealed class CohortPublicationCostTests
         }
     }
 
+    /** P2 evidence: lock hold per checkpoint against its off-lock write on the saved cohort. */
+    [Fact(Explicit = true)]
+    public async Task SavedNativeCohortCheckpointCapturesUnderTheLockAndWritesOffIt()
+    {
+        var profileRoot = Environment.GetEnvironmentVariable("GODEVILUTION_COHORT_COST_PROFILE_ROOT");
+        var sessionRoot = Environment.GetEnvironmentVariable("GODEVILUTION_COHORT_COST_SESSION");
+        if (string.IsNullOrWhiteSpace(profileRoot) || string.IsNullOrWhiteSpace(sessionRoot)) {
+            Assert.Skip("Set GODEVILUTION_COHORT_COST_PROFILE_ROOT and GODEVILUTION_COHORT_COST_SESSION.");
+            return;
+        }
+
+        var repositoryRoot = FindRepositoryRoot();
+        var ownedRoot = Path.Combine(repositoryRoot, ".local", "cohort-cost-tests", Guid.NewGuid().ToString("N"));
+        CopyDirectory(Path.Combine(sessionRoot, "save"), ownedRoot);
+        var performance = new HostPerformanceRecorder();
+        AuthoritativeTcpServer? server = null;
+        try {
+            server = CreateHost(profileRoot, ownedRoot,
+                File.ReadAllText(Path.Combine(repositoryRoot, "tools", "native-test-heroes", "warrior-l8.json")),
+                performance, TimeSpan.FromSeconds(1));
+            server.Start();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromMinutes(3));
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            var stream = client.GetStream();
+            await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                ClientHello = new ClientHello {
+                    ClientBuildId = "cohort-cost-test-client",
+                    ProtocolSchemaVersion = "0.2.0",
+                    ContentManifestHash = server.ActiveContentManifestHash,
+                    RulesetIdentityHash = server.ActiveRulesetIdentityHash,
+                    ResumeToken = File.ReadAllText(Path.Combine(sessionRoot, "resume-token.txt")).Trim(),
+                    SupportsClockGatedCommands = true,
+                },
+            }, timeout.Token);
+            await ReadUntilAsync(stream, Envelope.PayloadOneofCase.Snapshot, timeout.Token);
+            for (var index = 0; index < 3; index++)
+                await PollAsync(stream, timeout.Token);
+
+            performance.Start();
+            for (var index = 0; index < 60; index++) {
+                await PollAsync(stream, timeout.Token);
+                await Task.Delay(PollInterval, timeout.Token);
+            }
+            var metrics = performance.Stop().Metrics;
+            var capture = metrics[nameof(HostPerformanceMetric.CohortCheckpointCaptureMilliseconds)];
+            var write = metrics[nameof(HostPerformanceMetric.CohortCheckpointWriteMilliseconds)];
+            var cohortBytes = new FileInfo(Path.Combine(ownedRoot, AuthoritativeCohortStore.CheckpointFileName)).Length;
+            var report = $"cohort {cohortBytes} bytes; capture {capture}; write {write}";
+            TestContext.Current.TestOutputHelper?.WriteLine(report);
+            Console.WriteLine(report);
+            Assert.True(capture.Samples >= 5, report);
+            Assert.True(write.Samples >= 5, report);
+        } finally {
+            if (server is not null)
+                await server.DisposeAsync();
+            try { Directory.Delete(ownedRoot, recursive: true); } catch (IOException) { }
+        }
+    }
+
     private static AuthoritativeTcpServer CreateHost(
         string profileRoot,
         string saveRoot,
         string testParticipant,
-        HostPerformanceRecorder performance)
+        HostPerformanceRecorder performance,
+        TimeSpan? checkpointInterval = null)
     {
         using var metadata = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(profileRoot, "cathedral-native-all-class-town-playtest.json")));
@@ -134,7 +196,8 @@ public sealed class CohortPublicationCostTests
             UseClockGatedCommandScheduling = true,
             PerformanceRecorder = performance,
             // The production host's default.
-            CohortCheckpointInterval = TimeSpan.FromSeconds(ServerHostOptions.DefaultCohortCheckpointIntervalSeconds),
+            CohortCheckpointInterval = checkpointInterval
+                ?? TimeSpan.FromSeconds(ServerHostOptions.DefaultCohortCheckpointIntervalSeconds),
         };
     }
 

@@ -15,6 +15,8 @@ public sealed partial class AuthoritativeTcpServer
     private readonly Dictionary<string, SessionState> cohortSessionsById = new(StringComparer.Ordinal);
     private AuthoritativeCohortDocument? committedCohort;
     private Exception? cohortFailure;
+    // At most one timed write; its result is adopted under the authoritative lock.
+    private Task<AuthoritativeCohortDocument?>? cohortWrite;
 
     /** Refuses implicit migration before seed or legacy save-root writes. */
     public static void ValidateCohortRootForStartup(AuthoritativeCohortStore store)
@@ -171,27 +173,72 @@ public sealed partial class AuthoritativeTcpServer
 
     /**
      * Caller holds the authoritative lock. Checkpoints the cohort; with a timed
-     * interval, only once it has elapsed unless forced at a durable boundary.
+     * interval, only once it has elapsed, writing off the lock. A forced durable
+     * boundary waits for any such write, then publishes before returning.
      */
     private void PublishCohortCore(bool force = false)
     {
         if (CohortStore is null)
             return;
         RequireCohortHealthy();
-        if (!force && cohortCheckpointInterval is { } interval && committedCohort is not null
-            && CheckpointTimeProvider.GetElapsedTime(lastCohortCheckpointTimestamp) < interval)
+        var timed = !force && cohortCheckpointInterval is not null && committedCohort is not null;
+        if (timed && CheckpointTimeProvider.GetElapsedTime(lastCohortCheckpointTimestamp) < cohortCheckpointInterval)
+            return;
+        if (!SettleCohortWriteCore(wait: !timed))
             return;
         try {
             var adapter = RequireCohortAdapter();
+            var capture = PerformanceRecorder?.Begin() ?? 0;
             var document = CaptureCohortDocumentCore(adapter, CohortIdentity(adapter));
-            CohortStore.Save(document);
-            committedCohort = document;
+            PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointCaptureMilliseconds, capture);
             lastCohortCheckpointTimestamp = CheckpointTimeProvider.GetTimestamp();
+            if (timed) {
+                // Its own thread: disk time must not take from the host's thread pool.
+                cohortWrite = Task.Factory.StartNew(() => WriteCohortInBackground(document),
+                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                return;
+            }
+            SaveCohortDocument(document);
+            committedCohort = document;
         } catch (Exception failure) {
             // Mutation has already happened. Never continue or publish this
             // state later as if the failed command had been acknowledged.
             FenceCohort(failure);
             throw;
+        }
+    }
+
+    /** Adopts a finished write; false while one is still running and the caller will not wait. */
+    private bool SettleCohortWriteCore(bool wait)
+    {
+        if (cohortWrite is not { } write)
+            return true;
+        if (!wait && !write.IsCompleted)
+            return false;
+        // The writer never takes the authoritative lock, so waiting cannot deadlock.
+        committedCohort = write.GetAwaiter().GetResult() ?? committedCohort;
+        cohortWrite = null;
+        return true;
+    }
+
+    private void SaveCohortDocument(AuthoritativeCohortDocument document)
+    {
+        var write = PerformanceRecorder?.Begin() ?? 0;
+        CohortStore!.Save(document);
+        PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointWriteMilliseconds, write);
+    }
+
+    /** A failed timed write keeps the host running; the next interval retries. Never throws. */
+    private AuthoritativeCohortDocument? WriteCohortInBackground(AuthoritativeCohortDocument document)
+    {
+        try {
+            SaveCohortDocument(document);
+            return document;
+        } catch (Exception failure) {
+            try { CheckpointFailureObserver?.Invoke(failure); } catch { }
+            // A failure after the rename left this generation durable, so the
+            // retry has to follow whatever the file now holds.
+            try { return CohortStore!.Load(); } catch { return null; }
         }
     }
 

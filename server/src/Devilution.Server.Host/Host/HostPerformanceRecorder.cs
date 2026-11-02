@@ -17,6 +17,8 @@ public enum HostPerformanceMetric
     CompatibilityReceiptsPublishMilliseconds,
     CommandQueueAdmissionMilliseconds,
     ScheduledCommandCheckpointMilliseconds,
+    CohortCheckpointCaptureMilliseconds,
+    CohortCheckpointWriteMilliseconds,
 }
 
 /** Opt-in, bounded diagnostics. No session IDs, credentials, or gameplay state. */
