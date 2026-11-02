@@ -48,6 +48,22 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch P2 Background checkpoint writes (done)
+
+- **Player-visible outcome:** the 30 s checkpoint stall shrinks by the file write;
+  a failed write no longer stops the game.
+- **Native source:** none (host persistence only).
+- **Files and contracts owned:** `PublishCohortCore` and the writer in
+  `AuthoritativeTcpServerCohort`, `CheckpointFailureObserver`, the capture and write
+  metrics. Forced boundaries stay synchronous and still fence on failure.
+- **Exit check:** explicit `SavedNativeCohortCheckpointCapturesUnderTheLockAndWritesOffIt`
+  on a saved L8 session; 60 Hz L5 and 20 Hz L8 journeys with resume; suites.
+- **Out of scope:** capture cost (P5), command logs (P3–P4).
+- **Size:** under a day.
+- **State:** done. Capture is 174 ms on the Debug L8 cohort, over three ticks at
+  20 Hz, because it serializes the module state under the lock. Second-player
+  admission still writes under the lock.
+
 ## Batch P1b 60 Hz fight hitch (done)
 
 - **Player-visible outcome:** fights on L3 no longer stall the host at 60 Hz;

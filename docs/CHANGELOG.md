@@ -5,6 +5,14 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-02
+
+- Background checkpoint writes (batch P2): timed cohort checkpoints capture under the
+  authority lock and write on their own thread, one at a time. A failed timed write
+  is logged and retried next interval instead of fencing the host. Admission, the
+  last disconnect, reload and shutdown wait for it and still publish synchronously.
+  On the L8 cohort this moves 72 ms off the lock; 174 ms of capture stays (P5).
+
 ## 2026-11-01
 
 - 60 Hz fight hitch (batch P1b): native vision rays looked up each cell in a sorted

@@ -9,6 +9,19 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-02 — Background checkpoint writes (P2)
+
+On a fresh 14.6 MB L8 cohort, Debug server, 17 checkpoints: capture under the lock
+p50 173 ms, max 193 ms; write off the lock p50 74 ms, max 89 ms. A traced 60 Hz
+`-TargetDepth 5 -FirstFightDepth 5` journey and resume pass (probe p90 1 ms, no
+retransmission), as does a 20 Hz L8 journey and resume. New tests park a write to
+show polls and ticks continue, a due checkpoint is skipped and forced boundaries
+wait; injected failures before and after the rename keep the host running and the
+generation chain valid. The cohort poll tests passed 20 of 20 repeats. Eight repeat
+full Server runs each had 0–2 timeouts in existing tests that have no timed cohort
+(PowerShell launcher harnesses, session restore), on a loaded machine; a passing
+clean run had 1885 passed, 18 skipped. Diablo suite 3852 passed (708 skipped) except the known `WorkerDelegation` check against an uncommitted plan; client suite 1250 passed (18 skipped).
+
 ### 2026-11-01 — 60 Hz fight hitch (P1b)
 
 Temporary timers placed the L3 stall in monster AI, mostly native visibility and
