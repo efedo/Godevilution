@@ -9,6 +9,17 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-01 — 60 Hz fight hitch (P1b)
+
+Temporary timers placed the L3 stall in monster AI, mostly native visibility and
+pack line of sight: 27–45 ms per tick in Release against a 16.7 ms budget. The fix
+uses a hash set for the vision-blocked cells. Afterwards a traced 60 Hz `-TargetDepth 5
+-FirstFightDepth 5` journey and resume pass on the Debug server. Probe p90 is 1–2 ms
+with no retransmission, and melee reactions average 14.6 ticks (0.24 s). Each level
+entry still takes one 0.3–1.3 s tick. Results: Diablo suite 3852 passed (708
+skipped) except the known `WorkerDelegation` check against an uncommitted plan,
+Server suite 1881 passed (17 skipped), client suite 1250 passed (18 skipped).
+
 ### 2026-11-01 — Timed cohort checkpoints (P1)
 
 Server suite 1881 passed (17 skipped). Client suite 1249 passed (18 skipped) with

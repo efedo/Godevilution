@@ -450,6 +450,8 @@ public sealed class AuthoritativeLevel
     private readonly IReadOnlyList<int> blockedCellList;
     private readonly IReadOnlyList<int> missileBlockedCellList;
     private readonly IReadOnlyList<int> nativeVisionBlockedCellList;
+    // Vision rays test every cell they cross; the sorted list is for capture only.
+    private readonly HashSet<int> nativeVisionBlockedCells;
     private DiabloWorldGeometryLevelState? capturedState;
 
     /** Retains the original CLR constructor for previously compiled callers. */
@@ -598,6 +600,7 @@ public sealed class AuthoritativeLevel
                 && flags.HasFlag(AuthoritativeDunTileFlags.BlockLight))
                 resolvedNativeVisionBlockedCells.Add(cell);
         }
+        this.nativeVisionBlockedCells = resolvedNativeVisionBlockedCells;
         nativeVisionBlockedCellList = Array.AsReadOnly(
             resolvedNativeVisionBlockedCells.OrderBy(cell => cell).ToArray());
         var pieceCollisionCells = (nativePieceCollisionCells ?? [])
@@ -847,7 +850,7 @@ public sealed class AuthoritativeLevel
         if (!ContainsPosition(positionX, positionY))
             return false;
         var cell = positionY * Width + positionX;
-        if (nativeVisionBlockedCellList.Contains(cell))
+        if (nativeVisionBlockedCells.Contains(cell))
             return false;
         if (NativePieceLayer.Count != 0
             && NativePieceProperties.TryGetValue(

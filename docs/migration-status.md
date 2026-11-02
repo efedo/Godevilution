@@ -114,8 +114,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   descends to L8 and saves it (format 12, written as compact format 13). The headless
   L8 journey and fresh-host resume pass on the Debug server. Since P1 the cohort
   advances in memory and checkpoints every 30 s, on clean shutdown and when the
-  last player leaves; format 1 cohorts are refused. At 60 Hz an L3 fight still
-  stalls the host (P1b); P2–P5 add background writes and Debug command logs.
+  last player leaves; format 1 cohorts are refused. Since P1b the L5 journey and
+  resume also pass at 60 Hz on the Debug server; entering a level still costs one
+  0.3–1.3 s tick. P2–P5 add background writes and Debug command logs.
   Since 2.2b native multiplayer also runs L1–L8 with native multiplayer rules, and
   clvl 8+ players reach L5 by the Town warp; two headless clients meet on L5 and
   resume there. Since 2.2c single-player L5's warp-up opens the Catacombs Town warp

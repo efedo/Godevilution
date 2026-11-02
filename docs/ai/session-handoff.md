@@ -48,6 +48,20 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch P1b 60 Hz fight hitch (done)
+
+- **Player-visible outcome:** fights on L3 no longer stall the host at 60 Hz;
+  swings land on time.
+- **Native source:** none (lookup structure only; vision results are unchanged).
+- **Files and contracts owned:** `AuthoritativeLevel` vision-blocked lookup,
+  `DiabloWorldState.FindLevelGeometry` and its use in monster visibility.
+- **Exit check:** `-TargetDepth 5 -FirstFightDepth 5` journey and resume at 60 Hz
+  on the Debug server; Diablo, Server and client suites.
+- **Out of scope:** level-entry generation time, other per-tick allocations.
+- **Size:** under a day.
+- **State:** done. Each level entry still costs one 0.3–1.3 s tick on Debug; the
+  client lead absorbs it.
+
 ## Batch P1 Live world, timed checkpoints (done)
 
 - **Player-visible outcome:** clock-gated cohort hosts no longer rewrite the cohort

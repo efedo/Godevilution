@@ -7,6 +7,11 @@ contracts stay in their existing guides.
 
 ## 2026-11-01
 
+- 60 Hz fight hitch (batch P1b): native vision rays looked up each cell in a sorted
+  list of every wall and blocker on the level, for every monster on every tick. A
+  hash set now answers that lookup, and monster visibility finds its level without
+  copying the level list. L3 monster ticks over 15 ms went from 762 to 5 in a
+  60 Hz journey, which now passes with resume on the Debug server.
 - Timed cohort checkpoints (persistence batch P1): clock-gated cohort hosts advance
   every tick in memory and acknowledge commands and serve polls without writing. The
   cohort checkpoints every `--checkpoint-interval-seconds` (default 30), on clean

@@ -303,6 +303,10 @@ public sealed partial class DiabloWorldState
             ? []
             : projectedLevels.Values.OrderBy(level => level.LevelId).ToArray();
 
+    /** One level of <see cref="LevelGeometry"/> without copying the list. */
+    public AuthoritativeLevel? FindLevelGeometry(uint levelId)
+        => World is not null && projectedLevels.TryGetValue(levelId, out var level) ? level : null;
+
     public bool ApplyWorldMutation(uint mutationId)
     {
         ValidateCathedralDoorMutation(mutationId);

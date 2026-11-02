@@ -5,6 +5,18 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeNativeSpecialLayerTests
 {
     [Fact]
+    public void NativeVisionStopsAtAnExplicitBlockedCellAndAWall()
+    {
+        // Row y=2 of a 5x5 level: an explicit vision blocker at x=2, a wall at (2,3).
+        var level = new AuthoritativeLevel(1, 5, 5,
+            blockedCells: [3 * 5 + 2], nativeVisionBlockedCells: [2 * 5 + 2]);
+        Assert.Equal([2 * 5 + 2, 3 * 5 + 2], level.NativeVisionBlockedCells);
+        Assert.False(level.HasNativeVisionLineOfSight(0, 2, 4, 2));
+        Assert.False(level.HasNativeVisionLineOfSight(2, 4, 2, 0));
+        Assert.True(level.HasNativeVisionLineOfSight(0, 1, 4, 1));
+    }
+
+    [Fact]
     public void LegacyClrConstructorSignaturesRemainAvailable()
     {
         var levelConstructor = typeof(AuthoritativeLevel).GetConstructor([

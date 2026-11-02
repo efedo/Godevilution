@@ -468,8 +468,7 @@ public sealed partial class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        var level = world.LevelGeometry
-            .FirstOrDefault(candidate => candidate.LevelId == target.LevelId);
+        var level = world.FindLevelGeometry(target.LevelId);
         return players.Any(player => player.Life > 0
             && player.CombatMode is not (DiabloPlayerCombatMode.NewLevel
                 or DiabloPlayerCombatMode.Quit)

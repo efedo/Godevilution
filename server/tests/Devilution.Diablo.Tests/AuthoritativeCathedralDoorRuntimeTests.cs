@@ -28,6 +28,22 @@ public sealed class AuthoritativeCathedralDoorRuntimeTests
     }
 
     [Fact]
+    public void LevelLookupFollowsTheProjectedGeometry()
+    {
+        var simulation = CreateSimulation(out _);
+        var player = CreatePlayer();
+        simulation.WorldState.ValidateInitialPlayerPosition(1, 1, 3);
+        var processor = new DiabloWorldCommandProcessor(simulation.WorldState);
+        var projected = Assert.Single(simulation.WorldState.LevelGeometry);
+        Assert.Same(projected, simulation.WorldState.FindLevelGeometry(projected.LevelId));
+        Assert.Null(simulation.WorldState.FindLevelGeometry(projected.LevelId + 1));
+        Assert.True(processor.Execute(player, new DiabloOperateObjectIntent(DoorId(2, 3)), 1, [player]).Succeeded);
+        var opened = simulation.WorldState.FindLevelGeometry(projected.LevelId);
+        Assert.Same(Assert.Single(simulation.WorldState.LevelGeometry), opened);
+        Assert.True(opened!.IsWalkable(2, 3));
+    }
+
+    [Fact]
     public void PresentationCaptureKeepsTypedDoorsWithoutCopyingPersistenceGeometry()
     {
         var simulation = CreateSimulation(out _);
