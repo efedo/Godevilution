@@ -7,6 +7,14 @@ contracts stay in their existing guides.
 
 ## 2026-11-01
 
+- Timed cohort checkpoints (persistence batch P1): clock-gated cohort hosts advance
+  every tick in memory and acknowledge commands and serve polls without writing. The
+  cohort checkpoints every `--checkpoint-interval-seconds` (default 30), on clean
+  shutdown and when the last player leaves; a crash loses play since the last one.
+  Cohort format 2 keeps each participant's retired client sequence and its last 256
+  receipts; format 1 saves are refused with the folder to delete. `ServerHello`
+  carries `host_instance_id`; after a host restart the client reschedules pending
+  commands the host never received from the restored tick.
 - Tick-rate synchronization test: `ClockGatedPlayStaysSynchronizedAtTheHostTickRate`
   plays three clock-gated steps against a live host at 9, 20 and 41 Hz and checks the
   advertised rate, the host clock and that each step lands on its scheduled tick.

@@ -962,8 +962,8 @@ public sealed class AuthoritativeCohortStoreTests
             File.WriteAllText(
                 store.CheckpointPath,
                 valid.Replace(
-                    "\"FormatVersion\":1,",
-                    "\"FormatVersion\":1,\"FormatVersion\":1,",
+                    "\"FormatVersion\":2,",
+                    "\"FormatVersion\":2,\"FormatVersion\":2,",
                     StringComparison.Ordinal));
             Assert.Throws<InvalidDataException>(() => store.Load());
 
@@ -1024,6 +1024,74 @@ public sealed class AuthoritativeCohortStoreTests
         }
     }
 
+    [Fact]
+    public void FormatOneCheckpointIsRefusedWithTheFolderToDelete()
+    {
+        var root = CreateRoot();
+        AuthoritativeCohortStore? store = null;
+        try {
+            store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1));
+            var formatOne = JsonNode.Parse(File.ReadAllText(store.CheckpointPath))!.AsObject();
+            formatOne["FormatVersion"] = 1;
+            File.WriteAllText(store.CheckpointPath, formatOne.ToJsonString());
+            var bytes = File.ReadAllBytes(store.CheckpointPath);
+
+            var refusal = Assert.Throws<InvalidDataException>(() => store.Load());
+            Assert.Contains("format 1", refusal.Message, StringComparison.Ordinal);
+            Assert.Contains(store.RootDirectory, refusal.Message, StringComparison.Ordinal);
+            Assert.Throws<InvalidDataException>(() => store.Save(CreateDocument(2) with { Tick = 21 }));
+            Assert.Equal(bytes, File.ReadAllBytes(store.CheckpointPath));
+        } finally {
+            store?.Dispose();
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public void RetiredReceiptsMayLeaveTheWindowButRetainedOnesCannot()
+    {
+        var root = CreateRoot();
+        AuthoritativeCohortStore? store = null;
+        try {
+            store = new AuthoritativeCohortStore(root);
+            var sessionId = new string('a', 64);
+            // Receipts 1-3 are allocated before cursor 200, receipt 4 after it.
+            CommandResult Receipt(ulong sequence)
+                => new() {
+                    ClientSequence = sequence,
+                    ServerReceiptSequence = sequence <= 3 ? 100 + sequence : 200 + sequence,
+                    AppliedTick = 20,
+                    Status = CommandStatus.Accepted,
+                };
+            AuthoritativeCohortDocument Document(ulong generation, ulong tick, ulong retired, params ulong[] sequences)
+                => CreateDocument(generation) with {
+                    Tick = tick,
+                    NextServerReceiptSequence = generation == 1 ? 200UL : 300UL,
+                    Participants = [new(sessionId, 1, sequences.Select(Receipt).ToArray()) {
+                        RetiredThroughClientSequence = retired,
+                    }],
+                };
+
+            store.Save(Document(1, 20, 0, 1, 2, 3));
+            store.Save(Document(2, 21, 2, 3, 4));
+            var loaded = Assert.Single(store.Load()!.Participants);
+            Assert.Equal(2UL, loaded.RetiredThroughClientSequence);
+            Assert.Equal([3UL, 4UL], loaded.CommandReceipts.Select(receipt => receipt.ClientSequence));
+
+            // A retained receipt above the retired sequence cannot disappear.
+            Assert.Throws<InvalidDataException>(() => store.Save(Document(3, 22, 2, 4)));
+            // The retired sequence cannot move backwards.
+            Assert.Throws<InvalidDataException>(() => store.Save(Document(3, 22, 1, 3, 4)));
+            // No receipt may sit at or below the retired sequence.
+            Assert.Throws<InvalidDataException>(() => store.Save(Document(3, 22, 3, 3, 4)));
+            store.Save(Document(3, 22, 3, 4));
+        } finally {
+            store?.Dispose();
+            DeleteRoot(root);
+        }
+    }
+
     private static AuthoritativeCohortDocument CreateDocument(ulong generation)
     {
         return new AuthoritativeCohortDocument(
@@ -1079,6 +1147,7 @@ public sealed class AuthoritativeCohortStoreTests
                 .Select(participant => new LegacyPersistedParticipant(
                     participant.SessionId,
                     participant.EntityId,
+                    participant.RetiredThroughClientSequence,
                     participant.CommandReceipts
                         .OrderBy(receipt => receipt.ClientSequence)
                         .Select(receipt => new LegacyPersistedReceipt(
@@ -1145,6 +1214,7 @@ public sealed class AuthoritativeCohortStoreTests
     private sealed record LegacyPersistedParticipant(
         string SessionId,
         uint EntityId,
+        ulong RetiredThroughClientSequence,
         IReadOnlyList<LegacyPersistedReceipt> CommandReceipts);
 
     private sealed record LegacyPersistedReceipt(

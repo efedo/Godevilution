@@ -43,6 +43,13 @@ resume metadata, not a sequence reservation: concurrent writers sharing a token
 still require external coordination. The local launcher locks its session
 directory to prevent simultaneous local writers.
 
+`ServerHello.host_instance_id` (tag 13) is random per host process. When a
+reconnecting client sees it change, the host restarted from its last checkpoint
+and may be behind ticks the client already saw: pending realtime commands above
+`last_client_sequence` are scheduled again from the restored tick. Cohort hosts
+keep the 256 most recent receipts per participant; a retry at or below a retired
+sequence is rejected as `TOO_LATE`.
+
 `ServerHello.game_mode` additively declares whether the shared authoritative
 simulation uses single-player or multiplayer rules. It is server-owned process
 configuration, not inferred from connected participant count. Both native and
@@ -108,14 +115,14 @@ retains its bounded retry. Queued input takes priority when registering a poll.
 Clock-gated cohort hosts arbitrate periodic simulation batches, command
 admission, snapshot capture, probe sampling and pre-write health checks in FIFO
 order before entering the state lock. Admission samples the physical clock
-after acquiring that lock; scheduled results still cross the durable publication
-barrier before acknowledgement. Each turn ends before external diagnostics or
+after acquiring that lock. Each turn ends before external diagnostics or
 network waits, preserving simulation progress under backpressure.
 
-The periodic loop advances and saves the cohort every `--cohort-checkpoint-interval`
-ticks (default 20), or sooner when a scheduled command is due, and yields once to a
-queued turn. Snapshot polls never advance or save: they serve the last durable tick.
-At that boundary, command lateness is judged against the durable tick, not the clock.
+The periodic loop advances the cohort every tick in memory and yields once to a
+queued turn. It checkpoints every `--checkpoint-interval-seconds` (default 30),
+at participant admission, when the last connection closes and at shutdown.
+Acknowledgements and snapshots never wait for a checkpoint, so a host crash loses
+play since the last one.
 
 Negotiated `ClockProbeRequest` replies also carry the optional
 `server_scheduling_clock_tick`, sampled from the server's scheduling clock.

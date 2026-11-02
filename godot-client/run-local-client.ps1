@@ -1488,11 +1488,11 @@ function Assert-CohortCheckpoint(
     Assert-CohortJsonProperties $document.Identity @(
         'ModuleId', 'ModuleFormatVersion', 'ProtocolSchemaVersion', 'ContentManifestHash',
         'RulesetIdentityHash', 'TickRateHz', 'GameMode') 'cohort identity'
-    if ($null -eq $document -or $document.FormatVersion -ne 1 -or $null -eq $document.Identity) {
+    if ($null -eq $document -or $document.FormatVersion -ne 2 -or $null -eq $document.Identity) {
         throw 'The cohort checkpoint format or identity is invalid.'
     }
     if (-not ($document.Participants -is [Array]) -or
-        -not (Test-CohortJsonInteger $document.FormatVersion 1 1) -or
+        -not (Test-CohortJsonInteger $document.FormatVersion 2 2) -or
         -not (Test-CohortJsonInteger $document.Generation 1 ([decimal][uint64]::MaxValue)) -or
         -not (Test-CohortJsonInteger $document.Tick 0 ([decimal][uint64]::MaxValue)) -or
         -not (Test-CohortJsonInteger $document.NextEntityId 0 ([uint32]::MaxValue)) -or
@@ -1545,7 +1545,7 @@ function Assert-CohortCheckpoint(
     $entityIds = [Collections.Generic.HashSet[uint32]]::new()
     for ($index = 0; $index -lt $participants.Count; $index++) {
         $participant = $participants[$index]
-        Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'CommandReceipts') 'cohort participant'
+        Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'RetiredThroughClientSequence', 'CommandReceipts') 'cohort participant'
         if (-not ($participant.CommandReceipts -is [Array])) { throw 'The cohort participant receipt ledger must be an array.' }
         if (($multiplayerRecovery -or $cooperative) -and @($participant.CommandReceipts).Count -eq 0) {
             throw 'The complete-cohort multiplayer acceptance requires a nonempty canonical receipt ledger for every participant.'

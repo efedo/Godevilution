@@ -83,7 +83,9 @@ public sealed partial class AuthoritativeTcpServer
                     document.Tick,
                     document.NextServerReceiptSequence,
                     document.Participants.Select(participant =>
-                        new AuthoritativeSessionCommandLedger(participant.SessionId, participant.CommandReceipts)).ToArray());
+                        new AuthoritativeSessionCommandLedger(participant.SessionId, participant.CommandReceipts) {
+                            RetiredThroughClientSequence = participant.RetiredThroughClientSequence,
+                        }).ToArray());
                 commandServer.InitializeCohortState(commands);
                 entityIds.RestoreNextId(document.NextEntityId);
                 adapter.CommitCohortRestore(prepared);
@@ -103,7 +105,7 @@ public sealed partial class AuthoritativeTcpServer
             // Settle only the current host clock, never elapsed offline time.
             AdvanceCurrentTickCore();
             lastSimulationTick = commandServer.CurrentTick;
-            PublishCohortCore();
+            PublishCohortCore(force: true);
         } catch (Exception failure) {
             FenceCohort(failure);
             throw;
@@ -159,23 +161,32 @@ public sealed partial class AuthoritativeTcpServer
             commands.CurrentTick,
             entityIds.NextId,
             commands.NextServerReceiptSequence,
-            roster.Select(session => new AuthoritativeCohortParticipantCheckpoint(
-                session.Id,
-                session.EntityId,
-                ledgers.TryGetValue(session.Id, out var ledger) ? ledger.CommandResults : [])).ToArray(),
+            roster.Select(session => ledgers.TryGetValue(session.Id, out var ledger)
+                ? new AuthoritativeCohortParticipantCheckpoint(session.Id, session.EntityId, ledger.CommandResults) {
+                    RetiredThroughClientSequence = ledger.RetiredThroughClientSequence,
+                }
+                : new AuthoritativeCohortParticipantCheckpoint(session.Id, session.EntityId, [])).ToArray(),
             module.SerializedState);
     }
 
-    private void PublishCohortCore()
+    /**
+     * Caller holds the authoritative lock. Checkpoints the cohort; with a timed
+     * interval, only once it has elapsed unless forced at a durable boundary.
+     */
+    private void PublishCohortCore(bool force = false)
     {
         if (CohortStore is null)
             return;
         RequireCohortHealthy();
+        if (!force && cohortCheckpointInterval is { } interval && committedCohort is not null
+            && CheckpointTimeProvider.GetElapsedTime(lastCohortCheckpointTimestamp) < interval)
+            return;
         try {
             var adapter = RequireCohortAdapter();
             var document = CaptureCohortDocumentCore(adapter, CohortIdentity(adapter));
             CohortStore.Save(document);
             committedCohort = document;
+            lastCohortCheckpointTimestamp = CheckpointTimeProvider.GetTimestamp();
         } catch (Exception failure) {
             // Mutation has already happened. Never continue or publish this
             // state later as if the failed command had been acknowledged.
@@ -276,7 +287,7 @@ public sealed partial class AuthoritativeTcpServer
                         throw new InvalidDataException("Failed participant admission changed the authoritative cohort.");
                     cohortSessionsById.Remove(session.Id);
                     sessionsByToken.TryRemove(session.Token, out _);
-                    PublishCohortCore();
+                    PublishCohortCore(force: true);
                 } catch (Exception cleanupFailure) {
                     FenceCohort(failure);
                     try { failure.Data["CohortAdmissionCleanupFailure"] = cleanupFailure; } catch { }
@@ -314,6 +325,7 @@ public sealed partial class AuthoritativeTcpServer
             serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
             serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
             serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
+            serverHello.HostInstanceId = HostInstanceId;
 
             var tick = commandServer.CurrentTick;
             var snapshot = snapshotProvider?.CreateSnapshot(session.Id, session.EntityId, tick);
@@ -322,7 +334,7 @@ public sealed partial class AuthoritativeTcpServer
                 snapshot.RulesetIdentityHash = handshake.Identity.RulesetIdentityHash;
                 AuthoritativeSnapshotValidator.Validate(snapshot);
             }
-            PublishCohortCore();
+            PublishCohortCore(force: true);
             return new(session, serverHello, null, snapshot, tick);
         } catch (Exception failure) {
             FenceCohort(failure);
@@ -343,7 +355,7 @@ public sealed partial class AuthoritativeTcpServer
     {
         RequireCohortHealthy();
         AdvanceCurrentTickCore();
-        PublishCohortCore();
+        PublishCohortCore(force: true);
         if (commandScheduler is { PendingCommandCount: not 0 })
             throw new InvalidOperationException("Ruleset reload is unavailable while commands are queued.");
         if (gameAdapter is not LeasedAuthoritativeGameHostAdapter leased)

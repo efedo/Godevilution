@@ -81,6 +81,10 @@ message ServerHello {
 	// Native ranged attacks may be buffered through the current walk step only
 	// when this capability and the request flag are both present.
 	bool supports_queued_ranged_attacks = 12;
+	// Random per host process. A changed value on reconnect means the host
+	// restarted from its last checkpoint and may have rolled back; empty from
+	// hosts that predate it.
+	string host_instance_id = 13;
 }
 
 enum CommandSchedulingMode {

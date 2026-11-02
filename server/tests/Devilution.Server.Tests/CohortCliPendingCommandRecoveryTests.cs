@@ -845,6 +845,9 @@ public sealed class CohortCliPendingCommandRecoveryTests
             startInfo.ArgumentList.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
             startInfo.ArgumentList.Add("--command-scheduling");
             startInfo.ArgumentList.Add("clock-gated");
+            // Crash recovery resumes from the last timed checkpoint; keep it short.
+            startInfo.ArgumentList.Add("--checkpoint-interval-seconds");
+            startInfo.ArgumentList.Add("1");
             startInfo.ArgumentList.Add("--starting-level");
             startInfo.ArgumentList.Add("0");
             if (randomSeed.HasValue) {

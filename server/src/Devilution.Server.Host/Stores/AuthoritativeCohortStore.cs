@@ -16,7 +16,8 @@ namespace Devilution.Server.Stores;
  */
 public sealed class AuthoritativeCohortStore : IDisposable
 {
-    public const int CurrentFormatVersion = 1;
+    /** Format 2 adds bounded receipt windows; format 1 saves are refused, not migrated. */
+    public const int CurrentFormatVersion = 2;
     public const string CheckpointFileName = "authoritative-cohort.json";
     private const string LeaseFileName = "authoritative-cohort.lease";
     private const int Sha256HexLength = 64;
@@ -143,7 +144,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
             var checkpointExists = ValidateCheckpointPathTarget();
             if (!checkpointExists)
                 return null;
-            var document = ReadDocument(File.ReadAllBytes(CheckpointPath));
+            var document = ReadCheckpoint(File.ReadAllBytes(CheckpointPath));
             if (expectedIdentity is not null && document.Identity != expectedIdentity)
                 throw new InvalidDataException("The cohort checkpoint identity does not match the active host.");
             return document;
@@ -192,7 +193,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
                     && cachedCheckpointDocument is not null
                     && previousBytes.AsSpan().SequenceEqual(cachedCheckpointBytes)
                     ? cachedCheckpointDocument
-                    : ReadDocument(previousBytes);
+                    : ReadCheckpoint(previousBytes);
             var expectedGeneration = previous is null
                 ? 1UL
                 : previous.Generation == ulong.MaxValue
@@ -264,12 +265,16 @@ public sealed class AuthoritativeCohortStore : IDisposable
                 throw new InvalidDataException("A persisted cohort participant cannot be removed.");
             if (nextParticipant.EntityId != previousParticipant.EntityId)
                 throw new InvalidDataException("A persisted cohort entity binding cannot change.");
+            if (nextParticipant.RetiredThroughClientSequence < previousParticipant.RetiredThroughClientSequence)
+                throw new InvalidDataException("A retired command window cannot move backwards.");
 
             var previousReceipts = previousParticipant.CommandReceipts.ToDictionary(
                 receipt => receipt.ClientSequence);
             var nextReceipts = nextParticipant.CommandReceipts.ToDictionary(
                 receipt => receipt.ClientSequence);
             foreach (var previousReceipt in previousParticipant.CommandReceipts) {
+                if (previousReceipt.ClientSequence <= nextParticipant.RetiredThroughClientSequence)
+                    continue;
                 if (!nextReceipts.TryGetValue(previousReceipt.ClientSequence, out var nextReceipt)
                     || !ReceiptsEqual(previousReceipt, nextReceipt))
                     throw new InvalidDataException("A persisted command receipt cannot be removed or changed.");
@@ -486,7 +491,9 @@ public sealed class AuthoritativeCohortStore : IDisposable
                             ? null!
                             : participant.CommandReceipts
                                 .Select(receipt => receipt is null ? null! : receipt.Clone())
-                                .ToArray()))
+                                .ToArray()) {
+                        RetiredThroughClientSequence = participant.RetiredThroughClientSequence,
+                    })
                 .ToArray();
         var detached = document with {
             Identity = document.Identity is null ? null! : document.Identity with { },
@@ -534,6 +541,8 @@ public sealed class AuthoritativeCohortStore : IDisposable
                 ?? throw new InvalidDataException("The participant receipt ledger is required.");
             foreach (var receipt in participantReceipts) {
                 ValidateReceipt(receipt, document.Tick, clientSequences);
+                if (receipt.ClientSequence <= participant.RetiredThroughClientSequence)
+                    throw new InvalidDataException("The cohort retains a receipt from its retired command window.");
                 if (!receiptSequences.Add(receipt.ServerReceiptSequence))
                     throw new InvalidDataException("The cohort contains a duplicate global receipt sequence.");
                 hasReceipt = true;
@@ -657,6 +666,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
             .Select(participant => new PersistedParticipant(
                 participant.SessionId,
                 participant.EntityId,
+                participant.RetiredThroughClientSequence,
                 participant.CommandReceipts.Select(ToPersistedReceipt).ToArray()))
             .ToArray();
         return new PersistedPayload(
@@ -702,7 +712,9 @@ public sealed class AuthoritativeCohortStore : IDisposable
             .Select(participant => new AuthoritativeCohortParticipantCheckpoint(
                 participant.SessionId,
                 participant.EntityId,
-                participant.CommandReceipts.Select(ToCommandResult).ToArray()))
+                participant.CommandReceipts.Select(ToCommandResult).ToArray()) {
+                RetiredThroughClientSequence = participant.RetiredThroughClientSequence,
+            })
             .ToArray();
         var document = new AuthoritativeCohortDocument(
             payload.FormatVersion,
@@ -749,6 +761,27 @@ public sealed class AuthoritativeCohortStore : IDisposable
         } catch (JsonException exception) {
             throw new InvalidDataException("The cohort checkpoint JSON is malformed.", exception);
         }
+    }
+
+    /** Names the folder to delete when the checkpoint predates the current format. */
+    private AuthoritativeCohortDocument ReadCheckpoint(byte[] bytes)
+    {
+        int? formatVersion = null;
+        try {
+            using var parsed = JsonDocument.Parse(bytes);
+            if (parsed.RootElement.ValueKind == JsonValueKind.Object
+                && parsed.RootElement.TryGetProperty("FormatVersion", out var version)
+                && version.ValueKind == JsonValueKind.Number
+                && version.TryGetInt32(out var parsedVersion))
+                formatVersion = parsedVersion;
+        } catch (JsonException) {
+            // ReadDocument reports malformed JSON.
+        }
+        if (formatVersion is < CurrentFormatVersion)
+            throw new InvalidDataException(
+                $"The cohort checkpoint '{CheckpointPath}' uses format {formatVersion}, which is no longer "
+                + $"supported. Delete the save folder '{RootDirectory}' to start a new game.");
+        return ReadDocument(bytes);
     }
 
     private static AuthoritativeCohortDocument ReadDocument(byte[] bytes)
@@ -868,7 +901,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
     };
 
     private static readonly IReadOnlySet<string> ParticipantFields = new HashSet<string>(StringComparer.Ordinal) {
-        "SessionId", "EntityId", "CommandReceipts",
+        "SessionId", "EntityId", "RetiredThroughClientSequence", "CommandReceipts",
     };
 
     private static readonly IReadOnlySet<string> ReceiptFields = new HashSet<string>(StringComparer.Ordinal) {
@@ -920,6 +953,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
     private sealed record PersistedParticipant(
         string SessionId,
         uint EntityId,
+        ulong RetiredThroughClientSequence,
         IReadOnlyList<PersistedReceipt> CommandReceipts);
 
     private sealed record PersistedReceipt(

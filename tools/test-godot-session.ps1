@@ -1416,7 +1416,7 @@ try {
             throw 'Native resume did not retain the final complete-cohort checkpoint.'
         }
         $cohort = Get-Content -LiteralPath $cohortPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-        if ($cohort.FormatVersion -ne 1 -or $cohort.Identity.GameMode -ne 0 -or
+        if ($cohort.FormatVersion -ne 2 -or $cohort.Identity.GameMode -ne 0 -or
             $cohort.Identity.ContentManifestHash -cne $resumedProcess.ContentHash -or
             $cohort.Identity.RulesetIdentityHash -cne $resumedProcess.RulesetHash -or
             @($cohort.Participants).Count -ne 1) {

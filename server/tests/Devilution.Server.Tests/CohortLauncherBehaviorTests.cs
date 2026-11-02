@@ -907,7 +907,7 @@ public sealed class CohortLauncherBehaviorTests
             Assert.True(suffix > 0);
             var payload = original[..suffix] + "}";
             var invalidPayloads = new[] {
-                payload.Replace("\"FormatVersion\":1", "\"FormatVersion\":\"1\"", StringComparison.Ordinal),
+                payload.Replace("\"FormatVersion\":2", "\"FormatVersion\":\"2\"", StringComparison.Ordinal),
                 payload.Replace("\"EntityId\":1", "\"EntityId\":\"1\"", StringComparison.Ordinal),
                 payload.Replace("\"Tick\":20", "\"Tick\":20.0", StringComparison.Ordinal),
                 payload.Replace("\"Generation\":1", "\"Generation\":1,\"Unexpected\":0", StringComparison.Ordinal),

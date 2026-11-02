@@ -133,9 +133,8 @@ public sealed class CohortPublicationCostTests
             CohortStore = store,
             UseClockGatedCommandScheduling = true,
             PerformanceRecorder = performance,
-            // The production host's defaults.
-            CohortCheckpointIntervalTicks = ServerHostOptions.DefaultCohortCheckpointIntervalTicks,
-            CohortSnapshotPollsServeDurableBoundary = true,
+            // The production host's default.
+            CohortCheckpointInterval = TimeSpan.FromSeconds(ServerHostOptions.DefaultCohortCheckpointIntervalSeconds),
         };
     }
 

@@ -424,6 +424,8 @@ public sealed partial class LiveAuthoritativeServerTests
             ownerClient = null;
             await DisposeCohortClientAsync(guestClient);
             guestClient = null;
+            // A clean quit writes the checkpoint; acknowledgements alone no longer do.
+            await firstServer.QuitAsync(cancellationToken);
             firstServer.Dispose();
             Assert.True(firstServer.HasExited, "The first owned cohort host must stop before checkpoint inspection.");
 
@@ -665,6 +667,7 @@ public sealed partial class LiveAuthoritativeServerTests
             resumedGuestClient = null;
             await DisposeCohortClientAsync(resumedOwnerClient);
             resumedOwnerClient = null;
+            await resumedServer.QuitAsync(cancellationToken);
             resumedServer.Dispose();
             Assert.True(resumedServer.HasExited, "The resumed owned cohort host must stop before checkpoint inspection.");
 

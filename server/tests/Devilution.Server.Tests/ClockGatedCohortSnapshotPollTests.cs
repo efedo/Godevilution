@@ -1623,7 +1623,8 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
         Func<Stream, Stream>? clockGatedTransportDecorator = null,
         HostCommandTimingRecorder? commandTimingRecorder = null,
         Action<string, ulong>? commitBoundaryResponseReadyObserverForTests = null,
-        uint checkpointIntervalTicks = 1)
+        TimeSpan? checkpointInterval = null,
+        TimeProvider? checkpointTime = null)
     {
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
             "cohort-poll-tests",
@@ -1647,8 +1648,8 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
                 CommandTimingRecorder = commandTimingRecorder,
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
-                CohortCheckpointIntervalTicks = checkpointIntervalTicks,
-                CohortSnapshotPollsServeDurableBoundary = checkpointIntervalTicks > 1,
+                CohortCheckpointInterval = checkpointInterval,
+                CheckpointTimeProvider = checkpointTime ?? TimeProvider.System,
             }
             : new AuthoritativeTcpServer(
                 commandServer,
@@ -1665,8 +1666,8 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
                 CommandTimingRecorder = commandTimingRecorder,
                 CommitBoundaryResponseReadyObserverForTests = commitBoundaryResponseReadyObserverForTests,
-                CohortCheckpointIntervalTicks = checkpointIntervalTicks,
-                CohortSnapshotPollsServeDurableBoundary = checkpointIntervalTicks > 1,
+                CohortCheckpointInterval = checkpointInterval,
+                CheckpointTimeProvider = checkpointTime ?? TimeProvider.System,
             };
     }
 

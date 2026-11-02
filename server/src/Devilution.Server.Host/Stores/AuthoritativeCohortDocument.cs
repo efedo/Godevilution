@@ -17,7 +17,11 @@ public sealed record AuthoritativeCohortIdentity(
 public sealed record AuthoritativeCohortParticipantCheckpoint(
     string SessionId,
     uint EntityId,
-    IReadOnlyList<CommandResult> CommandReceipts);
+    IReadOnlyList<CommandResult> CommandReceipts)
+{
+    /** Receipts at or below this client sequence left the bounded window; zero keeps all. */
+    public ulong RetiredThroughClientSequence { get; init; }
+}
 
 /** One complete, versioned host recovery document. */
 public sealed record AuthoritativeCohortDocument(

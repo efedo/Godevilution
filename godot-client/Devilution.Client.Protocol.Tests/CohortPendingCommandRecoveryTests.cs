@@ -16,13 +16,18 @@ using Xunit.Sdk;
 
 namespace Devilution.Client.Protocol.Tests;
 
-/** Production TCP acceptance for a committed command whose acknowledgement is lost. */
+/**
+ * Production TCP acceptance for a host crash after a command was applied but before
+ * its acknowledgement arrived. The replacement host resumes from its last timed
+ * checkpoint, which predates the command, so the client schedules it again from the
+ * restored tick and the world converges on one application of it.
+ */
 public sealed class CohortPendingCommandRecoveryTests
 {
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
     [Fact]
-    public async Task PendingCommandReplaysToCohortReplacementWithoutDuplicatingItsEffect()
+    public async Task PendingCommandRunsAgainAfterTheHostRollsBackToItsLastCheckpoint()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(90));
@@ -79,14 +84,8 @@ public sealed class CohortPendingCommandRecoveryTests
             Assert.Equal(CommandStatus.Accepted, originalReceipt.Status);
             Assert.Equal(CommandRejectReason.Unspecified, originalReceipt.RejectReason);
             Assert.Equal(1, client.PendingCommandCount);
-            var persistedOriginal = await WaitForPersistedReceiptAsync(
-                saveRoot,
-                client.SessionToken,
-                initialEntityId,
-                sequence,
-                cancellationToken);
-            Assert.Equal(originalReceipt.ServerReceiptSequence, persistedOriginal.ServerReceiptSequence);
-            Assert.Equal(originalReceipt.AppliedTick, persistedOriginal.AppliedTick);
+            var originalHostInstanceId = client.HostInstanceId;
+            Assert.NotEmpty(originalHostInstanceId);
 
             var committedSnapshot = await WaitForMessageAsync(
                 client,
@@ -115,8 +114,10 @@ public sealed class CohortPendingCommandRecoveryTests
                 cancellationToken: cancellationToken);
             stage = "reconnect-original-client";
             relay.VerifyHealthy();
+            model.ResetTransientPresentation();
             await client.ReconnectAsync(cancellationToken);
             relay.VerifyHealthy();
+            Assert.NotEqual(originalHostInstanceId, client.HostInstanceId);
             var resumedSnapshot = await WaitForMessageAsync(
                 client,
                 message => message.Snapshot is not null,
@@ -124,43 +125,41 @@ public sealed class CohortPendingCommandRecoveryTests
             model.Apply(resumedSnapshot);
             var resumedPlayer = Assert.Single(model.Snapshot!.Players);
             Assert.Equal(initialEntityId, resumedPlayer.EntityId);
-            Assert.Equal(initialPositionY + 1, resumedPlayer.PositionY);
+            // The last checkpoint was written at admission, before the move.
+            Assert.Equal(initialPositionY, resumedPlayer.PositionY);
             var resumedTick = resumedSnapshot.Snapshot!.Tick;
+            Assert.True(resumedTick < originalReceipt.AppliedTick);
 
             stage = "recover-original-command";
             var replayedCommand = await WaitForRecoveredCommandWhilePollingAsync(
                 client,
                 relay,
                 cancellationToken);
-            Assert.Equal(originalCommand.ToByteArray(), replayedCommand.ToByteArray());
             Assert.Equal(sequence, replayedCommand.ClientSequence);
-            Assert.Equal(originalCommand.RequestedTick, replayedCommand.RequestedTick);
+            Assert.True(replayedCommand.RequestedTick > resumedTick);
             Assert.Equal(
                 originalCommand.MoveRequested.ToByteArray(),
                 replayedCommand.MoveRequested.ToByteArray());
-            var duplicateReceipt = await WaitForCommandResultAsync(
+            var replayedReceipt = await WaitForCommandResultAsync(
                 client,
                 model,
                 sequence,
                 cancellationToken);
-            Assert.Equal(CommandStatus.Duplicate, duplicateReceipt.Status);
-            Assert.True(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(duplicateReceipt));
-            Assert.Equal(originalReceipt.ServerReceiptSequence, duplicateReceipt.ServerReceiptSequence);
-            Assert.Equal(originalReceipt.AppliedTick, duplicateReceipt.AppliedTick);
-            Assert.Equal(originalReceipt.RejectReason, duplicateReceipt.RejectReason);
+            Assert.Equal(CommandStatus.Accepted, replayedReceipt.Status);
+            Assert.Equal(CommandRejectReason.Unspecified, replayedReceipt.RejectReason);
             Assert.Equal(0, client.PendingCommandCount);
-            var duplicateSettledSnapshot = await WaitForMessageAsync(
+            var replayedSettledSnapshot = await WaitForMessageAsync(
                 client,
                 message => message.Snapshot is { } snapshot
                     && snapshot.Tick > resumedTick
-                    && snapshot.Tick >= duplicateReceipt.AppliedTick
+                    && snapshot.Tick >= replayedReceipt.AppliedTick
                     && snapshot.Players.Any(player =>
                         player.EntityId == initialEntityId
                         && player.PositionY == initialPositionY + 1
                         && player.CurrentAction is null
                         && player.CombatMode == PlayerCombatMode.Stand),
                 cancellationToken);
-            model.Apply(duplicateSettledSnapshot);
+            model.Apply(replayedSettledSnapshot);
             Assert.Equal(initialEntityId, model.PlayerEntityId);
             Assert.Equal(initialPositionY + 1, model.Snapshot!.Players.Single().PositionY);
 
@@ -177,7 +176,7 @@ public sealed class CohortPendingCommandRecoveryTests
                 nextSequence,
                 cancellationToken);
             Assert.Equal(CommandStatus.Accepted, nextReceipt.Status);
-            Assert.True(nextReceipt.ServerReceiptSequence > duplicateReceipt.ServerReceiptSequence);
+            Assert.True(nextReceipt.ServerReceiptSequence > replayedReceipt.ServerReceiptSequence);
             var nextSettledSnapshot = await WaitForMessageAsync(
                 client,
                 message => message.Snapshot is { } snapshot
@@ -190,19 +189,27 @@ public sealed class CohortPendingCommandRecoveryTests
                         && player.CombatMode == PlayerCombatMode.Stand),
                 cancellationToken);
             model.Apply(nextSettledSnapshot);
-            var nextPersisted = await WaitForPersistedReceiptAsync(
-                saveRoot,
-                client.SessionToken,
-                initialEntityId,
-                nextSequence,
-                cancellationToken);
-            Assert.True(nextPersisted.ServerReceiptSequence > duplicateReceipt.ServerReceiptSequence);
-            Assert.Equal(nextReceipt.AppliedTick, nextPersisted.AppliedTick);
             Assert.Equal(initialEntityId, model.PlayerEntityId);
             Assert.Equal(initialPlayer.PositionX + 1, model.Snapshot!.Players.Single().PositionX);
             Assert.Equal(initialPositionY + 1, model.Snapshot!.Players.Single().PositionY);
             relay.VerifyHealthy();
             Assert.True(relay.RecoveredTransmissionCount >= 1);
+
+            // The last connection closing writes the checkpoint the next crash would resume from.
+            stage = "checkpoint-on-last-disconnect";
+            var sessionToken = client.SessionToken;
+            await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            client = null;
+            await relay.DisposeAsync();
+            relay = null;
+            var nextPersisted = await WaitForPersistedReceiptAsync(
+                saveRoot,
+                sessionToken,
+                initialEntityId,
+                nextSequence,
+                cancellationToken);
+            Assert.Equal(nextReceipt.ServerReceiptSequence, nextPersisted.ServerReceiptSequence);
+            Assert.Equal(nextReceipt.AppliedTick, nextPersisted.AppliedTick);
         } catch (Exception exception) {
             primaryFailure = new InvalidOperationException(
                 $"Cohort pending-command recovery failed at {stage}; retained fixture: {saveRoot}.",
@@ -629,7 +636,10 @@ public sealed class CohortPendingCommandRecoveryTests
                         var original = Command.Parser.ParseFrom(originalCommandBytes);
                         if (command.ClientSequence != original.ClientSequence)
                             continue;
-                        if (!originalCommandBytes.AsSpan().SequenceEqual(command.ToByteArray())) {
+                        // A restarted host reschedules the tick; the intent never changes.
+                        var unscheduled = command.Clone();
+                        unscheduled.RequestedTick = original.RequestedTick;
+                        if (!originalCommandBytes.AsSpan().SequenceEqual(unscheduled.ToByteArray())) {
                             throw new InvalidDataException("Reconnect changed the pending command identity.");
                         }
                     }

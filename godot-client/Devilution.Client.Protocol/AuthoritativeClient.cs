@@ -135,6 +135,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public bool IsConnected => Volatile.Read(ref transportConnected) == 1;
 
+    /** The connected host process's instance ID; empty from hosts that predate it. */
+    public string HostInstanceId { get; private set; } = string.Empty;
+
     public int PendingCommandCount
     {
         get
@@ -287,8 +290,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             ValidateInitialSnapshotIdentity(initialSnapshot.Snapshot);
             // Do not renumber pending retries. Only new intents advance beyond
             // the authoritative ledger restored by a fresh host/client process.
-            lock (pendingLock)
+            var hostRestarted = HostInstanceId.Length != 0
+                && hello.ServerHello.HostInstanceId.Length != 0
+                && hello.ServerHello.HostInstanceId != HostInstanceId;
+            HostInstanceId = hello.ServerHello.HostInstanceId;
+            lock (pendingLock) {
                 nextClientSequence = Math.Max(nextClientSequence, hello.ServerHello.LastClientSequence);
+                if (hostRestarted)
+                    RescheduleAfterHostRestartLocked(hello.ServerHello.LastClientSequence, initialSnapshot.Snapshot.Tick);
+            }
             Enqueue(initialSnapshot);
             var initialSnapshotReceiptMs = clock.ElapsedMilliseconds;
             var connectedStream = stream;
@@ -1440,10 +1450,26 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
+    /**
+     * A restarted host resumed from its last checkpoint, possibly earlier than the
+     * ticks this client already saw. Realtime commands it never received are
+     * scheduled again from the restored tick instead of waiting for their old ticks.
+     */
+    private void RescheduleAfterHostRestartLocked(ulong restoredLastClientSequence, ulong restoredTick)
+    {
+        foreach (var entry in pending.Values) {
+            if (entry.Command.ClientSequence <= restoredLastClientSequence || !entry.ObservedTick.HasValue)
+                continue;
+            entry.ObservedTick = restoredTick;
+            entry.TransmissionStarted = false;
+            entry.Retransmitted = false;
+        }
+    }
+
     private sealed class PendingCommand(Command command, ulong? observedTick)
     {
         public Command Command { get; } = command;
-        public ulong? ObservedTick { get; } = observedTick;
+        public ulong? ObservedTick { get; set; } = observedTick;
         public bool TransmissionStarted { get; set; }
         public bool Retransmitted { get; set; }
         public int DispatchAttempt { get; set; }

@@ -150,7 +150,10 @@ internal static class Program
         var modulePlan = activeRuleset.ModulePlan;
         var ruleset = activeRuleset.Identity;
         var gameAdapter = new LeasedAuthoritativeGameHostAdapter(rulesetRuntime);
-        var commandServer = new AuthoritativeCommandServer(gameAdapter);
+        var commandServer = new AuthoritativeCommandServer(gameAdapter) {
+            CompletedCommandWindow = options.UseCohortPersistence && options.UseClockGatedCommandScheduling
+                ? ServerHostOptions.CohortCompletedCommandWindow : null,
+        };
         var handshake = new ProtocolHandshake(ProtocolServerIdentity.FromRuleset(
             options.BuildId,
             options.ProtocolSchemaVersion,
@@ -173,11 +176,9 @@ internal static class Program
                 : commandTimingSink.Enqueue,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
             CohortStore = cohortStore,
-            // Immediate scheduling keeps its per-tick checkpoints.
-            CohortCheckpointIntervalTicks = options.UseClockGatedCommandScheduling
-                ? options.CohortCheckpointIntervalTicks : 1,
-            CohortSnapshotPollsServeDurableBoundary = options.UseClockGatedCommandScheduling
-                && options.CohortCheckpointIntervalTicks > 1,
+            // Immediate scheduling keeps its per-mutation checkpoints.
+            CohortCheckpointInterval = options.UseClockGatedCommandScheduling
+                ? TimeSpan.FromSeconds(options.CohortCheckpointIntervalSeconds) : null,
             ClientFailureObserver = exception => Console.Error.WriteLine(
                 $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
         };
@@ -202,7 +203,7 @@ internal static class Program
         Console.WriteLine($"Command scheduling: {(options.UseClockGatedCommandScheduling ? "clock-gated" : "immediate")}");
         Console.WriteLine($"Persistence: {(options.UseCohortPersistence ? "complete cohort" : "legacy per-session")}");
         if (options.UseCohortPersistence && options.UseClockGatedCommandScheduling)
-            Console.WriteLine($"Cohort checkpoint interval: {options.CohortCheckpointIntervalTicks} ticks");
+            Console.WriteLine($"Cohort checkpoint interval: {options.CohortCheckpointIntervalSeconds} s");
         if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
             Console.WriteLine(
                 $"Procedural monsters: max {proceduralMonsterLimit}"

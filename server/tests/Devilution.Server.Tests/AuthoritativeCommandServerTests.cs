@@ -25,6 +25,50 @@ public sealed class AuthoritativeCommandServerTests
     }
 
     [Fact]
+    public void CompletedCommandWindowRetiresTheOldestReceipts()
+    {
+        var executor = new RecordingExecutor();
+        var server = new AuthoritativeCommandServer(executor) { CompletedCommandWindow = 2 };
+        for (ulong sequence = 1; sequence <= 4; sequence++)
+            server.Process("player", Attack(sequence, requestedTick: 10), currentTick: 10);
+
+        Assert.Equal([3UL, 4UL], server.ExportCompletedCommands("player").Keys.Order());
+        Assert.Equal(4UL, server.LastClientSequence("player"));
+        Assert.Equal(CommandStatus.Duplicate, server.Process("player", Attack(4, 10), currentTick: 11).Status);
+        var retired = server.Process("player", Attack(2, 10), currentTick: 11);
+        Assert.Equal(CommandStatus.Rejected, retired.Status);
+        Assert.Equal(CommandRejectReason.TooLate, retired.RejectReason);
+        Assert.Equal(4, executor.CallCount);
+
+        var state = server.CaptureCohortState();
+        var ledger = Assert.Single(state.Sessions);
+        Assert.Equal(2UL, ledger.RetiredThroughClientSequence);
+        var restored = new AuthoritativeCommandServer(new RecordingExecutor()) { CompletedCommandWindow = 2 };
+        restored.InitializeCohortState(state);
+        Assert.Equal(4UL, restored.LastClientSequence("player"));
+        Assert.Equal(CommandRejectReason.TooLate, restored.Process("player", Attack(1, 10), currentTick: 11).RejectReason);
+        Assert.Equal(CommandStatus.Duplicate, restored.Process("player", Attack(3, 10), currentTick: 11).Status);
+    }
+
+    [Fact]
+    public void RestoredLedgerCannotRetainARetiredReceipt()
+    {
+        var source = new AuthoritativeCommandServer(new RecordingExecutor());
+        source.Process("player", Attack(1, 10), currentTick: 10);
+        var state = source.CaptureCohortState();
+        var invalid = state with {
+            Sessions = [state.Sessions[0] with { RetiredThroughClientSequence = 1 }],
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCommandServer(new RecordingExecutor()).InitializeCohortState(invalid));
+    }
+
+    [Fact]
+    public void CompletedCommandWindowMustBePositive()
+        => Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new AuthoritativeCommandServer(new RecordingExecutor()) { CompletedCommandWindow = 0 });
+
+    [Fact]
     public void DuplicateCommandExecutesOnceAndReusesItsReceipt()
     {
         var executor = new RecordingExecutor();

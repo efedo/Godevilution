@@ -5,7 +5,11 @@ namespace Devilution.Server.Commands;
 /** Detached completed ledger for one stable participant, including an empty ledger. */
 public sealed record AuthoritativeSessionCommandLedger(
     string SessionId,
-    IReadOnlyList<CommandResult> CommandResults);
+    IReadOnlyList<CommandResult> CommandResults)
+{
+    /** Receipts at or below this client sequence left the bounded window; zero keeps all. */
+    public ulong RetiredThroughClientSequence { get; init; }
+}
 
 /**
  * Exact command admission clock and receipt cursor. Zero cursor represents

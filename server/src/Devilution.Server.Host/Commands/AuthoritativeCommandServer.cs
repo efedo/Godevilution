@@ -14,6 +14,8 @@ public sealed class AuthoritativeCommandServer
 {
     private readonly object synchronization = new();
     private Dictionary<string, Dictionary<ulong, CommandResult>> completedCommandsBySession = new(StringComparer.Ordinal);
+    private Dictionary<string, ulong> retiredThroughBySession = new(StringComparer.Ordinal);
+    private readonly int? completedCommandWindow;
     private HashSet<ulong> allocatedReceiptSequences = [];
     private readonly CommandAdmissionPolicy admissionPolicy;
     private readonly IAuthoritativeCommandExecutor executor;
@@ -25,6 +27,18 @@ public sealed class AuthoritativeCommandServer
     {
         this.executor = executor ?? throw new ArgumentNullException(nameof(executor));
         this.admissionPolicy = admissionPolicy ?? new CommandAdmissionPolicy();
+    }
+
+    /**
+     * Most recent receipts kept per session. Older receipts retire; a retry at or
+     * below a session's retired sequence is rejected as too late. Null keeps every
+     * receipt (the default).
+     */
+    public int? CompletedCommandWindow
+    {
+        get => completedCommandWindow;
+        init => completedCommandWindow = value is null or > 0
+            ? value : throw new ArgumentOutOfRangeException(nameof(CompletedCommandWindow));
     }
 
     /** Returns the greatest authoritative tick admitted or simulated so far. */
@@ -67,6 +81,8 @@ public sealed class AuthoritativeCommandServer
             var completedCommands = GetCompletedCommands(sessionId);
             if (completedCommands.TryGetValue(command.ClientSequence, out var priorResult))
                 return CreateDuplicateResult(priorResult);
+            if (command.ClientSequence <= retiredThroughBySession.GetValueOrDefault(sessionId))
+                return CreateRetiredResult(command.ClientSequence, currentTick);
 
             var receiptSequence = AllocateReceiptSequence();
             var admission = admissionPolicy.Evaluate(command, currentTick);
@@ -80,6 +96,7 @@ public sealed class AuthoritativeCommandServer
             }
 
             completedCommands.Add(command.ClientSequence, result.Clone());
+            RetireOldestCommands(sessionId, completedCommands);
             return result;
         }
     }
@@ -129,8 +146,9 @@ public sealed class AuthoritativeCommandServer
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         lock (synchronization) {
-            return completedCommandsBySession.TryGetValue(sessionId, out var commands)
+            var retained = completedCommandsBySession.TryGetValue(sessionId, out var commands)
                 && commands.Count > 0 ? commands.Keys.Max() : 0;
+            return Math.Max(retained, retiredThroughBySession.GetValueOrDefault(sessionId));
         }
     }
 
@@ -164,7 +182,9 @@ public sealed class AuthoritativeCommandServer
                     .Select(session => new AuthoritativeSessionCommandLedger(
                         session.Key,
                         session.Value.OrderBy(command => command.Key)
-                            .Select(command => command.Value.Clone()).ToArray()))
+                            .Select(command => command.Value.Clone()).ToArray()) {
+                        RetiredThroughClientSequence = retiredThroughBySession.GetValueOrDefault(session.Key),
+                    })
                     .ToArray());
         }
     }
@@ -189,6 +209,7 @@ public sealed class AuthoritativeCommandServer
                 throw new InvalidDataException("The command cohort has no session collection.");
 
             var candidateLedgers = new Dictionary<string, Dictionary<ulong, CommandResult>>(StringComparer.Ordinal);
+            var candidateRetired = new Dictionary<string, ulong>(StringComparer.Ordinal);
             var candidateReceipts = new HashSet<ulong>();
             foreach (var session in state.Sessions.ToArray()) {
                 if (session is null || string.IsNullOrWhiteSpace(session.SessionId)
@@ -199,7 +220,8 @@ public sealed class AuthoritativeCommandServer
                     if (source is null)
                         throw new InvalidDataException("The command cohort contains a null command receipt.");
                     var result = source.Clone();
-                    if (result.ClientSequence == 0 || result.ServerReceiptSequence == 0
+                    if (result.ClientSequence <= session.RetiredThroughClientSequence
+                        || result.ServerReceiptSequence == 0
                         || !Enum.IsDefined(result.Status) || !Enum.IsDefined(result.RejectReason)
                         || state.NextServerReceiptSequence != 0
                             && result.ServerReceiptSequence >= state.NextServerReceiptSequence
@@ -208,9 +230,14 @@ public sealed class AuthoritativeCommandServer
                         throw new InvalidDataException("The command cohort contains an invalid or duplicate command receipt.");
                 }
                 candidateLedgers.Add(session.SessionId, commands);
+                if (session.RetiredThroughClientSequence != 0)
+                    candidateRetired.Add(session.SessionId, session.RetiredThroughClientSequence);
             }
 
             completedCommandsBySession = candidateLedgers;
+            retiredThroughBySession = candidateRetired;
+            foreach (var (sessionId, commands) in completedCommandsBySession)
+                RetireOldestCommands(sessionId, commands);
             allocatedReceiptSequences = candidateReceipts;
             currentTick = state.CurrentTick;
             nextServerReceiptSequence = state.NextServerReceiptSequence;
@@ -268,6 +295,20 @@ public sealed class AuthoritativeCommandServer
         return completedCommands;
     }
 
+    /** Caller holds the lock. Retires the lowest client sequences beyond the window. */
+    private void RetireOldestCommands(string sessionId, Dictionary<ulong, CommandResult> completedCommands)
+    {
+        if (completedCommandWindow is not int window || completedCommands.Count <= window)
+            return;
+        var retiredThrough = retiredThroughBySession.GetValueOrDefault(sessionId);
+        foreach (var sequence in completedCommands.Keys.Order().Take(completedCommands.Count - window).ToArray()) {
+            allocatedReceiptSequences.Remove(completedCommands[sequence].ServerReceiptSequence);
+            completedCommands.Remove(sequence);
+            retiredThrough = Math.Max(retiredThrough, sequence);
+        }
+        retiredThroughBySession[sessionId] = retiredThrough;
+    }
+
     private ulong AllocateReceiptSequence()
     {
         if (nextServerReceiptSequence == 0)
@@ -296,6 +337,14 @@ public sealed class AuthoritativeCommandServer
         duplicate.Status = CommandStatus.Duplicate;
         return duplicate;
     }
+
+    private static CommandResult CreateRetiredResult(ulong clientSequence, ulong currentTick)
+        => new() {
+            ClientSequence = clientSequence,
+            AppliedTick = currentTick,
+            Status = CommandStatus.Rejected,
+            RejectReason = CommandRejectReason.TooLate,
+        };
 
     private static CommandResult CreateMalformedResult(ulong clientSequence, ulong currentTick)
     {

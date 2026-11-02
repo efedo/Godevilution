@@ -48,6 +48,27 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   documentation and cohesive commits. Every worker and reviewer follows the
   [worker guide](worker-guide.md).
 
+## Batch P1 Live world, timed checkpoints (done)
+
+- **Player-visible outcome:** clock-gated cohort hosts no longer rewrite the cohort
+  every 20 ticks; play continues without disk stalls and a crash loses at most the
+  last checkpoint interval.
+- **Native source:** none (host persistence).
+- **Files and contracts owned:** cohort store format 2 and its participant window
+  (`AuthoritativeCohortStore`, `AuthoritativeCohortDocument`,
+  `AuthoritativeCommandServer`), timed publication in `AuthoritativeTcpServer*`,
+  `--checkpoint-interval-seconds`, `ServerHello.host_instance_id` and the client's
+  restart rescheduling in `AuthoritativeClient`, launcher format checks.
+- **Exit check:** killed-host client test; L5 journey and resume at 20 and 60 Hz
+  with probe p90; server and client suites.
+- **Out of scope:** background writes (P2), command logs (P3–P4), legacy
+  per-session persistence.
+- **Size:** two days.
+- **State:** done. Suites pass; the 20 Hz journey and resume pass with probe p90
+  1 ms. At 60 Hz probe p90 is 2 ms, but an L3 fight stalls the host for seconds on
+  Debug and Release and fails the journey; split out as P1b. Old format 1 session
+  saves under `.local` are refused and must be deleted by the user.
+
 ## Batch 2.4b Catacombs ranged and missile monsters (done)
 
 - **Player-visible outcome:** on L5–L8 the ranged families fight as native: Skeleton

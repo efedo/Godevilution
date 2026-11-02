@@ -58,7 +58,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private Task? acceptLoop;
     private Task? simulationLoop;
     private ulong lastSimulationTick;
-    private uint cohortCheckpointIntervalTicks = 1;
+    private TimeSpan? cohortCheckpointInterval;
+    private long lastCohortCheckpointTimestamp;
     private bool periodicTurnYielded;
     private long nextConnectionOrdinal;
     private long nextTimingOrdinal;
@@ -182,23 +183,24 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     public AuthoritativeCohortStore? CohortStore { get; init; }
 
     /**
-     * Clock-gated cohort hosts: the periodic loop advances and publishes once the
-     * clock is this many ticks past the durable cohort, or when queued commands are
-     * due. One (the default) publishes every tick.
+     * Cohort hosts: the minimum time between checkpoints. The world still advances
+     * every tick and acknowledgements never wait for a write, so a crash loses play
+     * since the last checkpoint. Startup, participant admission, ruleset reload, the
+     * last connection closing and shutdown always checkpoint. Null (the default)
+     * checkpoints every published mutation.
      */
-    public uint CohortCheckpointIntervalTicks
+    public TimeSpan? CohortCheckpointInterval
     {
-        get => cohortCheckpointIntervalTicks;
-        init => cohortCheckpointIntervalTicks = value != 0
-            ? value : throw new ArgumentOutOfRangeException(nameof(CohortCheckpointIntervalTicks));
+        get => cohortCheckpointInterval;
+        init => cohortCheckpointInterval = value is null || value > TimeSpan.Zero
+            ? value : throw new ArgumentOutOfRangeException(nameof(CohortCheckpointInterval));
     }
 
-    /**
-     * Clock-gated cohort hosts: a snapshot poll inside the checkpoint interval serves
-     * the durable cohort boundary without advancing or publishing. Off by default,
-     * where every poll advances to the clock and publishes.
-     */
-    public bool CohortSnapshotPollsServeDurableBoundary { get; init; }
+    /** Time source for <see cref="CohortCheckpointInterval"/>; tests inject one. */
+    public TimeProvider CheckpointTimeProvider { get; init; } = TimeProvider.System;
+
+    /** Random per host process; a reconnecting client compares it to detect a restart. */
+    public string HostInstanceId { get; } = Guid.NewGuid().ToString("N");
 
     /** Defaults to legacy sidecar fallback; strict restore is an explicit host opt-in. */
     public AuthoritativeSessionRestorePolicy SessionRestorePolicy
@@ -444,7 +446,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             // Queued transport intents are nondurable. All handlers and the
             // scheduler are quiescent before the final settled publication.
             if (shutdown is not null && failure is null && Volatile.Read(ref cohortFailure) is null)
-                WithCohortBarrier(PublishCohortCore);
+                WithCohortBarrier(() => PublishCohortCore(force: true));
         } catch (Exception exception) {
             RecordShutdownFailure(exception, "final-publication");
         }
@@ -565,7 +567,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 advanced = commandServer.WithSynchronizedState(() => {
                     RequireCohortHealthy();
                     var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-                    if (tick == lastSimulationTick || !IsCohortCheckpointDue(tick))
+                    if (tick == lastSimulationTick)
                         return false;
                     AdvanceCurrentTickCore();
                     lastSimulationTick = commandServer.CurrentTick;
@@ -584,20 +586,6 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceAndCheckpointMilliseconds, measurement);
         }
     }
-
-    /** Caller holds the authoritative lock. Only an interval above one defers a checkpoint. */
-    private bool IsCohortCheckpointDue(ulong tick)
-        => CohortStore is null || committedCohort is null || cohortCheckpointIntervalTicks == 1
-            || tick >= committedCohort.Tick + cohortCheckpointIntervalTicks
-            || commandScheduler?.HasDueWork(tick) == true;
-
-    /**
-     * Caller holds the authoritative lock. Every mutation publishes before it is
-     * visible, so a live tick equal to the committed one is durable state.
-     */
-    private bool ServesDurableCohortBoundary()
-        => CohortSnapshotPollsServeDurableBoundary && committedCohort is { } committed
-            && commandServer.CurrentTick == committed.Tick;
 
     /** Caller holds the authoritative lock; no pre-lock physical clock samples. */
     private ulong AdvanceCurrentTickCore(ulong legacyMinimumTick = 0)
@@ -727,6 +715,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
                     serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
                     serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
+                    serverHello.HostInstanceId = HostInstanceId;
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
@@ -926,6 +915,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         } finally {
             clients.TryRemove(client, out _);
             client.Dispose();
+            CheckpointAfterLastConnection();
         }
     }
 
@@ -984,7 +974,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
         serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
         serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
-
+        serverHello.HostInstanceId = HostInstanceId;
 
         // Keep the handshake cursor, authoritative tick, and initial projection in the same
         // ruleset generation. Network writes happen only after this authority lock is released.
@@ -1172,7 +1162,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         string? rulesetIdentityHash = null)
     {
         if (CohortStore is not null) {
-            WithCohortBarrier(PublishCohortCore);
+            WithCohortBarrier(() => PublishCohortCore());
             return;
         }
         var lockWait = PerformanceRecorder?.Begin() ?? 0;
@@ -1819,6 +1809,19 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         }
 
         await EnvelopeCodec.WriteAsync(stream, envelope, cancellationToken);
+    }
+
+    /** Timed cohort hosts checkpoint when the last connection closes outside shutdown. */
+    private void CheckpointAfterLastConnection()
+    {
+        if (CohortStore is null || cohortCheckpointInterval is null || !clients.IsEmpty
+            || cancellation?.IsCancellationRequested != false || Volatile.Read(ref cohortFailure) is not null)
+            return;
+        try {
+            WithCohortBarrier(() => PublishCohortCore(force: true));
+        } catch (Exception) {
+            // PublishCohortCore fenced the host; Completion carries the failure.
+        }
     }
 
     private void WithCohortBarrier(Action operation)

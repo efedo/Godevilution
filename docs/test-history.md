@@ -9,6 +9,20 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-01 — Timed cohort checkpoints (P1)
+
+Server suite 1881 passed (17 skipped). Client suite 1249 passed (18 skipped) with
+one failure, `LiveCohortRestoresOwnedTownPortalAndNonOwnerUseAfterProcessRestart`:
+it killed the host and expected the last acknowledgement saved. It now quits cleanly
+and passes. `CohortPendingCommandRecoveryTests` kills the host after an applied but
+unacknowledged move. The replacement host resumes from the admission checkpoint and
+the client reschedules the move, which lands once. A traced 20 Hz `-TargetDepth 5
+-FirstFightDepth 5` journey and resume pass: probe p90 1 ms (15 ms before) and melee
+reactions 5.6 ticks (9.9). At 60 Hz probe p90 is 2 ms (325 ms), but the journey fails
+in an L3 fight on both the Debug and Release servers. The authority lock is held for
+1–4 s with one timed checkpoint in the run, and a TooLate swing never lands (split
+out as P1b).
+
 ### 2026-11-01 — Tick-rate synchronization and rates above 40 Hz
 
 `ClockGatedPlayStaysSynchronizedAtTheHostTickRate` passes at 9, 20 and 41 Hz (about

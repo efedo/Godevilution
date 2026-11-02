@@ -34,12 +34,12 @@ public sealed class CohortHostConfigurationTests
     }
 
     [Fact]
-    public void CohortCheckpointIntervalDefaultsToOneSecond()
+    public void CohortCheckpointIntervalDefaultsToThirtySeconds()
     {
         Assert.True(ServerHostOptions.TryParse([], out var options, out var error), error);
-        Assert.Equal(20U, options.CohortCheckpointIntervalTicks);
-        Assert.True(ServerHostOptions.TryParse(["--cohort-checkpoint-interval", "1"], out options, out error), error);
-        Assert.Equal(1U, options.CohortCheckpointIntervalTicks);
+        Assert.Equal(30U, options.CohortCheckpointIntervalSeconds);
+        Assert.True(ServerHostOptions.TryParse(["--checkpoint-interval-seconds", "1"], out options, out error), error);
+        Assert.Equal(1U, options.CohortCheckpointIntervalSeconds);
     }
 
     [Theory]
@@ -49,8 +49,8 @@ public sealed class CohortHostConfigurationTests
     [InlineData("4294967296")]
     public void InvalidCohortCheckpointIntervalIsRejected(string value)
     {
-        Assert.False(ServerHostOptions.TryParse(["--cohort-checkpoint-interval", value], out _, out var error));
-        Assert.Contains("cohort checkpoint interval", error);
+        Assert.False(ServerHostOptions.TryParse(["--checkpoint-interval-seconds", value], out _, out var error));
+        Assert.Contains("checkpoint interval", error);
     }
 
     [Fact]
