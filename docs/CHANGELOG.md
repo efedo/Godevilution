@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-03
+
+- Acceptance bot no longer starves the client's main thread: a failed target search stops
+  and yields instead of repeating on one snapshot (485 ms a pass to 25 ms), door retries wait
+  for a frame, and above 20 Hz tick budgets cannot end a stage within 3 s of wall time.
+
 ## 2026-11-02
 
 - Background checkpoint writes (batch P2): timed cohort checkpoints capture under the

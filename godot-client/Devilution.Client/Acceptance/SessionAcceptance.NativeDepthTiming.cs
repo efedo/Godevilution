@@ -74,8 +74,9 @@ public partial class SessionAcceptance
         var start = main.ObservedSnapshot!.Tick;
         var wallLimit = AcceptanceTickBudget.WallBackstopSeconds(budget, AcceptanceTickBudget.EffectiveRate(main.ObservedIdentity?.TickRateHz));
         var backstop = Stopwatch.StartNew();
-        while (waiting() && !AcceptanceTickBudget.Expired(main.ObservedSnapshot!.Tick, start, budget)
-            && backstop.Elapsed.TotalSeconds < wallLimit)
+        while (waiting() && backstop.Elapsed.TotalSeconds < wallLimit
+            && !(AcceptanceTickBudget.Expired(main.ObservedSnapshot!.Tick, start, budget)
+                && AcceptanceTickBudget.PastWallFloor(referenceSeconds, backstop.Elapsed.TotalSeconds)))
             await Frame();
     }
 }

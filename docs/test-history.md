@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-03 — Acceptance bot main-thread stall
+
+`-TargetDepth 5 -FirstFightDepth 5` journey and resume, Debug server: 20 Hz and 60 Hz pass;
+200 Hz passes 2 of 4, both failures character deaths (L3 melee; a potion refused while dying).
+The stall, WASD and duplicate `TooLate` failures did not recur. Client suite 1255 passed,
+18 skipped, 1 failed: `TimingProbeCorrelationAndExpiryIgnoreOldReplies` (connection aborted),
+which passes alone 8 of 8 and with its class 3 of 3.
+
 ### 2026-11-02 — Background checkpoint writes (P2)
 
 On a fresh 14.6 MB L8 cohort, Debug server, 17 checkpoints: capture under the lock

@@ -263,6 +263,8 @@ public partial class SessionAcceptance
             var nativeRangedViewport = ranged && IsNativeSceneViewportActive(main, player.LevelId);
             var targets = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                 .OrderBy(monster => NativeMonsterDistance(player, monster)).ThenBy(monster => monster.EntityId).Take(12);
+            var openCells = new Dictionary<(int X, int Y), bool>();
+            var moved = false;
             foreach (var target in targets) {
                 bool AttackCell(int x, int y) => ranged
                     ? NativeDistance(x, y, target.PositionX, target.PositionY) <= 6
@@ -276,12 +278,18 @@ public partial class SessionAcceptance
                     && AuthoritativeTargetSelector.SelectCombatTarget(snapshot, player.EntityId, target.PositionX, target.PositionY) == target.EntityId)
                     return target;
                 var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackGoal,
-                    nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null);
+                    nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null, openCells);
                 if (firstStep is null) continue;
                 var sequence = main.ObservedLastQueuedSequence;
                 await Click(main.ObservedTileScreenPosition(firstStep.Value.X, firstStep.Value.Y), walk: true);
                 await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter");
                 await UseNativeHealingPotionIfNeeded(main);
+                moved = true;
+                break;
+            }
+            // Nothing ran since the snapshot was read, so another pass would repeat this search on it.
+            if (!moved) {
+                await Frame();
                 break;
             }
         }
@@ -289,8 +297,17 @@ public partial class SessionAcceptance
     }
 
     private static (int X, int Y)? FindNativeClassApproachStep(Main main, Snapshot snapshot, PlayerSnapshot player,
-        LevelGeometrySnapshot geometry, Func<int, int, bool> goal, Func<int, int, bool>? firstStepVisible = null)
+        LevelGeometrySnapshot geometry, Func<int, int, bool> goal, Func<int, int, bool>? firstStepVisible = null,
+        Dictionary<(int X, int Y), bool>? openCells = null)
     {
+        // One snapshot's open cells, shared by a pass's searches because each check scans its objects.
+        openCells ??= [];
+        bool Open(int x, int y)
+        {
+            if (!openCells.TryGetValue((x, y), out var open))
+                openCells[(x, y)] = open = IsNativeApproachCellOpen(main, snapshot, player, geometry, x, y);
+            return open;
+        }
         var start = (X: player.PositionX, Y: player.PositionY);
         var queue = new Queue<((int X, int Y) Cell, (int X, int Y) First)>();
         var visited = new HashSet<(int X, int Y)> { start };
@@ -299,9 +316,8 @@ public partial class SessionAcceptance
             if (current.Cell != start && goal(current.Cell.X, current.Cell.Y)) return current.First;
             foreach (var (dx, dy) in new[] { (0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, -1), (-1, 1) }) {
                 var next = (X: current.Cell.X + dx, Y: current.Cell.Y + dy);
-                if (visited.Contains(next) || !IsNativeApproachCellOpen(main, snapshot, player, geometry, next.X, next.Y)) continue;
-                if (dx != 0 && dy != 0 && (!IsNativeApproachCellOpen(main, snapshot, player, geometry, current.Cell.X + dx, current.Cell.Y)
-                    || !IsNativeApproachCellOpen(main, snapshot, player, geometry, current.Cell.X, current.Cell.Y + dy))) continue;
+                if (visited.Contains(next) || !Open(next.X, next.Y)) continue;
+                if (dx != 0 && dy != 0 && (!Open(current.Cell.X + dx, current.Cell.Y) || !Open(current.Cell.X, current.Cell.Y + dy))) continue;
                 if (current.Cell == start && firstStepVisible is not null && !firstStepVisible(next.X, next.Y)) continue;
                 visited.Add(next);
                 queue.Enqueue((next, current.Cell == start ? next : current.First));

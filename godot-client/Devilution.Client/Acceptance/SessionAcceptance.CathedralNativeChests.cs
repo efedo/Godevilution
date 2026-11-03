@@ -439,9 +439,7 @@ public partial class SessionAcceptance
                 _ => dy > 0 ? Key.Down : Key.Up,
             };
             var previousSequence = main.ObservedLastQueuedSequence;
-            Require(main.ObservedPendingCommandCount == 0 && Settled(main)
-                && (main.ObservedCommandResult is null
-                    || main.ObservedCommandResult.ClientSequence == previousSequence),
+            Require(NativeWalkBoundarySettled(main),
                 "Native chest approach requires a settled client command boundary before walking.");
             GetViewport().GuiReleaseFocus();
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
@@ -468,6 +466,12 @@ public partial class SessionAcceptance
                 "The ordinary native chest approach did not reach its requested adjacent path cell.");
         }
     }
+
+    /** Whether the client can queue a fresh walk: no command is pending and the last queued one has its receipt. */
+    private static bool NativeWalkBoundarySettled(Main main)
+        => main.ObservedPendingCommandCount == 0 && Settled(main)
+            && (main.ObservedCommandResult is null
+                || main.ObservedCommandResult.ClientSequence == main.ObservedLastQueuedSequence);
 
     private static ObjectSnapshot FindNativeChest(Snapshot snapshot, uint entityId)
         => snapshot.Objects.Single(value => value.EntityId == entityId && value.LevelId == 1);

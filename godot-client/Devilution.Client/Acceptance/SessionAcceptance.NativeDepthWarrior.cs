@@ -425,6 +425,7 @@ public partial class SessionAcceptance
                     + $"walkPending={alive.NativeWalkPathPending}; pending={main.ObservedPendingCommandCount}; "
                     + $"queued={main.ObservedLastQueuedSequence}; result={main.ObservedCommandResult?.ClientSequence}/"
                     + $"{main.ObservedCommandResult?.Status}/{main.ObservedCommandResult?.RejectReason}");
+                await SettleInterruptedNativeDoorApproachAsync(main);
                 await UseNativeHealingPotionIfNeeded(main);
                 continue;
             }
@@ -443,6 +444,16 @@ public partial class SessionAcceptance
             GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
         }
         throw new InvalidOperationException($"The Warrior opened {NativeWarriorTravelAttempts} Catacombs doors without reaching the L{destination} route.");
+    }
+
+    /**
+     * An approach can fail on a snapshot that frames have not refreshed, so a retry needs a frame
+     * and the interrupted walk's end; without them every retry fails on the same snapshot.
+     */
+    private async Task SettleInterruptedNativeDoorApproachAsync(Main main)
+    {
+        await Frame();
+        await WaitTicksWhile(main, () => !NativeWalkBoundarySettled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 2);
     }
 
     /**
@@ -538,6 +549,7 @@ public partial class SessionAcceptance
             if (main.ObservedSnapshot!.Players.Single() is not { Life: > 0 } alive || alive.LevelId != levelId)
                 throw;
             // Monsters pouring through an opened door block the walk; the kill loop fights them (and may retreat).
+            await SettleInterruptedNativeDoorApproachAsync(main);
             await UseNativeHealingPotionIfNeeded(main);
             return true;
         }
@@ -784,8 +796,9 @@ public partial class SessionAcceptance
             if (Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)
                 && receipt.AppliedTick >= snapshot.Tick)
                 nativeWarriorTiming?.Reaction(receipt.AppliedTick - snapshot.Tick);
-            // A clocked swing that reaches the host after its tick changes nothing; swing again.
-            if (receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.TooLate })
+            // A clocked swing that reaches the host after its tick changes nothing, and a resend
+            // of it returns the same refusal as a duplicate; swing again.
+            if (receipt.RejectReason == CommandRejectReason.TooLate)
                 continue;
             if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)) {
                 Require(receipt.Status == CommandStatus.Rejected

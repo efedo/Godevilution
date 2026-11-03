@@ -68,6 +68,33 @@ public sealed class AcceptanceTickBudgetTests
     }
 
     [Fact]
+    public void AStallCannotSpendAFastStageBeforeTheWallFloor()
+    {
+        // 10 reference seconds are 200 ticks, 1 s at 200 Hz; a stall can deliver them in one snapshot.
+        Assert.False(AcceptanceTickBudget.StageExpired(10, 0, 200, 12_076, 16_749));
+        Assert.False(AcceptanceTickBudget.StageExpired(10, 2.9, 200, 1_000, 1_201));
+        Assert.True(AcceptanceTickBudget.StageExpired(10, 3, 200, 1_000, 1_201));
+        Assert.False(AcceptanceTickBudget.StageExpired(10, 11.9, 200, 1_000, 1_100));
+        Assert.True(AcceptanceTickBudget.StageExpired(10, 12, 200, 1_000, 1_100));
+    }
+
+    [Theory]
+    [InlineData(10, 2.9, false)]
+    [InlineData(10, 3, true)]
+    [InlineData(2, 1.9, false)]
+    [InlineData(2, 2, true)]
+    public void WaitsMayEndOnTicksOnlyPastTheWallFloor(double seconds, double elapsed, bool past)
+        => Assert.Equal(past, AcceptanceTickBudget.PastWallFloor(seconds, elapsed));
+
+    [Fact]
+    public void TheWallFloorNeverExceedsAShortStage()
+    {
+        Assert.False(AcceptanceTickBudget.StageExpired(1, 0.9, 200, 1_000, 1_021));
+        Assert.True(AcceptanceTickBudget.StageExpired(1, 1, 200, 1_000, 1_021));
+        Assert.True(AcceptanceTickBudget.StageExpired(0, 0, 200, 1_000, 1_001));
+    }
+
+    [Fact]
     public void SlowerServersAlsoSpendTheStageInGameTicks()
     {
         Assert.False(AcceptanceTickBudget.StageExpired(10, 15, 10, 0, 150));
