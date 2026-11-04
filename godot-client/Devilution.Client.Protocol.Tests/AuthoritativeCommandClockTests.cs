@@ -93,6 +93,34 @@ public sealed class AuthoritativeCommandClockTests
     }
 
     [Fact]
+    public void SchedulingClockSampleCorrectsTheProjectionBackwardWhenTheServerSlows()
+    {
+        var time = new ManualClock();
+        var clock = new AuthoritativeCommandClock(time);
+        clock.ObserveMonotonic(100, 20);
+        time.Milliseconds = 1000;
+        Assert.Equal(120UL, clock.Estimate(0, 20));
+
+        // The server ran at half speed: delayed snapshots leave the projection, a sample corrects it.
+        clock.ObserveMonotonic(110, 20);
+        Assert.Equal(120UL, clock.Estimate(0, 20));
+        clock.ObserveSchedulingClock(110);
+        Assert.Equal(110UL, clock.Estimate(0, 20));
+        time.Milliseconds = 1050;
+        Assert.Equal(111UL, clock.Estimate(0, 20));
+    }
+
+    [Fact]
+    public void SchedulingClockSampleOlderThanTheAnchorIsIgnored()
+    {
+        var time = new ManualClock();
+        var clock = new AuthoritativeCommandClock(time);
+        clock.ObserveSchedulingClock(100);
+        clock.ObserveSchedulingClock(90);
+        Assert.Equal(100UL, clock.Estimate(0, 20));
+    }
+
+    [Fact]
     public void RejectsInvalidRateAndOverflowRatherThanWrappingTicks()
     {
         var time = new ManualClock();

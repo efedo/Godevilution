@@ -2,14 +2,23 @@ using Devilution.Engine;
 
 namespace Devilution.Server.Simulation;
 
-/** Monotonic wall-clock tick source for the standalone server host. */
+/**
+ * Tick source for the standalone server host, paced at a target rate by wall time. Reads
+ * happen under the authority lock, so time spent executing ticks counts against the next
+ * read: one read grants at most `MaximumStepSeconds` of game time and drops any excess.
+ * A host that falls behind therefore runs slower instead of jumping to catch up.
+ */
 public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumableAuthoritativeClock
 {
+    /** One tick at the 20 Hz reference rate; timer jitter below this loses no game time. */
+    public const double MaximumStepSeconds = 0.05;
+
     private readonly object synchronization = new();
     private readonly TimeProvider time;
-    private long startedAt;
-    private ulong startingTick;
     private readonly uint tickRateHz;
+    private readonly ulong maximumStepTicks;
+    private long anchor;
+    private ulong tick;
 
     public RealtimeAuthoritativeClock(uint tickRateHz)
         : this(tickRateHz, TimeProvider.System)
@@ -21,8 +30,9 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
         if (tickRateHz == 0)
             throw new ArgumentOutOfRangeException(nameof(tickRateHz));
         this.tickRateHz = tickRateHz;
+        maximumStepTicks = Math.Max(1UL, (ulong)(tickRateHz * MaximumStepSeconds));
         time = timeProvider ?? TimeProvider.System;
-        startedAt = time.GetTimestamp();
+        anchor = time.GetTimestamp();
     }
 
     public ulong CurrentTick
@@ -40,11 +50,25 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
         lock (synchronization) {
             if (tick <= CurrentTickCore())
                 return;
-            startingTick = tick;
-            startedAt = time.GetTimestamp();
+            this.tick = tick;
+            anchor = time.GetTimestamp();
         }
     }
 
     private ulong CurrentTickCore()
-        => checked(startingTick + (ulong)(time.GetElapsedTime(startedAt).TotalSeconds * tickRateHz));
+    {
+        var now = time.GetTimestamp();
+        var due = (ulong)(time.GetElapsedTime(anchor, now).TotalSeconds * tickRateHz);
+        if (due == 0)
+            return tick;
+        if (due > maximumStepTicks) {
+            tick = checked(tick + maximumStepTicks);
+            anchor = now;
+        } else {
+            tick = checked(tick + due);
+            // Keep the fractional tick so a steady reader runs at exactly the target rate.
+            anchor += (long)(due * (double)time.TimestampFrequency / tickRateHz);
+        }
+        return tick;
+    }
 }

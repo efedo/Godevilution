@@ -10,8 +10,8 @@ public sealed class AuthoritativeClockTests
     {
         var time = new ManualClockTimeProvider();
         var clock = new RealtimeAuthoritativeClock(20, time);
-        time.AdvanceMilliseconds(100);
-        Assert.Equal(2UL, clock.CurrentTick);
+        time.AdvanceMilliseconds(50);
+        Assert.Equal(1UL, clock.CurrentTick);
 
         clock.RestoreAtTick(10000);
         Assert.Equal(10000UL, clock.CurrentTick);
@@ -24,6 +24,38 @@ public sealed class AuthoritativeClockTests
         clock.RestoreAtTick(10001);
         time.AdvanceMilliseconds(25);
         Assert.Equal(10002UL, clock.CurrentTick);
+    }
+
+    [Theory]
+    [InlineData(20U, 1UL)]
+    [InlineData(60U, 3UL)]
+    [InlineData(200U, 10UL)]
+    public void AStallSlowsTheClockInsteadOfJumping(uint rate, ulong maximumStep)
+    {
+        var time = new ManualClockTimeProvider();
+        var clock = new RealtimeAuthoritativeClock(rate, time);
+
+        time.AdvanceMilliseconds(30_000);
+        Assert.Equal(maximumStep, clock.CurrentTick);
+
+        // The stalled time is gone: later reads see only time since the last one.
+        Assert.Equal(maximumStep, clock.CurrentTick);
+        time.AdvanceMilliseconds(50);
+        Assert.Equal(maximumStep * 2, clock.CurrentTick);
+    }
+
+    [Fact]
+    public void SteadyReadsRunAtExactlyTheTargetRate()
+    {
+        var time = new ManualClockTimeProvider();
+        var clock = new RealtimeAuthoritativeClock(200, time);
+
+        for (var read = 0; read < 1000; read++) {
+            time.AdvanceMilliseconds(7);
+            _ = clock.CurrentTick;
+        }
+
+        Assert.Equal(1400UL, clock.CurrentTick);
     }
 
     [Fact]

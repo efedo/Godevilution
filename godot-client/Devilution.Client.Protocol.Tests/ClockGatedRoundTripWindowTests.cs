@@ -22,22 +22,22 @@ public sealed class ClockGatedRoundTripWindowTests
     }
 
     [Fact]
-    public void KeepsTheLargestSampleInsideTheWindow()
+    public void ALoneStallDoesNotRaiseTheEstimate()
     {
         var window = new ClockGatedRoundTripWindow(100, 10_000);
-        window.Observe(0, 1_320);
-        Assert.Equal(1_320, window.Observe(5_000, 10));
-        Assert.Equal(1_320, window.Observe(10_000, 10));
+        window.Observe(0, 20);
+        window.Observe(10, 20);
+        Assert.Equal(100, window.Observe(20, 2_500));
     }
 
     [Fact]
-    public void AStallAgesOutOnceLaterProbesPassTheWindow()
+    public void ASustainedRiseAgesOutOnceLaterProbesPassTheWindow()
     {
         var window = new ClockGatedRoundTripWindow(100, 10_000);
-        window.Observe(0, 1_320);
-        window.Observe(9_000, 250);
-        Assert.Equal(250, window.Observe(10_001, 20));
-        Assert.Equal(100, window.Observe(19_001, 20));
+        window.Observe(0, 500);
+        window.Observe(1, 500);
+        Assert.Equal(500, window.Observe(2, 500));
+        Assert.Equal(100, window.Observe(10_100, 20));
     }
 
     [Fact]
@@ -50,11 +50,13 @@ public sealed class ClockGatedRoundTripWindowTests
     }
 
     [Fact]
-    public void ARisingSampleRaisesTheEstimateAtOnce()
+    public void ARiseCountsOnceItIsTheMedian()
     {
         var window = new ClockGatedRoundTripWindow(100, 10_000);
         window.Observe(0, 20);
-        Assert.Equal(700, window.Observe(10, 700));
+        window.Observe(1, 20);
+        window.Observe(2, 700);
+        Assert.Equal(700, window.Observe(3, 700));
     }
 
     [Fact]

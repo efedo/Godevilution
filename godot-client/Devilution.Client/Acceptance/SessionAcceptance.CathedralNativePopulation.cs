@@ -263,7 +263,7 @@ public partial class SessionAcceptance
         var result = main.ObservedCommandResult;
         var after = main.ObservedSnapshot!.Players.Single();
         var afterItemIdentity = CaptureNativePlayerItemIdentity(after);
-        Require(result is { Status: CommandStatus.Accepted, RejectReason: CommandRejectReason.Unspecified }
+        Require(result is not null && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence == checked(previousSequence + 1) && result.AppliedTick > 0
             && before.LevelId == 0 && after.LevelId == 0
             && after.Life == after.LifeMaximum && after.LifeMaximum == before.LifeMaximum
@@ -350,8 +350,7 @@ public partial class SessionAcceptance
             ?? throw new InvalidDataException("The first native Town-return movement has no receipt.");
         Require(result.ClientSequence == checked(savedObservedSequence + 1)
             && result.AppliedTick > 0
-            && result.Status == CommandStatus.Accepted
-            && result.RejectReason == CommandRejectReason.Unspecified
+            && IsAcceptedOrSuccessfulDuplicate(result)
             && main.ObservedSnapshot!.Players.Single() is { LevelId: 0 } after
             && (after.PositionX, after.PositionY) == step,
             "The first native Town-to-L1 movement did not produce its exact next accepted receipt and Town position.");
@@ -1355,8 +1354,7 @@ public partial class SessionAcceptance
                 await AcceptedAndSettled(main, previousSequence, "Operate a reachable native Cathedral door");
                 var result = main.ObservedCommandResult
                     ?? throw new InvalidDataException($"Native door {door.EntityId} produced no operation receipt.");
-                Require(result.Status == CommandStatus.Accepted
-                    && result.RejectReason == CommandRejectReason.Unspecified
+                Require(IsAcceptedOrSuccessfulDuplicate(result)
                     && result.ClientSequence == checked(previousSequence + 1) && result.AppliedTick > 0,
                     $"Native door {door.EntityId} did not produce its exact next accepted operation receipt: "
                     + $"sequence={result?.ClientSequence}, tick={result?.AppliedTick}, "
@@ -1391,8 +1389,7 @@ public partial class SessionAcceptance
             await AcceptedAndSettled(main, previousSequenceForMove, "Approach a reachable native Cathedral door");
             var movementResult = main.ObservedCommandResult;
             var afterPlayer = main.ObservedSnapshot!.Players.Single();
-            Require(movementResult is { Status: CommandStatus.Accepted,
-                    RejectReason: CommandRejectReason.Unspecified }
+            Require(movementResult is not null && IsAcceptedOrSuccessfulDuplicate(movementResult)
                 && movementResult.ClientSequence == checked(previousSequenceForMove + 1)
                 && movementResult.AppliedTick > 0
                 && afterPlayer.Life > 0 && afterPlayer.LevelId == player.LevelId
@@ -1940,9 +1937,9 @@ public partial class SessionAcceptance
         var lifeOutcomeValid = concurrentCombat
             ? beforeLife < player.LifeMaximum && after.Life > 0
             : after.Life > beforeLife;
-        Require(result is { ClientSequence: var acknowledgedSequence, Status: CommandStatus.Accepted,
-                RejectReason: CommandRejectReason.Unspecified }
-            && acknowledgedSequence == expectedSequence
+        // A retransmitted command answers Duplicate with the original outcome.
+        Require(result is not null && IsAcceptedOrSuccessfulDuplicate(result)
+            && result.ClientSequence == expectedSequence
             && exactPotionConsumed && lifeOutcomeValid,
             $"The ordinary consumable command did not produce its required accepted exact-item healing result; "
             + $"expected sequence={expectedSequence}, result={result?.ClientSequence}/{result?.Status}/{result?.RejectReason}, "
@@ -2031,7 +2028,7 @@ public partial class SessionAcceptance
                 "The nearby native healing drop did not move into the Rogue's carried items.", 5);
             var after = main.ObservedSnapshot!.Players.Single();
             var result = main.ObservedCommandResult;
-            Require(result is { Status: CommandStatus.Accepted, RejectReason: CommandRejectReason.Unspecified }
+            Require(result is not null && IsAcceptedOrSuccessfulDuplicate(result)
                 && result.ClientSequence == sequence + 1
                 && after.Gold == gold
                 && CountNativeItemOccurrences(main, after, candidate.State.StableItemId, candidate.ItemSeed) == 1,

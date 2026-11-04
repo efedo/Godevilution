@@ -111,7 +111,7 @@ public partial class SessionAcceptance
                 await AcceptedAndSettled(main, beforeSequence, "Open an ordinary native Cathedral chest");
                 var result = main.ObservedCommandResult!;
                 var chestAfter = main.ObservedSnapshot!.Objects.Single(item => item.EntityId == chestBefore.EntityId);
-                Require(result.Status == CommandStatus.Accepted && result.RejectReason == CommandRejectReason.Unspecified
+                Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result)
                     && chestAfter.Activated && !chestAfter.NativeChestInteractable
                     && chestAfter.AnimationFrame == checked(chestBefore.AnimationFrame + 2)
                     && chestAfter.NativeObjectId == chestBefore.NativeObjectId
@@ -455,8 +455,7 @@ public partial class SessionAcceptance
                 && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
                 "The cardinal native chest approach command did not settle.", stageSeconds: 10);
             var receipt = main.ObservedCommandResult!;
-            Require(receipt.Status == CommandStatus.Accepted
-                && receipt.RejectReason == CommandRejectReason.Unspecified,
+            Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt),
                 $"The cardinal native chest approach was rejected: {receipt.Status}/{receipt.RejectReason}; "
                 + $"step=({step.X},{step.Y}); observedTick={snapshot.Tick}; appliedTick={receipt.AppliedTick}; "
                 + $"before[{DescribeNativeAttackSnapshot(snapshot, 0)}]; "

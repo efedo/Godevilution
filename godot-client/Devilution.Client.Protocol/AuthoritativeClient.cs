@@ -116,6 +116,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     /** The most recently accepted server identity; retained across reconnects. */
     public AuthoritativeServerIdentity? ServerIdentity { get; private set; }
 
+    /**
+     * The configured interval holds at the 20 Hz reference rate and shortens on faster servers,
+     * so a poll spans the same game time and commands decide on equally fresh state.
+     */
+    private double SnapshotPollIntervalMilliseconds
+        => options.SnapshotPollInterval.TotalMilliseconds * Math.Min(1d, 20d / ServerTickRateHz);
+
     public ulong SuggestedCommandTick(ulong observedTick)
     {
         var leadMilliseconds = IsClockGatedCommandScheduling
@@ -640,7 +647,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 }
             } else if ((!forceTimingProbe
                     && !hasPendingCommands
-                    && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
+                    && now - lastSnapshotRequestMs >= SnapshotPollIntervalMilliseconds
                     && (!IsClockGatedCommandScheduling || !attemptedCommandDispatch))
                 || forceTimingProbe) {
                 if (!IsClockGatedCommandScheduling) {
@@ -700,7 +707,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             !command.TransmissionStarted && command.ObservedTick.HasValue);
                     var probeInterval = requiresCalibration
                         ? TimingCalibrationRetryInterval.TotalMilliseconds
-                        : options.SnapshotPollInterval.TotalMilliseconds;
+                        : SnapshotPollIntervalMilliseconds;
                     var probeIntervalElapsed = usesClockOnlyProbe
                         ? !lastClockOnlyProbeSentMs.HasValue
                             || dispatchNow - lastClockOnlyProbeSentMs.Value >= probeInterval
@@ -727,7 +734,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             : forceCalibration
                                 || pending.Count > 0
                                 || dispatchNow - lastSnapshotRequestMs
-                                    < options.SnapshotPollInterval.TotalMilliseconds;
+                                    < SnapshotPollIntervalMilliseconds;
                     if (timingProbe is not null || probeNotAllowed)
                         return null;
 
@@ -809,7 +816,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (lastSnapshotReceiptGeneration == generation)
             cadenceBaseline = Math.Max(cadenceBaseline, lastSnapshotReceiptMs);
         return retryDue
-            || now - cadenceBaseline >= options.SnapshotPollInterval.TotalMilliseconds;
+            || now - cadenceBaseline >= SnapshotPollIntervalMilliseconds;
     }
 
     private void RecordNegotiatedSnapshotReceipt(long generation)
@@ -1189,15 +1196,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 // existing bounded expiry path when an older peer omits it.
                 if (!reply.HasServerSchedulingClockTick)
                     return;
-                commandClock.ObserveMonotonic(reply.ServerSchedulingClockTick, ServerTickRateHz);
+                commandClock.ObserveSchedulingClock(reply.ServerSchedulingClockTick);
             }
             timingProbe = null;
             timingCalibrationReady = true;
             timingCalibrationProbeAttempts = 0;
             lastTimingProbeRequestMs = null;
             var sample = Math.Max(0, now - probe.SentAtMs);
-            // Gated admission waits on the full measured round trip. The lead keeps
-            // the largest recent sample, so one server stall ages out of it.
+            // Gated admission waits on the full measured round trip. The lead uses
+            // the median recent sample, so one server stall does not raise it.
             Volatile.Write(ref roundTripMilliseconds, clockGatedRoundTrip.Observe(now, sample));
             Volatile.Write(ref retryRoundTripMilliseconds, Math.Max(Volatile.Read(ref retryRoundTripMilliseconds), sample));
             if (recorder is not null)

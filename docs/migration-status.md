@@ -118,7 +118,10 @@ Passing a scoped test or adding a schema version does not close a milestone.
   resume also pass at 60 Hz on the Debug server; entering a level still costs one
   0.3–1.3 s tick. Since P2 timed checkpoints write on their own thread, and a failed
   write is logged and retried. Capture still holds the lock (174 ms on the Debug L8
-  cohort), which P5 addresses; P3–P4 add Debug command logs.
+  cohort), which P5 addresses; P3–P4 add Debug command logs. Since P1c the clock is
+  paced by the tick rate, stalls slow the game rather than jump it, late gameplay
+  commands are accepted for up to 2 s, and the L5 journey and resume pass at 200 Hz
+  on Debug and Release servers.
   Since 2.2b native multiplayer also runs L1–L8 with native multiplayer rules, and
   clvl 8+ players reach L5 by the Town warp; two headless clients meet on L5 and
   resume there. Since 2.2c single-player L5's warp-up opens the Catacombs Town warp

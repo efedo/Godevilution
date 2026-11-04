@@ -85,7 +85,11 @@ gameplay contract.
 
 Each command carries a session-scoped client sequence and requested simulation
 tick. The server assigns receipt order, applies its late-command policy, and
-deduplicates by session and client sequence. Clients retain unresolved commands
+deduplicates by session and client sequence. Live hosts apply a gameplay command
+that arrives up to 2 s late on the current tick and report it `Accepted`; beyond
+that it is `TooLate`. Store and stash commands keep their two-tick `Rescheduled`
+window. Direct `AuthoritativeCommandServer` callers default to no late tolerance.
+Clients retain unresolved commands
 and retry after an adaptive acknowledgement deadline. A duplicate returns the
 original receipt and applied tick without mutating state twice.
 
@@ -129,7 +133,9 @@ Negotiated `ClockProbeRequest` replies also carry the optional
 The client uses its presence (including a valid value of zero) only to anchor
 command-clock estimation; it does not update model state, snapshot freshness,
 or authoritative simulation time. Correlated `SnapshotRequest` replies omit
-this field and retain their existing snapshot-boundary behavior.
+this field and retain their existing snapshot-boundary behavior. The scheduling
+clock is paced by the tick rate and slows when the host stalls, so a sample may
+correct the client's projection backward.
 
 Acknowledgements are authoritative for accepted, rescheduled, rejected, and
 duplicate outcomes. Commands express intent only: clients never supply the

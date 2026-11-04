@@ -40,6 +40,21 @@ public sealed class AuthoritativeCommandClock(TimeProvider? timeProvider = null)
         }
     }
 
+    /**
+     * Anchors on a sample of the server's scheduling clock, correcting the projection
+     * backward too because a slowed server runs behind the negotiated rate. An older
+     * sample than the anchor is out of order and ignored.
+     */
+    public void ObserveSchedulingClock(ulong tick)
+    {
+        lock (synchronization) {
+            if (snapshotTick is { } currentTick && tick < currentTick)
+                return;
+            snapshotTick = tick;
+            receivedAt = time.GetTimestamp();
+        }
+    }
+
     public void Reset()
     {
         lock (synchronization) {

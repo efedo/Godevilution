@@ -626,6 +626,33 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
     }
 
     [Fact]
+    public async Task SnapshotPollIntervalShortensOnFasterServers()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(3));
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var snapshotRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+            await using var stream = connection.GetStream();
+            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token, tickRateHz: 200);
+            while ((await ReadEnvelopeAsync(stream, timeout.Token)).PayloadCase != Envelope.PayloadOneofCase.SnapshotRequest) {
+            }
+            snapshotRequested.TrySetResult();
+        }, timeout.Token);
+
+        // Four seconds at 20 Hz are 0.4 s at 200 Hz; the unscaled interval would outlast the timeout.
+        await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromSeconds(4)));
+        await client.ConnectAsync(timeout.Token);
+        while (!snapshotRequested.Task.IsCompleted) {
+            await Task.Delay(10, timeout.Token);
+            await client.PollAsync(timeout.Token);
+        }
+        await serverTask.WaitAsync(timeout.Token);
+    }
+
+    [Fact]
     public async Task MissingNegotiationRetainsSnapshotTimingProbeFallback()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
@@ -678,7 +705,8 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
     private static async Task DispatchHandshakeAsync(
         NetworkStream stream,
         bool supportsClockOnlyProbes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        uint tickRateHz = 20)
     {
         var hello = await ReadEnvelopeAsync(stream, cancellationToken);
         Assert.Equal(Envelope.PayloadOneofCase.ClientHello, hello.PayloadCase);
@@ -687,7 +715,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
                 SessionToken = "clock-only-probe-session",
-                TickRateHz = 20,
+                TickRateHz = tickRateHz,
                 GameMode = GameMode.SinglePlayer,
                 CommandSchedulingMode = CommandSchedulingMode.ClockGated,
                 SupportsClockOnlyProbes = supportsClockOnlyProbes,

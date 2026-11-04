@@ -10,6 +10,14 @@ contracts stay in their existing guides.
 - Acceptance bot no longer starves the client's main thread: a failed target search stops
   and yields instead of repeating on one snapshot (485 ms a pass to 25 ms), door retries wait
   for a frame, and above 20 Hz tick budgets cannot end a stage within 3 s of wall time.
+- 200 Hz journeys: the server clock is paced by the tick rate. One read grants at most 50 ms
+  of game time, and time spent executing ticks counts against the next read, so a stalled host
+  slows the game instead of catching up in a burst. Live hosts accept a late gameplay command
+  on the current tick for up to 2 s; store and stash commands keep their rescheduling window.
+  The client corrects its clock backward from probe replies, polls snapshots proportionally
+  faster above 20 Hz, and takes its command lead from the median probe rather than the largest,
+  so one slow probe cannot schedule a command seconds ahead. The bot accepts a successful
+  duplicate receipt from a retransmitted command.
 
 ## 2026-11-02
 

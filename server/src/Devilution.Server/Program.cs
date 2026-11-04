@@ -150,7 +150,7 @@ internal static class Program
         var modulePlan = activeRuleset.ModulePlan;
         var ruleset = activeRuleset.Identity;
         var gameAdapter = new LeasedAuthoritativeGameHostAdapter(rulesetRuntime);
-        var commandServer = new AuthoritativeCommandServer(gameAdapter) {
+        var commandServer = new AuthoritativeCommandServer(gameAdapter, CommandAdmissionPolicy.ForLiveHost(options.TickRateHz)) {
             CompletedCommandWindow = options.UseCohortPersistence && options.UseClockGatedCommandScheduling
                 ? ServerHostOptions.CohortCompletedCommandWindow : null,
         };

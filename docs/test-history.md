@@ -9,6 +9,18 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-03 — 200 Hz journeys on the paced clock
+
+`-TargetDepth 5 -FirstFightDepth 5` journey and resume, with the machine under other load:
+200 Hz Debug server 4 of 4 played, Release 2 of 2, 60 Hz Debug 2 of 2. A fifth Debug run
+stopped before play because the source was edited during its import. Clock share at 200 Hz:
+Debug 0.96–0.97 journey, 0.91–0.93 resume; Release 0.97–0.98, 0.96–0.99. Snapshot materialize
+including tick execution: p50 8–23 ms, largest 0.82 s. Snapshot gap p90 about 200 ms at 200 Hz.
+An earlier batch also passed 20 Hz, but lost several runs to the 60 s Godot import timeout under
+load, which remains. Server suite 1895 passed, 17 skipped; client suite 1259 passed, 18 skipped.
+Both ran before the final bot-only receipt change. Immediate scheduling, the
+`ServerHostOptions` default, can still advance to a future applied tick in one step.
+
 ### 2026-11-03 — Acceptance bot main-thread stall
 
 `-TargetDepth 5 -FirstFightDepth 5` journey and resume, Debug server: 20 Hz and 60 Hz pass;

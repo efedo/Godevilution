@@ -4,8 +4,10 @@ namespace Devilution.Server.Commands;
 
 /**
  * Applies the authoritative late-command policy before a command reaches game
- * state. Gameplay-changing commands are strict by default; opening a store is
- * non-critical and may be moved to the current tick within a small window.
+ * state. Gameplay-changing commands are strict by default; a live host sets a
+ * tolerance within which a late one runs on the current tick and is accepted.
+ * Opening a store is non-critical and may be moved to the current tick within
+ * a small window, reported as rescheduled.
  */
 public sealed class CommandAdmissionPolicy
 {
@@ -19,6 +21,13 @@ public sealed class CommandAdmissionPolicy
 
     public ulong NonCriticalLateToleranceTicks { get; }
 
+    /** A live host's policy at its tick rate, tolerating `LiveLateToleranceSeconds` of lateness. */
+    public static CommandAdmissionPolicy ForLiveHost(uint tickRateHz)
+        => new(gameplayCriticalLateToleranceTicks: (ulong)LiveLateToleranceSeconds * tickRateHz);
+
+    /** Matches the client's longest retry timeout, so only a stale resend is still refused. */
+    public const uint LiveLateToleranceSeconds = 2;
+
     public CommandAdmission Evaluate(Command command, ulong currentTick)
     {
         if (command.IntentCase == Command.IntentOneofCase.None)
@@ -28,16 +37,17 @@ public sealed class CommandAdmissionPolicy
             return CommandAdmission.Accepted(command.RequestedTick);
 
         var lateness = currentTick - command.RequestedTick;
-        var lateTolerance = command.IntentCase is Command.IntentOneofCase.OpenStoreRequested
+        if (command.IntentCase is Command.IntentOneofCase.OpenStoreRequested
             or Command.IntentOneofCase.CloseStoreRequested
             or Command.IntentOneofCase.OpenStashRequested
-            or Command.IntentOneofCase.CloseStashRequested
-            ? NonCriticalLateToleranceTicks
-            : GameplayCriticalLateToleranceTicks;
-        if (lateness <= lateTolerance)
-            return CommandAdmission.Rescheduled(currentTick);
-
-        return CommandAdmission.Rejected(CommandRejectReason.TooLate, currentTick);
+            or Command.IntentOneofCase.CloseStashRequested) {
+            return lateness <= NonCriticalLateToleranceTicks
+                ? CommandAdmission.Rescheduled(currentTick)
+                : CommandAdmission.Rejected(CommandRejectReason.TooLate, currentTick);
+        }
+        return lateness <= GameplayCriticalLateToleranceTicks
+            ? CommandAdmission.Accepted(currentTick)
+            : CommandAdmission.Rejected(CommandRejectReason.TooLate, currentTick);
     }
 }
 
