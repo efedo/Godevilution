@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-11-03
 
+- Clock-gated command lead: the client's tick projection is pulled back by each snapshot to what
+  the snapshot's age allows and stops 1 s past the last server evidence, and the round-trip lead
+  stops at 500 ms, so a slowed server cannot leave a command waiting seconds ahead.
 - Level-entry ticks: the server compiles its code fully optimized at first use, enters every
   floor once on a throwaway run at startup on a background thread, and the live warp no longer
   re-checks state that cannot have changed between prepare and commit. On a Release server at

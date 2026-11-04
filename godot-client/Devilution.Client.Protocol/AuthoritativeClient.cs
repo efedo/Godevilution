@@ -69,6 +69,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     // interval may intentionally be much longer than startup calibration.
     private static readonly TimeSpan TimingCalibrationRetryInterval = TimeSpan.FromMilliseconds(250);
     private const int MaximumCalibrationProbeAttempts = 3;
+    // Ticks ahead wait longer on a slowed server, and the client polls nothing while a command
+    // is pending, so the lead stays short; a live host accepts a command that arrives later.
+    public const double MaximumClockGatedLeadMilliseconds = 500;
 
     public string SessionToken { get; private set; } = string.Empty;
 
@@ -126,7 +129,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public ulong SuggestedCommandTick(ulong observedTick)
     {
         var leadMilliseconds = IsClockGatedCommandScheduling
-            ? Volatile.Read(ref roundTripMilliseconds)
+            ? Math.Min(Volatile.Read(ref roundTripMilliseconds), MaximumClockGatedLeadMilliseconds)
             : RetryTimeout.TotalMilliseconds;
         var leadTicks = Math.Max(1, (int)Math.Ceiling(
             leadMilliseconds / 1000 * ServerTickRateHz) + 1);
@@ -995,6 +998,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 commandClock.ObserveMonotonic(envelope.Snapshot.Tick, ServerTickRateHz);
             else
                 commandClock.Observe(envelope.Snapshot.Tick);
+        } else if (IsClockGatedCommandScheduling) {
+            commandClock.ObserveServerMessage();
         }
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
             try {

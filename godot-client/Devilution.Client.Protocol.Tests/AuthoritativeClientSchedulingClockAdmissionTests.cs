@@ -322,7 +322,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
 
         var clock = new ControlledAuthoritativeClock();
         var adapter = new AdmissionTestAdapter(holdSecondSnapshot: true);
-        var commandServer = new AuthoritativeCommandServer(adapter);
+        var commandServer = new AuthoritativeCommandServer(adapter, CommandAdmissionPolicy.ForLiveHost(20));
         var identityHash = new string('c', 64);
         var identity = new ProtocolServerIdentity(
             "first-dispatch-snapshot-fallback-test",
@@ -418,19 +418,15 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             Assert.Equal(0, adapter.ExecutedCommandCount);
 
             adapter.ReleaseSecondSnapshot();
-            var snapshot = await WaitForSnapshotAsync(client, model, timeout.Token);
-            Assert.Equal(100UL, snapshot.Tick);
-            await WaitUntilAsync(
-                () => server.PendingCommandCount == 1,
-                timeout.Token,
-                "the host to queue the command sent after snapshot fallback");
-            clock.Set(dispatch.RequestedTick);
+            // After two silent seconds the projection stops at one second past the sample, so the
+            // command runs late on the host's current tick instead of waiting for a far-future one.
+            Assert.InRange(dispatch.RequestedTick, 101UL, 131UL);
             var execution = await adapter.CommandExecuted.Task.WaitAsync(timeout.Token);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence, timeout.Token);
             Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
             Assert.Equal(CommandRejectReason.Unspecified, acknowledgement.RejectReason);
-            Assert.Equal(dispatch.RequestedTick, acknowledgement.AppliedTick);
-            Assert.Equal(dispatch.RequestedTick, execution.AppliedTick);
+            Assert.True(acknowledgement.AppliedTick >= dispatch.RequestedTick);
+            Assert.Equal(acknowledgement.AppliedTick, execution.AppliedTick);
             Assert.Equal(sequence, execution.ClientSequence);
             Assert.Equal(1, adapter.ExecutedCommandCount);
         } finally {

@@ -82,6 +82,42 @@ public sealed class DeferredCommandTimingTests
     }
 
     [Fact]
+    public async Task ALoneSlowProbeCannotScheduleACommandSecondsAhead()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var cancellationToken = timeout.Token;
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(cancellationToken);
+            await using var stream = connection.GetStream();
+            await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100, cancellationToken: cancellationToken);
+            var readinessProbe = (await ReadEnvelopeAsync(stream, cancellationToken)).SnapshotRequest;
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+            }, cancellationToken);
+            var command = Assert.Single((await ReadEnvelopeAsync(stream, cancellationToken)).CommandBatch.Commands);
+            await WriteEnvelopeAsync(stream, new Envelope { CommandAck = Accepted(command.ClientSequence) }, cancellationToken);
+            return command;
+        }, cancellationToken);
+
+        await using var client = new AuthoritativeClient(Options(listener));
+        await client.ConnectAsync(cancellationToken);
+        client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
+        while (!serverTask.IsCompleted) {
+            await client.PollAsync(cancellationToken);
+            await Task.Delay(10, cancellationToken);
+        }
+
+        var sent = await serverTask;
+        Assert.True(client.RoundTripMilliseconds >= 1000);
+        // At 20 Hz: one second of projection (20 ticks) and the 500 ms lead limit (10) plus one.
+        Assert.InRange(sent.RequestedTick, 101UL, 131UL);
+    }
+
+    [Fact]
     public async Task FutureAcknowledgementDoesNotCauseRoutinePrematureRetry()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);

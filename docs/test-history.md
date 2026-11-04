@@ -9,6 +9,16 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-03 — Clock-gated command lead bound
+
+200 Hz `-TargetDepth 5 -FirstFightDepth 5` journey and resume: Debug 3 of 3, Release 2 of 2, no
+TooLate in any receipt. Journey leads are unchanged, p50 36-43 and largest 68-81 ticks against
+76-81 in earlier journeys; these runs held clock share 0.96-0.98, so they did not reproduce the
+slowed fight, which only tests cover. Client suite 1266 passed, 18 skipped. Across the two Release
+resumes NotAllowed receipts rose to 9 and 15 (1-5 before); they carry the normal lead of about 21
+ticks and fall in fight stretches, as before the fix, so they look like longer fights. The trace
+does not record command intents, so this is not proven.
+
 ### 2026-11-03 — Level-entry ticks
 
 Slowest tick per first entry, `-TargetDepth 5 -FirstFightDepth 5` at 200 Hz on a Release server
@@ -19,9 +29,9 @@ Debug. Debug entries stay slow (one run: L2 435 ms, L3 549 ms).
 
 Journeys: Release 1 of 1 on the final code, and 2 of 2 with temporary timers. Debug 3 of 3 on
 the final code; one earlier Debug run with temporary
-timers failed on L3 when a heal was refused: a 4.4 s round trip made the client schedule it 884
-ticks ahead, and it ran too late. The lead logic is unchanged here and the rate of this failure
-is unmeasured. Fight-tick cost of losing tiered PGO could not be told from noise on this machine.
+timers failed on L3 when a heal was refused: the client scheduled it 884 ticks ahead, and it ran
+too late. Probe samples stop at 2 s, so most of that was the clock projection outrunning a slowed
+server, since bounded; the rate of this failure is unmeasured. Fight-tick cost of losing tiered PGO could not be told from noise on this machine.
 
 Server suite 1896 passed (17 skipped), Diablo suite 3853 passed. The native progression tests
 pass with the local all-class profile (19 of 19). `AuthoritativeCatacombsFloorAdmissionTests`
