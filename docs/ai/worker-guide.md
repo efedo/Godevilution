@@ -6,6 +6,16 @@ Read this file, [AGENTS.md](../../AGENTS.md) and the current phase of the
 (`test-history.md`, `CHANGELOG.md`, `replay-fixtures.md`, the architecture
 document) end to end; search them for the specific contract you need.
 
+## Roles
+
+Claude Opus 5.5 is the planner: it selects batches, writes and acknowledges
+batch contracts, and revises the plan. Astra 5 at medium effort is the
+supervisor: it assigns the worker pool, integrates, verifies, documents and
+commits. Two Sol 5.6 implementers and one independent Sol 5.6 reviewer, all at
+extra-high effort, do the assignments they are given and never spawn helpers.
+The full policy is the [worker delegation](../completion-plan.md#worker-delegation)
+section of the completion plan.
+
 ## The goal
 
 Ship a playable game: a player launches the normal client, creates a character,
@@ -92,6 +102,10 @@ State each item in one or two lines:
 
 ## Verification
 
+- **Focused checks while working.** Implementers run only the tests that
+  cover the code they changed. The supervisor runs the broad suites once on the
+  integrated batch before committing. Do not rerun a check that already passed
+  on unchanged code.
 - **Smallest sufficient evidence.** Unit tests for new logic, the existing
   oracle or replay comparisons the change could affect, and one gameplay
   demonstration through the normal launch. Do not add per-feature native trace
@@ -109,6 +123,8 @@ State each item in one or two lines:
   heading checks are acceptable.
 - **Explicit tests** (`[Fact(Explicit = true)]`) are for local-only evidence.
   Anything CI can run must not be explicit.
+- **Note, do not fix, what is out of scope.** A defect or cleanup outside the
+  batch contract goes in the handoff as one line; do not fix it in passing.
 - **Report truthfully.** If a check fails or was not run, say so with the
   output. Never narrow a claim to make it pass; fix the defect or report it.
 
@@ -149,6 +165,8 @@ Stop work and report to the planner instead of continuing when:
 - a native behavior seems to contradict the current C# design;
 - you are about to add a new profile, launcher, registry, oracle family or
   documentation file;
+- the batch would need a toolchain change (Godot, .NET SDK, CMake/vcpkg or
+  package versions) that its contract does not name;
 - CI turns red for a reason outside the batch.
 
 ## Handoff format

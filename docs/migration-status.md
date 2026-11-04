@@ -196,11 +196,12 @@ implementation and inactive native Gold changes beyond the previously approved
 correction. Do not broaden them to ordinary gameplay work. If a conflict arises,
 identify the exact human instruction rather than creating a new restriction.
 
-The [worker policy](completion-plan.md#worker-delegation) specifies two GPT-6.1
-Sol/medium implementers and one separate GPT-6.1 Sol/xhigh independent reviewer. Create
-one reusable pool in a clean session; do not assume old chat handles exist there.
-No model substitution, replacement per package or nested delegation. Root owns
-integration, necessary verification and selective cohesive commits.
+The [worker policy](completion-plan.md#worker-delegation) has Claude Opus 5.5 plan and
+Astra 5/medium supervise two Sol 5.6/xhigh implementers and one separate Sol 5.6/xhigh
+independent reviewer. Create one reusable pool in a clean session; do not assume old
+chat handles exist there. No model substitution, replacement per package or nested
+delegation. The supervisor owns integration, necessary verification and selective
+cohesive commits.
 
 ## Useful entry points
 
