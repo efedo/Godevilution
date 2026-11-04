@@ -22,10 +22,10 @@ embedded Lua nor the C++/SDL runtime.
 
 Execute this goal through the milestone dependencies and acceptance gates in
 this plan, with accepted verification summarized in `test-history.md`. Claude
-Opus 5.5 plans; Astra 5 at medium reasoning effort supervises integration,
-verification, documentation, and cohesive commits. Use a fixed pool of two Sol
-5.6 implementation workers and one separate, independent Sol 5.6 reviewer, all
-at extra-high effort. Reuse these same workers for successive bounded packages until completion,
+Opus 5.5 plans and orchestrates, and owns final verification, documentation,
+and cohesive commits. Use a fixed pool of two Sol 6.1 implementation workers and
+one separate, independent Sol 6.1 reviewer, all at `max` reasoning effort. Reuse
+these same workers for successive bounded packages until completion,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
 
@@ -938,57 +938,63 @@ universal product gates.
 ### Worker delegation
 
 - Each role belongs to one runtime:
-  - **Planner, Claude Opus 5.5:** batch selection, batch contracts, queue
-    refinement, and plan revisions when implementation finds a gap.
-  - **Supervisor, Astra 5 at `medium` effort:** creates and assigns the worker
-    pool, routes review findings, integrates, runs final verification, updates
+  - **Orchestrator, Claude Opus 5.5:** batch selection, batch contracts, queue
+    refinement, plan revisions, the worker pool, assignments, sequencing; it
+    routes review findings, integrates, runs final verification, updates
     documentation, commits, and hands back.
-  - **Workers, Sol 5.6 at `xhigh` effort:** two implementation workers and one
-    separate, independent reviewer.
+  - **Workers, Sol 6.1 at `max` reasoning effort:** two implementation workers
+    and one separate, independent reviewer.
   - **The user:** approves plans and accepts finished work.
 
-  This supersedes all earlier worker models (including GPT-6.1 Sol and GPT-6
-  Luna), effort settings, and pool sizes. Do not silently substitute another
-  model or effort setting; report unavailability and obtain direction.
+  This supersedes all earlier worker models, supervisors, effort settings, and
+  pool sizes. Do not silently substitute another model or effort setting; report
+  unavailability and obtain direction.
+- Run Sol through the Codex CLI as background processes, using the newest
+  `%LOCALAPPDATA%\OpenAI\Codex\bin\*\codex.exe`. Start with
+  `codex exec -m gpt-6.1-sol -c model_reasoning_effort=max -s <sandbox> -C <repo> --json -o <file> "<assignment>"`
+  and record the `thread_id` from the first JSON line in the ignored
+  `.local/sol-pool.json`. Continue with
+  `codex exec resume <thread_id> -m gpt-6.1-sol -c model_reasoning_effort=max -c sandbox_mode=<sandbox> --json -o <file> "<assignment>"`;
+  `resume` has no `-s`, and its settings are passed each time. The reviewer uses
+  `read-only`, implementers `workspace-write`. Never bypass approvals or the
+  sandbox; anything it refuses comes back as a report.
 - If implementation shows the batch contract or plan is wrong or incomplete,
-  the supervisor stops that part of the work and returns the question to the
-  planner; it does not rewrite the plan itself.
+  the orchestrator stops that part of the work, revises the plan within what the
+  user approved, and takes anything beyond that back to the user.
 - Keep review independent: the reviewer is its own worker, never implements
   packages, and never reviews work it wrote. Implementers do not review each
   other's packages in place of the reviewer.
-- The supervisor creates the pool once and reuses the same three workers
+- The orchestrator creates the pool once and reuses the same three workers
   through follow-up assignments until the goal is complete. Do not spawn a new
   worker per package or let workers spawn additional agents. At most three child workers may run,
   subject to the runtime's actual thread and concurrency limits. Replace an
   unavailable worker only with explicit human approval; never bypass a limit
   with extra chats or alternate orchestration.
-- The planner selects milestone-aligned work packages and supplies scope,
-  file/contract ownership, native references, and acceptance criteria. The
-  supervisor owns assignment, integration, final verification, documentation,
-  and commits.
+- The orchestrator selects milestone-aligned work packages and supplies scope,
+  file/contract ownership, native references, and acceptance criteria.
 - Delegate substantial implementation packages that can proceed independently
   alongside useful work. Before each assignment, refresh the worker's bounded
   scope, current checkpoint, file/contract ownership, prerequisites, native
   references, and acceptance criteria. Require a handoff before reassigning a
   worker. Assign disjoint files/contracts; serialize shared simulation, protocol,
   fixture-hash, and status edits.
-- Have the same independent Sol 5.6 reviewer at extra-high effort critically
+- Have the same independent Sol 6.1 reviewer at `max` reasoning effort critically
   review each substantial package. The reviewer inspects the actual diff, native
   behavior, test evidence, compatibility, and plan acceptance criteria, and identifies
   missing branches or regressions instead of relying on the implementer's
   summary. Reviews do not silently expand or rewrite the implementation scope.
 - Implementation workers report changed files, checks performed and results,
-  and unresolved gaps. The supervisor sends review findings back to the same
+  and unresolved gaps. The orchestrator sends review findings back to the same
   implementer, verifies the integrated result, and includes code, tests, and
   relevant documentation in a cohesive commit. Review is not a substitute for
   execution evidence.
 - Implementers run only the checks that cover the code they changed. The
-  supervisor runs the broad suites once on the integrated result before
+  orchestrator runs the broad suites once on the integrated result before
   committing. Nobody reruns a passing check on unchanged code.
 - Handle small or tightly coupled tasks locally when delegation would mainly
-  duplicate work or add coordination overhead. Missing worker availability does
-  not prevent independent local progress, but local self-review does not count
-  as the required separate-worker review for a delegated package.
+  duplicate work or add coordination overhead. These changes still go to the
+  reviewer: local self-review does not count as review. Missing worker
+  availability does not prevent independent local progress.
 - Every worker and reviewer follows the [worker guide](ai/worker-guide.md):
   batch contracts, porting method, verification, documentation budget, stop
   conditions, handoff format and reviewer checklist.

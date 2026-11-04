@@ -199,11 +199,11 @@ correction. Do not broaden them to ordinary gameplay work. If a conflict arises,
 identify the exact human instruction rather than creating a new restriction.
 
 The [worker policy](completion-plan.md#worker-delegation) has Claude Opus 5.5 plan and
-Astra 5/medium supervise two Sol 5.6/xhigh implementers and one separate Sol 5.6/xhigh
-independent reviewer. Create one reusable pool in a clean session; do not assume old
-chat handles exist there. No model substitution, replacement per package or nested
-delegation. The supervisor owns integration, necessary verification and selective
-cohesive commits.
+orchestrate two Sol 6.1/max implementers and one separate Sol 6.1/max independent
+reviewer, run through the Codex CLI. Create the pool once and reuse it through the
+thread ids in `.local/sol-pool.json`. No model substitution, replacement per package or
+nested delegation. The orchestrator owns final verification and selective cohesive
+commits.
 
 ## Useful entry points
 

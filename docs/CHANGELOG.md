@@ -10,6 +10,8 @@ contracts stay in their existing guides.
 - Debug command logs (P3, P4): Debug hosts and clients log commands, receipts and checkpoints on a
   background thread. `--replay-command-log` reproduces a later checkpoint byte for byte and
   `--compare-client-command-log` checks a client log against the host's.
+- Worker policy: Opus 5.5 plans and orchestrates a reusable pool of two Sol 6.1 implementers and
+  one Sol 6.1 reviewer at `max` reasoning, run through the Codex CLI.
 
 ## 2026-11-03
 

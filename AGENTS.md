@@ -11,7 +11,7 @@ To ensure that your contributions are effective and align with the project's goa
 
 ## Planning
 - Before starting work, read docs/ai/worker-guide.md and follow it; take batches only from the current work-plan queue.
-- Claude Opus 5.5 plans; Astra 5 at medium effort supervises a fixed pool of two Sol 5.6 implementers and one Sol 5.6 reviewer at extra-high effort. See the worker delegation section of docs/completion-plan.md.
+- Claude Opus 5.5 plans and orchestrates a fixed, reusable pool of two Sol 6.1 implementers and one Sol 6.1 reviewer at `max` reasoning, run through the Codex CLI. See the worker delegation section of docs/completion-plan.md.
 - For each task, provide a clear and concise plan of action before writing any code.
 - You may create temporary files to assist with planning under docs/ai, which should be deleted after the task is completed.
 

@@ -59,7 +59,7 @@ Catacombs-only parity work stays frozen until Phase 2 reaches that family.
 ### Phase 1: Playable native Cathedral
 
 Work this queue in order, one batch at a time. Refine details in each batch
-contract; do not add, drop or reorder batches without the planner.
+contract; do not add, drop or reorder batches without the orchestrator.
 
 | Batch | Player-visible outcome | Exit | State |
 | --- | --- | --- | --- |

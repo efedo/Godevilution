@@ -43,9 +43,10 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   user instruction. Git history holds past versions; do not create backup
   documentation or QA dumps.
 - Use the [fixed worker policy](../completion-plan.md#worker-delegation).
-  Claude Opus 5.5 plans and selects batches; Astra 5 at medium effort
-  supervises the Sol 5.6 workers and owns integration, verification, concise
-  documentation and cohesive commits. Every worker and reviewer follows the
+  Claude Opus 5.5 plans, selects batches, orchestrates the Sol 6.1 workers and
+  owns final verification, concise documentation and cohesive commits. The
+  pool's thread ids are in the ignored `.local/sol-pool.json`. Every worker and
+  reviewer follows the
   [worker guide](worker-guide.md).
 
 ## Batch P2 Background checkpoint writes (done)

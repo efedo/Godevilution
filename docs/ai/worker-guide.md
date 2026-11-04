@@ -8,11 +8,11 @@ document) end to end; search them for the specific contract you need.
 
 ## Roles
 
-Claude Opus 5.5 is the planner: it selects batches, writes and acknowledges
-batch contracts, and revises the plan. Astra 5 at medium effort is the
-supervisor: it assigns the worker pool, integrates, verifies, documents and
-commits. Two Sol 5.6 implementers and one independent Sol 5.6 reviewer, all at
-extra-high effort, do the assignments they are given and never spawn helpers.
+Claude Opus 5.5 is the orchestrator: it selects batches, writes and acknowledges
+batch contracts, revises the plan, assigns the worker pool, routes review
+findings, runs final verification, documents and commits. Two Sol 6.1
+implementers and one independent Sol 6.1 reviewer, all at `max` reasoning, do
+the assignments they are given and never spawn helpers.
 The full policy is the [worker delegation](../completion-plan.md#worker-delegation)
 section of the completion plan.
 
@@ -55,7 +55,7 @@ Avoid repeating these. Each item is a real pattern from this repository's histor
   [work plan](../work-plan.md). Do not invent batches, reorder the queue, or
   start a later phase. If the queue is empty or blocked, stop and report.
 - Before writing code, write the batch contract below into your handoff (not a
-  new file) and get it acknowledged by the planner.
+  new file) and get it acknowledged by the orchestrator.
 - Frozen until the work plan reopens them: new Catacombs-only parity work,
   new opt-in profiles or launchers, new acceptance scenarios that are not part
   of the batch exit, and Hellfire.
@@ -103,7 +103,7 @@ State each item in one or two lines:
 ## Verification
 
 - **Focused checks while working.** Implementers run only the tests that
-  cover the code they changed. The supervisor runs the broad suites once on the
+  cover the code they changed. The orchestrator runs the broad suites once on the
   integrated batch before committing. Do not rerun a check that already passed
   on unchanged code.
 - **Smallest sufficient evidence.** Unit tests for new logic, the existing
@@ -156,7 +156,7 @@ summaries. Update guides only when a command or contract changes.
 
 ## Stop and escalate
 
-Stop work and report to the planner instead of continuing when:
+Stop work and report to the orchestrator instead of continuing when:
 
 - the batch has run past its size estimate by half with no demonstrable
   progress on its player-visible outcome;

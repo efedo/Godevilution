@@ -45,10 +45,9 @@ public sealed class ProjectDocumentationConsistencyTests
         var policyEnd = plan.IndexOf("## Verification policy", policyStart, StringComparison.Ordinal);
         Assert.True(policyEnd > policyStart);
         var policy = plan[policyStart..policyEnd];
-        Assert.Contains("**Planner, Claude Opus 5.5:**", policy, StringComparison.Ordinal);
-        Assert.Contains("**Supervisor, Astra 5 at `medium` effort:**", policy, StringComparison.Ordinal);
-        Assert.Contains("**Workers, Sol 5.6 at `xhigh` effort:** two implementation workers and one", policy, StringComparison.Ordinal);
-        Assert.Contains("separate, independent reviewer", policy, StringComparison.Ordinal);
+        Assert.Contains("**Orchestrator, Claude Opus 5.5:**", policy, StringComparison.Ordinal);
+        Assert.Contains("**Workers, Sol 6.1 at `max` reasoning effort:** two implementation workers", policy, StringComparison.Ordinal);
+        Assert.Contains("separate, independent reviewer", policy.ReplaceLineEndings(" ").Replace("  ", " "), StringComparison.Ordinal);
         Assert.Contains("never reviews work it wrote", policy, StringComparison.Ordinal);
         Assert.Contains("reuses the same three workers", policy, StringComparison.Ordinal);
         Assert.Contains("worker per package or let workers spawn additional agents", policy, StringComparison.Ordinal);
@@ -57,7 +56,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("routes review findings", policy, StringComparison.Ordinal);
         Assert.DoesNotContain("gpt-5.6-luna", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("`gpt-6-luna`", plan, StringComparison.Ordinal);
-        Assert.DoesNotContain("`gpt-6.1-sol`", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("Allow up to five independent workers", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("reviewer with `medium` reasoning effort", policy, StringComparison.Ordinal);
         Assert.DoesNotContain("reviewer at medium effort", policy, StringComparison.Ordinal);
