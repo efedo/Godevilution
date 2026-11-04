@@ -82,6 +82,21 @@ public sealed class NativeClassSelectingGameHostAdapterTests
         Assert.Throws<InvalidOperationException>(() => fresh.CommitCohortRestore(single.PrepareCohortRestore(saved)));
     }
 
+    [Fact]
+    public void DeferredCaptureKeepsItsClassRunAfterSelectionAndLiveAdvance()
+    {
+        var (adapter, _) = Create();
+        var expected = adapter.CaptureCohortState();
+        var encode = adapter.CaptureCohortForDeferredEncoding();
+        adapter.InitializeParticipant("rogue", new AuthoritativeParticipantSelection(1) { EntityId = PlayerEntityId });
+        adapter.AdvanceTo(9);
+        var actual = encode();
+        Assert.Equal(expected.SerializedState, actual.SerializedState);
+        Assert.Equal(expected.Tick, actual.Tick);
+        Assert.Empty(actual.Participants);
+        Assert.NotEqual(actual.SerializedState, adapter.CaptureCohortState().SerializedState);
+    }
+
     private static string FindRepositoryRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)

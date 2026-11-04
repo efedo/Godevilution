@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Devilution.Data;
 using Devilution.Engine;
+using Devilution.Diablo;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
@@ -84,13 +85,15 @@ public sealed class CohortPublicationCostTests
                 + $"materialize {materialize}");
             Assert.True(Median(roundTrips) < 125, $"Median poll round trip {Median(roundTrips):F1} ms.");
         } finally {
-            if (server is not null)
-                await server.DisposeAsync();
+            if (server is not null) {
+                try { await server.DisposeAsync(); }
+                finally { server.CommandLog?.Dispose(); }
+            }
             try { Directory.Delete(ownedRoot, recursive: true); } catch (IOException) { }
         }
     }
 
-    /** P2 evidence: lock hold per checkpoint against its off-lock write on the saved cohort. */
+    /** Timed capture cost and deferred byte parity on the saved native cohort. */
     [Fact(Explicit = true)]
     public async Task SavedNativeCohortCheckpointCapturesUnderTheLockAndWritesOffIt()
     {
@@ -106,10 +109,15 @@ public sealed class CohortPublicationCostTests
         CopyDirectory(Path.Combine(sessionRoot, "save"), ownedRoot);
         var performance = new HostPerformanceRecorder();
         AuthoritativeTcpServer? server = null;
+        AuthoritativeCommandServer? commands = null;
+        LeasedAuthoritativeGameHostAdapter? adapter = null;
         try {
             server = CreateHost(profileRoot, ownedRoot,
                 File.ReadAllText(Path.Combine(repositoryRoot, "tools", "native-test-heroes", "warrior-l8.json")),
-                performance, TimeSpan.FromSeconds(1));
+                performance, TimeSpan.FromSeconds(1), (capturedCommands, capturedAdapter) => {
+                    commands = capturedCommands;
+                    adapter = capturedAdapter;
+                });
             server.Start();
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
             timeout.CancelAfter(TimeSpan.FromMinutes(3));
@@ -130,6 +138,15 @@ public sealed class CohortPublicationCostTests
             for (var index = 0; index < 3; index++)
                 await PollAsync(stream, timeout.Token);
 
+            var captured = commands!.WithSynchronizedState(() => (
+                Expected: adapter!.CaptureCohortState(),
+                Encode: adapter!.CaptureCohortForDeferredEncoding()));
+            while (commands.CurrentTick <= captured.Expected.Tick)
+                await PollAsync(stream, timeout.Token);
+            var deferred = await Task.Run(captured.Encode, timeout.Token);
+            Assert.Equal(captured.Expected.SerializedState, deferred.SerializedState);
+            Assert.Equal(captured.Expected.Participants, deferred.Participants);
+
             performance.Start();
             for (var index = 0; index < 60; index++) {
                 await PollAsync(stream, timeout.Token);
@@ -142,13 +159,58 @@ public sealed class CohortPublicationCostTests
             var report = $"cohort {cohortBytes} bytes; capture {capture}; write {write}";
             TestContext.Current.TestOutputHelper?.WriteLine(report);
             Console.WriteLine(report);
-            Assert.True(capture.Samples >= 5, report);
-            Assert.True(write.Samples >= 5, report);
+            Assert.True(capture.Samples >= 10, report);
+            Assert.True(write.Samples >= 10, report);
+            Assert.True(capture.Maximum < 1000.0 / 60, report);
+            Assert.NotNull(server.CommandLog);
+            Assert.True(Directory.GetFiles(Path.Combine(ownedRoot, "command-log"), "checkpoint-*.json").Length >= 10,
+                "The attached command log must actually retain the measured checkpoints.");
         } finally {
-            if (server is not null)
-                await server.DisposeAsync();
+            if (server is not null) {
+                try { await server.DisposeAsync(); }
+                finally { server.CommandLog?.Dispose(); }
+            }
             try { Directory.Delete(ownedRoot, recursive: true); } catch (IOException) { }
         }
+    }
+
+    [Fact(Explicit = true)]
+    public void SavedNativeCohortDeferredCaptureRetainsDoorBytesAndDefersValidationFailure()
+    {
+        var profileRoot = Environment.GetEnvironmentVariable("GODEVILUTION_COHORT_COST_PROFILE_ROOT");
+        var sessionRoot = Environment.GetEnvironmentVariable("GODEVILUTION_COHORT_COST_SESSION");
+        if (string.IsNullOrWhiteSpace(profileRoot) || string.IsNullOrWhiteSpace(sessionRoot)) {
+            Assert.Skip("Set GODEVILUTION_COHORT_COST_PROFILE_ROOT and GODEVILUTION_COHORT_COST_SESSION.");
+            return;
+        }
+        var document = AuthoritativeCohortStore.DeserializeDocument(File.ReadAllBytes(
+            Path.Combine(sessionRoot, "save", AuthoritativeCohortStore.CheckpointFileName)));
+        var codec = new DiabloCohortCodec();
+        var state = codec.Deserialize(document.SerializedModuleState);
+        var packs = new[] { "content", "native_cathedral_population", "native_cathedral_runtime",
+            "native_town_geometry", "native_catacombs_population" }
+            .Select(directory => ContentPackLoader.LoadManifestDirectory(Path.Combine(profileRoot, directory))).ToArray();
+        var content = ComposedContent.Compose(new ContentManifest(packs[0].Id, packs[0].Version, packs));
+        var activation = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap.ActivateNativeTownClass(
+            content, state.Participants[0].Player.CharacterClassId,
+            state.Configuration.InitialRandomSeed, state.Configuration.GameMode);
+        var candidate = activation.CohortCandidateFactory!(state);
+        var simulation = candidate.Simulation;
+        var runtime = candidate.CreateRuntime();
+        var expected = codec.Serialize(simulation.CaptureCohortState(runtime));
+        var captured = simulation.CaptureCohortForDeferredEncoding(runtime, out var validate);
+        var door = captured.NativeCatacombs!.Doors.First(door => door.Status == AuthoritativeCatacombsDoorStatus.Closed);
+        Assert.True(simulation.WorldState.TryOperateNativeCatacombsDoor(door.EntityId, []));
+        validate();
+        Assert.Equal(expected, codec.Serialize(captured));
+        Assert.NotEqual(expected, codec.Serialize(simulation.CaptureCohortState(runtime)));
+
+        // A malformed live projection is captured consistently and rejected on the writer.
+        var value = simulation.WorldState.Objects[door.EntityId];
+        value.AnimationFrame++;
+        Assert.Throws<InvalidDataException>(() => simulation.CaptureCohortState(runtime));
+        _ = simulation.CaptureCohortForDeferredEncoding(runtime, out var invalidValidation);
+        Assert.Throws<InvalidDataException>(invalidValidation);
     }
 
     private static AuthoritativeTcpServer CreateHost(
@@ -156,7 +218,8 @@ public sealed class CohortPublicationCostTests
         string saveRoot,
         string testParticipant,
         HostPerformanceRecorder performance,
-        TimeSpan? checkpointInterval = null)
+        TimeSpan? checkpointInterval = null,
+        Action<AuthoritativeCommandServer, LeasedAuthoritativeGameHostAdapter>? observeAdapter = null)
     {
         using var metadata = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(profileRoot, "cathedral-native-all-class-town-playtest.json")));
@@ -185,14 +248,19 @@ public sealed class CohortPublicationCostTests
         var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
         var identity = ProtocolServerIdentity.FromRuleset(
             "cohort-cost-test", "0.2.0", 20, runtime.Active.Identity, AuthoritativeGameMode.SinglePlayer);
+        var commandLog = new HostCommandLog(Path.Combine(saveRoot, "command-log"), [], seed,
+            failure => Console.Error.WriteLine($"Command log failed: {failure}"));
+        var commands = new AuthoritativeCommandServer(adapter) { CommandLog = commandLog };
+        observeAdapter?.Invoke(commands, adapter);
         return new AuthoritativeTcpServer(
-            new AuthoritativeCommandServer(adapter),
+            commands,
             new ProtocolHandshake(identity),
             clock,
             adapter,
             port: 0,
             address: IPAddress.Loopback) {
             CohortStore = store,
+            CommandLog = commandLog,
             UseClockGatedCommandScheduling = true,
             PerformanceRecorder = performance,
             // The production host's default.

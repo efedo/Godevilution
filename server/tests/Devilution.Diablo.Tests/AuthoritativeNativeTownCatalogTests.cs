@@ -270,6 +270,38 @@ public sealed class AuthoritativeNativeTownCatalogTests
                 StringComparison.Ordinal))));
     }
 
+    [Fact]
+    public void DeferredTownCaptureCopiesHistoryAndSharesOnlyImmutableGeometry()
+    {
+        var catalog = LoadCatalog();
+        var history = new List<AuthoritativeNativeTownMutation> { AuthoritativeNativeTownMutation.OpenHive };
+        var geometry = Apply(catalog.CreateInitialGeometry(), history);
+        var expected = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(catalog.Capture(geometry, history));
+        var validations = new List<Action>();
+        var captured = catalog.CaptureForDeferredValidation(geometry, history, validations);
+        history.Add(AuthoritativeNativeTownMutation.CloseHive);
+        _ = Apply(geometry, [AuthoritativeNativeTownMutation.CloseHive]);
+        Assert.Same(geometry.NativePieceLayer, captured.NativePieceLayer);
+        Assert.NotSame(history, captured.Mutations);
+        Assert.Throws<NotSupportedException>(() => ((IList<ushort>)captured.NativePieceLayer)[0] = 1);
+        foreach (var validate in validations)
+            validate();
+        Assert.Equal(expected, System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(captured));
+    }
+
+    [Fact]
+    public void DeferredTownCaptureRejectsBadReplayHistoryWhenValidationRuns()
+    {
+        var catalog = LoadCatalog();
+        var geometry = catalog.CreateInitialGeometry();
+        // Valid mutation values, but the captured geometry has not applied this history.
+        var invalid = new[] { AuthoritativeNativeTownMutation.OpenHive };
+        Assert.Throws<InvalidDataException>(() => catalog.Capture(geometry, invalid));
+        var validations = new List<Action>();
+        _ = catalog.CaptureForDeferredValidation(geometry, invalid, validations);
+        Assert.Throws<InvalidDataException>(() => Assert.Single(validations)());
+    }
+
     internal static AuthoritativeNativeTownCatalog LoadCatalog()
         => AuthoritativeNativeTownCatalog.Load(CreateContent());
 

@@ -150,12 +150,14 @@ public sealed partial class ClockGatedCohortSnapshotPollTests
             Assert.Equal(FixedTick + 6, (await PollSnapshotAsync(stream, timeout.Token)).Tick);
             Assert.Equal(1, write.Writes);
 
+            // Publish the next live tick before releasing the writer: the background
+            // scheduler may settle and retry immediately after that release.
+            clock.Set(FixedTick + 7);
             write.Release();
             await WaitUntilAsync(() => store.Load()!.Generation > before.Generation, timeout.Token);
             Assert.True(store.Load()!.Tick >= FixedTick + 3);
 
-            // The skipped checkpoint follows on the next tick, continuing the chain.
-            clock.Set(FixedTick + 7);
+            // The skipped checkpoint continues the generation chain.
             await WaitUntilAsync(() => store.Load()!.Tick >= FixedTick + 7, timeout.Token);
             Assert.Null(server.LastClientFailure);
             var metrics = performance.Stop().Metrics;

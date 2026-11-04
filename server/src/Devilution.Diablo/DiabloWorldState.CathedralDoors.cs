@@ -157,8 +157,11 @@ public sealed partial class DiabloWorldState
     }
 
     public DiabloCathedralDoorCheckpoint? CaptureCathedralDoors()
+        => CaptureCathedralDoors(null);
+
+    internal DiabloCathedralDoorCheckpoint? CaptureCathedralDoors(List<Action>? deferredValidations)
     {
-        RequireSpecialLayerPersistenceCoverage();
+        RequireSpecialLayerPersistenceCoverage(deferredValidations);
         if (cathedralDoorCatalog is null)
             return null;
         var checkpoint = new DiabloCathedralDoorCheckpoint(
@@ -174,7 +177,10 @@ public sealed partial class DiabloWorldState
                     .OrderBy(value => value.Value.Door.PositionY).ThenBy(value => value.Value.Door.PositionX)
                     .Select(value => CaptureDoor(value.Key, value.Value.LevelId, value.Value.Door)).ToArray()))
                 .ToArray());
-        checkpoint.ValidateShape();
+        if (deferredValidations is null)
+            checkpoint.ValidateShape();
+        else
+            deferredValidations.Add(checkpoint.ValidateShape);
         return checkpoint;
     }
 
@@ -183,8 +189,31 @@ public sealed partial class DiabloWorldState
             .ThenBy(value => value.Value.Door.PositionY).ThenBy(value => value.Value.Door.PositionX)
             .Select(value => CaptureDoor(value.Key, value.Value.LevelId, value.Value.Door)).ToArray();
 
-    private void RequireSpecialLayerPersistenceCoverage()
+    private void RequireSpecialLayerPersistenceCoverage(List<Action>? deferredValidations = null)
     {
+        if (deferredValidations is not null) {
+            var catalog = nativeTownCatalog;
+            var town = nativeTownGeometry;
+            // Levels are immutable. Capture coverage and owners, without retaining the world.
+            var levels = (World?.Levels ?? []).Concat(projectedLevels.Values).Select(level => (
+                Level: level,
+                Cathedral: cathedralDoorCatalog?.Definitions.Any(value => value.LevelId == level.LevelId) == true,
+                Town: catalog is not null && catalog.LevelId == level.LevelId,
+                Catacombs: FindLevelState(level.LevelId)?.CatacombsDoorOwner is not null)).ToArray();
+            deferredValidations.Add(() => {
+                if (levels.Any(entry => entry.Level.StaticObjectBlockedCells.Count != 0))
+                    throw new InvalidDataException("Live static-object collision must not be stored as canonical geometry.");
+                foreach (var entry in levels) {
+                    if (entry.Level.NativeSpecialLayer.Count == 0 || entry.Cathedral)
+                        continue;
+                    if (entry.Town)
+                        RequireNativeTownLevel(catalog!, town!, entry.Level, false);
+                    else if (!entry.Catacombs)
+                        throw new InvalidDataException("Special-layer persistence requires a mapped versioned capability.");
+                }
+            });
+            return;
+        }
         if ((World?.Levels ?? []).Concat(projectedLevels.Values).Any(level => level.StaticObjectBlockedCells.Count != 0))
             throw new InvalidDataException("Live static-object collision must not be stored as canonical geometry.");
         if ((World?.Levels ?? []).Concat(projectedLevels.Values).Any(level =>

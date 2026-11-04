@@ -144,20 +144,37 @@ public sealed partial class AuthoritativeTcpServer
     private AuthoritativeCohortDocument CaptureCohortDocumentCore(
         IAuthoritativeGameCohortAdapter adapter,
         AuthoritativeCohortIdentity identity)
+        => CaptureCohortDocumentEncoderCore(adapter, identity, deferEncoding: false)();
+
+    /** Captures every live input now; only detached validation and encoding may run later. */
+    private Func<AuthoritativeCohortDocument> CaptureCohortDocumentEncoderCore(
+        IAuthoritativeGameCohortAdapter adapter,
+        AuthoritativeCohortIdentity identity,
+        bool deferEncoding)
     {
-        var module = adapter.CaptureCohortState();
+        Func<AuthoritativeModuleCohortState> encodeModule;
+        if (deferEncoding && adapter is IAuthoritativeDeferredGameCohortAdapter deferred) {
+            encodeModule = deferred.CaptureCohortForDeferredEncoding();
+        } else {
+            var captured = adapter.CaptureCohortState();
+            encodeModule = () => captured;
+        }
         var commands = commandServer.CaptureCohortState();
         var roster = cohortSessionsById.Values.Where(session => session.ParticipantInitialized)
             .OrderBy(session => session.Id, StringComparer.Ordinal).ToArray();
         var bindings = roster.Select(session =>
             new AuthoritativeModuleCohortParticipant(session.Id, session.EntityId)).ToArray();
-        ValidateCohortBindings(module, identity, commands.CurrentTick, bindings);
         var ledgers = commands.Sessions.ToDictionary(session => session.SessionId, StringComparer.Ordinal);
         if (ledgers.Keys.Any(sessionId => !cohortSessionsById.TryGetValue(sessionId, out var owner)
                 || !owner.ParticipantInitialized))
             throw new InvalidDataException("The command cohort contains a ledger without an initialized owner.");
         var generation = committedCohort is null ? 1UL : checked(committedCohort.Generation + 1);
-        return ComposeCohortDocument(generation, identity, module, commands, entityIds.NextId, bindings);
+        var nextEntityId = entityIds.NextId;
+        return () => {
+            var module = encodeModule();
+            ValidateCohortBindings(module, identity, commands.CurrentTick, bindings);
+            return ComposeCohortDocument(generation, identity, module, commands, nextEntityId, bindings);
+        };
     }
 
     /** One checkpoint from captured state; a command log replay composes its result the same way. */
@@ -200,19 +217,27 @@ public sealed partial class AuthoritativeTcpServer
             return;
         if (!SettleCohortWriteCore(wait: !timed))
             return;
+        var capture = PerformanceRecorder?.Begin() ?? 0;
+        var timedPublished = false;
         try {
             var adapter = RequireCohortAdapter();
-            var capture = PerformanceRecorder?.Begin() ?? 0;
-            var document = CaptureCohortDocumentCore(adapter, CohortIdentity(adapter));
+            var encodeDocument = CaptureCohortDocumentEncoderCore(adapter, CohortIdentity(adapter), timed);
+            if (timed) {
+                lastCohortCheckpointTimestamp = CheckpointTimeProvider.GetTimestamp();
+                var logged = CommandLog is null ? null
+                    : new TaskCompletionSource<AuthoritativeCohortDocument?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                // Its own thread: validation, encoding and disk work stay off the authority lock.
+                cohortWrite = Task.Factory.StartNew(() => WriteCohortInBackground(encodeDocument, logged),
+                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                if (logged is not null)
+                    CommandLog!.RecordCheckpoint(checked(committedCohort!.Generation + 1), commandServer.CurrentTick, logged.Task);
+                timedPublished = true;
+                return;
+            }
+            var document = encodeDocument();
             PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointCaptureMilliseconds, capture);
             CommandLog?.RecordCheckpoint(document);
             lastCohortCheckpointTimestamp = CheckpointTimeProvider.GetTimestamp();
-            if (timed) {
-                // Its own thread: disk time must not take from the host's thread pool.
-                cohortWrite = Task.Factory.StartNew(() => WriteCohortInBackground(document),
-                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-                return;
-            }
             SaveCohortDocument(document);
             committedCohort = document;
         } catch (Exception failure) {
@@ -220,6 +245,10 @@ public sealed partial class AuthoritativeTcpServer
             // state later as if the failed command had been acknowledged.
             FenceCohort(failure);
             throw;
+        } finally {
+            // Include writer-thread creation and marker enqueueing through the timed return.
+            if (timedPublished)
+                PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointCaptureMilliseconds, capture);
         }
     }
 
@@ -243,17 +272,26 @@ public sealed partial class AuthoritativeTcpServer
         PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointWriteMilliseconds, write);
     }
 
-    /** A failed timed write keeps the host running; the next interval retries. Never throws. */
-    private AuthoritativeCohortDocument? WriteCohortInBackground(AuthoritativeCohortDocument document)
+    /** Failed timed encoding or publication is reported and retried next interval, without fencing. */
+    private AuthoritativeCohortDocument? WriteCohortInBackground(
+        Func<AuthoritativeCohortDocument> encodeDocument,
+        TaskCompletionSource<AuthoritativeCohortDocument?>? logged)
     {
         try {
-            SaveCohortDocument(document);
+            var write = PerformanceRecorder?.Begin() ?? 0;
+            var document = encodeDocument();
+            logged?.TrySetResult(document);
+            CohortStore!.Save(document);
+            PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointWriteMilliseconds, write);
             return document;
         } catch (Exception failure) {
             try { CheckpointFailureObserver?.Invoke(failure); } catch { }
             // A failure after the rename left this generation durable, so the
             // retry has to follow whatever the file now holds.
             try { return CohortStore!.Load(); } catch { return null; }
+        } finally {
+            // An encoding failure must neither strand nor stop the command-log appender.
+            logged?.TrySetResult(null);
         }
     }
 

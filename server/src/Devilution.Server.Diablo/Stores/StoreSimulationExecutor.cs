@@ -19,7 +19,7 @@ namespace Devilution.Server.Stores;
  * is applied once even when a client command is retried.
  */
 public sealed class StoreSimulationExecutor
-    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IAuthoritativeFloorEntryWarmup
+    : IAuthoritativeGameHostAdapter, IAuthoritativeDeferredGameCohortAdapter, IAuthoritativeFloorEntryWarmup
 {
     /** Reserved service-only store used by Adria's mana refill action. */
     public const uint AdriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
@@ -351,6 +351,19 @@ public sealed class StoreSimulationExecutor
             RequireCohortCapability(state);
             return CreateModuleCohortState(
                 state.Simulation.CaptureCohortState(state.Runtime));
+        });
+    }
+
+    /** Only the graph is captured here; the encoder owns no live simulation references. */
+    public Func<AuthoritativeModuleCohortState> CaptureCohortForDeferredEncoding()
+    {
+        return WithActiveState(state => {
+            RequireCohortCapability(state);
+            var captured = state.Simulation.CaptureCohortForDeferredEncoding(state.Runtime, out var validate);
+            return (Func<AuthoritativeModuleCohortState>)(() => {
+                validate();
+                return CreateModuleCohortState(captured);
+            });
         });
     }
 

@@ -12,7 +12,7 @@ namespace Devilution.Server.Gameplay;
  * in lockstep until a class is chosen: by the first admitted participant, or by
  * the one run that accepts a restored cohort. The rest are then discarded.
  */
-public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeFloorEntryWarmup, IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter
+public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeFloorEntryWarmup, IAuthoritativeGameHostAdapter, IAuthoritativeDeferredGameCohortAdapter
 {
     private readonly IReadOnlyDictionary<uint, StoreSimulationExecutor> runs;
     private readonly uint defaultClassId;
@@ -109,6 +109,9 @@ public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeFloorEnt
             : runs.Values.Any(run => run.IsEntityIdOccupied(entityId));
 
     public AuthoritativeModuleCohortState CaptureCohortState() => Current.CaptureCohortState();
+
+    public Func<AuthoritativeModuleCohortState> CaptureCohortForDeferredEncoding()
+        => Current.CaptureCohortForDeferredEncoding();
 
     /**
      * A cohort with participants belongs to the one class run that validates it;

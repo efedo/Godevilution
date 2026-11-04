@@ -205,19 +205,29 @@ public sealed class CommandLogTests : IDisposable
     }
 
     /** Records a deterministic run and returns the run directory. */
-    private string RecordRun(bool logCheckpoints = true, int extraCheckpoints = 0)
+    private string RecordRun(bool logCheckpoints = true, int extraCheckpoints = 0, bool deferCheckpoints = false, bool failedCheckpoint = false)
     {
         var directory = Path.Combine(root, "run");
         var module = new ChainModule();
         using var log = new HostCommandLog(directory, ["--port", "1"], 7);
         var server = new AuthoritativeCommandServer(module) { CommandLog = log };
         var generation = 0UL;
+        var pending = new List<(TaskCompletionSource<AuthoritativeCohortDocument?> Completion, AuthoritativeCohortDocument Document)>();
+        if (failedCheckpoint)
+            log.RecordCheckpoint(1, 0, Task.FromResult<AuthoritativeCohortDocument?>(null));
         void Checkpoint(uint nextEntityId)
         {
             var document = AuthoritativeTcpServer.ComposeCohortDocument(++generation, Identity, module.CaptureCohortState(),
                 server.CaptureCohortState(), nextEntityId, module.Roster);
-            if (logCheckpoints)
-                log.RecordCheckpoint(document);
+            if (logCheckpoints) {
+                if (deferCheckpoints) {
+                    var completion = new TaskCompletionSource<AuthoritativeCohortDocument?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    pending.Add((completion, document));
+                    log.RecordCheckpoint(document.Generation, document.Tick, completion.Task);
+                } else {
+                    log.RecordCheckpoint(document);
+                }
+            }
         }
 
         void Join(string session, uint entity)
@@ -242,7 +252,139 @@ public sealed class CommandLogTests : IDisposable
         Checkpoint(3);
         for (var extra = 0; extra < extraCheckpoints; extra++)
             Checkpoint(3);
+        // Complete in reverse order to prove appender positions, rather than encoding
+        // completion order, determine which commands belong to each checkpoint.
+        foreach (var entry in pending.AsEnumerable().Reverse())
+            entry.Completion.SetResult(entry.Document);
         return directory;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DeferredCheckpointsPreserveReplayBytesAndContinueAfterFailedEncoding(bool failedCheckpoint)
+    {
+        var directory = RecordRun(deferCheckpoints: true, failedCheckpoint: failedCheckpoint);
+        var result = Replay(directory, new ChainModule());
+        Assert.True(result.Matches, result.Message);
+        Assert.Equal(3, result.CommandsApplied);
+        var records = CommandLogReader.ReadAll(Path.Combine(directory, HostCommandLog.LogFileName));
+        Assert.Equal([1UL, 2UL, 3UL, 4UL], records.Where(record => record.Checkpoint is not null
+                && File.Exists(Path.Combine(directory, record.Checkpoint.FileName)))
+            .Select(record => record.Checkpoint.Generation));
+        Assert.DoesNotContain(records, record => record.RecordsDropped is not null);
+    }
+
+    [Fact]
+    public async Task PendingEncoderDoesNotBlockLaterCommandsReachingDisk()
+    {
+        var directory = Path.Combine(root, "pending-encode");
+        var encoded = new TaskCompletionSource<AuthoritativeCohortDocument?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var document = CheckpointDocument(1, 5);
+        var log = new HostCommandLog(directory, [], 7);
+        try {
+            log.RecordCheckpoint(document.Generation, document.Tick, encoded.Task);
+            log.RecordCommand(FirstSession, Move(1, 6), 6, Accepted(1, 1, 6));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(10));
+            IReadOnlyList<CommandLogRecord> records;
+            while (!(records = CommandLogReader.ReadAll(Path.Combine(directory, HostCommandLog.LogFileName)))
+                .Any(record => record.ServerCommand is not null))
+                await Task.Delay(10, timeout.Token);
+            Assert.Equal([CommandLogRecord.KindOneofCase.Header, CommandLogRecord.KindOneofCase.Checkpoint,
+                CommandLogRecord.KindOneofCase.ServerCommand], records.Select(record => record.KindCase));
+            Assert.False(encoded.Task.IsCompleted);
+            var marker = records[1].Checkpoint;
+            Assert.Equal(document.Generation, marker.Generation);
+            Assert.Equal(document.Tick, marker.Tick);
+            Assert.False(File.Exists(Path.Combine(directory, marker.FileName)));
+
+            var disposing = Task.Run(log.Dispose, timeout.Token);
+            encoded.SetResult(document);
+            await disposing.WaitAsync(timeout.Token);
+            Assert.Equal(AuthoritativeCohortStore.SerializeDocument(document),
+                File.ReadAllBytes(Path.Combine(directory, marker.FileName)));
+            Assert.Empty(Directory.GetFiles(directory, "*.pending"));
+        } finally {
+            encoded.TrySetResult(null);
+            log.Dispose();
+        }
+    }
+
+    [Fact]
+    public void FailedAttemptMarkerNeverUsesTheFileFromItsRetriedGeneration()
+    {
+        var directory = RecordRun(deferCheckpoints: true, failedCheckpoint: true);
+        var attempts = CommandLogReader.ReadAll(Path.Combine(directory, HostCommandLog.LogFileName))
+            .Where(record => record.Checkpoint?.Generation == 1).Select(record => record.Checkpoint).ToArray();
+        Assert.Equal(2, attempts.Length);
+        Assert.Equal(0UL, attempts[0].Tick);
+        Assert.Equal(5UL, attempts[1].Tick);
+        Assert.NotEqual(attempts[0].FileName, attempts[1].FileName);
+        Assert.False(File.Exists(Path.Combine(directory, attempts[0].FileName)));
+        Assert.True(File.Exists(Path.Combine(directory, attempts[1].FileName)));
+        var replay = Replay(directory, new ChainModule());
+        Assert.True(replay.Matches, replay.Message);
+    }
+
+    [Fact]
+    public async Task DeferredRetentionKeepsNewestMarkersWhenOlderEncodersFinishLast()
+    {
+        var directory = Path.Combine(root, "retention");
+        var pending = new List<(TaskCompletionSource<AuthoritativeCohortDocument?> Encoded, AuthoritativeCohortDocument Document)>();
+        var log = new HostCommandLog(directory, [], 7);
+        try {
+            for (ulong generation = 1; generation <= HostCommandLog.RetainedCheckpoints + 4; generation++) {
+                var encoded = new TaskCompletionSource<AuthoritativeCohortDocument?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var document = CheckpointDocument(generation, generation);
+                pending.Add((encoded, document));
+                log.RecordCheckpoint(generation, generation, encoded.Task);
+            }
+            foreach (var entry in pending.Skip(4).Reverse())
+                entry.Encoded.SetResult(entry.Document);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(10));
+            while (Directory.GetFiles(directory, "checkpoint-*.json").Length != HostCommandLog.RetainedCheckpoints)
+                await Task.Delay(10, timeout.Token);
+            foreach (var entry in pending.Take(4).Reverse())
+                entry.Encoded.SetResult(entry.Document);
+            log.Dispose();
+            var expected = CommandLogReader.ReadAll(Path.Combine(directory, HostCommandLog.LogFileName))
+                .Where(record => record.Checkpoint is not null).Skip(4).Select(record => record.Checkpoint.FileName).Order();
+            Assert.Equal(expected, Directory.GetFiles(directory, "checkpoint-*.json").Select(path => Path.GetFileName(path)!).Order());
+            Assert.Empty(Directory.GetFiles(directory, "*.pending"));
+        } finally {
+            foreach (var entry in pending)
+                entry.Encoded.TrySetResult(null);
+            log.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task FaultedEncoderReportsFailureAndLeavesTheAppenderRunning()
+    {
+        var directory = Path.Combine(root, "faulted-encode");
+        var reported = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var log = new HostCommandLog(directory, [], 7, failure => reported.TrySetResult(failure));
+        log.RecordCheckpoint(1, 5, Task.FromException<AuthoritativeCohortDocument?>(new InvalidDataException("bad graph")));
+        log.RecordCommand(FirstSession, Move(1, 6), 6, Accepted(1, 1, 6));
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        Assert.IsType<InvalidDataException>(await reported.Task.WaitAsync(timeout.Token));
+        while (!CommandLogReader.ReadAll(Path.Combine(directory, HostCommandLog.LogFileName))
+            .Any(record => record.ServerCommand is not null))
+            await Task.Delay(10, timeout.Token);
+        Assert.Empty(Directory.GetFiles(directory, "checkpoint-*.json"));
+    }
+
+    private static AuthoritativeCohortDocument CheckpointDocument(ulong generation, ulong tick)
+    {
+        var module = new ChainModule();
+        module.InitializeParticipant(FirstSession, new AuthoritativeParticipantSelection(4) { EntityId = 1, CharacterName = "Hero" });
+        var commands = new AuthoritativeCommandServer(module);
+        commands.AdvanceTo(tick);
+        return AuthoritativeTcpServer.ComposeCohortDocument(generation, Identity,
+            module.CaptureCohortState(), commands.CaptureCohortState(), 2, module.Roster);
     }
 
     private static AuthoritativeCommandLogReplayResult Replay(string directory, ChainModule module, ulong? from = null, ulong? to = null)

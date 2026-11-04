@@ -1,3 +1,5 @@
+using Devilution.Server.Commands;
+using Devilution.Protocol.V1;
 using Devilution.Server.Host;
 using Devilution.Server.Stores;
 using Xunit;
@@ -124,6 +126,33 @@ public sealed class StoreSimulationCohortAdapterTests
         Assert.Equal(
             source.GetSessionStateTick("legacy"),
             restored.GetSessionStateTick("legacy"));
+    }
+
+    [Fact]
+    public async Task DeferredEncodingKeepsCapturedBytesAfterLiveCommandsAndAdmission()
+    {
+        var source = CreateExecutor();
+        var hero = new string('a', 64);
+        source.InitializeParticipant(hero, new AuthoritativeParticipantSelection(null) { EntityId = 7 });
+        var expected = source.CaptureCohortState();
+        var encode = source.CaptureCohortForDeferredEncoding();
+
+        source.AdvanceTo(1);
+        source.Execute(hero, new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 1);
+        source.InitializeParticipant(new string('b', 64), new AuthoritativeParticipantSelection(null) { EntityId = 8 });
+        Assert.NotEqual(expected.SerializedState, source.CaptureCohortState().SerializedState);
+
+        var actual = await Task.Run(encode, TestContext.Current.CancellationToken);
+        Assert.Equal(expected.SerializedState, actual.SerializedState);
+        Assert.Equal(expected.Participants, actual.Participants);
+        Assert.Equal(expected.Tick, actual.Tick);
+
+        var identity = new AuthoritativeCohortIdentity(expected.ModuleId, expected.FormatVersion,
+            "0.1.0", new string('a', 64), new string('b', 64), 60, AuthoritativeGameMode.SinglePlayer);
+        var commands = new AuthoritativeCommandCohortState(expected.Tick, 1, []);
+        var synchronous = AuthoritativeTcpServer.ComposeCohortDocument(1, identity, expected, commands, 8, expected.Participants);
+        var deferred = AuthoritativeTcpServer.ComposeCohortDocument(1, identity, actual, commands, 8, actual.Participants);
+        Assert.Equal(AuthoritativeCohortStore.SerializeDocument(synchronous), AuthoritativeCohortStore.SerializeDocument(deferred));
     }
 
     private static StoreSimulationExecutor CreateExecutor()

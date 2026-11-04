@@ -1285,10 +1285,32 @@ public sealed partial class DiabloSimulation
     /**
      * Captures the complete module state at the runtime's exact barrier tick.
      * The runtime callback never advances participants or drains transient
-     * events; all returned collections are detached from the live simulation.
+     * events. Mutable collections are detached; immutable level geometry and
+     * value records may be shared safely with the live simulation.
      */
     public DiabloCohortState CaptureCohortState(
         AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime)
+        => CaptureCohortStateCore(runtime, validateShape: true);
+
+    /** Detached timed graph; the writer must run the captured validation before encoding it. */
+    public DiabloCohortState CaptureCohortForDeferredEncoding(
+        AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime,
+        out Action validate)
+    {
+        var validations = new List<Action>();
+        var state = CaptureCohortStateCore(runtime, validateShape: false, validations);
+        var captured = validations.ToArray();
+        validate = () => {
+            foreach (var validation in captured)
+                validation();
+        };
+        return state;
+    }
+
+    private DiabloCohortState CaptureCohortStateCore(
+        AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime,
+        bool validateShape,
+        List<Action>? deferredValidations = null)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         RequireOwnedRuntime(runtime);
@@ -1296,21 +1318,23 @@ public sealed partial class DiabloSimulation
             // Acquire this after the Engine barrier: nested Read/Write capture
             // must not invert the lock order against another capture.
             lock (cohortBindingGate)
-                return CaptureDetachedCohortState(tick, sessions);
+                return CaptureDetachedCohortState(tick, sessions, validateShape, deferredValidations);
         });
     }
 
     private DiabloCohortState CaptureDetachedCohortState(
         ulong tick,
-        IReadOnlyList<SimulationSession<AuthoritativePlayerState>> sessions)
+        IReadOnlyList<SimulationSession<AuthoritativePlayerState>> sessions,
+        bool validateShape,
+        List<Action>? deferredValidations)
     {
         RequireSingleCohortRuntimeOwner();
         worldCommands.AssertCohortCaptureBoundary();
         var participants = sessions
             .Select(session => CaptureCohortParticipant(session.Id, session.State))
             .ToArray();
-        WorldState.ValidateNativePopulationState(sessions.Select(session => session.State));
-        var infrastructure = WorldState.CaptureCohortInfrastructure();
+        WorldState.ValidateNativePopulationState(sessions.Select(session => session.State), deferredValidations);
+        var infrastructure = WorldState.CaptureCohortInfrastructure(deferredValidations);
 
         var hasNativePlayerHit = WorldState.CombatTargets.Values.Any(target => target.NativePlayerHitRecorded);
         var hasNativeTrapState = WorldState.HasMutatedNativeTraps
@@ -1413,9 +1437,9 @@ public sealed partial class DiabloSimulation
             VictoryTriggered: WorldState.VictoryTriggered,
             Geometry: WorldState.World?.CaptureGeometryState(),
             WorldInfrastructure: infrastructure) {
-            NativeTown = WorldState.CaptureNativeTown(),
-            CathedralDoors = WorldState.CaptureCathedralDoors(),
-            CathedralItems = WorldState.CaptureCathedralItems(),
+            NativeTown = WorldState.CaptureNativeTown(deferredValidations),
+            CathedralDoors = WorldState.CaptureCathedralDoors(deferredValidations),
+            CathedralItems = WorldState.CaptureCathedralItems(deferredValidations),
             NativeSarcophagi = WorldState.HasNativeProgression || WorldState.HasNativeSarcophagusMutations || hasNativeBarrelState
                 ? WorldState.CaptureNativeSarcophagi()
                 : null,
@@ -1426,12 +1450,15 @@ public sealed partial class DiabloSimulation
                 WorldState.CaptureNativeInitialSpecialStand()) : null,
             NativeCatacombs = WorldState.HasNativeProgression
                 && WorldState.NativeProgressionCohortFormatVersion == DiabloCohortState.NativeCatacombsProgressionFormatVersion
-                ? new(WorldState.CaptureNativeCatacombsDoorStates().SelectMany(floor => floor.Doors).ToArray(),
+                ? new(deferredValidations is null
+                        ? WorldState.CaptureNativeCatacombsDoorStates().SelectMany(floor => floor.Doors).ToArray()
+                        : WorldState.CaptureNativeCatacombsDoorsForDeferredEncoding(),
                     WorldState.CaptureNativeCatacombsMonsterPhases(), WorldState.CaptureNativeCatacombsRangedActions(),
                     WorldState.CaptureNativeCatacombsArrows())
                 : null,
         };
-        state.ValidateShape();
+        if (validateShape)
+            state.ValidateShape();
         return state;
     }
 

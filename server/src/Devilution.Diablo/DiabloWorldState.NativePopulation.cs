@@ -69,6 +69,24 @@ public sealed partial class DiabloWorldState
             throw new InvalidDataException("A retained native object lies outside its owned level.");
     }
 
+    private void ValidateNativePopulationObjectForCapture(AuthoritativeWorldObject value, List<Action>? deferredValidations)
+    {
+        if (deferredValidations is null) {
+            ValidateNativePopulationObject(value);
+            return;
+        }
+        var owner = NativePopulationForLevel(value.LevelId);
+        var captured = DiabloSimulation.CaptureObject(value);
+        var containsPosition = ContainsPosition(value.LevelId, value.PositionX, value.PositionY);
+        deferredValidations.Add(() => {
+            if (owner is null || captured.LevelId != owner.LevelId)
+                throw new InvalidDataException("Explicitly refused native objects require the populated profile owner.");
+            owner.ValidateObjectProjection(captured);
+            if (!containsPosition)
+                throw new InvalidDataException("A retained native object lies outside its owned level.");
+        });
+    }
+
     internal bool CanOperateNativeObject(AuthoritativeWorldObject value)
     {
         var owner = NativePopulationForLevel(value.LevelId);
@@ -135,12 +153,13 @@ public sealed partial class DiabloWorldState
     internal bool AllowsNativeMonsterActivation(uint levelId)
         => !OwnsNativePopulationLevel(levelId);
 
-    internal void ValidateNativePopulationState(IEnumerable<AuthoritativePlayerState> participants)
+    internal void ValidateNativePopulationState(IEnumerable<AuthoritativePlayerState> participants,
+        List<Action>? deferredValidations = null)
     {
         if (nativePopulationPolicy is null)
             return;
         foreach (var policy in NativePopulationOwners)
-            policy.ValidateWorld(this);
+            policy.ValidateWorld(this, deferredValidations);
         // Multiplayer runs admit every base-game class; the run's class only generated its floors.
         if (participants.Any(player => !AllowsNativePopulationLevel(player.LevelId)
             || player.CharacterClassId != nativePopulationParticipantClassId

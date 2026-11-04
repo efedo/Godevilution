@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-11-04
 
+- Cheaper capture (P5): a timed checkpoint builds a detached state graph under the lock and validates
+  and encodes it on the writer thread, taking the Debug L8 lock hold from 174 ms to about 9 ms. File
+  bytes are unchanged, and a failed encode is reported and retried without fencing the host.
 - Debug command logs (P3, P4): Debug hosts and clients log commands, receipts and checkpoints on a
   background thread. `--replay-command-log` reproduces a later checkpoint byte for byte and
   `--compare-client-command-log` checks a client log against the host's.

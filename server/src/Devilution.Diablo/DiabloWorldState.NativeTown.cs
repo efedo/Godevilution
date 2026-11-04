@@ -46,8 +46,12 @@ public sealed partial class DiabloWorldState
     }
 
     private void RequireNativeTownLevel(AuthoritativeLevel actual, bool allowOmittedSpecial)
+        => RequireNativeTownLevel(nativeTownCatalog!, nativeTownGeometry!, actual, allowOmittedSpecial);
+
+    private static void RequireNativeTownLevel(AuthoritativeNativeTownCatalog catalog,
+        AuthoritativeTownGeometry geometry, AuthoritativeLevel actual, bool allowOmittedSpecial)
     {
-        var expected = nativeTownCatalog!.CreateBackingLevel(nativeTownGeometry!, actual);
+        var expected = catalog.CreateBackingLevel(geometry, actual);
         DiabloCathedralDoorCheckpoint.RequireSameLevels(
             [CaptureCohortLevel(expected)], [CaptureCohortLevel(actual)]);
         if (!actual.NativeSpecialLayer.SequenceEqual(expected.NativeSpecialLayer)
@@ -70,11 +74,26 @@ public sealed partial class DiabloWorldState
     }
 
     public DiabloNativeTownCheckpoint? CaptureNativeTown()
+        => CaptureNativeTown(null);
+
+    internal DiabloNativeTownCheckpoint? CaptureNativeTown(List<Action>? deferredValidations)
     {
         if (nativeTownCatalog is null)
             return null;
         if (World is null)
             throw new InvalidDataException("Native Town checkpoint has no authoritative world.");
+        if (deferredValidations is not null) {
+            var catalog = nativeTownCatalog;
+            var geometry = nativeTownGeometry!;
+            var backing = World.Levels.Single(level => level.LevelId == catalog.LevelId);
+            var effective = projectedLevels.GetValueOrDefault(catalog.LevelId);
+            deferredValidations.Add(() => {
+                RequireNativeTownLevel(catalog, geometry, backing, false);
+                if (effective is not null)
+                    RequireNativeTownLevel(catalog, geometry, effective, false);
+            });
+            return catalog.CaptureForDeferredValidation(geometry, nativeTownMutations, deferredValidations);
+        }
         RequireNativeTownLevel(World.Levels.Single(level => level.LevelId == nativeTownCatalog.LevelId), false);
         if (projectedLevels.TryGetValue(nativeTownCatalog.LevelId, out var projected))
             RequireNativeTownLevel(projected, false);

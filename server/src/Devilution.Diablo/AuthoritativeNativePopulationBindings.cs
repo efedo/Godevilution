@@ -175,6 +175,9 @@ internal sealed partial class AuthoritativeNativePopulationBindings
     }
 
     internal bool ReservesEntityId(uint entityId) => reservedEntityIds.Contains(entityId);
+    // AuthoritativeLevel owns read-only geometry; deferred validators can share it safely.
+    internal AuthoritativeLevel ImmutableBackingLevel => backingLevel;
+
     internal AuthoritativeLevel CreateBackingLevel() => AuthoritativeCathedralDoors.CopyLevel(backingLevel);
 
     internal void ValidateBackingLevel(AuthoritativeLevel level, bool allowOmittedSpecial = false)
@@ -349,11 +352,15 @@ internal sealed partial class AuthoritativeNativePopulationBindings
     private static int GetOpenedChestAnimationFrame(AuthoritativeCathedralPopulationObjectState raw)
         => checked((int)raw.AnimFrame + 2);
 
-    internal void ValidateWorld(DiabloWorldState world)
+    internal void ValidateWorld(DiabloWorldState world, List<Action>? deferredValidations = null)
     {
         if (world.World is null)
             throw new InvalidDataException("Native population requires complete backing geometry.");
-        ValidateBackingLevel(world.World.Levels.Single(level => level.LevelId == LevelId));
+        var backing = world.World.Levels.Single(level => level.LevelId == LevelId);
+        if (deferredValidations is null)
+            ValidateBackingLevel(backing);
+        else
+            deferredValidations.Add(() => ValidateBackingLevel(backing));
         if (world.CombatTargets.Values.Select(value => value.LevelId)
             .Concat(world.CombatTargets.Values.Where(value => value.Drop is not null)
                 .Select(value => value.Drop!.LevelId))
@@ -377,15 +384,30 @@ internal sealed partial class AuthoritativeNativePopulationBindings
                 throw new InvalidDataException("A dormant native monster reservation was reused or activated.");
         }
         var currentObjects = world.Objects.Values.Where(value => value.LevelId == LevelId).ToArray();
-        if (currentObjects.Length != objectRows.Count)
-            throw new InvalidDataException("The populated level lost a retained native object.");
-        foreach (var value in currentObjects)
-            ValidateObject(value);
+        if (deferredValidations is null) {
+            if (currentObjects.Length != objectRows.Count)
+                throw new InvalidDataException("The populated level lost a retained native object.");
+            foreach (var value in currentObjects)
+                ValidateObject(value);
+        } else {
+            var objects = currentObjects.Select(DiabloSimulation.CaptureObject).ToArray();
+            deferredValidations.Add(() => {
+                if (objects.Length != objectRows.Count)
+                    throw new InvalidDataException("The populated level lost a retained native object.");
+                foreach (var value in objects)
+                    ValidateObjectProjection(value);
+            });
+        }
+        // These checks consult live reservation/spawn registries as well as entity facts;
+        // only the immutable geometry and copied object checks above can run detached.
         world.ValidateNativeSarcophagusState(this);
         world.ValidateNativeBarrelState(this);
         world.ValidateNativeTrapState(this);
         if (Family == AuthoritativeNativePopulationFamily.Catacombs) {
-            world.ValidateNativeCatacombsDoors(this);
+            if (deferredValidations is null)
+                world.ValidateNativeCatacombsDoors(this);
+            else
+                deferredValidations.Add(world.CaptureNativeCatacombsDoorValidation(this));
             world.ValidateNativeCatacombsMonsterPhases(this);
             world.ValidateNativeCatacombsRangedActions(this);
             world.ValidateNativeCatacombsArrows(this);

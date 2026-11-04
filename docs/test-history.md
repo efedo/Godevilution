@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-04 — Cheaper capture (P5)
+
+Saved 14.6 MB L8 cohort, full timed lock hold with a command log attached: Debug 8.86 ms mean, 10.58
+worst over 17 captures; a worker's Release run measured 6.13 mean, 13.00 worst over 18. Deferred bytes
+match the synchronous path on that cohort after live door mutation. 200 Hz Debug journey and resume
+passed; replay gave the same 8997266 and 8937985 bytes. Suites: server 1924, Diablo 3855, client 1267
+passed, none failed. Independent Sol 6.1 review: two findings fixed, then accepted.
+
 ### 2026-11-04 — Debug command logs
 
 200 Hz `-TargetDepth 5 -FirstFightDepth 5` Debug journey and resume passed. Replay from each run's

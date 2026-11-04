@@ -44,3 +44,14 @@ public interface IAuthoritativeGameCohortAdapter
 
     void CommitCohortRestore(IAuthoritativePreparedCohortRestore prepared);
 }
+
+/**
+ * Optional timed-checkpoint optimization. Capture runs under the authority lock;
+ * the returned encoder owns a detached graph and must not read the live adapter,
+ * runtime or mutable content. Validation and encoding run on the background writer.
+ * Legacy adapters continue through CaptureCohortState synchronously.
+ */
+public interface IAuthoritativeDeferredGameCohortAdapter : IAuthoritativeGameCohortAdapter
+{
+    Func<AuthoritativeModuleCohortState> CaptureCohortForDeferredEncoding();
+}

@@ -13,7 +13,7 @@ namespace Devilution.Server.Host;
  * used by an operation that is already in flight.
  */
 public sealed class LeasedAuthoritativeGameHostAdapter
-    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IAuthoritativeFloorEntryWarmup, IDisposable
+    : IAuthoritativeGameHostAdapter, IAuthoritativeDeferredGameCohortAdapter, IAuthoritativeFloorEntryWarmup, IDisposable
 {
     private readonly GameplayRulesetRuntime<IAuthoritativeGameHostAdapter> rulesets;
     private readonly Action<IAuthoritativeGameHostAdapter> disposeAdapter;
@@ -74,6 +74,18 @@ public sealed class LeasedAuthoritativeGameHostAdapter
     {
         ThrowIfDisposed();
         return WithAdapter(adapter => RequireCohortAdapter(adapter).CaptureCohortState());
+    }
+
+    public Func<AuthoritativeModuleCohortState> CaptureCohortForDeferredEncoding()
+    {
+        ThrowIfDisposed();
+        return WithAdapter(adapter => {
+            var cohort = RequireCohortAdapter(adapter);
+            if (cohort is IAuthoritativeDeferredGameCohortAdapter deferred)
+                return deferred.CaptureCohortForDeferredEncoding();
+            var captured = cohort.CaptureCohortState();
+            return (Func<AuthoritativeModuleCohortState>)(() => captured);
+        });
     }
 
     public bool IsEntityIdOccupied(uint entityId)

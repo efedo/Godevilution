@@ -275,6 +275,20 @@ public sealed class AuthoritativeNativeTownCatalog
         return CreateCheckpoint(replay, mutations);
     }
 
+    /** Geometry is immutable; copy only the live history and replay/validate on the writer. */
+    internal DiabloNativeTownCheckpoint CaptureForDeferredValidation(
+        AuthoritativeTownGeometry geometry,
+        IReadOnlyList<AuthoritativeNativeTownMutation> typedMutationHistory,
+        List<Action> deferredValidations)
+    {
+        var mutations = typedMutationHistory.ToArray();
+        deferredValidations.Add(() => {
+            var replay = Replay(ValidateMutations(mutations));
+            ValidateGeometryEquals(geometry, replay, "current Town geometry");
+        });
+        return CreateCheckpoint(geometry, mutations);
+    }
+
     /** Rebuilds a detached Town state without advancing any shared simulation RNG. */
     public AuthoritativeTownGeometry Restore(DiabloNativeTownCheckpoint checkpoint)
     {

@@ -245,9 +245,9 @@ public sealed partial class DiabloWorldState
     public IReadOnlySet<uint> ActiveWorldMutationIds => activeWorldMutationIds;
 
     /** Captures detached fallback and mutation infrastructure without side effects. */
-    internal DiabloWorldInfrastructureState CaptureCohortInfrastructure()
+    internal DiabloWorldInfrastructureState CaptureCohortInfrastructure(List<Action>? deferredValidations = null)
     {
-        RequireSpecialLayerPersistenceCoverage();
+        RequireSpecialLayerPersistenceCoverage(deferredValidations);
         return new DiabloWorldInfrastructureState(
             fallbackWidth,
             fallbackHeight,

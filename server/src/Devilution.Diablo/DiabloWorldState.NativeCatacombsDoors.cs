@@ -190,6 +190,17 @@ public sealed partial class DiabloWorldState
         return true;
     }
 
+    private bool TryGetNativeCatacombsDoorStateForCapture(uint entityId, List<Action>? deferredValidations,
+        out AuthoritativeCatacombsDoorState door)
+    {
+        if (deferredValidations is null)
+            return TryGetNativeCatacombsDoorState(entityId, out door);
+        // The complete floor validator was captured by ValidateNativePopulationState.
+        // Read just the immutable value here, without revalidating live geometry.
+        door = nativeCatacombsDoorsByEntityId.GetValueOrDefault(entityId)?.State!;
+        return door is not null;
+    }
+
     internal bool IsNativeCatacombsDoor(uint entityId, uint levelId, int x, int y)
         => nativeCatacombsDoorsByEntityId.TryGetValue(entityId, out var entry)
             && entry.LevelId == levelId && entry.State.PositionX == x && entry.State.PositionY == y;
@@ -222,6 +233,82 @@ public sealed partial class DiabloWorldState
                 owner.CreateBackingLevel(), levelStates[levelId].CatacombsDoorLevel!, Array.AsReadOnly(states));
         }).ToArray();
         return Array.AsReadOnly(result);
+    }
+
+    /** The checkpoint needs ordered door values, not newly built backing levels. */
+    internal IReadOnlyList<AuthoritativeCatacombsDoorState> CaptureNativeCatacombsDoorsForDeferredEncoding()
+        => LevelValues(state => state.CatacombsDoorOwner).OrderBy(pair => pair.Key)
+            .SelectMany(pair => nativeCatacombsDoorsByEntityId.Values.Where(entry => entry.LevelId == pair.Key)
+                .OrderBy(entry => entry.State.PositionY).ThenBy(entry => entry.State.PositionX)
+                .Select(entry => entry.State)).ToArray();
+
+    /** Snapshots the live bindings; raw-origin and geometry checks use only immutable inputs. */
+    internal Action CaptureNativeCatacombsDoorValidation(AuthoritativeNativePopulationBindings owner)
+    {
+        var levelId = owner.LevelId;
+        var bound = FindLevelState(levelId);
+        var level = bound?.CatacombsDoorLevel;
+        var boundOwner = bound?.CatacombsDoorOwner;
+        var backing = World?.Levels.SingleOrDefault(value => value.LevelId == levelId);
+        var catalog = RequireNativeCatacombsDoorCatalog();
+        var fingerprint = nativeCatacombsDoorCatalogFingerprint;
+        var projected = projectedLevels.GetValueOrDefault(levelId);
+        var entries = nativeCatacombsDoorsByEntityId.Where(pair => pair.Value.LevelId == levelId).ToArray();
+        var doorIds = entries.Select(pair => pair.Value.State.EntityId).ToHashSet();
+        var objects = Objects.Values.Where(value => value.LevelId == levelId
+                && (doorIds.Contains(value.EntityId) || value.NativeObjectId is AuthoritativeCatacombsDoorCatalog.LeftNativeObjectId
+                    or AuthoritativeCatacombsDoorCatalog.RightNativeObjectId))
+            .ToDictionary(value => value.EntityId,
+                value => (State: DiabloSimulation.CaptureObject(value), HasCathedralDoor: value.CathedralDoor is not null));
+        return () => {
+            if (level is null || !ReferenceEquals(boundOwner, owner))
+                throw new InvalidDataException("A Catacombs door level has no exact retained owner.");
+            if (backing is null)
+                throw new InvalidDataException("A Catacombs door owner lost its backing world level.");
+            owner.ValidateBackingLevel(backing);
+            var rawDoors = owner.InitialState.ActiveObjectIds.Take(owner.InitialState.ActiveObjectCount)
+                .Select(slot => owner.InitialState.ObjectSlots[slot]).Where(raw => raw.DoorFlag).ToArray();
+            foreach (var raw in rawDoors) {
+                var entityId = owner.ObjectEntityAt(raw.Position.X, raw.Position.Y)
+                    ?? throw new InvalidDataException("A Catacombs raw door lost its object entity binding.");
+                if (!objects.TryGetValue(entityId, out var current))
+                    throw new InvalidDataException("A Catacombs raw door lost its projected object.");
+                var rawMatches = entries.Where(pair => pair.Key == entityId
+                    && pair.Value.State.NativeObjectId == (uint)raw.Type
+                    && pair.Value.State.PositionX == raw.Position.X
+                    && pair.Value.State.PositionY == raw.Position.Y).ToArray();
+                if (rawMatches.Length != 1)
+                    throw new InvalidDataException("Catacombs door state no longer matches the exact raw object row.");
+                var initialProjection = new AuthoritativeWorldObject(entityId, current.State.ObjectId, levelId,
+                    raw.Position.X, raw.Position.Y, missilePassable: raw.MissilePassable,
+                    nativeObjectId: (uint)raw.Type, hideWhenActivated: false,
+                    animationFrame: checked((int)raw.AnimFrame), trapArmed: raw.TrapFlag);
+                _ = AuthoritativeCatacombsDoors.BindRetained(owner.ImmutableBackingLevel, checked((uint)owner.Depth),
+                    catalog, owner.InitialState, raw, initialProjection);
+            }
+            foreach (var pair in entries) {
+                var entry = pair.Value;
+                if (owner.Depth != entry.Depth || !objects.TryGetValue(entry.State.EntityId, out var captured))
+                    throw new InvalidDataException("A Catacombs door state lost its owner, level or object.");
+                AuthoritativeCatacombsDoors.Validate(level, checked((uint)entry.Depth), catalog, entry.State);
+                var value = captured.State;
+                if (value.EntityId != entry.State.EntityId || value.LevelId != entry.LevelId
+                    || value.NativeObjectId != entry.State.NativeObjectId
+                    || value.PositionX != entry.State.PositionX || value.PositionY != entry.State.PositionY
+                    || value.Activated || value.Breakable || value.Destroyed || captured.HasCathedralDoor
+                    || value.AnimationFrame != entry.State.AnimationFrame || value.MissilePassable != entry.State.MissFlag)
+                    throw new InvalidDataException("A Catacombs door object projection changed its retained raw identity or scalar state.");
+                owner.ValidateObjectProjection(value);
+            }
+            if (owner.Family != AuthoritativeNativePopulationFamily.Catacombs
+                || fingerprint != catalog.Fingerprint || owner.CatacombsDoorCatalogFingerprint != catalog.Fingerprint
+                || entries.Length != owner.InitialDoorCount || rawDoors.Length != entries.Length
+                || objects.Values.Count(value => value.State.NativeObjectId is AuthoritativeCatacombsDoorCatalog.LeftNativeObjectId
+                    or AuthoritativeCatacombsDoorCatalog.RightNativeObjectId) != entries.Length
+                || catalog.ForDepth(checked((uint)owner.Depth)).Depth != owner.Depth
+                || !ReferenceEquals(projected, level))
+                throw new InvalidDataException("Retained Catacombs door coverage or level projection changed.");
+        };
     }
 
     internal void ValidateNativeCatacombsDoors(AuthoritativeNativePopulationBindings owner)

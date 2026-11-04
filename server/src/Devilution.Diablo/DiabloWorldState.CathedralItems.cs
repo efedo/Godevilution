@@ -129,9 +129,33 @@ public sealed partial class DiabloWorldState
     }
 
     public DiabloCathedralItemCheckpoint? CaptureCathedralItems()
+        => CaptureCathedralItems(null);
+
+    internal DiabloCathedralItemCheckpoint? CaptureCathedralItems(List<Action>? deferredValidations)
     {
         if (cathedralItems is null)
             return null;
+        if (deferredValidations is not null) {
+            var captured = cathedralItems.CaptureCheckpoint();
+            var actual = WorldItems.Values.ToDictionary(value => value.EntityId);
+            var expected = captured.Levels.Select(level => (level.LevelId,
+                Items: level.SlotEntityBindings.Where(binding => binding.EntityId != 0).Select(binding => {
+                    var value = cathedralItems.GetProjection(level.LevelId, binding.EntityId);
+                    return value is null ? null : ToWorldItem(level.LevelId, value);
+                }).ToArray())).ToArray();
+            deferredValidations.Add(() => {
+                foreach (var level in expected) {
+                    if (actual.Values.Count(value => value.LevelId == level.LevelId) != level.Items.Length)
+                        throw new InvalidDataException("The native item projection was mutated outside its owner.");
+                    foreach (var item in level.Items)
+                        if (item is null || !actual.TryGetValue(item.EntityId, out var value) || !SameWorldItem(value, item))
+                            throw new InvalidDataException("The native item projection was mutated outside its owner.");
+                }
+            });
+            foreach (var level in cathedralItems.Profile.LevelProfiles)
+                _ = BuildCathedralItemOccupancy(cathedralItems.Profile, level.LevelId, [], deferredValidations);
+            return captured;
+        }
         ValidateCathedralItemProjection();
         foreach (var level in cathedralItems.Profile.LevelProfiles)
             BuildCathedralItemOccupancy(cathedralItems.Profile, level.LevelId, []);
@@ -324,7 +348,8 @@ public sealed partial class DiabloWorldState
 
     private AuthoritativeCathedralItemOccupancyContext BuildCathedralItemOccupancy(
         AuthoritativeCathedralItemRuntimeProfile profile, uint levelId,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        List<Action>? deferredValidations = null)
     {
         var definition = profile.LevelProfiles.Single(value => value.LevelId == levelId);
         var solid = definition.SolidTiles.ToArray();
@@ -332,11 +357,20 @@ public sealed partial class DiabloWorldState
             if (!projectedLevels.TryGetValue(levelId, out var level) || level.Width != 112 || level.Height != 112
                 || level.NativePieceLayer.Count != 112 * 112)
                 throw new InvalidDataException("Native item levels require their complete current d-piece projection.");
-            for (var index = 0; index < solid.Length; index++) {
-                if (!level.NativePieceProperties.TryGetValue(level.NativePieceLayer[index], out var flags))
-                    throw new InvalidDataException("Native item placement is missing a current SOL row.");
-                solid[index] = (flags & AuthoritativeDunTileFlags.Solid) != 0;
+            void CaptureSolidTiles()
+            {
+                for (var index = 0; index < solid.Length; index++) {
+                    if (!level.NativePieceProperties.TryGetValue(level.NativePieceLayer[index], out var flags))
+                        throw new InvalidDataException("Native item placement is missing a current SOL row.");
+                    solid[index] = (flags & AuthoritativeDunTileFlags.Solid) != 0;
+                }
             }
+            // Capture discards this occupancy context. Derive its SOL mask on the writer
+            // from the immutable level; runtime placement still derives it immediately.
+            if (deferredValidations is null)
+                CaptureSolidTiles();
+            else
+                deferredValidations.Add(CaptureSolidTiles);
         } else if (fallbackWidth != 112 || fallbackHeight != 112
             || Enumerable.Range(0, solid.Length).Any(index => solid[index] != fallbackBlockedCells.Contains(index))) {
             throw new InvalidDataException("Native item fallback geometry disagrees with its explicit placement profile.");
@@ -359,20 +393,20 @@ public sealed partial class DiabloWorldState
                 isSolid = door.SolidFlag; isInteractive = door.SelectionRegion != 0;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor:
-                ValidateNativePopulationObject(value);
-                if (!TryGetNativeCatacombsDoorState(value.EntityId, out var catacombsDoor))
+                ValidateNativePopulationObjectForCapture(value, deferredValidations);
+                if (!TryGetNativeCatacombsDoorStateForCapture(value.EntityId, deferredValidations, out var catacombsDoor))
                     throw new InvalidDataException("Native C2 door placement requires its exact live door owner.");
                 isSolid = catacombsDoor.SolidFlag; isInteractive = catacombsDoor.SelectionRegion != 0;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeChest:
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus:
-                ValidateNativePopulationObject(value);
+                ValidateNativePopulationObjectForCapture(value, deferredValidations);
                 if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
                     throw new InvalidDataException("A native loot object has unsupported object behavior.");
                 isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeBarrel:
-                ValidateNativePopulationObject(value);
+                ValidateNativePopulationObjectForCapture(value, deferredValidations);
                 if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
                     throw new InvalidDataException("A native barrel has unsupported object behavior.");
                 isSolid = !value.Activated;
@@ -383,7 +417,7 @@ public sealed partial class DiabloWorldState
                     throw new InvalidDataException("An immutable native object acquired unsupported gameplay state.");
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused:
-                ValidateNativePopulationObject(value);
+                ValidateNativePopulationObjectForCapture(value, deferredValidations);
                 if (value.Activated || value.Destroyed)
                     throw new InvalidDataException("An explicitly refused native object acquired unsupported gameplay state.");
                 break;

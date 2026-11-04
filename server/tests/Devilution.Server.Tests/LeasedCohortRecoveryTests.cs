@@ -153,6 +153,21 @@ public sealed class LeasedCohortRecoveryTests
                 [TsvTable.Parse("rules.tsv", $"id\tvalue\na\t{value}\n")])]);
     }
 
+    [Fact]
+    public void DeferredCaptureOfALegacyAdapterCapturesSynchronouslyBeforeReleasingItsLease()
+    {
+        var initial = new ForwardingAdapter(CreateExecutor());
+        initial.InitializeParticipant("hero", new AuthoritativeParticipantSelection(null) { EntityId = 7 });
+        using var leased = new LeasedAuthoritativeGameHostAdapter(CreateRuntime(new Queue<ForwardingAdapter>([initial])));
+        var expected = initial.CaptureCohortState();
+        var encode = leased.CaptureCohortForDeferredEncoding();
+        initial.AdvanceTo(1);
+        leased.Dispose();
+        var actual = encode();
+        Assert.Equal(expected.SerializedState, actual.SerializedState);
+        Assert.Equal(expected.Tick, actual.Tick);
+    }
+
     private static StoreSimulationExecutor CreateExecutor()
     {
         return new StoreSimulationExecutor(
