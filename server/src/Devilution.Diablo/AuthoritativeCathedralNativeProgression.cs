@@ -95,7 +95,12 @@ internal sealed class AuthoritativeCathedralNativeProgression
     {
         if (IsCatacombs(levelId))
             throw new InvalidDataException("A Catacombs floor entry uses its own native owner.");
-        var entry = SampleEntry(levelId, player, uniqueFlags);
+        return BuildCathedralEntry(SampleEntry(levelId, player, uniqueFlags));
+    }
+
+    internal (DiabloNativeFloorEntry Entry, AuthoritativeCathedralNativePopulationBuild Build) BuildCathedralEntry(
+        DiabloNativeFloorEntry entry)
+    {
         var prepared = build(entry);
         return (entry with { GenerationFingerprint = prepared.Policy.Fingerprint }, prepared);
     }
@@ -112,8 +117,26 @@ internal sealed class AuthoritativeCathedralNativeProgression
         var entry = SampleEntry(levelId, player, uniqueFlags, townWarp) with {
             CatacombsLifeQ6 = player.Life, CatacombsEntry = firstEntry,
         };
+        return BuildCatacombsEntry(entry);
+    }
+
+    internal (DiabloNativeFloorEntry Entry, AuthoritativeCatacombsNativePopulationBuild Build) BuildCatacombsEntry(
+        DiabloNativeFloorEntry entry)
+    {
         var prepared = buildCatacombs!(entry);
         return (entry with { GenerationFingerprint = prepared.Policy.Fingerprint }, prepared);
+    }
+
+    /** A plausible first entry for a throwaway run; its generated floor is never shown or saved. */
+    internal DiabloNativeFloorEntry CreateWarmupEntry(uint levelId, uint classId, IReadOnlySet<int> uniqueFlags)
+    {
+        const int life = 64 << 6;
+        const int mana = 16 << 6;
+        return new DiabloNativeFloorEntry(levelId,
+            new(life, mana, 10, animations.GetRequired(classId).IdleFrames, new(0, 0), true, true),
+            uniqueFlags.Order().ToArray(), string.Empty) {
+            CatacombsLifeQ6 = IsCatacombs(levelId) ? life : null,
+        };
     }
 
     private DiabloNativeFloorEntry SampleEntry(uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags,

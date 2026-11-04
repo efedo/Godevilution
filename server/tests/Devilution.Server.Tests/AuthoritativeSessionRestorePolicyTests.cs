@@ -890,6 +890,26 @@ public sealed class AuthoritativeSessionRestorePolicyTests
                 version,
                 [TsvTable.Parse("rules.tsv", $"id\tvalue\na\t{value}\n")])]);
 
+    [Fact]
+    public void FloorEntryWarmupRunsOutsideTheLeaseAndIgnoresAdaptersWithoutIt()
+    {
+        LeasedAuthoritativeGameHostAdapter? leased = null;
+        var warmed = false;
+        // The write barrier throws on a thread still holding the read side.
+        var warming = new WarmingGameAdapter(() => {
+            leased!.DisposeRetiredAdapters();
+            warmed = true;
+        });
+        using (leased = CreateLeasedAdapter(new Queue<IAuthoritativeGameHostAdapter>([warming]), () => 10)) {
+            leased.WarmFloorEntries();
+        }
+        Assert.True(warmed);
+
+        using var plain = CreateLeasedAdapter(
+            new Queue<IAuthoritativeGameHostAdapter>([new ReloadableGameAdapter("plain")]), () => 10);
+        plain.WarmFloorEntries();
+    }
+
     private static LeasedAuthoritativeGameHostAdapter CreateLeasedAdapter(
         Queue<IAuthoritativeGameHostAdapter> adapters,
         Func<ulong> tickProvider)
@@ -970,6 +990,32 @@ public sealed class AuthoritativeSessionRestorePolicyTests
 
         public void InitializeParticipant(string sessionId, AuthoritativeParticipantSelection selection)
             => CallCount++;
+    }
+
+    private sealed class WarmingGameAdapter(Action warm) : IAuthoritativeGameHostAdapter, IAuthoritativeFloorEntryWarmup
+    {
+        public void WarmFloorEntries() => warm();
+
+        public void InitializeParticipant(string sessionId, AuthoritativeParticipantSelection selection)
+        {
+        }
+
+        public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
+            => CommandExecutionResult.Accepted;
+
+        public void AdvanceTo(ulong tick)
+        {
+        }
+
+        public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick) => new() { Tick = tick };
+
+        public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick) => null;
+
+        public string ExportPlayerSave(string sessionId) => "save";
+
+        public void ImportPlayerSave(string sessionId, string serializedSave)
+        {
+        }
     }
 
     private sealed class ReloadableGameAdapter(

@@ -75,8 +75,8 @@ separate. The server owns gameplay, RNG, world state and persistence. The
   on the Debug server; Diablo, Server and client suites.
 - **Out of scope:** level-entry generation time, other per-tick allocations.
 - **Size:** under a day.
-- **State:** done. Each level entry still costs one 0.3–1.3 s tick on Debug; the
-  client lead absorbs it.
+- **State:** done. P1d later cut level entries to about 120–240 ms on Release; Debug
+  stays near 0.5 s and the client lead absorbs it.
 
 ## Batch P1 Live world, timed checkpoints (done)
 

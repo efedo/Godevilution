@@ -6,6 +6,7 @@ public sealed partial class DiabloWorldState
 
     internal bool HasNativeProgression => nativeProgression is not null;
     internal string? NativeProgressionFingerprint => nativeProgression?.Fingerprint;
+    internal Func<DiabloContentActivation>? NativeProgressionFreshActivation => nativeProgression?.FreshActivation;
     internal int NativeProgressionCohortFormatVersion
         => nativeProgression?.CohortFormatVersion
             ?? throw new InvalidOperationException("Native progression is not configured.");
@@ -39,14 +40,15 @@ public sealed partial class DiabloWorldState
 
     internal (NativeProgressionAdmission Admission, DiabloNativeFloorEntry Entry)? PrepareNativeProgressionEntry(
         AuthoritativePlayerState player, uint levelId, IReadOnlyList<AuthoritativePlayerState> players,
-        AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells, AuthoritativeCatacombsEntry? firstEntry = null)
+        AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells, AuthoritativeCatacombsEntry? firstEntry = null,
+        bool verifyAtCommit = true)
     {
         if (OwnsNativePopulationLevel(levelId) || levelId == 0 || nativeProgression is null)
             return null;
         if (nativeProgression.IsCatacombs(levelId)) {
             var catacombs = nativeProgression.PrepareCatacombs(levelId, player, cathedralItems!.UniqueItemFlags, firstEntry);
             return (new(null, PrepareNativeCatacombsFloorAdmission(catacombs.Build, items, spells,
-                nativeProgression.CatacombsMissiles!, players)), catacombs.Entry);
+                nativeProgression.CatacombsMissiles!, players, verifyAtCommit)), catacombs.Entry);
         }
         var prepared = nativeProgression.Prepare(levelId, player, cathedralItems!.UniqueItemFlags);
         // The new floor has a complete allowlist independent of carried item state.
@@ -59,7 +61,29 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("A native floor entry cannot admit an unbound carried item.");
         }
         var door = nativeProgression.GetDoor(levelId, cathedralDoorCatalog!);
-        return (new(PrepareNativeFloorAdmission(prepared.Build, door, items, spells, players), null), prepared.Entry);
+        return (new(PrepareNativeFloorAdmission(prepared.Build, door, items, spells, players, verifyAtCommit), null), prepared.Entry);
+    }
+
+    /** Enters each floor of this throwaway run, as live first entries would; see WarmNativeFloorEntries. */
+    internal void WarmNativeFloorEntries(AuthoritativeItemCatalog items, AuthoritativeSpellCatalog spells)
+    {
+        var definition = nativeProgression
+            ?? throw new InvalidOperationException("Native progression is not configured.");
+        for (var levelId = 2U; definition.Supports(levelId); levelId++) {
+            var entry = definition.CreateWarmupEntry(levelId, nativePopulationParticipantClassId ?? 0,
+                cathedralItems!.UniqueItemFlags);
+            if (definition.IsCatacombs(levelId)) {
+                var catacombs = definition.BuildCatacombsEntry(entry);
+                var floor = PrepareNativeCatacombsFloorAdmission(catacombs.Build, items, spells,
+                    definition.CatacombsMissiles!, [], verifyAtCommit: false);
+                CommitNativeProgressionEntry(new NativeProgressionAdmission(null, floor), catacombs.Entry);
+                continue;
+            }
+            var cathedral = definition.BuildCathedralEntry(entry);
+            var admission = PrepareNativeFloorAdmission(cathedral.Build,
+                definition.GetDoor(levelId, cathedralDoorCatalog!), items, spells, [], verifyAtCommit: false);
+            CommitNativeProgressionEntry(admission, cathedral.Entry);
+        }
     }
 
     internal void CommitNativeProgressionEntry(NativeProgressionAdmission admission, DiabloNativeFloorEntry entry)

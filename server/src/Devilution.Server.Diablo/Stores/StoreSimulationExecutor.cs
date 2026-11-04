@@ -19,7 +19,7 @@ namespace Devilution.Server.Stores;
  * is applied once even when a client command is retried.
  */
 public sealed class StoreSimulationExecutor
-    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter
+    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IAuthoritativeFloorEntryWarmup
 {
     /** Reserved service-only store used by Adria's mana refill action. */
     public const uint AdriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
@@ -879,6 +879,9 @@ public sealed class StoreSimulationExecutor
     }
 
     /** Advances statuses and autonomous monster behavior at a server tick boundary. */
+    public void WarmFloorEntries()
+        => WithActiveState(state => state.Simulation).WarmNativeFloorEntries();
+
     public void AdvanceTo(ulong tick)
     {
         _ = WithActiveState(state => {

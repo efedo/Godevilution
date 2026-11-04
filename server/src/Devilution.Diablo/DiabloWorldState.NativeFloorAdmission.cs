@@ -11,9 +11,9 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralNativePopulationBuild Build,
         AuthoritativeCathedralDoorCatalog Doors,
         AuthoritativeCathedralItemRuntime Items,
-        string ExpectedItemCheckpoint,
-        string ExpectedFloorState,
-        string ExpectedCombinedItems,
+        string? ExpectedItemCheckpoint,
+        string? ExpectedFloorState,
+        string? ExpectedCombinedItems,
         IReadOnlyList<AuthoritativePlayerState> Participants);
 
     internal NativeFloorAdmission PrepareNativeFloorAdmission(
@@ -21,7 +21,8 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralDoorDefinition door,
         AuthoritativeItemCatalog items,
         AuthoritativeSpellCatalog spells,
-        IReadOnlyList<AuthoritativePlayerState> participants)
+        IReadOnlyList<AuthoritativePlayerState> participants,
+        bool verifyAtCommit = true)
     {
         ArgumentNullException.ThrowIfNull(build);
         if (World is null || cathedralItems is null || cathedralDoorCatalog is null
@@ -70,8 +71,12 @@ public sealed partial class DiabloWorldState
                 .Select(policy => new { policy.LevelId, policy.Fingerprint }).ToArray())));
         var (profile, checkpoint) = CombineFloorItems(oldProfile, current, build.Items, fingerprint);
         var combined = new AuthoritativeCathedralItemRuntime(profile, checkpoint, items.NativeGoldStackMetadata);
-        return new(floor, build,
-            new AuthoritativeCathedralDoorCatalog(cathedralDoorCatalog.Definitions.Append(door)), combined,
+        var doors = new AuthoritativeCathedralDoorCatalog(cathedralDoorCatalog.Definitions.Append(door));
+        if (!verifyAtCommit) {
+            floor.ValidateNativePopulationState([]);
+            return new(floor, build, doors, combined, null, null, null, participants.ToArray());
+        }
+        return new(floor, build, doors, combined,
             JsonSerializer.Serialize(current), CaptureNativeAdmissionState(floor),
             JsonSerializer.Serialize(combined.CaptureCheckpoint()), participants.ToArray());
     }
@@ -138,9 +143,10 @@ public sealed partial class DiabloWorldState
             || WorldItems.Values.Any(value => value.LevelId == policy.LevelId)
             || Corpses.Values.Any(value => value.LevelId == policy.LevelId)
             || Projectiles.Values.Any(value => value.LevelId == policy.LevelId)
-            || CaptureNativeAdmissionState(floor) != admission.ExpectedFloorState
-            || JsonSerializer.Serialize(admission.Items.CaptureCheckpoint()) != admission.ExpectedCombinedItems
-            || JsonSerializer.Serialize(CaptureCathedralItems()) != admission.ExpectedItemCheckpoint)
+            || admission.ExpectedFloorState is not null
+                && (CaptureNativeAdmissionState(floor) != admission.ExpectedFloorState
+                    || JsonSerializer.Serialize(admission.Items.CaptureCheckpoint()) != admission.ExpectedCombinedItems
+                    || JsonSerializer.Serialize(CaptureCathedralItems()) != admission.ExpectedItemCheckpoint))
             throw new InvalidOperationException("A prepared native floor is stale.");
         RequireAdoptableLevelStates(floor);
         AdoptFloorEntities(floor, apply: false);

@@ -9,6 +9,24 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-03 — Level-entry ticks
+
+Slowest tick per first entry, `-TargetDepth 5 -FirstFightDepth 5` at 200 Hz on a Release server
+with the machine under other load. Before: L2 343 ms, L3 133, L4 162, L5 570. After, two runs:
+L2 118-121, L3 112-117, L4 124-136, L5 186-242, of which JIT is a few ms. Cathedral entries now
+spend 60-75 ms building and 40-50 ms admitting. Warm-up takes about 2 s on Release and 6 s on
+Debug. Debug entries stay slow (one run: L2 435 ms, L3 549 ms).
+
+Journeys: Release 1 of 1 on the final code, and 2 of 2 with temporary timers. Debug 3 of 3 on
+the final code; one earlier Debug run with temporary
+timers failed on L3 when a heal was refused: a 4.4 s round trip made the client schedule it 884
+ticks ahead, and it ran too late. The lead logic is unchanged here and the rate of this failure
+is unmeasured. Fight-tick cost of losing tiered PGO could not be told from noise on this machine.
+
+Server suite 1896 passed (17 skipped), Diablo suite 3853 passed. The native progression tests
+pass with the local all-class profile (19 of 19). `AuthoritativeCatacombsFloorAdmissionTests`
+and the native population integration tests need private oracle inputs absent here and did not run.
+
 ### 2026-11-03 — 200 Hz journeys on the paced clock
 
 `-TargetDepth 5 -FirstFightDepth 5` journey and resume, with the machine under other load:

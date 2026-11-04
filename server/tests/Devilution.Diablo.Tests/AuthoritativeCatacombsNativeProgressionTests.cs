@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Devilution.Data;
+using Devilution.Engine;
 using Devilution.Server.Stores;
 using Xunit;
 
@@ -55,6 +56,104 @@ public sealed class AuthoritativeCatacombsNativeProgressionTests
         for (var level = 8U; level > 1; level--)
             UseStair(restoredWorld, restoredCommands, restoredPlayer, level, level - 1);
         Assert.Equal(1U, restoredPlayer.LevelId);
+    }
+
+    /** Warming runs off the authority lock, so it must not reach the live run or change what it generates. */
+    [Fact(Explicit = true)]
+    public void WarmingFloorEntriesLeavesTheLiveRunAndItsLaterFloorsUnchanged()
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var codec = new DiabloCohortCodec();
+        var warmed = StartDescent(content, seed);
+        var cold = StartDescent(content, seed);
+        var before = codec.Serialize(warmed.Simulation.CaptureCohortState(warmed.Runtime));
+
+        warmed.Simulation.WarmNativeFloorEntries();
+
+        Assert.Equal(before, codec.Serialize(warmed.Simulation.CaptureCohortState(warmed.Runtime)));
+        for (uint level = 1; level < 8; level++) {
+            UseStair(warmed.Simulation.WorldState, WorldCommands(warmed.Simulation), warmed.Player, level, level + 1);
+            UseStair(cold.Simulation.WorldState, WorldCommands(cold.Simulation), cold.Player, level, level + 1);
+        }
+        Assert.Equal(codec.Serialize(cold.Simulation.CaptureCohortState(cold.Runtime)),
+            codec.Serialize(warmed.Simulation.CaptureCohortState(warmed.Runtime)));
+    }
+
+    [Theory(Explicit = true)]
+    [InlineData(2U)]
+    [InlineData(5U)]
+    public void FloorEntryPublishesTheSameStateWithoutCommitVerification(uint levelId)
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var codec = new DiabloCohortCodec();
+        string Enter(bool verifyAtCommit)
+        {
+            var run = StartDescent(content, seed);
+            var world = run.Simulation.WorldState;
+            for (uint level = 1; level + 1 < levelId; level++)
+                UseStair(world, WorldCommands(run.Simulation), run.Player, level, level + 1);
+            var stair = world.World!.WarpTargets.Single(row => row.SourceLevelId == levelId - 1 && row.TargetLevelId == levelId);
+            run.Player.PositionX = stair.TriggerX;
+            run.Player.PositionY = stair.TriggerY;
+            var prepared = world.PrepareNativeProgressionEntry(run.Player, levelId, [run.Player],
+                run.Simulation.Items!, run.Simulation.Spells!, verifyAtCommit: verifyAtCommit)!.Value;
+            world.CommitNativeProgressionEntry(prepared.Admission, prepared.Entry);
+            return codec.Serialize(run.Simulation.CaptureCohortState(run.Runtime));
+        }
+
+        Assert.Equal(Enter(verifyAtCommit: true), Enter(verifyAtCommit: false));
+    }
+
+    /** Callers that do not commit in the same call keep the full state comparison by default. */
+    [Theory(Explicit = true)]
+    [InlineData(2U)]
+    [InlineData(5U)]
+    public void VerifiedFloorEntryRefusesAChangedFloor(uint levelId)
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var codec = new DiabloCohortCodec();
+        var run = StartDescent(content, seed);
+        var world = run.Simulation.WorldState;
+        for (uint level = 1; level + 1 < levelId; level++)
+            UseStair(world, WorldCommands(run.Simulation), run.Player, level, level + 1);
+        var prepared = world.PrepareNativeProgressionEntry(run.Player, levelId, [run.Player],
+            run.Simulation.Items!, run.Simulation.Spells!)!.Value;
+        prepared.Admission.Floor.CombatTargets.Values.First(target => target.HitPointsQ6 > 128).ApplyDamageQ6(64);
+        var before = codec.Serialize(run.Simulation.CaptureCohortState(run.Runtime));
+
+        Assert.Throws<InvalidOperationException>(() => world.CommitNativeProgressionEntry(prepared.Admission, prepared.Entry));
+
+        Assert.Equal(before, codec.Serialize(run.Simulation.CaptureCohortState(run.Runtime)));
+        Assert.False(world.OwnsNativePopulationLevel(levelId));
+    }
+
+    /** Skipping the full state comparison keeps the identity checks on what the floor would adopt. */
+    [Fact(Explicit = true)]
+    public void UnverifiedFloorEntryStillRefusesAForeignEntity()
+    {
+        var (content, seed) = LoadAllClassProfile();
+        var run = StartDescent(content, seed);
+        var world = run.Simulation.WorldState;
+        var prepared = world.PrepareNativeProgressionEntry(run.Player, 2, [run.Player],
+            run.Simulation.Items!, run.Simulation.Spells!, verifyAtCommit: false)!.Value;
+        var foreign = world.CombatTargets.Values.First();
+        prepared.Admission.Floor.CombatTargets.Add(foreign.EntityId, foreign);
+
+        Assert.Throws<InvalidOperationException>(() => world.CommitNativeProgressionEntry(prepared.Admission, prepared.Entry));
+    }
+
+    private static (DiabloSimulation Simulation, AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> Runtime,
+        AuthoritativePlayerState Player) StartDescent(ComposedContent content, uint seed)
+    {
+        var activation = DiabloModule.Instance.CathedralNativeTownProgressionContentBootstrap
+            .ActivateNativeTownClass(content, 0, seed);
+        var simulation = activation.Simulation;
+        var start = simulation.WorldState.World!.WarpTargets.Single(row => row.SourceLevelId == 1 && row.TargetLevelId == 2);
+        var template = activation.PlayerLoadouts.CreateTemplate("native-floor-warmup", 0,
+            null, null, null, startingLevelId: 1, startingPositionX: start.TriggerX, startingPositionY: start.TriggerY);
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("native-floor-warmup", player => player.EntityId = 0x70000001);
+        return (simulation, runtime, runtime.Read("native-floor-warmup", value => value));
     }
 
     /** Native CheckTriggers ignores a walking player: the L5 down path crosses the up stair. */

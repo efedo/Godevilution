@@ -545,8 +545,9 @@ public sealed class DiabloWorldCommandProcessor
             || !world.CanEnterNativePopulationLevel(warp.TargetLevelId))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var participants = players.ToArray();
+        // Commit follows in this call with only read-only checks between, so nothing can go stale.
         var entry = world.PrepareNativeProgressionEntry(player, warp.TargetLevelId, participants,
-            items!, spells!, warp.FirstEntry);
+            items!, spells!, warp.FirstEntry, verifyAtCommit: false);
         var destinationWorld = entry?.Admission.Floor ?? world;
         var destination = DeterministicGridCrawl.FindClosestValidPosition(
             warp.TargetX,

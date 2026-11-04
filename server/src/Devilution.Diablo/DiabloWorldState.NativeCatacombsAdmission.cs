@@ -9,11 +9,11 @@ public sealed partial class DiabloWorldState
         DiabloWorldState Floor,
         AuthoritativeCatacombsNativePopulationBuild Build,
         AuthoritativeCathedralItemRuntime Items,
-        string ExpectedWorld,
-        string ExpectedFloor,
-        string ExpectedItems,
+        string? ExpectedWorld,
+        string? ExpectedFloor,
+        string? ExpectedItems,
         IReadOnlyList<AuthoritativePlayerState> Participants,
-        string ExpectedParticipants);
+        string? ExpectedParticipants);
 
     internal static DiabloWorldState CreateNativeCatacombsFloor(
         AuthoritativeCatacombsNativePopulationBuild build,
@@ -64,7 +64,8 @@ public sealed partial class DiabloWorldState
         AuthoritativeItemCatalog items,
         AuthoritativeSpellCatalog spells,
         AuthoritativeMonsterMissileCatalog missiles,
-        IReadOnlyList<AuthoritativePlayerState> participants)
+        IReadOnlyList<AuthoritativePlayerState> participants,
+        bool verifyAtCommit = true)
     {
         ArgumentNullException.ThrowIfNull(build);
         ArgumentNullException.ThrowIfNull(participants);
@@ -112,6 +113,8 @@ public sealed partial class DiabloWorldState
             build.Items, AuthoritativeNativePopulationBindings.ComputeFamilyItemGenerationFingerprint(owners));
         var combined = new AuthoritativeCathedralItemRuntime(profile, checkpoint, items.NativeGoldStackMetadata,
             owners.ToDictionary(value => value.LevelId, value => value.ItemFamilyContext));
+        if (!verifyAtCommit)
+            return new(floor, build, combined, null, null, null, participants.ToArray(), null);
         return new(floor, build, combined, CaptureNativeFamilyAdmissionState(this),
             CaptureNativeFamilyAdmissionState(floor), CaptureNativeAdmissionItems(combined),
             participants.ToArray(), CaptureNativeAdmissionParticipants(participants));
@@ -148,10 +151,11 @@ public sealed partial class DiabloWorldState
             || liveIds.Distinct().Count() != liveIds.Length || HasEntitiesOnNativeAdmissionLevel(levelId)
             || liveIds.Concat(owner.BoundEntityIds).Any(id => IsEntityIdOccupied(id)
                 || admission.Participants.Any(player => player.EntityId == id))
-            || CaptureNativeAdmissionParticipants(admission.Participants) != admission.ExpectedParticipants
-            || CaptureNativeFamilyAdmissionState(this) != admission.ExpectedWorld
-            || CaptureNativeFamilyAdmissionState(floor) != admission.ExpectedFloor
-            || CaptureNativeAdmissionItems(admission.Items) != admission.ExpectedItems
+            || admission.ExpectedWorld is not null
+                && (CaptureNativeAdmissionParticipants(admission.Participants) != admission.ExpectedParticipants
+                    || CaptureNativeFamilyAdmissionState(this) != admission.ExpectedWorld
+                    || CaptureNativeFamilyAdmissionState(floor) != admission.ExpectedFloor
+                    || CaptureNativeAdmissionItems(admission.Items) != admission.ExpectedItems)
             || nativeCatacombsDoorCatalogFingerprint is not null
                 && nativeCatacombsDoorCatalogFingerprint != floor.nativeCatacombsDoorCatalogFingerprint)
             throw new InvalidOperationException("A prepared Catacombs floor is stale.");

@@ -115,8 +115,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   L8 journey and fresh-host resume pass on the Debug server. Since P1 the cohort
   advances in memory and checkpoints every 30 s, on clean shutdown and when the
   last player leaves; format 1 cohorts are refused. Since P1b the L5 journey and
-  resume also pass at 60 Hz on the Debug server; entering a level still costs one
-  0.3–1.3 s tick. Since P2 timed checkpoints write on their own thread, and a failed
+  resume also pass at 60 Hz on the Debug server. Since P1d first entry to a level
+  costs one tick of about 120 ms (Cathedral) to 240 ms (Catacombs) on Release, and
+  still about 0.5 s on Debug. Since P2 timed checkpoints write on their own thread, and a failed
   write is logged and retried. Capture still holds the lock (174 ms on the Debug L8
   cohort), which P5 addresses; P3–P4 add Debug command logs. Since P1c the clock is
   paced by the tick rate, stalls slow the game rather than jump it, late gameplay

@@ -34,6 +34,20 @@ internal static class Program
         }
     }
 
+    /** Compiles first-floor-entry code off the authority lock; a failure only leaves it cold. */
+    private static void StartFloorEntryWarmup(IAuthoritativeFloorEntryWarmup target)
+    {
+        new Thread(() => {
+            try {
+                var started = Stopwatch.GetTimestamp();
+                target.WarmFloorEntries();
+                Console.WriteLine($"Floor entry warm-up: {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F0} ms");
+            } catch (Exception failure) {
+                Console.Error.WriteLine($"Floor entry warm-up failed: {failure.GetType().Name}: {failure.Message}");
+            }
+        }) { IsBackground = true, Name = "Floor entry warm-up", Priority = ThreadPriority.BelowNormal }.Start();
+    }
+
     private static async Task<int> RunAsync(ServerHostOptions options)
     {
         // Lease precedes every seed/save-root write, including startup failures.
@@ -185,6 +199,7 @@ internal static class Program
                 $"Cohort checkpoint write failed; retrying next interval: {exception.GetType().Name}: {exception.Message}"),
         };
         server.Start();
+        StartFloorEntryWarmup(gameAdapter);
         commandTimingPublisher = commandTimingSink?.RunAsync();
         Console.WriteLine($"Godevilution authoritative server listening on {options.BindAddress}:{server.Port}");
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");

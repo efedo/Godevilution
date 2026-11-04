@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-11-03
 
+- Level-entry ticks: the server compiles its code fully optimized at first use, enters every
+  floor once on a throwaway run at startup on a background thread, and the live warp no longer
+  re-checks state that cannot have changed between prepare and commit. On a Release server at
+  200 Hz, L2 entry went from 343 to about 120 ms and L5 from 570 to 186-242 ms.
 - Acceptance bot no longer starves the client's main thread: a failed target search stops
   and yields instead of repeating on one snapshot (485 ms a pass to 25 ms), door retries wait
   for a frame, and above 20 Hz tick budgets cannot end a stage within 3 s of wall time.

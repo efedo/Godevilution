@@ -12,7 +12,7 @@ namespace Devilution.Server.Gameplay;
  * in lockstep until a class is chosen: by the first admitted participant, or by
  * the one run that accepts a restored cohort. The rest are then discarded.
  */
-public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter
+public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeFloorEntryWarmup, IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter
 {
     private readonly IReadOnlyDictionary<uint, StoreSimulationExecutor> runs;
     private readonly uint defaultClassId;
@@ -65,6 +65,8 @@ public sealed class NativeClassSelectingGameHostAdapter : IAuthoritativeGameHost
             Volatile.Write(ref selected, run);
         }
     }
+
+    public void WarmFloorEntries() => Current.WarmFloorEntries();
 
     public void AdvanceTo(ulong tick)
     {

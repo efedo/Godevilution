@@ -13,7 +13,7 @@ namespace Devilution.Server.Host;
  * used by an operation that is already in flight.
  */
 public sealed class LeasedAuthoritativeGameHostAdapter
-    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IDisposable
+    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IAuthoritativeFloorEntryWarmup, IDisposable
 {
     private readonly GameplayRulesetRuntime<IAuthoritativeGameHostAdapter> rulesets;
     private readonly Action<IAuthoritativeGameHostAdapter> disposeAdapter;
@@ -255,6 +255,13 @@ public sealed class LeasedAuthoritativeGameHostAdapter
     {
         ThrowIfDisposed();
         WithAdapter(adapter => adapter.AdvanceTo(tick));
+    }
+
+    /** Runs outside the lease: warming takes seconds and must not hold back a ruleset reload. */
+    public void WarmFloorEntries()
+    {
+        ThrowIfDisposed();
+        WithAdapter(adapter => adapter as IAuthoritativeFloorEntryWarmup)?.WarmFloorEntries();
     }
 
     public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
