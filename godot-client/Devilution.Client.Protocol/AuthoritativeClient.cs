@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Net.Sockets;
 using Devilution.Protocol;
+using Devilution.Protocol.CommandLog;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
 
@@ -87,6 +88,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     /** Optional bounded, read-only diagnostic capture; null keeps tracing inert. */
     public AuthoritativeClientCommandTimingRecorder? CommandTimingRecorder { get; init; }
+
+    /** Debug diagnostics: every queued and sent command and every receipt. The owner disposes it. */
+    public CommandLogAppender? CommandLog { get; init; }
 
     public uint ServerTickRateHz { get; private set; } = 20;
 
@@ -432,6 +436,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 && queuedCommand.IntentCase == Command.IntentOneofCase.AttackRequested)
                 queuedCommand.AttackRequested.QueueDuringMove = true;
             pending.Add(sequence, new PendingCommand(queuedCommand, observedTick));
+            CommandLog?.Append(new CommandLogRecord {
+                ClientQueued = new ClientQueuedRecord { Command = queuedCommand.Clone() },
+            });
             return sequence;
         }
     }
@@ -572,6 +579,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                     Volatile.Read(ref roundTripMilliseconds),
                                     timingCalibrationReady,
                                     CaptureCommandIntent(entry.Command));
+                            CommandLog?.Append(new CommandLogRecord {
+                                ClientSent = new ClientSentRecord { Command = entry.Command.Clone() },
+                            });
                             return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
                         }
                     }, cancellationToken, commandWriteObserver);
@@ -1274,6 +1284,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         var receivedStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
         var transportGenerationForRecord = connectionGeneration ?? Volatile.Read(ref transportGeneration);
         foreach (var result in acknowledgement.Results) {
+            CommandLog?.Append(new CommandLogRecord {
+                ClientReceipt = new ClientReceiptRecord { Result = result.Clone() },
+            });
             var trackedPendingCommand = false;
             var wasRetransmitted = false;
             long? commandRoundTripMilliseconds = null;

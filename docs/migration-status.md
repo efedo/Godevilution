@@ -119,7 +119,8 @@ Passing a scoped test or adding a schema version does not close a milestone.
   costs one tick of about 120 ms (Cathedral) to 240 ms (Catacombs) on Release, and
   still about 0.5 s on Debug. Since P2 timed checkpoints write on their own thread, and a failed
   write is logged and retried. Capture still holds the lock (174 ms on the Debug L8
-  cohort), which P5 addresses; P3–P4 add Debug command logs. Since P1c the clock is
+  cohort), which P5 addresses. Since P3–P4 Debug builds keep command logs that the host can replay and
+  compare (client against server). Since P1c the clock is
   paced by the tick rate, stalls slow the game rather than jump it, late gameplay
   commands are accepted for up to 2 s, and the L5 journey and resume pass at 200 Hz
   on Debug and Release servers.

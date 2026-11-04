@@ -55,6 +55,30 @@ public sealed record ServerHostOptions(
     /** Optional new file for an explicitly started local diagnostic recording. */
     public string? PerformanceOutput { get; init; }
 
+#if DEBUG
+    public const bool DefaultCommandLog = true;
+#else
+    public const bool DefaultCommandLog = false;
+#endif
+
+    /** Per-run command log and retained checkpoints; on by default only in Debug builds. */
+    public bool CommandLog { get; init; } = DefaultCommandLog;
+
+    /** Parent of the per-run log directories; null puts them beside the save root. */
+    public string? CommandLogDirectory { get; init; }
+
+    /** Replays this run directory, using its recorded arguments, instead of hosting. */
+    public string? ReplayCommandLog { get; init; }
+
+    public ulong? ReplayFromGeneration { get; init; }
+
+    public ulong? ReplayToGeneration { get; init; }
+
+    /** Compares this client log with the server run directories below, instead of hosting. */
+    public string? CompareClientCommandLog { get; init; }
+
+    public IReadOnlyList<string> CompareServerCommandLogs { get; init; } = [];
+
     /** Opt-in bounded stdout evidence for host command/snapshot timing. */
     public bool CommandTimingTrace { get; init; }
 
@@ -126,6 +150,37 @@ public sealed record ServerHostOptions(
                     return false;
                 }
                 current = current with { UseClockGatedCommandScheduling = value == "clock-gated" };
+                break;
+            case "--command-log":
+                if (!bool.TryParse(value, out var commandLog)) {
+                    options = current;
+                    error = $"'{value}' is not a valid command log setting.";
+                    return false;
+                }
+                current = current with { CommandLog = commandLog };
+                break;
+            case "--command-log-directory":
+                current = current with { CommandLogDirectory = value };
+                break;
+            case "--replay-command-log":
+                current = current with { ReplayCommandLog = value };
+                break;
+            case "--replay-from-generation":
+            case "--replay-to-generation":
+                if (!ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var replayGeneration)) {
+                    options = current;
+                    error = $"'{value}' is not a valid checkpoint generation.";
+                    return false;
+                }
+                current = argument == "--replay-from-generation"
+                    ? current with { ReplayFromGeneration = replayGeneration }
+                    : current with { ReplayToGeneration = replayGeneration };
+                break;
+            case "--compare-client-command-log":
+                current = current with { CompareClientCommandLog = value };
+                break;
+            case "--compare-server-command-log":
+                current = current with { CompareServerCommandLogs = [.. current.CompareServerCommandLogs, value] };
                 break;
             case "--checkpoint-interval-seconds":
                 if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var checkpointInterval)
@@ -408,5 +463,12 @@ public sealed record ServerHostOptions(
           --checkpoint-interval-seconds <n> Clock-gated cohort checkpoint spacing; a crash loses up to n s (default: 30)
           --performance-output <file> New diagnostic JSON file; use profile-start after warm-up, then quit
           --command-timing-trace <bool> Bounded command timing JSON lines on stdout (default: false)
+          --command-log <bool>         Per-run command log and retained checkpoints (default: true in Debug builds)
+          --command-log-directory <directory> Parent of the run directories (default: beside the save root)
+          --replay-command-log <directory> Replay a run directory between checkpoints and compare the bytes
+          --replay-from-generation <n> Checkpoint to start from (default: earliest retained)
+          --replay-to-generation <n>   Checkpoint to compare with (default: last logged)
+          --compare-client-command-log <file> Compare a client log with --compare-server-command-log directories
+          --compare-server-command-log <directory> A server run the client played on; repeatable
         """;
 }

@@ -92,6 +92,7 @@ public sealed partial class AuthoritativeTcpServer
                 entityIds.RestoreNextId(document.NextEntityId);
                 adapter.CommitCohortRestore(prepared);
                 foreach (var participant in document.Participants) {
+                    CommandLog?.RecordJoin(participant.SessionId, participant.EntityId, document.Tick, null, restored: true);
                     cohortSessionsById.Add(participant.SessionId,
                         new SessionState(participant.SessionId, string.Empty, participant.EntityId) {
                             ParticipantInitialized = true,
@@ -156,18 +157,31 @@ public sealed partial class AuthoritativeTcpServer
                 || !owner.ParticipantInitialized))
             throw new InvalidDataException("The command cohort contains a ledger without an initialized owner.");
         var generation = committedCohort is null ? 1UL : checked(committedCohort.Generation + 1);
+        return ComposeCohortDocument(generation, identity, module, commands, entityIds.NextId, bindings);
+    }
+
+    /** One checkpoint from captured state; a command log replay composes its result the same way. */
+    internal static AuthoritativeCohortDocument ComposeCohortDocument(
+        ulong generation,
+        AuthoritativeCohortIdentity identity,
+        AuthoritativeModuleCohortState module,
+        AuthoritativeCommandCohortState commands,
+        uint nextEntityId,
+        IReadOnlyList<AuthoritativeModuleCohortParticipant> roster)
+    {
+        var ledgers = commands.Sessions.ToDictionary(session => session.SessionId, StringComparer.Ordinal);
         return new AuthoritativeCohortDocument(
             AuthoritativeCohortStore.CurrentFormatVersion,
             generation,
             identity,
             commands.CurrentTick,
-            entityIds.NextId,
+            nextEntityId,
             commands.NextServerReceiptSequence,
-            roster.Select(session => ledgers.TryGetValue(session.Id, out var ledger)
-                ? new AuthoritativeCohortParticipantCheckpoint(session.Id, session.EntityId, ledger.CommandResults) {
+            roster.Select(participant => ledgers.TryGetValue(participant.SessionId, out var ledger)
+                ? new AuthoritativeCohortParticipantCheckpoint(participant.SessionId, participant.EntityId, ledger.CommandResults) {
                     RetiredThroughClientSequence = ledger.RetiredThroughClientSequence,
                 }
-                : new AuthoritativeCohortParticipantCheckpoint(session.Id, session.EntityId, [])).ToArray(),
+                : new AuthoritativeCohortParticipantCheckpoint(participant.SessionId, participant.EntityId, [])).ToArray(),
             module.SerializedState);
     }
 
@@ -191,6 +205,7 @@ public sealed partial class AuthoritativeTcpServer
             var capture = PerformanceRecorder?.Begin() ?? 0;
             var document = CaptureCohortDocumentCore(adapter, CohortIdentity(adapter));
             PerformanceRecorder?.Complete(HostPerformanceMetric.CohortCheckpointCaptureMilliseconds, capture);
+            CommandLog?.RecordCheckpoint(document);
             lastCohortCheckpointTimestamp = CheckpointTimeProvider.GetTimestamp();
             if (timed) {
                 // Its own thread: disk time must not take from the host's thread pool.
@@ -316,12 +331,13 @@ public sealed partial class AuthoritativeTcpServer
             var adapter = RequireCohortAdapter();
             var before = adapter.CaptureCohortState();
             try {
-                initializer.InitializeParticipant(session.Id,
-                    new AuthoritativeParticipantSelection(hello.HasRequestedCharacterClassId
-                        ? hello.RequestedCharacterClassId : null) {
-                        CharacterName = hello.HasRequestedCharacterName ? hello.RequestedCharacterName : null,
-                        EntityId = session.EntityId,
-                    });
+                var selection = new AuthoritativeParticipantSelection(hello.HasRequestedCharacterClassId
+                    ? hello.RequestedCharacterClassId : null) {
+                    CharacterName = hello.HasRequestedCharacterName ? hello.RequestedCharacterName : null,
+                    EntityId = session.EntityId,
+                };
+                initializer.InitializeParticipant(session.Id, selection);
+                CommandLog?.RecordJoin(session.Id, session.EntityId, commandServer.CurrentTick, selection);
                 session.ParticipantInitialized = true;
             } catch (Exception failure) {
                 // Only a proven non-mutating rejection is recoverable. Never

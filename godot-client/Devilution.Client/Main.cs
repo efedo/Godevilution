@@ -1,6 +1,7 @@
 using Devilution.Client.Protocol;
 using Devilution.Client.Diagnostics;
 using Devilution.Client.PresentationAssets;
+using Devilution.Protocol.CommandLog;
 using Devilution.Protocol.V1;
 using Godot;
 using System.Runtime.InteropServices;
@@ -18,6 +19,7 @@ public partial class Main : Node2D
         Name = "WorldArea", ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore,
     };
     private AuthoritativeClient? client;
+    private CommandLogAppender? commandLog;
     private WorldPresentation? world;
     private HudPresentation? hud;
     private PresentationFeedback? feedback;
@@ -409,11 +411,29 @@ public partial class Main : Node2D
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()
                 : null,
+            CommandLog = commandLog ??= CreateCommandLog(),
         };
         client = newClient;
         activeConnectionOptions = options;
         connectionTask = ConnectAsync(newClient, generation, connectionLifetime.Token);
         hud?.SetStatus("Connecting to authoritative server...");
+    }
+
+    /** One log per client process in Debug builds; a failure only leaves the run unlogged. */
+    private static CommandLogAppender? CreateCommandLog()
+    {
+#if DEBUG
+        try {
+            var directory = Environment.GetEnvironmentVariable("GODEVILUTION_CLIENT_COMMAND_LOG_DIRECTORY")
+                ?? ProjectSettings.GlobalizePath("user://command-logs");
+            Directory.CreateDirectory(directory);
+            var path = Path.Combine(directory, $"client-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Environment.ProcessId}.cmdlog");
+            return new CommandLogAppender(path, failure => GD.PushWarning($"Command log stopped: {failure.Message}"));
+        } catch (Exception failure) when (failure is IOException or UnauthorizedAccessException) {
+            GD.PushWarning($"Command log unavailable: {failure.Message}");
+        }
+#endif
+        return null;
     }
 
     public override void _Process(double delta)
@@ -1117,6 +1137,7 @@ public partial class Main : Node2D
                 AddCleanupFailure(cleanupFailures, await AwaitFailure(
                     disposeTask,
                     allowCancellation: false));
+                commandLog?.Dispose();
                 connectionLifetime?.Dispose();
                 failureCount = cleanupFailures.Count;
                 if (cleanupFailures.Count > 0)

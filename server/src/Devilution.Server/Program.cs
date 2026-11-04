@@ -27,11 +27,59 @@ internal static class Program
         }
 
         try {
-            return await RunAsync(options);
+            if (options.CompareClientCommandLog is not null)
+                return CompareCommandLogs(options);
+            return options.ReplayCommandLog is null
+                ? await RunAsync(options, args)
+                : await ReplayCommandLogAsync(options);
         } catch (Exception exception) {
             Console.Error.WriteLine($"Server startup failed: {exception.Message}");
             return 1;
         }
+    }
+
+    private static int CompareCommandLogs(ServerHostOptions options)
+    {
+        var comparison = AuthoritativeCommandLogReplay.Compare(options.CompareClientCommandLog!, options.CompareServerCommandLogs);
+        foreach (var mismatch in comparison.Mismatches)
+            Console.Error.WriteLine(mismatch);
+        Console.WriteLine(comparison.Summary);
+        return comparison.Matches ? 0 : 1;
+    }
+
+    /** Rebuilds the logged host from its recorded arguments, on a throwaway save root. */
+    private static async Task<int> ReplayCommandLogAsync(ServerHostOptions replay)
+    {
+        var directory = Path.GetFullPath(replay.ReplayCommandLog!);
+        var header = AuthoritativeCommandLogReplay.ReadHeader(directory);
+        if (!ServerHostOptions.TryParse(header.ServerArguments, out var recorded, out var error))
+            throw new InvalidDataException($"The command log's server arguments are invalid: {error}");
+        Environment.CurrentDirectory = header.WorkingDirectory;
+        var root = Path.Combine(directory, $"replay-root-{Guid.NewGuid():N}");
+        try {
+            return await RunAsync(recorded with {
+                SaveRoot = root,
+                RandomSeed = header.RandomSeed,
+                CommandLog = false,
+                CommandTimingTrace = false,
+                PerformanceOutput = null,
+                ReplayCommandLog = directory,
+                ReplayFromGeneration = replay.ReplayFromGeneration,
+                ReplayToGeneration = replay.ReplayToGeneration,
+            }, []);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static HostCommandLog CreateCommandLog(ServerHostOptions options, IReadOnlyList<string> args, uint randomSeed)
+    {
+        var parent = options.CommandLogDirectory
+            ?? Path.GetFullPath(options.SaveRoot).TrimEnd(Path.DirectorySeparatorChar) + "-command-logs";
+        var run = Path.Combine(parent, $"{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Environment.ProcessId}");
+        return new HostCommandLog(run, args, randomSeed, failure =>
+            Console.Error.WriteLine($"Command log stopped: {failure.GetType().Name}: {failure.Message}"));
     }
 
     /** Compiles first-floor-entry code off the authority lock; a failure only leaves it cold. */
@@ -48,7 +96,7 @@ internal static class Program
         }) { IsBackground = true, Name = "Floor entry warm-up", Priority = ThreadPriority.BelowNormal }.Start();
     }
 
-    private static async Task<int> RunAsync(ServerHostOptions options)
+    private static async Task<int> RunAsync(ServerHostOptions options, IReadOnlyList<string> args)
     {
         // Lease precedes every seed/save-root write, including startup failures.
         using var cohortStore = options.UseCohortPersistence
@@ -139,6 +187,7 @@ internal static class Program
 
         var moduleCandidates = LoadModuleCandidates(out var modulePackages);
         var randomSeed = worldSeedStore.LoadOrCreate(options.RandomSeed);
+        using var commandLog = options.CommandLog ? CreateCommandLog(options, args, randomSeed) : null;
         var playerStart = new AuthoritativePlayerStartConfiguration(
             options.StartingGold,
             options.StartingLife,
@@ -167,7 +216,14 @@ internal static class Program
         var commandServer = new AuthoritativeCommandServer(gameAdapter, CommandAdmissionPolicy.ForLiveHost(options.TickRateHz)) {
             CompletedCommandWindow = options.UseCohortPersistence && options.UseClockGatedCommandScheduling
                 ? ServerHostOptions.CohortCompletedCommandWindow : null,
+            CommandLog = commandLog,
         };
+        if (options.ReplayCommandLog is { } replayDirectory) {
+            var replay = AuthoritativeCommandLogReplay.Run(replayDirectory, options.ReplayFromGeneration,
+                options.ReplayToGeneration, gameAdapter, gameAdapter, commandServer);
+            Console.WriteLine($"Replay of checkpoints {replay.FromGeneration} to {replay.ToGeneration}: {replay.Message}");
+            return replay.Matches ? 0 : 1;
+        }
         var handshake = new ProtocolHandshake(ProtocolServerIdentity.FromRuleset(
             options.BuildId,
             options.ProtocolSchemaVersion,
@@ -190,6 +246,7 @@ internal static class Program
                 : commandTimingSink.Enqueue,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
             CohortStore = cohortStore,
+            CommandLog = commandLog,
             // Immediate scheduling keeps its per-mutation checkpoints.
             CohortCheckpointInterval = options.UseClockGatedCommandScheduling
                 ? TimeSpan.FromSeconds(options.CohortCheckpointIntervalSeconds) : null,

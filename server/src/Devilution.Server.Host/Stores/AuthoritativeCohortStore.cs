@@ -215,16 +215,26 @@ public sealed class AuthoritativeCohortStore : IDisposable
                 throw new InvalidDataException(
                     $"The cohort generation must be exactly {expectedGeneration}.");
 
-            var payload = ToPayload(normalized);
-            var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payload, JsonOptions);
-            var integrity = ComputeIntegrity(payloadBytes);
-            var bytes = AppendIntegrityProperty(payloadBytes, integrity);
+            var bytes = SerializeNormalized(normalized);
             var nextCachedBytes = bytes.ToArray();
             var nextCachedDocument = normalized;
             PublishAtomically(bytes);
             cachedCheckpointBytes = nextCachedBytes;
             cachedCheckpointDocument = nextCachedDocument;
         }
+    }
+
+    /** The exact bytes Save would publish for this document. */
+    public static byte[] SerializeDocument(AuthoritativeCohortDocument document)
+        => SerializeNormalized(Normalize(document));
+
+    public static AuthoritativeCohortDocument DeserializeDocument(byte[] bytes)
+        => ReadDocument(bytes);
+
+    private static byte[] SerializeNormalized(AuthoritativeCohortDocument normalized)
+    {
+        var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(ToPayload(normalized), JsonOptions);
+        return AppendIntegrityProperty(payloadBytes, ComputeIntegrity(payloadBytes));
     }
 
     private static void ValidateIdentityTransition(

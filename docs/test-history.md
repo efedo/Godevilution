@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-04 — Debug command logs
+
+200 Hz `-TargetDepth 5 -FirstFightDepth 5` Debug journey and resume passed. Replay from each run's
+first checkpoint with a participant: generations 2 to 4, 140 commands, same 9007180 bytes; 5 to 7,
+33 commands, same 8975639 bytes. Client logs against server logs: 140 and 33 commands matched, 0
+sends unconfirmed. Suites: server 1911 passed, client 1267 passed, Diablo 3853 passed. Capture
+still runs under the lock, so log capture cost stays with P5.
+
 ### 2026-11-03 — Clock-gated command lead bound
 
 200 Hz `-TargetDepth 5 -FirstFightDepth 5` journey and resume: Debug 3 of 3, Release 2 of 2, no

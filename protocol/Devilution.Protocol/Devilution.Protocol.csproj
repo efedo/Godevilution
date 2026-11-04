@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../devilution.proto" GrpcServices="None" Link="devilution.proto" />
+    <Protobuf Include="../devilution.proto" ProtoRoot=".." GrpcServices="None" Link="devilution.proto" />
+    <Protobuf Include="../command_log.proto" ProtoRoot=".." GrpcServices="None" Link="command_log.proto" />
   </ItemGroup>
 </Project>

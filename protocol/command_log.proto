@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package devilution.protocol.commandlog.v1;
+
+import "devilution.proto";
+
+option csharp_namespace = "Devilution.Protocol.CommandLog";
+
+// Debug diagnostics only, never sent on the wire. A log file is a sequence of
+// length-delimited CommandLogRecord messages; a crash can truncate the last one.
+message CommandLogRecord {
+	int64 unix_milliseconds = 1;
+	oneof kind {
+		CommandLogHeader header = 10;
+		ServerCommandRecord server_command = 11;
+		ParticipantJoinedRecord participant_joined = 12;
+		ParticipantLeftRecord participant_left = 13;
+		CheckpointRecord checkpoint = 14;
+		ClientQueuedRecord client_queued = 20;
+		ClientSentRecord client_sent = 21;
+		ClientReceiptRecord client_receipt = 22;
+		RecordsDroppedRecord records_dropped = 30;
+	}
+}
+
+// Server logs carry what a replay needs to rebuild the same host.
+message CommandLogHeader {
+	repeated string server_arguments = 1;
+	string working_directory = 2;
+	uint32 random_seed = 3;
+}
+
+// One command that reached the executor or admission refusal; duplicates change nothing.
+message ServerCommandRecord {
+	string session_id = 1;
+	uint64 current_tick = 2;
+	devilution.protocol.v1.Command command = 3;
+	devilution.protocol.v1.CommandResult result = 4;
+}
+
+message ParticipantJoinedRecord {
+	string session_id = 1;
+	uint32 entity_id = 2;
+	uint64 tick = 3;
+	optional uint32 requested_class_id = 4;
+	optional string character_name = 5;
+	// Restored from a checkpoint, so a replay must not initialize it again.
+	bool restored = 6;
+}
+
+message ParticipantLeftRecord {
+	string session_id = 1;
+	uint64 tick = 2;
+}
+
+// A captured checkpoint; every earlier record is inside it and no later one is.
+message CheckpointRecord {
+	uint64 generation = 1;
+	uint64 tick = 2;
+	string file_name = 3;
+}
+
+message ClientQueuedRecord {
+	devilution.protocol.v1.Command command = 1;
+}
+
+// One transmission; a retransmission of the same sequence adds another record.
+message ClientSentRecord {
+	devilution.protocol.v1.Command command = 1;
+}
+
+message ClientReceiptRecord {
+	devilution.protocol.v1.CommandResult result = 1;
+}
+
+// The queue overflowed, so a replay or comparison across this point is invalid.
+message RecordsDroppedRecord {
+	uint64 count = 1;
+}

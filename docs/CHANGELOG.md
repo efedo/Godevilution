@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-04
+
+- Debug command logs (P3, P4): Debug hosts and clients log commands, receipts and checkpoints on a
+  background thread. `--replay-command-log` reproduces a later checkpoint byte for byte and
+  `--compare-client-command-log` checks a client log against the host's.
+
 ## 2026-11-03
 
 - Clock-gated command lead: the client's tick projection is pulled back by each snapshot to what

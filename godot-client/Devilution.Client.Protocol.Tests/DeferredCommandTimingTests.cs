@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using Devilution.Client.Protocol;
+using Devilution.Protocol.CommandLog;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
 using Xunit;
@@ -11,6 +12,63 @@ namespace Devilution.Client.Protocol.Tests;
 /** Transport-only coverage for the negotiated clock-gated command mode. */
 public sealed class DeferredCommandTimingTests
 {
+    [Fact]
+    public async Task CommandLogRecordsTheQueuedCommandItsSendAndItsReceipt()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var cancellationToken = timeout.Token;
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var commandSeen = new TaskCompletionSource<Command>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseConnection = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(cancellationToken);
+            await using var stream = connection.GetStream();
+            await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100, cancellationToken: cancellationToken);
+            var readinessProbe = (await ReadEnvelopeAsync(stream, cancellationToken)).SnapshotRequest;
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+            }, cancellationToken);
+            var command = Assert.Single((await ReadEnvelopeAsync(stream, cancellationToken)).CommandBatch.Commands);
+            commandSeen.SetResult(command);
+            await WriteEnvelopeAsync(stream, new Envelope { CommandAck = Accepted(command.ClientSequence) }, cancellationToken);
+            await releaseConnection.Task.WaitAsync(cancellationToken);
+        }, cancellationToken);
+
+        var path = Path.Combine(Path.GetTempPath(), $"godevilution-client-{Guid.NewGuid():N}.cmdlog");
+        try {
+            using (var log = new CommandLogAppender(path)) {
+                await using var client = new AuthoritativeClient(Options(listener)) { CommandLog = log };
+                await client.ConnectAsync(cancellationToken);
+                while (client.DrainMessages().Count == 0)
+                    await Task.Delay(10, cancellationToken);
+                client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
+                while (!commandSeen.Task.IsCompleted) {
+                    await client.PollAsync(cancellationToken);
+                    await Task.Delay(10, cancellationToken);
+                }
+                while (client.PendingCommandCount != 0)
+                    await Task.Delay(10, cancellationToken);
+                releaseConnection.SetResult();
+                await serverTask.WaitAsync(cancellationToken);
+            }
+
+            var sentCommand = await commandSeen.Task;
+            var records = CommandLogReader.ReadAll(path);
+            Assert.Equal(
+                [CommandLogRecord.KindOneofCase.ClientQueued, CommandLogRecord.KindOneofCase.ClientSent, CommandLogRecord.KindOneofCase.ClientReceipt],
+                records.Select(record => record.KindCase));
+            Assert.Equal(1UL, records[0].ClientQueued.Command.ClientSequence);
+            Assert.Equal(sentCommand, records[1].ClientSent.Command);
+            Assert.Equal(sentCommand.ClientSequence, records[2].ClientReceipt.Result.ClientSequence);
+        } finally {
+            timeout.Cancel();
+            releaseConnection.TrySetResult();
+            File.Delete(path);
+        }
+    }
+
     [Theory]
     [InlineData(90UL)]
     [InlineData(100UL)]

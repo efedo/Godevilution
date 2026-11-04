@@ -252,6 +252,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     public Action<Exception>? ClientFailureObserver { get; init; }
 
+    /** Debug diagnostics: joins, leaves and checkpoints; commands reach it from the command server. */
+    public HostCommandLog? CommandLog { get; init; }
+
     /** A failed timed checkpoint write, called on the writer; the host keeps running. */
     public Action<Exception>? CheckpointFailureObserver { get; init; }
 
@@ -638,6 +641,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         var connectionOrdinal = CommandTimingRecorder is null
             ? 0
             : unchecked((int)Interlocked.Increment(ref nextConnectionOrdinal));
+        string? connectedSessionId = null;
         try {
             stream = client.GetStream();
             var helloEnvelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
@@ -740,6 +744,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 }
             }
             var sessionId = session.Id;
+            connectedSessionId = sessionId;
             var entityId = session.EntityId;
             if (commandScheduler is not null) {
                 clockGatedPipelineOwnsWrites = true;
@@ -924,6 +929,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         } finally {
             clients.TryRemove(client, out _);
             client.Dispose();
+            if (connectedSessionId is not null)
+                CommandLog?.RecordLeave(connectedSessionId, commandServer.CurrentTick);
             CheckpointAfterLastConnection();
         }
     }
@@ -1125,11 +1132,11 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 ? hello.RequestedCharacterName
                 : null;
             commandServer.WithSynchronizedSession(session.Id, () => {
-                participantInitializer?.InitializeParticipant(
-                    session.Id,
-                    new AuthoritativeParticipantSelection(requestedClassId) {
-                        CharacterName = requestedCharacterName,
-                    });
+                var selection = new AuthoritativeParticipantSelection(requestedClassId) {
+                    CharacterName = requestedCharacterName,
+                };
+                participantInitializer?.InitializeParticipant(session.Id, selection);
+                CommandLog?.RecordJoin(session.Id, session.EntityId, commandServer.CurrentTick, selection);
                 session.ParticipantInitialized = true;
             });
         }

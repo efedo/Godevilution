@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Server.Host;
 
 namespace Devilution.Server.Commands;
 
@@ -40,6 +41,9 @@ public sealed class AuthoritativeCommandServer
         init => completedCommandWindow = value is null or > 0
             ? value : throw new ArgumentOutOfRangeException(nameof(CompletedCommandWindow));
     }
+
+    /** Records each newly processed command under the lock, with the tick to replay it at. */
+    public HostCommandLog? CommandLog { get; init; }
 
     /** Returns the greatest authoritative tick admitted or simulated so far. */
     public ulong CurrentTick
@@ -97,6 +101,7 @@ public sealed class AuthoritativeCommandServer
 
             completedCommands.Add(command.ClientSequence, result.Clone());
             RetireOldestCommands(sessionId, completedCommands);
+            CommandLog?.RecordCommand(sessionId, command, currentTick, result);
             return result;
         }
     }
