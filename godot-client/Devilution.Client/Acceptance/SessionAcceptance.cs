@@ -594,7 +594,12 @@ public partial class SessionAcceptance : Node
             && IsTownPortalPreviewDepthProfile(profile.RootElement);
     }
 
-    private async Task Frame() => await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    private async Task Frame()
+    {
+        nativeObjectStageBudget?.Check();
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        nativeObjectStageBudget?.Check();
+    }
 
     private async Task Capture(string path)
     {

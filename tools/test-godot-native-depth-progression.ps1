@@ -12,6 +12,9 @@ param(
     # kill. Acceptance evidence uses the default of 1 (a kill on every floor).
     [ValidateRange(1, 8)] [int]$FirstFightDepth = 1,
     [string]$TestParticipant,
+    # Optional C2 dungeon seed; omitted preserves the existing fixed seed 2588.
+    [Nullable[System.UInt32]]$CatacombsSeed,
+    [switch]$RequireTrappedDoor,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
     [switch]$Visible,
     # Development runs: server simulation rate for both phases; acceptance evidence uses the default 20 Hz.
@@ -49,6 +52,13 @@ $arguments = @{
     SessionDirectory = $sessionDirectory; QuitAfterSeconds = $QuitAfterSeconds
     ServerBuildConfiguration = $ServerBuildConfiguration; TickRateHz = $TickRateHz
 }
+if (($RequireTrappedDoor -and $TargetDepth -lt 5) -or
+    (-not $allClass -and ($PSBoundParameters.ContainsKey('CatacombsSeed') -or $RequireTrappedDoor))) {
+    throw 'Catacombs seed and required-door checks need an all-class journey through L5 or deeper.'
+}
+if ($RequireTrappedDoor -and (-not $PSBoundParameters.ContainsKey('CatacombsSeed') -or $CatacombsSeed -ne 0 -or $TargetDepth -lt 7)) {
+    throw '-RequireTrappedDoor needs -CatacombsSeed 0 and -TargetDepth 7 or 8 for the known L7 door at (68,74).'
+}
 if (-not $allClass -and ($TestParticipant -or $TargetDepth -ne 4 -or $Visible)) {
     throw '-TestParticipant, -TargetDepth and -Visible apply only to the all-class Town profile.'
 }
@@ -56,9 +66,21 @@ if ($allClass) {
     $arguments.CathedralNativeTownProfileDirectory = $profileRoot
     if ($TestParticipant) { $arguments.TestParticipantPath = (Resolve-Path -LiteralPath $TestParticipant).ProviderPath }
 } else { $arguments.CathedralNativeDepthProgressionProfileDirectory = $profileRoot }
+$previousCatacombsSeed = $env:GODEVILUTION_NATIVE_CATACOMBS_SEED
+$previousRequiredDoor = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR
+$previousDoorLevel = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL
+$previousDoorX = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X
+$previousDoorY = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y
+$env:GODEVILUTION_NATIVE_CATACOMBS_SEED = if ($PSBoundParameters.ContainsKey('CatacombsSeed')) { [string]$CatacombsSeed } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = if ($RequireTrappedDoor) { '1' } else { $null }
+# Acceptance-only destination, paired with the explicit seed; normal journeys have none.
+$env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = if ($RequireTrappedDoor) { '7' } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = if ($RequireTrappedDoor) { '68' } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y = if ($RequireTrappedDoor) { '74' } else { $null }
 $previousTarget = $env:GODEVILUTION_NATIVE_DEPTH_TARGET
-$env:GODEVILUTION_NATIVE_DEPTH_TARGET = [string]$TargetDepth
 $previousFirstFight = $env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT
+try {
+$env:GODEVILUTION_NATIVE_DEPTH_TARGET = [string]$TargetDepth
 $env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT = [string]$FirstFightDepth
 $journeyPhase = if ($allClass) { 'NativeDepthJourney' } else { 'CathedralNativeDepthProgressionJourney' }
 $resumePhase = if ($allClass) { 'NativeDepthResume' } else { 'CathedralNativeDepthProgressionResume' }
@@ -81,6 +103,7 @@ function Invoke-TimedLauncher([string]$directory, [string]$phase, [hashtable]$la
             Write-Output ("$phase timing: launcher {0:0.0}s, outside the journey {1:0.0}s, journey {2:0.0}s for {3} ticks at {4} Hz (clock share {5:0.00}); {6}; untimed {7:0.0}s" -f
                 $launcherSeconds, ($launcherSeconds - $timing.WallSeconds), $timing.WallSeconds, $timing.Ticks,
                 $timing.TickRateHz, $timing.ClockShare, $kinds, $timing.UntimedSeconds)
+            Write-Output ("Catacombs chest/pickup and required-door added time: {0:0.0}s" -f $timing.AddedObjectSeconds)
         } else { Write-Output "$phase timing: launcher ${launcherSeconds}s (no acceptance timing written)" }
     }
 }
@@ -103,6 +126,13 @@ if ($allClass) {
             $_.MonsterEntityId -le 0 -or $_.ExperienceAfter -le $_.ExperienceBefore -or $_.Attacks -le 0)) -or
             ($_.LevelId -lt $FirstFightDepth -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
+    }
+    if ($TargetDepth -ge 5 -and ($null -eq $route.Objects -or $route.Objects.ChestEntity -le 0 -or
+        $route.Objects.DropEntity -le 0 -or ($RequireTrappedDoor -and ($journey.TrappedDoorOperated -ne $true -or
+        $route.Objects.DoorEntity -le 0 -or $route.Objects.DoorLevel -ne 7 -or $route.Objects.DoorTrapSource -le 0 -or
+        $route.Objects.DoorTrapTick -le 0 -or $journey.RequiredDoorTarget.Level -ne 7 -or
+        $journey.RequiredDoorTarget.X -ne 68 -or $journey.RequiredDoorTarget.Y -ne 74)))) {
+        throw 'The Catacombs journey lacks its chest/pickup or required door-trap evidence.'
     }
     # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
     if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
@@ -277,7 +307,14 @@ foreach ($process in @($journeyProcess, $resumeProcess)) {
         } finally { $ownedProcess.Dispose() }
     }
 }
-$env:GODEVILUTION_NATIVE_DEPTH_TARGET = $previousTarget
-$env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT = $previousFirstFight
 $summary = if ($allClass) { "Warrior kill on each of L$FirstFightDepth-L$TargetDepth, native draws through L$TargetDepth, Town resume." } else { 'L1 gear/earned Gold, L2-L4 combat, Town resume.' }
 Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summary"
+} finally {
+    $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = $previousCatacombsSeed
+    $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = $previousRequiredDoor
+    $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = $previousDoorLevel
+    $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = $previousDoorX
+    $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y = $previousDoorY
+    $env:GODEVILUTION_NATIVE_DEPTH_TARGET = $previousTarget
+    $env:GODEVILUTION_NATIVE_DEPTH_FIRST_FIGHT = $previousFirstFight
+}

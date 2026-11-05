@@ -6,20 +6,24 @@ using static Devilution.Diablo.Tests.AuthoritativeCathedralThemeItemNativeOracle
 
 namespace Devilution.Diablo.Tests;
 
-/** Compares ordinary untrapped L1 chest generation with the native 36-case corpus. */
+/** Compares ordinary L1-L4 chest generation with the native 54-case corpus. */
 public sealed class AuthoritativeCathedralChestLootNativeOracleTests
 {
     private const string DirectoryVariable = "GODEVILUTION_CATHEDRAL_CHEST_ORACLE_DIRECTORY";
     private const string FileName = "native-chest-operations.json";
-    private const int MaximumBytes = 32 * 1024 * 1024;
+    // The 54-case L1-L4 capture is 44,265,579 bytes (43 MiB bounded reader).
+    private const int MaximumBytes = 43 * 1024 * 1024;
 
-    [Theory(Explicit = true)]
+    [Theory]
     [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
     public void OrdinaryChestLootMatchesNative(int depth)
     {
         var directory = Environment.GetEnvironmentVariable(DirectoryVariable);
         if (string.IsNullOrWhiteSpace(directory))
-            throw new InvalidOperationException($"Set {DirectoryVariable} to the captured native chest oracle directory.");
+            Assert.Skip("Run tools/run-native-oracle-parity.sh to generate the native chest comparison.");
         directory = Path.GetFullPath(directory);
         Assert.True(Directory.Exists(directory), "Native chest oracle directory must exist.");
         Assert.Equal(new[] { FileName }, Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly)
@@ -36,11 +40,12 @@ public sealed class AuthoritativeCathedralChestLootNativeOracleTests
         Assert.Equal(1, N(corpus, "version"));
         var catalog = ReadCatalog(corpus.GetProperty("catalog"));
         Assert.Equal(168, catalog.Items.Count);
-        Assert.Equal(36, N(corpus, "caseCount"));
+        Assert.Equal(54, N(corpus, "caseCount"));
         var cases = A(corpus, "cases").EnumerateArray().ToArray();
-        Assert.Equal(36, cases.Length);
+        Assert.Equal(54, cases.Length);
 
-        foreach (var value in cases) {
+        Assert.Equal(depth == 1 ? 36 : 6, cases.Count(value => N(value, "depth") == depth));
+        foreach (var value in cases.Where(value => N(value, "depth") == depth)) {
             Properties(value, "name", "depth", "slot", "levelLoading", "inputChest", "input", "expectedChest", "expected",
                 "repeatedChest", "repeated");
             Assert.Equal(depth, N(value, "depth"));

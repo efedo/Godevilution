@@ -74,7 +74,55 @@ public sealed partial class DiabloCohortCodecTests
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(json.ToJsonString()));
     }
 
-    private static DiabloCohortState NativeTrapState(DiabloNativeTrapDisposition disposition)
+    [Fact]
+    public void Pre25aThreeFieldArrowBytesDecodeWithoutMakingOriginalFieldsOptional()
+    {
+        var json = JsonNode.Parse(codec.Serialize(NativeTrapState(DiabloNativeTrapDisposition.Fired)))!.AsObject();
+        // The exact extension shape written by ab5e38d1f, before the additive fields.
+        const string oldArrow = "{\"NativeObjectSlot\":10,\"MissileDistance\":1,\"LastCollisionTargetHash\":0}";
+        json["Projectiles"]![0]!["NativeTrapArrow"] = JsonNode.Parse(oldArrow);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json.ToJsonString());
+        var restored = codec.Deserialize(System.Text.Encoding.UTF8.GetString(bytes));
+        Assert.Equal(new AuthoritativeNativeTrapArrowState(10, 1, 0), Assert.Single(restored.Projectiles).NativeTrapArrow);
+        Assert.Equal(codec.Serialize(restored), codec.Serialize(codec.Deserialize(codec.Serialize(restored))));
+        foreach (var original in new[] { "NativeObjectSlot", "MissileDistance", "LastCollisionTargetHash" }) {
+            var corrupt = json.DeepClone();
+            corrupt["Projectiles"]![0]!["NativeTrapArrow"]!.AsObject().Remove(original);
+            Assert.Throws<InvalidDataException>(() => codec.Deserialize(corrupt.ToJsonString()));
+        }
+    }
+
+    [Theory]
+    [InlineData(1)] [InlineData(7)] [InlineData(27)]
+    public void AdditiveTrapKindsDecodeOmittedDefaultsAndRejectUnrelatedControllerState(int type)
+    {
+        var state = NativeTrapState(DiabloNativeTrapDisposition.Fired);
+        var owner = Assert.Single(state.NativeTraps!);
+        var intrinsic = type == 27;
+        var missile = DiabloCombatCommandProcessor.AddObjectTrapMissile(0xE0000010,
+            intrinsic ? owner.Facts.TriggerEntityId : owner.Facts.TrapEntityId,
+            owner.Facts.TriggerEntityId, 1, intrinsic ? 11 : 10,
+            intrinsic ? 40 : 30, intrinsic ? 40 : 30, 41, 41,
+            (int)DeterministicGridDirections.Toward(30, 30, 41, 41), type, intrinsic,
+            new DeterministicLegacyRandom(2588), 1);
+        var projectile = System.Text.Json.JsonSerializer.Deserialize<DiabloProjectileState>(
+            System.Text.Json.JsonSerializer.Serialize(missile))!;
+        state = state with {
+            NativeTraps = intrinsic ? [] : [owner with { Facts = owner.Facts with { MissileTypeId = type } }],
+            Objects = state.Objects.Select(value => intrinsic && value.EntityId == owner.Facts.TriggerEntityId
+                ? value with { NativeObjectId = 68 } : value).ToArray(), Projectiles = [projectile],
+        };
+        var encoded = codec.Serialize(state);
+        Assert.DoesNotContain("\"Stage\"", encoded);
+        Assert.Equal(encoded, codec.Serialize(codec.Deserialize(encoded)));
+        foreach (var field in new[] { "WallLeftX", "ApocalypseScanY", "ElementalOriginX", "GuardianState" }) {
+            var corrupt = JsonNode.Parse(encoded)!;
+            corrupt["Projectiles"]![0]![field] = 1;
+            Assert.Throws<InvalidDataException>(() => codec.Deserialize(corrupt.ToJsonString()));
+        }
+    }
+
+    internal static DiabloCohortState NativeTrapState(DiabloNativeTrapDisposition disposition)
     {
         var source = NativeBarrelState(false);
         var armed = disposition == DiabloNativeTrapDisposition.Armed;

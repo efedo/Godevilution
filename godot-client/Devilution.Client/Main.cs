@@ -51,6 +51,7 @@ public partial class Main : Node2D
         => model.RecentEvents.Count == 0 ? null : model.RecentEvents[^1].EventCase.ToString();
     // Installed only for a bounded acceptance observation; normal scenes retain nothing.
     internal Action<CommandAck>? AcceptanceAcknowledgementObserver { get; set; }
+    internal Action<Snapshot>? AcceptanceSnapshotObserver { get; set; }
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
     internal AuthoritativeClientTimingCaptureReport? ObservedCommandTimingReport
         => client?.CommandTimingRecorder?.CaptureReport();
@@ -471,8 +472,10 @@ public partial class Main : Node2D
                             heldEntityAttack.ObserveResult(result);
                         AcceptanceAcknowledgementObserver?.Invoke(acknowledgement.Clone());
                     }
-                    if (message.Snapshot is not null)
+                    if (message.Snapshot is not null) {
                         snapshotRevision++;
+                        AcceptanceSnapshotObserver?.Invoke(message.Snapshot);
+                    }
                 } catch (Exception exception) {
                     hud?.SetStatus($"Invalid authoritative state: {exception.Message}");
                 }

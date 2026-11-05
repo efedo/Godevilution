@@ -133,11 +133,13 @@ Passing a scoped test or adding a schema version does not close a milestone.
   Since 2.4a the L5–L8 melee families fight with native AI (per-tick native traces)
   and the headless Warrior journey kills on every floor to L8. Since 2.4b the ranged
   and missile families (archers, Acid, Magma, Familiar) do too, with native Acid,
-  splat, puddle, magma ball, explosion and lightning missiles.
+  splat, puddle, magma ball, explosion and lightning missiles. Since 2.5a trapped doors
+  and chests fire native Arrow, Firebolt, FireArrow and Lightning traps on L1–L8, retained
+  across resume, and the journey opens a chest, picks up a drop and (when seeded) fires a door.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
-- CI now regenerates 19 archive-free native oracle corpora and runs their
+- CI now regenerates 21 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;
-  2.4a the ten-lane melee AI trace; 2.4b the seven-lane ranged AI trace). Retail-archive corpora stay local by design (public
+  2.4a the ten-lane melee AI trace; 2.4b the seven-lane ranged AI trace; 2.5a door and chest traps). Retail-archive corpora stay local by design (public
   repository), so those comparisons still skip in CI.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.

@@ -24,7 +24,7 @@ public sealed class AuthoritativeCatacombsNativeObjectPolicyTests
         Assert.True(AuthoritativeCatacombsNativeObjectPolicy.Classify(42).SupportedInCatacombs);
         Assert.Equal(AuthoritativeCatacombsNativeObjectRole.AutonomousTrap,
             AuthoritativeCatacombsNativeObjectPolicy.Classify(53).Role);
-        Assert.False(AuthoritativeCatacombsNativeObjectPolicy.Classify(53).SupportedInCatacombs);
+        Assert.True(AuthoritativeCatacombsNativeObjectPolicy.Classify(53).SupportedInCatacombs);
         Assert.Equal(AuthoritativeCatacombsNativeObjectOperation.Cauldron,
             AuthoritativeCatacombsNativeObjectPolicy.Classify(80).Operation);
         Assert.False(AuthoritativeCatacombsNativeObjectPolicy.Classify(80).SupportedInCatacombs);

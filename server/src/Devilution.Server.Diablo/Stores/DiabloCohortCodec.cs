@@ -526,8 +526,16 @@ public sealed partial class DiabloCohortCodec
             && missing.All(name => IsHorkMoveField(type, name)
                 || IsOptionalNativeWalkPathField(type, name, schema)
                 || IsOptionalNativeQueuedRangedAttackField(type, name, schema)
-                || IsOptionalCatacombsActorField(type, name, schema));
+                || IsOptionalCatacombsActorField(type, name, schema)
+                || IsOptionalObjectTrapMissileField(type, name));
     }
+
+    /** Pre-2.5a Arrow payloads have only the three original scalars; additive defaults stay omitted. */
+    private static bool IsOptionalObjectTrapMissileField(Type type, string name)
+        => type == typeof(AuthoritativeNativeTrapArrowState)
+            && name is nameof(AuthoritativeNativeTrapArrowState.MissileTypeId)
+                or nameof(AuthoritativeNativeTrapArrowState.IntrinsicChest)
+                or nameof(AuthoritativeNativeTrapArrowState.Stage);
 
     /** v12 omits the default-valued C2 actor scalars of Cathedral actors. */
     private static bool IsOptionalCatacombsActorField(Type type, string name, CodecSchema schema)

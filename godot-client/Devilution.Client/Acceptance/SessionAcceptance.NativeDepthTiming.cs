@@ -53,6 +53,7 @@ public partial class SessionAcceptance
                 Phase = phase, Passed = passed, TickRateHz = rate, WallSeconds = Math.Round(wall, 3), Ticks = ticks,
                 ClockShare = Share(wall, ticks),
                 UntimedSeconds = Math.Round(wall - kinds.Sum(kind => kind.WallSeconds), 3),
+                AddedObjectSeconds = Math.Round(kinds.Where(kind => kind.Kind == "objects").Sum(kind => kind.WallSeconds), 3),
                 Kinds = kinds, MeleeReactions = AcceptanceTickBudget.Summarize(reactions), Segments = segments.ToArray(),
             });
         }

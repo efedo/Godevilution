@@ -23,8 +23,25 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             return false;
         var linked = HasLinkedNativeTrap(state, raw);
         if (raw.Type is >= 68 and <= 70)
-            return !linked && raw.Var4 is 0 or 1;
+            return raw.Var4 is 0 or 1;
         return raw.TrapFlag == linked && (!linked || HasSupportedNativeTrapLink(state, raw));
+    }
+
+    internal bool TryGetNativeChestFacts(AuthoritativeWorldObject value,
+        out AuthoritativeCatacombsNativeChestFacts? facts)
+    {
+        ValidateObject(value);
+        facts = null;
+        if (!objectRows.TryGetValue(value.EntityId, out var raw) || !IsSupportedNativeChest(raw))
+            return false;
+        facts = new(raw.Slot, raw.Type, raw.Position.X, raw.Position.Y, raw.RndSeed,
+            raw.Var1, raw.Var2, raw.Var4, value.TrapArmed, raw.AnimFrame) {
+            LinkedWallTrap = InitialState.ActiveObjectIds.Take(InitialState.ActiveObjectCount)
+                .Select(slot => InitialState.ObjectSlots[slot])
+                .FirstOrDefault(trap => trap.Type is 53 or 54
+                    && trap.Var1 == raw.Position.X && trap.Var2 == raw.Position.Y),
+        };
+        return true;
     }
 
     /** Registry identity belongs only to the additive mixed-family admission path. */

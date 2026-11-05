@@ -20,6 +20,30 @@ public sealed partial class DiabloWorldState
         return state.Facts;
     }
 
+    internal uint RequireNativeTrapMissileOwner(AuthoritativeProjectile projectile)
+    {
+        var missile = projectile.NativeTrapArrow
+            ?? throw new InvalidDataException("An object missile is missing its retained state.");
+        if (missile.IntrinsicChest) {
+            if (!Objects.TryGetValue(projectile.SourceEntityId, out var chest)
+                || !chest.Activated || chest.TrapArmed || chest.NativeObjectId is < 68 or > 70
+                || projectile.TargetEntityId != chest.EntityId || projectile.LevelId != chest.LevelId
+                || projectile.StartX != chest.PositionX || projectile.StartY != chest.PositionY
+                || NativePopulationForLevel(chest.LevelId) is not { } owner
+                || !owner.TryGetNativeChestFacts(chest, out var facts)
+                || facts!.ObjectSlot != missile.NativeObjectSlot
+                || missile.MissileTypeId != (facts.Var4 == 0 ? 0 : 27))
+                throw new InvalidDataException("An intrinsic trap missile has no exact opened chest owner.");
+            return chest.LevelId;
+        }
+        var wall = RequireNativeTrapArrowOwner(projectile.SourceEntityId, missile.NativeObjectSlot);
+        if (projectile.LevelId != wall.LevelId || projectile.TargetEntityId != wall.TriggerEntityId
+            || projectile.StartX != wall.SourceX || projectile.StartY != wall.SourceY
+            || missile.MissileTypeId != wall.MissileTypeId)
+            throw new InvalidDataException("A wall trap missile changed its generated missile or source.");
+        return wall.LevelId;
+    }
+
     internal (AuthoritativeCombatTarget? Monster, AuthoritativePlayerState? Player, short Hash)
         NativeTrapArrowOccupants(uint levelId, int x, int y,
             IReadOnlyList<AuthoritativePlayerState> players)

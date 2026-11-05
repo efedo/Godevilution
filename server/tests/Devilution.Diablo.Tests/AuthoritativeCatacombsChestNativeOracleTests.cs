@@ -13,7 +13,7 @@ public sealed class AuthoritativeCatacombsChestNativeOracleTests
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    [Theory(Explicit = true)]
+    [Theory]
     [InlineData(5, false)]
     [InlineData(6, false)]
     [InlineData(7, false)]
@@ -27,7 +27,7 @@ public sealed class AuthoritativeCatacombsChestNativeOracleTests
         var configured = Environment.GetEnvironmentVariable(multiplayer
             ? "GODEVILUTION_CATACOMBS_MULTIPLAYER_CHEST_ORACLE_DIRECTORY" : "GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY");
         if (string.IsNullOrWhiteSpace(configured))
-            throw new InvalidDataException("An explicit native Catacombs chest comparison directory is required.");
+            Assert.Skip("Run tools/run-native-oracle-parity.sh to generate the native Catacombs chest comparison.");
         var directory = Path.GetFullPath(configured);
         Assert.True(Directory.Exists(directory));
         var file = multiplayer ? "native-catacombs-multiplayer-chest-operations.json" : "native-catacombs-chest-operations.json";
@@ -49,8 +49,8 @@ public sealed class AuthoritativeCatacombsChestNativeOracleTests
         var catalog = ReadCatalog(corpus.GetProperty("catalog"));
         Assert.Equal(168, catalog.Items.Count);
         var cases = corpus.GetProperty("cases").EnumerateArray().ToArray();
-        Assert.Equal(30, N(corpus, "caseCount"));
-        Assert.Equal(30, cases.Length);
+        Assert.Equal(31, N(corpus, "caseCount"));
+        Assert.Equal(31, cases.Length);
         Assert.Equal(cases.Length, cases.Select(row => S(row, "name")).Distinct().Count());
         Assert.Equal(new[] { 5, 6, 7, 68, 69, 70 }, cases.Where(row => N(row, "depth") == depth)
             .Select(row => N(row, "rawType")).Distinct().Order());

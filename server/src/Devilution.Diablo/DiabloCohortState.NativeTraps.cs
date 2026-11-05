@@ -39,14 +39,24 @@ public sealed partial record DiabloCohortState
                 throw new InvalidDataException("Native trap state conflicts with its retained source or trigger.");
         }
         var arrows = Projectiles.Where(value => value.NativeTrapArrow is not null).ToArray();
-        if (arrows.Select(value => value.SourceEntityId).Distinct().Count() != arrows.Length)
+        if (arrows.Where(value => value.NativeTrapArrow!.Stage != NativeObjectMissileStage.LightningSegment)
+            .GroupBy(value => value.SourceEntityId).Any(group => group.Count() != 1))
             throw new InvalidDataException("A native one-shot trap cannot own duplicate live arrows.");
         foreach (var projectile in arrows) {
             var arrow = projectile.NativeTrapArrow!;
             arrow.ValidateShape(projectile);
+            if (arrow.IntrinsicChest) {
+                if (!objects.TryGetValue(projectile.SourceEntityId, out var chest)
+                    || chest.NativeObjectId is < 68 or > 70 || !chest.Activated || chest.TrapArmed
+                    || projectile.LevelId != chest.LevelId || projectile.TargetEntityId != chest.EntityId
+                    || projectile.StartX != chest.PositionX || projectile.StartY != chest.PositionY)
+                    throw new InvalidDataException("An intrinsic trap missile has no retained opened chest.");
+                continue;
+            }
             var owner = NativeTraps.SingleOrDefault(value => value.Facts.TrapObjectSlot == arrow.NativeObjectSlot
                 && value.Facts.TrapEntityId == projectile.SourceEntityId);
             if (owner is null || owner.Disposition != DiabloNativeTrapDisposition.Fired
+                || arrow.MissileTypeId != owner.Facts.MissileTypeId
                 || projectile.LevelId != owner.Facts.LevelId
                 || projectile.TargetEntityId != owner.Facts.TriggerEntityId
                 || projectile.StartX != owner.Facts.SourceX || projectile.StartY != owner.Facts.SourceY

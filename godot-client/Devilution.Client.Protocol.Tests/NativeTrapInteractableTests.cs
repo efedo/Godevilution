@@ -35,6 +35,25 @@ public sealed class NativeTrapInteractableTests
             Snapshot(trap), trap.PositionX, trap.PositionY)?.EntityId);
     }
 
+    [Theory]
+    [InlineData(42U)]
+    [InlineData(43U)]
+    public void CatacombsLinkedDoorTrapAcceptsItsNativeUntypedDoorState(uint type)
+    {
+        var door = new ObjectSnapshot {
+            EntityId = 10, ObjectId = type, LevelId = 7, NativeObjectId = type, TrapArmed = true,
+            NativeTrapInteractable = true, KeepVisibleAfterActivation = true, AnimationFrame = 1,
+            PresentationKind = Devilution.Protocol.V1.ObjectPresentationKind.Trap,
+        };
+        Assert.True(AuthoritativeObjectSelector.IsValidNativeTrapInteraction(door));
+        Assert.True(Assert.Single(Apply(door).Objects).NativeTrapInteractable);
+        door.NativeChestInteractable = true;
+        Assert.Throws<InvalidDataException>(() => Apply(door));
+        door.NativeChestInteractable = false;
+        door.EffectKind = 1;
+        Assert.Throws<InvalidDataException>(() => Apply(door));
+    }
+
     [Fact]
     public void DisarmClearsTransientCapabilityAndRevealsOrdinaryOperationCapability()
     {

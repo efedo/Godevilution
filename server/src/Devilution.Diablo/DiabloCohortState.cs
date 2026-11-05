@@ -318,6 +318,8 @@ public sealed partial record DiabloCohortState(
         ValidateNativeProgressionShape();
         ValidateNativeWalkPathShape();
         ValidateNativeQueuedRangedAttackShape();
+        foreach (var projectile in Projectiles.Where(value => value.NativeMonsterMissile is not null))
+            projectile.NativeMonsterMissile!.ValidateShape(projectile);
         ValidateNativeTrapShape();
         if (FormatVersion is not (NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion or NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion)
             && (CombatTargets.Any(target => target.Monster.NativeMeleeCursor is not null || target.Monster.NativeWalkCursor is not null)

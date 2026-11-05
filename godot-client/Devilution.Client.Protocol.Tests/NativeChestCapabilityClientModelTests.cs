@@ -21,6 +21,46 @@ public sealed class NativeChestCapabilityClientModelTests
         Assert.True(Assert.Single(valid.Objects).NativeChestInteractable);
     }
 
+    [Theory]
+    [InlineData(5U, false)]
+    [InlineData(6U, false)]
+    [InlineData(7U, false)]
+    [InlineData(68U, false)]
+    [InlineData(69U, false)]
+    [InlineData(70U, false)]
+    [InlineData(5U, true)]
+    [InlineData(6U, true)]
+    [InlineData(7U, true)]
+    [InlineData(68U, true)]
+    [InlineData(69U, true)]
+    [InlineData(70U, true)]
+    public void CatacombsChestSnapshotsAdvanceTheClockWithOrWithoutTrapSense(uint type, bool revealTrap)
+    {
+        var chest = ValidChest();
+        chest.NativeObjectId = type;
+        chest.LevelId = 5;
+        chest.TrapArmed = revealTrap;
+        chest.NativeTrapInteractable = revealTrap;
+        chest.PresentationKind = revealTrap ? Devilution.Protocol.V1.ObjectPresentationKind.Trap
+            : Devilution.Protocol.V1.ObjectPresentationKind.Generic;
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Tick = 1751,
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 5, VisitedLevelIds = { 0, 4, 5 } } },
+            Objects = { chest },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        var later = snapshot.Clone();
+        later.Tick++;
+        model.Apply(new AuthoritativeClientMessage(Snapshot: later));
+        Assert.Equal(1752UL, model.Snapshot!.Tick);
+        Assert.True(AuthoritativeObjectSelector.HasAuthoritativeInteraction(chest));
+        Assert.Equal(revealTrap, AuthoritativeObjectSelector.IsValidNativeTrapInteraction(chest));
+
+        chest.Activated = true;
+        Assert.Throws<InvalidDataException>(() => Apply(chest));
+    }
+
     [Fact]
     public void RejectsForgedOrInconsistentNativeChestCapability()
     {

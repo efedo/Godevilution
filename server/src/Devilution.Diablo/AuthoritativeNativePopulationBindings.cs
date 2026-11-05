@@ -238,9 +238,9 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             throw new InvalidDataException("A populated native object has no owned generation binding.");
         var expected = objectSnapshots[current.EntityId];
         if (expected.TrapArmed && !current.TrapArmed
-            && HasSupportedNativeTrapLink(InitialState, raw)) {
-            // The per-world trap owner validates whether this one-way raw trap-flag
-            // change came from a successful disarm or a completed wall trap.
+            && (HasSupportedNativeTrapLink(InitialState, raw)
+                || Family == AuthoritativeNativePopulationFamily.Catacombs && raw.Type is >= 68 and <= 70)) {
+            // Wall-trap lifecycle and chest operations own this one-way flag clear.
             current = current with { TrapArmed = expected.TrapArmed };
         }
         if (raw.DoorFlag) {
@@ -281,7 +281,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         ValidateObject(value);
         var raw = objectRows[value.EntityId];
         var supportedLinkedTrapDoor = raw.TrapFlag && HasSupportedNativeTrapLink(InitialState, raw);
-        return raw.DoorFlag && (!raw.TrapFlag || supportedLinkedTrapDoor) && value.CathedralDoor is not null
+        return raw.DoorFlag && (!raw.TrapFlag || supportedLinkedTrapDoor)
+                && (Family == AuthoritativeNativePopulationFamily.Catacombs || value.CathedralDoor is not null)
             || CanOperateNativeChest(value)
             || CanOperateNativeSarcophagus(value);
     }
@@ -325,6 +326,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         var raw = objectRows[value.EntityId];
         value.Activated = true;
         value.AnimationFrame = GetOpenedChestAnimationFrame(raw);
+        if (raw.Type is >= 68 and <= 70)
+            value.TrapArmed = false;
         ValidateObject(value);
         return true;
     }

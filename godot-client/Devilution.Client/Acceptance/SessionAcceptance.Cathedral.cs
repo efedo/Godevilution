@@ -145,11 +145,11 @@ public partial class SessionAcceptance
             }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds);
             if (interrupted) {
                 // The caller stops travel (for example to heal) and owns the retry.
-                await ClickControl(main, sections, 4, "CancelTravel");
+                await StopNativeTravelAsync(main);
                 throw new InvalidOperationException("Generated-route traversal was interrupted by its caller.");
             }
             if (stopEarly) {
-                await ClickControl(main, sections, 4, "CancelTravel");
+                await StopNativeTravelAsync(main);
                 await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled
                     && main.ObservedCommandResult is { } settledResult
                     && settledResult.ClientSequence == main.ObservedLastQueuedSequence

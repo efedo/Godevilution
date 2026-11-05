@@ -68,7 +68,7 @@ public static class AuthoritativeCatacombsChestLootGenerator
         var lootTier = AuthoritativeCatacombsNativeObjectPolicy.LootTierForChestType(chest.NativeObjectId);
         var intrinsicTrap = chest.NativeObjectId is >= 68 and <= 70;
         if (chest.LinkedWallTrap is { } wall) {
-            if (intrinsicTrap || wall.Type is not (53 or 54) || wall.Slot == chest.ObjectSlot
+            if (wall.Type is not (53 or 54) || wall.Slot == chest.ObjectSlot
                 || wall.Slot < 0 || wall.Slot >= request.WorldState.ObjectCanInteract.Count
                 || (uint)wall.Position.X >= AuthoritativeCathedralThemeItemWorldState.Width
                 || (uint)wall.Position.Y >= AuthoritativeCathedralThemeItemWorldState.Height

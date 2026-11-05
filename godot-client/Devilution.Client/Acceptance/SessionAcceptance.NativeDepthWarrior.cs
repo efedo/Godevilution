@@ -16,7 +16,7 @@ public partial class SessionAcceptance
         ulong ExperienceBefore, ulong ExperienceAfter, int Attacks);
 
     private sealed record NativeWarriorDepthCheckpoint(string PlayerPayload, uint RandomState, ulong Sequence,
-        string WorldHash, NativeWarriorFloor[] Floors);
+        string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null);
 
     private const int NativeWarriorAttacksPerFloor = 160;
     // L5-L8 melee families fight as native since batch 2.4a, so every floor records a kill.
@@ -74,6 +74,7 @@ public partial class SessionAcceptance
                 GD.PrintErr($"Native Warrior timing was not written: {exception.Message}");
             }
             nativeWarriorTiming = null;
+            main.AcceptanceSnapshotObserver = null;
         }
     }
 
@@ -97,7 +98,9 @@ public partial class SessionAcceptance
         if (phase == "NativeDepthJourney") {
             Require(previous is null && main.ObservedSnapshot!.Players.Single() is { LevelId: 0, CharacterClassId: 0 },
                 "The depth journey must start with a new Warrior in Town.");
+            ConfigureNativeCatacombsRequiredDoor();
             StartNativeWarriorDrawCapture(main);
+            main.AcceptanceSnapshotObserver = ObserveNativeCatacombsDoorTraps;
             var draws = new List<NativeWarriorFloorDraw> { await VerifyNativeWarriorFloorDrawAsync(main, directory, 0) };
             var panels = await VerifyNativeWarriorPanelsAsync(main, directory);
             var controls = await VerifyNativeWarriorControlsAsync(main, directory);
@@ -107,6 +110,8 @@ public partial class SessionAcceptance
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
                 if (depth > NativeWarriorFoughtFloor || depth < NativeWarriorFirstFightFloor) {
+                    if (depth >= 5)
+                        nativeCatacombsObjects = await TryNativeCatacombsObjectsAsync(main);
                     var entered = main.ObservedSnapshot!.Players.Single();
                     floors.Add(new(depth, string.Empty, 0, entered.Experience, entered.Experience, 0));
                     GD.Print($"Native Warrior entered L{depth}; life={entered.Life}");
@@ -114,6 +119,8 @@ public partial class SessionAcceptance
                 }
                 var floor = await DefeatNativeWarriorFloorAsync(main, directory, depth);
                 floors.Add(floor);
+                if (depth >= 5)
+                    nativeCatacombsObjects = await TryNativeCatacombsObjectsAsync(main);
                 var afterKill = main.ObservedSnapshot!.Players.Single();
                 GD.Print($"Native Warrior L{depth} kill; XP={floor.ExperienceBefore}->{floor.ExperienceAfter}; life={afterKill.Life}");
                 if (depth < target && ((long)afterKill.Life * 2 < afterKill.LifeMaximum
@@ -128,6 +135,8 @@ public partial class SessionAcceptance
                     GD.Print($"Native Warrior healed in Town and returned to L{depth}");
                 }
             }
+            Require(target < NativeWarriorTownWarpDepth || nativeCatacombsObjects is not null,
+                "No visited Catacombs floor offered a reachable chest with a drop to pick up.");
             // From L5 and below, the way home is L5's warp-up, which opens the Town warp (batch 2.2c).
             var stairsUpTo = target >= NativeWarriorTownWarpDepth ? (int)NativeWarriorTownWarpDepth : 0;
             for (var destination = (int)target - 1; destination >= stairsUpTo; destination--)
@@ -142,15 +151,22 @@ public partial class SessionAcceptance
             draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, 0));
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
+            if (nativeCatacombsObjects is not null) nativeCatacombsObjects = WithNativeCatacombsDoor(nativeCatacombsObjects);
+            Require(!NativeWarriorRequiresTrappedDoor || nativeCatacombsRequiredDoorFiring is not null,
+                "The required seeded run did not fire a reachable Catacombs door trap.");
             var checkpoint = new NativeWarriorDepthCheckpoint(Convert.ToBase64String(player.ToByteArray()),
                 snapshot.RandomState, main.ObservedLastQueuedSequence, HashNativeProgressionWorld(snapshot),
-                floors.Select(floor => floor with { GeometryHash = HashProto(DepthGeometry(main, floor.LevelId)) }).ToArray());
+                floors.Select(floor => floor with { GeometryHash = HashProto(DepthGeometry(main, floor.LevelId)) }).ToArray(),
+                nativeCatacombsObjects);
             VerifyNativeWarriorRetention(main, checkpoint);
             WriteEvidence(directory, "nativedepthjourney.json", new {
                 Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
                 RulesetHash = identity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
                 LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY,
                 Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
+                RequiredTrappedDoor = NativeWarriorRequiresTrappedDoor, TrappedDoorOperated = checkpoint.Objects?.DoorEntity > 0,
+                RequiredDoorTarget = nativeCatacombsRequiredDoor,
+                UnreachableNativeObjects = nativeCatacombsUnreachableObjects,
                 NativeDraws = draws.ToArray(), NativePanels = panels, NativeControls = controls, TownWarp = townWarp,
             });
             GD.Print($"Native Warrior Town/L1-L{target} checkpoint passed; sequence={checkpoint.Sequence}");
@@ -373,8 +389,7 @@ public partial class SessionAcceptance
                 && alive.LevelId == player.LevelId) {
                 GD.Print($"Native Warrior travel to L{destination} interrupted ({failure.Message}); clearing and retrying; "
                     + DescribeNativeWarriorSurroundings(main));
-                await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled,
-                    "Interrupted native Warrior travel did not stop.", 15);
+                await StopNativeTravelAsync(main);
                 // Repeated hits can hold the Warrior out of Stand; the retry's clearing fights them.
                 await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
                 // Give the interrupted walk's last queued command time to return its receipt.
@@ -382,6 +397,32 @@ public partial class SessionAcceptance
             }
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
+    }
+
+    /** Already-stopped travel is stopped; reveal and hover can also finish a prior cancellation. */
+    private async Task StopNativeTravelAsync(Main main)
+    {
+        var control = (Button)main.FindChild("CancelTravel", true, false);
+        var sections = (TabContainer)main.FindChild("HudSections", true, false);
+        await AcceptanceControlClick.WhenEnabled(() => !control.Disabled, async () => {
+            await RevealControl(sections, 4, control);
+            var position = control.GetGlobalRect().GetCenter();
+            Input.ParseInputEvent(new InputEventMouseMotion { Position = position, GlobalPosition = position });
+            await Frame();
+        }, async () => {
+            var position = control.GetGlobalRect().GetCenter();
+            Input.ParseInputEvent(new InputEventMouseButton {
+                ButtonIndex = MouseButton.Left, Position = position, GlobalPosition = position, Pressed = true,
+            });
+            try { await Frame(); }
+            finally {
+                Input.ParseInputEvent(new InputEventMouseButton {
+                    ButtonIndex = MouseButton.Left, Position = position, GlobalPosition = position, Pressed = false,
+                });
+            }
+            await Frame();
+        });
+        await Until(() => control.Disabled, "Interrupted native Warrior travel did not stop.", 15);
     }
 
     /**
@@ -403,9 +444,8 @@ public partial class SessionAcceptance
             if (reach.Contains((route.TriggerX, route.TriggerY)))
                 return;
             var door = snapshot.Objects
-                // The server refuses trapped Catacombs doors until their traps fire natively (batch 2.5).
                 .Where(item => item.LevelId == player.LevelId && item.NativeObjectId is 42 or 43 && !item.MissilePassable
-                    && !item.TrapArmed && refusals.GetValueOrDefault(item.EntityId) < 3
+                    && refusals.GetValueOrDefault(item.EntityId) < 3
                     && reach.Any(cell => Math.Abs(cell.X - item.PositionX) + Math.Abs(cell.Y - item.PositionY) == 1))
                 .OrderBy(item => NativeDistance(item.PositionX, item.PositionY, route.TriggerX, route.TriggerY))
                 .ThenBy(item => item.EntityId).FirstOrDefault();
@@ -510,6 +550,13 @@ public partial class SessionAcceptance
         await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
             $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
         nativeWarriorCatacombsDoorDraws++;
+        var operatedTick = main.ObservedCommandResult!.AppliedTick;
+        await Until(() => main.ObservedSnapshot!.Tick > operatedTick,
+            "The opened Catacombs door did not receive its native object tick.", 5);
+        if (door.TrapArmed) {
+            await Until(() => !main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).TrapArmed,
+                "The opened native Catacombs door did not consume its linked trap.");
+        }
     }
 
     /**
@@ -525,7 +572,7 @@ public partial class SessionAcceptance
         var reach = NativeWarriorReach(DepthGeometryFromSnapshot(snapshot, levelId), player, -1, -1);
         var door = snapshot.Objects
             .Where(item => item.LevelId == levelId && item.NativeObjectId is 42 or 43 && !item.MissilePassable
-                && !item.TrapArmed && !operated.Contains(item.EntityId)
+                && !operated.Contains(item.EntityId)
                 && reach.Any(cell => Math.Abs(cell.X - item.PositionX) + Math.Abs(cell.Y - item.PositionY) == 1))
             .OrderBy(item => snapshot.Monsters.Count(monster => monster.Alive && !monster.IsPlayerMinion
                     && monster.LevelId == levelId
@@ -813,6 +860,8 @@ public partial class SessionAcceptance
     private static void VerifyNativeWarriorRetention(Main main, NativeWarriorDepthCheckpoint expected)
     {
         var snapshot = main.ObservedSnapshot!;
+        if (expected.Objects is not null)
+            VerifyNativeCatacombsObjects(snapshot, expected.Objects);
         Require(expected.Floors.Length is >= 1 and <= (int)NativeWarriorDeepestFloor
             && expected.Floors.Select(floor => floor.LevelId).SequenceEqual(Enumerable.Range(1, expected.Floors.Length).Select(level => (uint)level)),
             "The depth checkpoint omitted or reordered a floor.");

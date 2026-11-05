@@ -5,7 +5,7 @@ using Devilution.Domain.Protocol;
 namespace Devilution.Client.Protocol;
 
 /** Main-thread authoritative projection consumed by Godot presentation nodes. */
-public sealed class AuthoritativeClientModel
+public sealed partial class AuthoritativeClientModel
 {
     private const int NativeMaximumWidth = AuthoritativeProtocolLimits.NativeMaximumWidth;
     private const int NativeMaximumHeight = AuthoritativeProtocolLimits.NativeMaximumHeight;
@@ -284,7 +284,7 @@ public sealed class AuthoritativeClientModel
             }
             foreach (var projectile in message.Snapshot.Projectiles) {
                 ValidateEntityId(entityIds, projectile.EntityId);
-                ValidateProjectile(projectile);
+                ValidateProjectile(projectile, message.Snapshot);
             }
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
@@ -1884,109 +1884,6 @@ public sealed class AuthoritativeClientModel
             }
         }
     }
-
-    private static void ValidateProjectile(ProjectileSnapshot projectile)
-    {
-        if (projectile.SourceEntityId == 0
-            || (projectile.SpellId == 0 && !IsWeaponProjectile(projectile.Behavior))
-            || projectile.RemainingTicks == 0
-            || projectile.Damage < 0
-            || projectile.AreaRadius < 0
-            || projectile.DamageMinimum < 0
-            || projectile.DamageMaximum < projectile.DamageMinimum
-            || projectile.DamageQ6 < 0
-            || projectile.ElementalFireDamage < 0
-            || projectile.ElementalLightningDamage < 0
-            || projectile.PerilSelfDamageQ6 < 0
-            || projectile.EffectiveSpellLevel < 0
-            || projectile.DamageType is < 0 or > MaximumProjectileDamageType
-            || projectile.Behavior is < 0 or > MaximumProjectileBehavior
-            || projectile.Phase is < 0 or > MaximumProjectilePhase
-            || (int)projectile.PresentationKind is < 0 or > MaximumProjectilePresentationKind
-            || !Enum.IsDefined(projectile.PresentationKind)
-            || (int)projectile.NativeVisual is < 0 or > MaximumNativeProjectileVisual
-            || !Enum.IsDefined(projectile.NativeVisual)
-            || UsesDirectionalPresentation(projectile)
-                && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection
-            || !IsValidNativeMissileIdentity(projectile)) {
-            throw new InvalidDataException(
-                "The authoritative snapshot contains invalid projectile state.");
-        }
-    }
-
-    private static bool UsesDirectionalPresentation(ProjectileSnapshot projectile)
-    {
-        if (projectile.NativeVisual != NativeProjectileVisual.Unspecified
-            || !string.IsNullOrEmpty(projectile.NativeMissileId))
-            return true;
-
-        return (AuthoritativeProjectileBehavior)projectile.Behavior is
-            AuthoritativeProjectileBehavior.ChargedBolt
-                or AuthoritativeProjectileBehavior.Firebolt
-                or AuthoritativeProjectileBehavior.Lightning
-                or AuthoritativeProjectileBehavior.LightningSegment
-                or AuthoritativeProjectileBehavior.FlashBottom
-                or AuthoritativeProjectileBehavior.FlashTop
-                or AuthoritativeProjectileBehavior.ResurrectionBeam
-                or AuthoritativeProjectileBehavior.Phasing
-                or AuthoritativeProjectileBehavior.Fireball
-                or AuthoritativeProjectileBehavior.HolyBolt
-                or AuthoritativeProjectileBehavior.BloodStar
-                or AuthoritativeProjectileBehavior.BoneSpirit
-                or AuthoritativeProjectileBehavior.FireWallSegment
-                or AuthoritativeProjectileBehavior.FlameWaveController
-                or AuthoritativeProjectileBehavior.FlameWaveSegment
-                or AuthoritativeProjectileBehavior.InfernoSegment
-                or AuthoritativeProjectileBehavior.ChainLightningBolt
-                or AuthoritativeProjectileBehavior.NovaBall
-                or AuthoritativeProjectileBehavior.ApocalypseBoom
-                or AuthoritativeProjectileBehavior.Elemental
-                or AuthoritativeProjectileBehavior.GuardianController
-                or AuthoritativeProjectileBehavior.Etherealize
-                or AuthoritativeProjectileBehavior.Acid
-                or AuthoritativeProjectileBehavior.AcidSplat
-                or AuthoritativeProjectileBehavior.AcidPuddle
-                or AuthoritativeProjectileBehavior.MonsterChargedBolt
-                or AuthoritativeProjectileBehavior.HorkSpawn
-                or AuthoritativeProjectileBehavior.WeaponArrow
-                or AuthoritativeProjectileBehavior.MonsterArrow;
-    }
-
-    private static bool IsWeaponProjectile(int behavior)
-        => (AuthoritativeProjectileBehavior)behavior is
-            AuthoritativeProjectileBehavior.WeaponArrow
-                or AuthoritativeProjectileBehavior.MonsterArrow;
-
-    private static bool IsValidNativeMissileIdentity(ProjectileSnapshot projectile)
-    {
-        if (string.IsNullOrEmpty(projectile.NativeMissileId))
-            return true;
-        // Native Arrow and Acid-family missiles keep their behavior's identity.
-        switch ((AuthoritativeProjectileBehavior)projectile.Behavior) {
-        case AuthoritativeProjectileBehavior.MonsterArrow:
-            return projectile.NativeMissileId == "Arrow";
-        case AuthoritativeProjectileBehavior.Acid:
-            return projectile.NativeMissileId == "Acid";
-        case AuthoritativeProjectileBehavior.AcidSplat:
-            return projectile.NativeMissileId == "AcidSplat";
-        case AuthoritativeProjectileBehavior.AcidPuddle:
-            return projectile.NativeMissileId == "AcidPuddle";
-        }
-        if ((AuthoritativeProjectileBehavior)projectile.Behavior
-                != AuthoritativeProjectileBehavior.MonsterMagic
-            || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(projectile.NativeMissileId)
-            || !IsAsciiLetter(projectile.NativeMissileId[0])
-                && projectile.NativeMissileId[0] != '_') {
-            return false;
-        }
-        return projectile.NativeMissileId.Skip(1).All(character =>
-            IsAsciiLetter(character)
-                || character is >= '0' and <= '9'
-                || character is '_' or '-');
-    }
-
-    private static bool IsAsciiLetter(char character)
-        => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
     private static bool HasValidItemIdentity(
         uint itemSeed,

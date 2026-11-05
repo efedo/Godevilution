@@ -829,7 +829,8 @@ public sealed class StoreSimulationExecutor
                 active.Simulation.Items,
                 active.Simulation.WorldState.CapturePresentationLevelGeometry(),
                 active.Simulation.WorldState.PublishedWarpTargets,
-                allowZeroPlayerEntityId: entityId == 0);
+                allowZeroPlayerEntityId: entityId == 0,
+                monsterMissiles: active.Simulation.MonsterMissiles);
         }));
     }
 

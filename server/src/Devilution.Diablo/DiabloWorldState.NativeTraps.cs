@@ -8,7 +8,7 @@ public sealed partial class DiabloWorldState
 
     internal bool HasMutatedNativeTraps
         => nativeTrapsByEntityId.Values.Any(state => state.Disposition != DiabloNativeTrapDisposition.Armed
-            || IsNativeTrapTriggerReady(state.Facts));
+            || !state.TriggerTrapArmed || IsNativeTrapTriggerReady(state.Facts));
 
     internal IReadOnlyList<DiabloNativeTrapState>? CaptureNativeTraps()
         => nativePopulationPolicy is null
@@ -27,15 +27,30 @@ public sealed partial class DiabloWorldState
 
         var initial = policy.CreateInitialNativeTrapStates();
         if (formatVersion >= DiabloCohortState.NativeTrapFormatVersion) {
-            if (savedStates is null || savedStates.Count != initial.Count)
-                throw new InvalidDataException("Native trap cohorts require complete generated wall-trap lifecycle state.");
+            if (savedStates is null)
+                throw new InvalidDataException("Native trap cohorts require generated wall-trap lifecycle state.");
             var restored = new Dictionary<uint, DiabloNativeTrapState>();
-            for (var index = 0; index < initial.Count; index++) {
-                var actual = savedStates[index];
+            var expected = initial.ToDictionary(state => state.Facts.TrapEntityId);
+            foreach (var actual in savedStates) {
                 actual.ValidateShape();
-                if (actual.Facts != initial[index].Facts
+                if (!expected.TryGetValue(actual.Facts.TrapEntityId, out var generated)
+                    || actual.Facts != generated.Facts
                     || !restored.TryAdd(actual.Facts.TrapEntityId, actual))
                     throw new InvalidDataException("Native trap state differs from its exact generated trap/trigger link.");
+            }
+            foreach (var generated in initial.Where(state => !restored.ContainsKey(state.Facts.TrapEntityId))) {
+                // Before 2.5a only Arrow links to C1 doors or ordinary chests were retained.
+                // Newly supported links inherit the saved trigger's one-way flag;
+                // opened armed triggers fire
+                // on the next native object tick, exactly as a pending native trap.
+                var facts = generated.Facts;
+                if (facts.MissileTypeId == 0 && facts.TriggerNativeTypeId is 1 or 2 or 5 or 6 or 7)
+                    throw new InvalidDataException("Native trap state omits a previously supported generated trap.");
+                var trigger = Objects[facts.TriggerEntityId];
+                var intrinsicOpened = facts.TriggerNativeTypeId is 68 or 69 or 70 && trigger.Activated;
+                restored.Add(facts.TrapEntityId, trigger.TrapArmed ? generated
+                    : intrinsicOpened ? generated with { TriggerTrapArmed = false }
+                    : generated with { TrapVar4 = 1, TriggerTrapArmed = false, Disposition = DiabloNativeTrapDisposition.Disarmed });
             }
             foreach (var entry in restored)
                 nativeTrapsByEntityId.Add(entry.Key, entry.Value);
@@ -49,15 +64,32 @@ public sealed partial class DiabloWorldState
         ValidateNativeTrapState(policy);
     }
 
+    /** Native OperateChest clears TCHEST's flag without dispatching its retained wall trap. */
+    private void SynchronizeIntrinsicChestWallTraps(AuthoritativeWorldObject chest)
+    {
+        if (chest.NativeObjectId is not (68 or 69 or 70))
+            return;
+        foreach (var state in nativeTrapsByEntityId.Values
+            .Where(state => state.Facts.TriggerEntityId == chest.EntityId).ToArray())
+            nativeTrapsByEntityId[state.Facts.TrapEntityId] = state with { TriggerTrapArmed = chest.TrapArmed };
+    }
+
     internal bool IsNativeTrapTrigger(AuthoritativeWorldObject value)
-        => TryGetNativeTrapFacts(value, out _);
+        => IsNativeIntrinsicChest(value) || TryGetNativeTrapFacts(value, out _);
+
+    private bool IsNativeIntrinsicChest(AuthoritativeWorldObject value)
+        => value.NativeObjectId is >= 68 and <= 70
+            && NativePopulationForLevel(value.LevelId) is { } owner
+            && owner.TryGetNativeChestFacts(value, out _) && !value.Activated;
 
     internal bool CanOperateNativeTrapTrigger(AuthoritativeWorldObject value)
     {
+        if (IsNativeIntrinsicChest(value))
+            return true;
         if (!TryGetNativeTrapFacts(value, out var facts) || facts.Count == 0)
             return false;
         var rawType = checked((int)value.NativeObjectId);
-        return rawType is 1 or 2 || (rawType is 5 or 6 or 7) && !value.Activated;
+        return rawType is 1 or 2 or 42 or 43 || (rawType is 5 or 6 or 7) && !value.Activated;
     }
 
     internal bool TryGetNativeTrapFacts(
@@ -75,7 +107,7 @@ public sealed partial class DiabloWorldState
         return true;
     }
 
-    /** Performs only the native disarm roll and state change; the caller still operates the target this command. */
+    /** Native players.cpp TryDisarm; the caller still operates the target this command. */
     internal DiabloNativeTrapDisarmResult TryDisarmNativeTrapTrigger(
         AuthoritativePlayerState player,
         AuthoritativeWorldObject trigger,
@@ -92,12 +124,13 @@ public sealed partial class DiabloWorldState
                 trigger.PositionX, trigger.PositionY, player.PositionX, player.PositionY) > 1)
             return DiabloNativeTrapDisarmResult.NotApplicable;
 
-        if (!TryGetNativeTrapFacts(trigger, out var facts))
+        var intrinsicChest = IsNativeIntrinsicChest(trigger);
+        if (!TryGetNativeTrapFacts(trigger, out var facts) && !intrinsicChest)
             return DiabloNativeTrapDisarmResult.NotApplicable;
         var linkedStates = facts.Select(value => nativeTrapsByEntityId[value.TrapEntityId]).ToArray();
-        if (linkedStates.Length == 0
+        if (!intrinsicChest && (linkedStates.Length == 0
             || linkedStates.Any(value => value.Disposition != DiabloNativeTrapDisposition.Armed
-                || value.TrapVar4 != value.Facts.InitialTrapVar4 || !value.TriggerTrapArmed))
+                || value.TrapVar4 != value.Facts.InitialTrapVar4 || !value.TriggerTrapArmed)))
             return DiabloNativeTrapDisarmResult.NotApplicable;
 
         var chance = checked(2 * player.Attributes.Dexterity.Current - 5 * nativePopulationPolicy!.Depth);
@@ -202,16 +235,36 @@ public sealed partial class DiabloWorldState
     {
         if (trigger is null || trigger.LevelId != facts.LevelId || trigger.EntityId != facts.TriggerEntityId)
             return false;
-        return facts.TriggerNativeTypeId is 1 or 2
-            ? trigger.CathedralDoor is { Status: not AuthoritativeCathedralDoorStatus.Closed }
-            : trigger.Activated;
+        var doorStatus = facts.TriggerNativeTypeId is 1 or 2 ? (int?)trigger.CathedralDoor?.Status
+            : nativeCatacombsDoorsByEntityId.TryGetValue(trigger.EntityId, out var door) ? (int)door.State.Status : null;
+        return UpdateTrapState(0, facts.TriggerNativeTypeId, doorStatus ?? 0, !trigger.Activated, trigger.TrapArmed);
+    }
+
+    /** Native objects.cpp UpdateTrapState, L1-L8 door/chest branches in their native order. */
+    internal static bool UpdateTrapState(int trapVar4, int triggerType, int doorVar4, bool canInteract, bool trapFlag)
+    {
+        if (trapVar4 != 0)
+            return false;
+        switch (triggerType) {
+        case 1: case 2: case 42: case 43:
+            if (doorVar4 == 0 && trapFlag)
+                return false;
+            break;
+        case 5: case 6: case 7:
+            if (canInteract && trapFlag)
+                return false;
+            break;
+        default:
+            return false;
+        }
+        return true;
     }
 
     private bool IsNativeTrapTriggerReady(AuthoritativeCathedralNativeTrapFacts facts)
         => Objects.TryGetValue(facts.TriggerEntityId, out var trigger)
             && IsNativeTrapTriggerReady(trigger, facts);
 
-    private (int X, int Y) FindNativeTrapTarget(
+    internal static (int X, int Y) FindNativeTrapTarget(
         AuthoritativeCathedralNativeTrapFacts facts,
         IReadOnlyList<AuthoritativePlayerState> players)
     {

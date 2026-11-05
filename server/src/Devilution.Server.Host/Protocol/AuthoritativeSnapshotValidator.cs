@@ -1441,8 +1441,9 @@ public static class AuthoritativeSnapshotValidator
     private static void ValidateProjectiles(Snapshot snapshot)
     {
         foreach (var projectile in snapshot.Projectiles) {
+            var nativeTrap = IsNativeObjectTrapProjectile(projectile, snapshot);
             if (projectile.SourceEntityId == 0
-                || projectile.SpellId == 0 && !IsWeaponProjectile(projectile.Behavior)
+                || projectile.SpellId == 0 && !IsWeaponProjectile(projectile.Behavior) && !nativeTrap
                 || projectile.RemainingTicks == 0
                 || projectile.Damage < 0
                 || projectile.AreaRadius < 0
@@ -1462,10 +1463,43 @@ public static class AuthoritativeSnapshotValidator
                 || !Enum.IsDefined(projectile.NativeVisual)
                 || UsesDirectionalPresentation(projectile)
                     && projectile.OriginalDirection is < 0 or > MaximumNativeMonsterDirection
-                || !IsValidNativeMissileIdentity(projectile))
+                || !IsValidNativeMissileIdentity(projectile) && !nativeTrap)
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid projectile state.");
         }
+    }
+
+    /** Trap ownership is already visible: a retained trigger and its native wall object or chest. */
+    private static bool IsNativeObjectTrapProjectile(ProjectileSnapshot projectile, Snapshot snapshot)
+    {
+        if (projectile.SpellId != 0 || projectile.LevelId is < 1 or > 8
+            || projectile.RemainingTicks > 256)
+            return false;
+        var source = snapshot.Objects.FirstOrDefault(value => value.EntityId == projectile.SourceEntityId);
+        var trigger = snapshot.Objects.FirstOrDefault(value => value.EntityId == projectile.TargetEntityId);
+        if (source is null || trigger is null || source.LevelId != projectile.LevelId
+            || trigger.LevelId != projectile.LevelId || source.Destroyed || trigger.Destroyed
+            || projectile.StartX != source.PositionX || projectile.StartY != source.PositionY)
+            return false;
+        var intrinsic = source.EntityId == trigger.EntityId
+            && source.NativeObjectId is 68 or 69 or 70 && source.Activated;
+        var wall = source.NativeObjectId is 53 or 54
+            // A fired door can be closed again while its missile is still alive.
+            && (trigger.NativeObjectId is 1 or 2 or 42 or 43
+                || trigger.NativeObjectId is 5 or 6 or 7 && trigger.Activated);
+        if (!intrinsic && !wall)
+            return false;
+        const int travel = 0;
+        const int impact = 1;
+        return ((AuthoritativeProjectileBehavior)projectile.Behavior, projectile.NativeMissileId, projectile.Phase) switch {
+            (AuthoritativeProjectileBehavior.WeaponArrow, "FireArrow", travel
+                or impact) => intrinsic,
+            (AuthoritativeProjectileBehavior.Firebolt, "Firebolt", travel) => wall,
+            (AuthoritativeProjectileBehavior.Firebolt, "MagmaBallExplosion", impact) => wall,
+            (AuthoritativeProjectileBehavior.Lightning, "LightningControl", travel) => wall,
+            (AuthoritativeProjectileBehavior.LightningSegment, "Lightning", travel) => wall,
+            _ => false,
+        };
     }
 
     private static bool UsesDirectionalPresentation(ProjectileSnapshot projectile)

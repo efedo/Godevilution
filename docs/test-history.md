@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-05 — Traps, chests and drops (2.5a)
+
+Debug L8 Warrior journey and resume passed: chest and pickup 15.3 s; `-CatacombsSeed 0
+-RequireTrappedDoor` 39.6 s, firing the L7 door. Suites: server 2055, Diablo 3865, client 1336 passed,
+none failed; explicit trap matrix passed. Native comparisons passed locally (231 managed cases) except
+the MPQ reader capture, which needs `spawn.mpq` and is left to CI. Sol 6.1 review: findings fixed,
+then accepted. Trapped sarcophagi stay refused.
+
 ### 2026-11-04 — Cheaper capture (P5)
 
 Saved 14.6 MB L8 cohort, full timed lock hold with a command log attached: Debug 8.86 ms mean, 10.58

@@ -4,7 +4,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
 {
     private const int NativeLeftWallTrap = 53;
     private const int NativeRightWallTrap = 54;
-    private const int NativeArrowMissile = 0;
+    internal static bool IsSupportedNativeTrapMissile(int missile) => missile is 0 or 1 or 7;
 
     /** Full source-order trap bindings; unsupported links are intentionally absent. */
     internal IReadOnlyList<AuthoritativeCathedralNativeTrapFacts> CreateInitialNativeTrapFacts()
@@ -16,7 +16,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             if (trap.Type is not (NativeLeftWallTrap or NativeRightWallTrap)
                 || trap.Var1 is < 0 or >= AuthoritativeCathedralThemeRoomState.Width
                 || trap.Var2 is < 0 or >= AuthoritativeCathedralThemeRoomState.Width
-                || trap.Var3 != NativeArrowMissile || trap.Var4 != 0)
+                || !IsSupportedNativeTrapMissile(trap.Var3) || trap.Var4 != 0)
                 continue;
 
             var cell = trap.Var2 * AuthoritativeCathedralThemeRoomState.Width + trap.Var1;
@@ -90,10 +90,10 @@ internal sealed partial class AuthoritativeNativePopulationBindings
 
     internal static bool IsSupportedNativeTrapTriggerType(
         AuthoritativeCathedralPopulationObjectState value)
-        => (value.Type is 1 or 2) && value.DoorFlag
-            || (value.Type is 5 or 6 or 7) && !value.DoorFlag;
+        => (value.Type is 1 or 2 or 42 or 43) && value.DoorFlag
+            || (value.Type is 5 or 6 or 7 or 68 or 69 or 70) && !value.DoorFlag;
 
-    /** A trigger is supported only when every wall trap linked to it is an L1 Arrow trap. */
+    /** Native objects.cpp AddTrap admits Arrow, Firebolt and LightningControl on L1-L8. */
     internal static bool HasSupportedNativeTrapLink(
         AuthoritativeCathedralThemeRoomState state,
         AuthoritativeCathedralPopulationObjectState trigger)
@@ -113,7 +113,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
                 && value.Var1 == trigger.Position.X && value.Var2 == trigger.Position.Y)
             .ToArray();
         return linked.Length != 0 && linked.All(value =>
-            value.Var3 == NativeArrowMissile && value.Var4 == 0
+            IsSupportedNativeTrapMissile(value.Var3) && value.Var4 == 0
             && (uint)value.Position.X < AuthoritativeCathedralThemeRoomState.Width
             && (uint)value.Position.Y < AuthoritativeCathedralThemeRoomState.Width);
     }

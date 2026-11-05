@@ -32,15 +32,22 @@ public sealed class AuthoritativeCathedralMonsterLootNativeOracleTests
         new("ordinary-extreme-seed", uint.MaxValue, MonsterId: 2),
         new("ordinary-player-minion-skipped", 2588, Flags: 32),
         new("ordinary-berserk-golem-drops", 22, Flags: 2080),
+        new("native-goat-data-level-eight", 22, MonsterId: 34),
     ];
 
-    [Theory(Explicit = true)]
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
     public void DeathTimeLootMatchesNative(int depth)
     {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(DirectoryVariable)))
+            Assert.Skip("Run tools/run-native-oracle-parity.sh to generate the native drop comparison.");
         var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(DirectoryVariable);
         Assert.Equal(new[] { FileName }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory).Select(Path.GetFileName));
         var corpus = ReadCorpus(AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, FileName), 128 * 1024 * 1024));
@@ -51,7 +58,8 @@ public sealed class AuthoritativeCathedralMonsterLootNativeOracleTests
                 row.Seed, 56, 56, row.Unique, IsMinion(row.Flags),
                 row.Unique ? corpus.Uniques[18] : null,
                 new(LevelLoading: true, MaximumLifeBase: 6400, MaximumManaBase: 3200));
-            var actual = AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(request);
+            var actual = depth <= 4 ? AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(request)
+                : AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(request, AuthoritativeNativeDungeonFamilyContext.Catacombs(depth));
             Assert.Equal(row.Seed, actual.InitialRandomState);
             Assert.Equal(row.Outcome, actual.Outcome);
             Assert.Equal(corpus.Monsters.Get(row.MonsterId).Level, actual.RawDataLevel);
@@ -91,11 +99,11 @@ public sealed class AuthoritativeCathedralMonsterLootNativeOracleTests
         Properties(value, "format", "version", "policy", "boundary", "nativeSource", "playerMaximumLife", "playerMaximumMana",
             "gameMode", "difficulty", "levelType", "questsDisabled", "hellfire", "spawn", "multiplayer", "monsterRuntimeCount",
             "uniqueMonsterCount", "historySearchSeed", "catalog", "monsterRuntime", "uniqueMonsters", "cases", "caseCount", "depthCount", "lanesPerDepth", "nativeCoverage");
-        if (S(value, "format") != "godevilution-cathedral-monster-loot" || N(value, "version") != 1 ||
-            S(value, "policy") != "original-diablo-single-player-normal-cathedral-ordinary-monster-death-loot" ||
+        if (S(value, "format") != "godevilution-cathedral-monster-loot" || N(value, "version") != 2 ||
+            S(value, "policy") != "original-diablo-single-player-normal-native-floor-ordinary-monster-death-loot" ||
             S(value, "boundary") != "MonsterDeath-rndItemSeed-reset-then-SpawnLoot" ||
             S(value, "nativeSource") != "BUILD_TESTING TestMonsterSpawnLoot -> Source/game/monsters/monsters.cpp:SpawnLoot -> Source/game/items/items.cpp:SpawnItem" ||
-            S(value, "gameMode") != "single-player" || S(value, "difficulty") != "normal" || S(value, "levelType") != "cathedral" ||
+            S(value, "gameMode") != "single-player" || S(value, "difficulty") != "normal" || S(value, "levelType") != "cathedral-and-catacombs" ||
             !B(value, "questsDisabled") || B(value, "hellfire") || B(value, "spawn") || B(value, "multiplayer") ||
             N(value, "playerMaximumLife") != 6400 || N(value, "playerMaximumMana") != 3200)
             throw new InvalidDataException("Native death-time loot identity/policy differs from the bounded seam.");
@@ -110,14 +118,15 @@ public sealed class AuthoritativeCathedralMonsterLootNativeOracleTests
         var historySeed = U(value, "historySearchSeed");
         if (historySeed > 4096) throw new InvalidDataException("The actual native history search must be bounded to seeds0..4096.");
         var cases = A(value, "cases").EnumerateArray().Select(row => ReadCase(row, monsters, uniques, historySeed)).ToArray();
-        if (cases.Length != 4 * Lanes.Length || N(value, "caseCount") != cases.Length || N(value, "depthCount") != 4 ||
+        var depthCount = N(value, "depthCount");
+        if (depthCount is not (4 or 8) || cases.Length != depthCount * Lanes.Length || N(value, "caseCount") != cases.Length || N(value, "depthCount") != depthCount ||
             N(value, "lanesPerDepth") != Lanes.Length)
             throw new InvalidDataException("Native death-time loot matrix is incomplete.");
-        foreach (var depth in Enumerable.Range(1, 4))
+        foreach (var depth in Enumerable.Range(1, depthCount))
             foreach (var lane in Lanes)
                 if (cases.Count(row => row.Depth == depth && row.Name == lane.Name) != 1)
                     throw new InvalidDataException("Native death-time loot matrix contains missing or duplicate cases.");
-        foreach (var depth in Enumerable.Range(1, 4)) {
+        foreach (var depth in Enumerable.Range(1, depthCount)) {
             var fresh = cases.Single(row => row.Depth == depth && row.Name == "ordinary-unique-history-fresh");
             var exhausted = cases.Single(row => row.Depth == depth && row.Name == "ordinary-unique-history-all");
             var rawLevel = monsters.Get(fresh.MonsterId).Level;
@@ -151,8 +160,8 @@ public sealed class AuthoritativeCathedralMonsterLootNativeOracleTests
         Properties(monster, "type", "levelType", "dataLevel", "treasure", "flags", "uniqueType", "rndItemSeed", "positionX", "positionY",
             "futureX", "futureY", "oldX", "oldY", "mode", "hitPoints", "maxHitPoints", "whoHit");
         var monsterId = N(monster, "type");
-        var typeIndex = monsterId switch { 0 => 0, 2 => 1, 38 => 2, _ => -1 };
-        if (depth is < 1 or > 4 || seed != (lane.HistorySeed ? historySeed : lane.Seed) || U(value, "preDeathRandomState") != (seed ^ 0x9E3779B9u) ||
+        var typeIndex = monsterId switch { 0 => 0, 2 => 1, 38 => 2, 34 => 3, _ => -1 };
+        if (depth is < 1 or > 8 || seed != (lane.HistorySeed ? historySeed : lane.Seed) || U(value, "preDeathRandomState") != (seed ^ 0x9E3779B9u) ||
             B(value, "unique") != lane.Unique || N(value, "activeCount") != lane.Count || B(value, "shuffledActiveItems") != lane.Shuffled ||
             N(value, "placementMode") != lane.Placement || N(value, "uniqueHistoryCount") != lane.History || B(value, "signedItemRefs") != lane.Signed ||
             monsterId != lane.MonsterId || N(value, "monsterTypeIndex") != typeIndex || N(monster, "levelType") != typeIndex ||

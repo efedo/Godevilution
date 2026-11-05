@@ -1340,7 +1340,15 @@ public sealed partial class DiabloWorldState
                     projectile.Phase,
                     projectile.LevelId,
                     projectile.TargetX,
-                    projectile.TargetY)) {
+                    projectile.TargetY)
+                    && !(projectile.NativeMonsterMissile?.HasFamiliarLightningAim(projectile.PositionX,
+                            projectile.PositionY, projectile.TargetX, projectile.TargetY) == true
+                        && projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic
+                        && projectile.NativeMissileId == "Lightning" && projectile.SpellId == 0
+                        && projectile.StartX == projectile.TargetX && projectile.StartY == projectile.TargetY
+                        && projectile.RemainingTicks is >= 1 and <= 8 && projectile.Damage is >= 1 and <= 10
+                        && projectile.Phase == AuthoritativeProjectilePhase.Travel
+                        && projectile.VelocityX == 0 && projectile.VelocityY == 0)) {
                 throw new InvalidDataException(
                     $"Projectile {projectile.EntityId} has invalid initial state.");
             }

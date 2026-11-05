@@ -173,11 +173,11 @@ public static class AuthoritativeCatacombsNativeObjectPolicy
             AuthoritativeCatacombsNativeObjectOperation.None => AuthoritativeCatacombsNativeObjectRole.Decorative,
             _ => AuthoritativeCatacombsNativeObjectRole.Interactive,
         };
-        var supported = nativeObjectId is 5 or 6 or 7 or 42 or 43 or 68 or 69 or 70;
+        var supported = nativeObjectId is 5 or 6 or 7 or 42 or 43 or 53 or 54 or 68 or 69 or 70;
         return new(nativeObjectId, role, operation, supported);
     }
 
-    /** TChest native IDs 68–70 share AddChest loot tiers 5–7 without changing their raw ID. */
+    /** TChest native IDs 68â€“70 share AddChest loot tiers 5â€“7 without changing their raw ID. */
     public static int LootTierForChestType(int nativeObjectId)
         => nativeObjectId switch {
             >= 5 and <= 7 => nativeObjectId,
@@ -185,6 +185,7 @@ public static class AuthoritativeCatacombsNativeObjectPolicy
             _ => throw new InvalidDataException("Native object is not one of the admitted ordinary or trapped chest types."),
         };
 
+    /** Native objects.cpp OperateChest's original-Diablo Catacombs intrinsic missile branch. */
     internal static AuthoritativeCatacombsChestTrapPlan? PlanIntrinsicTrap(
         AuthoritativeCatacombsNativeChestFacts chest,
         int playerX,

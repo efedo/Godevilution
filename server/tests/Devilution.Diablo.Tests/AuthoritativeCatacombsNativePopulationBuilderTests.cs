@@ -22,6 +22,72 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
 	}
 
 	[Fact(Explicit = true)]
+	public void ExplicitSeedZeroBuildsTheMeasuredL7DoorThroughTheProductionDepthBuilder()
+	{
+		if (Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED") != "0")
+			Assert.Skip("Run the selected-seed check with GODEVILUTION_NATIVE_CATACOMBS_SEED=0.");
+		using var fixture = CreateFixture(0);
+		var depths = fixture.CreateNativeDepthsForAvailability();
+		var start = fixture.CreateCharacterStart(0);
+		var hero = start.Hero;
+		var entry = new DiabloNativeFloorEntry(7, new(hero.MaximumLifeBase, hero.MaximumManaBase,
+			hero.LightRadius, hero.IdleFrames, hero.PreEntryFuture, true, true), [], string.Empty) {
+			CatacombsLifeQ6 = hero.MaximumLifeBase,
+		};
+		var build = depths.Build(entry, start, fixture.RuntimeCatalog, fixture.Activation.PlayerClasses,
+			fixture.Activation.TrustedOptions!.MonsterTypes!, fixture.Items, fixture.Spells,
+			fixture.StoreItems, fixture.ItemSidecars);
+		Assert.Equal(0U, build.Ready.Request.FreshLevel.Request.DungeonSeed);
+		var door = build.Policy.Bindings.InitialState.ObjectSlots[118];
+		Assert.Contains(door.Type, new[] { 42, 43 });
+		Assert.True(door.TrapFlag);
+		Assert.Equal((68, 74), (door.Position.X, door.Position.Y));
+		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells,
+			fixture.Activation.MonsterMissiles!);
+		Assert.True(world.CanOperateNativeObject(world.Objects.Values.Single(value =>
+			value.PositionX == 68 && value.PositionY == 74)));
+	}
+
+	[Fact(Explicit = true)]
+	public void MeasureFreshCatacombsTrapAvailabilityAcross100Seeds()
+	{
+		using var fixture = CreateFixture(0);
+		var rows = new List<object>();
+		for (uint seed = 0; seed < 100; seed++) {
+			for (var depth = 5; depth <= 8; depth++) {
+				var fresh = fixture.CreateFreshForAvailability(depth, seed);
+				var state = fresh.Population.State;
+				var objects = state.ActiveObjectIds.Take(state.ActiveObjectCount).Select(slot => state.ObjectSlots[slot]).ToArray();
+				var doors = objects.Where(value => value.Type is 42 or 43 && value.TrapFlag).ToArray();
+				var chests = objects.Count(value => value.Type is 5 or 6 or 7 or 68 or 69 or 70 && value.TrapFlag);
+				var level = fresh.Geometry.Level;
+				var entry = fresh.Geometry.GenerationResult.EntryPosition;
+				var reach = new HashSet<(int X, int Y)> { (entry.X, entry.Y) };
+				var queue = new Queue<(int X, int Y)>(); queue.Enqueue((entry.X, entry.Y));
+				while (queue.TryDequeue(out var cell)) {
+					foreach (var offset in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) }) {
+						var next = (X: cell.X + offset.Item1, Y: cell.Y + offset.Item2);
+						if (!level.ContainsPosition(next.X, next.Y) || reach.Contains(next)) continue;
+						var reference = state.ObjectRefs[next.Y * level.Width + next.X];
+						var obj = reference == 0 ? null : state.ObjectSlots[Math.Abs(reference) - 1];
+						// Actors can be cleared and native doors opened by the real controls.
+						if (obj?.Type is not (42 or 43) && (!level.IsWalkable(next.X, next.Y) || obj?.SolidFlag == true)) continue;
+						reach.Add(next); queue.Enqueue(next);
+					}
+				}
+				var reachable = doors.Where(door => reach.Any(cell =>
+					Math.Abs(cell.X - door.Position.X) + Math.Abs(cell.Y - door.Position.Y) == 1)).ToArray();
+				rows.Add(new { Seed = seed, Depth = depth, ArmedDoors = doors.Length, TrappedChests = chests,
+					ReachableDoors = reachable.Select(value => new { value.Slot, value.Position.X, value.Position.Y }).ToArray() });
+			}
+		}
+		var output = Environment.GetEnvironmentVariable("GODEVILUTION_TRAP_AVAILABILITY_REPORT")
+			?? throw new InvalidOperationException("Select a private availability report path.");
+		File.WriteAllText(output, System.Text.Json.JsonSerializer.Serialize(rows));
+		Assert.Equal(400, rows.Count);
+	}
+
+	[Fact(Explicit = true)]
 	public void CatacombsAllQualifiedFreshReadyCasesBuildAndAdmitACompleteNativeOwner()
 	{
 		using var warriorFixture = CreateFixture(0);
@@ -129,18 +195,27 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
 			Assert.Equal(unavailableArmorStandInputs, unavailableArmorStandProjections);
 			Assert.Equal(unavailableWeaponRackInputs, unavailableWeaponRackProjections);
 			Assert.All(floor.Objects.Values.Where(value => value.NativeObjectId is 5 or 6 or 7 or 68 or 69 or 70), value => {
-				Assert.False(floor.CanOperateNativeChest(value));
-				Assert.False(floor.CanOperateNativeObject(value));
+				Assert.True(floor.CanOperateNativeChest(value));
+				Assert.True(floor.CanOperateNativeObject(value));
 			});
 			foreach (var armedDoor in floor.Objects.Values.Where(value => value.NativeObjectId is 42 or 43 && value.TrapArmed)) {
 				armedDoorsObserved++;
 				var before = floor.CaptureNativeCatacombsDoorStates().Single().Doors
 					.Single(value => value.EntityId == armedDoor.EntityId);
-				Assert.False(floor.CanOperateNativeObject(armedDoor));
-				Assert.False(floor.TryOperateNativeCatacombsDoor(armedDoor.EntityId, []));
-				Assert.Equal(before, floor.CaptureNativeCatacombsDoorStates().Single().Doors
-					.Single(value => value.EntityId == armedDoor.EntityId));
-				Assert.True(floor.Objects[armedDoor.EntityId].TrapArmed);
+				Assert.True(floor.CanOperateNativeObject(armedDoor));
+				Assert.True(floor.TryOperateNativeCatacombsDoor(armedDoor.EntityId, []));
+				var opened = floor.CaptureNativeCatacombsDoorStates().Single().Doors
+					.Single(value => value.EntityId == armedDoor.EntityId);
+				Assert.Equal(AuthoritativeCatacombsDoorStatus.Open, opened.Status);
+				Assert.Equal(before.AnimationFrame + 2, opened.AnimationFrame);
+				var participant = DiabloPlayerTemplate.CreateDefault(0, 6400, 0, 0).CreatePlayer();
+				participant.EntityId = 0xF5000001;
+				participant.LevelId = armedDoor.LevelId;
+				var linked = floor.CaptureNativeTraps()!.Where(value => value.Facts.TriggerEntityId == armedDoor.EntityId).ToArray();
+				Assert.NotEmpty(linked);
+				var fired = floor.ConsumeReadyNativeTraps([participant]);
+				Assert.All(linked, value => Assert.Contains(fired, shot => shot.TrapEntityId == value.Facts.TrapEntityId));
+				Assert.False(floor.Objects[armedDoor.EntityId].TrapArmed);
 			}
 		}
 		Assert.True(armedDoorsObserved > 0, "The qualified native case matrix must cover an armed Catacombs door.");
@@ -319,6 +394,14 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
 				table with { SourcePath = AuthoritativeCathedralNativeCharacterStart.TableName },
 				Activation.PlayerClasses, Activation.PlayerAnimations, Activation.PlayerLoadouts);
 		}
+
+		internal AuthoritativeCatacombsNativeDepths CreateNativeDepthsForAvailability()
+			=> AuthoritativeCatacombsNativeDepths.Create(Metadata, automap, StorySeed);
+
+		internal AuthoritativeCatacombsFreshLevelResult CreateFreshForAvailability(int depth, uint seed)
+			=> AuthoritativeCatacombsFreshLevelGenerator.Generate(Metadata, depth, seed, StorySeed,
+				AuthoritativeCatacombsEntry.Main, CreateHeroContext(characterStart.Hero),
+				stableLevelSymbol: $"catacombs{depth}");
 
 		internal AuthoritativeCatacombsNativePopulationBuild CreateBuild(
 			int depth,

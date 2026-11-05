@@ -683,6 +683,9 @@ protected:
 		const auto noDropType = LevelBestiary.addType(MT_FIEND, PLACE_SCATTER);
 		ASSERT_TRUE(noDropType.has_value());
 		noDropType_ = *noDropType;
+		const auto goatType = LevelBestiary.addType(MT_NGOATMC, PLACE_SCATTER);
+		ASSERT_TRUE(goatType.has_value());
+		goatType_ = *goatType;
 		font_ = LoadOptionalClx("fonts\\12-00.clx");
 		ASSERT_TRUE(font_.has_value());
 		ASSERT_EQ(font_->numSprites(), 256U);
@@ -739,7 +742,7 @@ protected:
 	void CaptureCase(std::ostream &stream, std::string_view name, int depth, uint32_t seed, size_t monsterType, bool unique, int activeCount, bool shuffled, PlacementMode placement, int historyCount, bool signedRefs = false, uint16_t flags = 0)
 	{
 		PrepareWorld(activeCount, shuffled, placement, signedRefs);
-		currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
+		currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = depth <= 4 ? DTYPE_CATHEDRAL : DTYPE_CATACOMBS });
 		for (int i = 0; i < historyCount; ++i)
 			UniqueItemFlags[i] = true;
 		const auto uniqueFlagsBefore = [&] {
@@ -895,7 +898,7 @@ protected:
 	size_t oldActiveMonsterCount_ = 0;
 	std::array<bool, 128> oldUniqueFlags_ {};
 	OptionalOwnedClxSpriteList font_;
-	size_t ordinaryType_ = 0, highLevelType_ = 0, noDropType_ = 0;
+	size_t ordinaryType_ = 0, highLevelType_ = 0, noDropType_ = 0, goatType_ = 0;
 	int cases_ = 0;
 	int droppedCases_ = 0, noDropFlagCases_ = 0, noDropRollCases_ = 0, poolFullCases_ = 0, minionSkippedCases_ = 0;
 	int weightedCases_ = 0, goldCases_ = 0, lastSlotCases_ = 0, fallbackCases_ = 0, exhaustedCases_ = 0, historyFreshCases_ = 0, historyRerollCases_ = 0;
@@ -916,15 +919,15 @@ TEST_F(CathedralMonsterLootOracleTest, CaptureOrdinaryMonsterDeathLoot)
 	{
 		JsonObject document(stream);
 		document.String("format", "godevilution-cathedral-monster-loot");
-		document.Number("version", 1);
-		document.String("policy", "original-diablo-single-player-normal-cathedral-ordinary-monster-death-loot");
+		document.Number("version", 2);
+		document.String("policy", "original-diablo-single-player-normal-native-floor-ordinary-monster-death-loot");
 		document.String("boundary", "MonsterDeath-rndItemSeed-reset-then-SpawnLoot");
 		document.String("nativeSource", "BUILD_TESTING TestMonsterSpawnLoot -> Source/game/monsters/monsters.cpp:SpawnLoot -> Source/game/items/items.cpp:SpawnItem");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
 		document.String("gameMode", "single-player");
 		document.String("difficulty", "normal");
-		document.String("levelType", "cathedral");
+		document.String("levelType", "cathedral-and-catacombs");
 		document.Boolean("questsDisabled", true);
 		document.Boolean("hellfire", false);
 		document.Boolean("spawn", false);
@@ -940,7 +943,7 @@ TEST_F(CathedralMonsterLootOracleTest, CaptureOrdinaryMonsterDeathLoot)
 		WriteUniqueMonsterCatalog(stream);
 		document.Key("cases");
 		stream << '[';
-		for (int depth = 1; depth <= 4; ++depth) {
+		for (int depth = 1; depth <= 8; ++depth) {
 			CaptureCase(stream, "ordinary-gold-selection", depth, 0, ordinaryType_, false, 0, false, PlacementMode::Open, 0);
 			CaptureCase(stream, "ordinary-high-level-selection", depth, 22, highLevelType_, false, 0, false, PlacementMode::Open, 0);
 			CaptureCase(stream, "ordinary-zero-seed", depth, 0, ordinaryType_, false, 0, false, PlacementMode::Open, 0, true);
@@ -958,11 +961,12 @@ TEST_F(CathedralMonsterLootOracleTest, CaptureOrdinaryMonsterDeathLoot)
 			CaptureCase(stream, "ordinary-extreme-seed", depth, UINT32_MAX, highLevelType_, false, 0, false, PlacementMode::Open, 0);
 			CaptureCase(stream, "ordinary-player-minion-skipped", depth, 2588, ordinaryType_, false, 0, false, PlacementMode::Open, 0, false, MFLAG_GOLEM);
 			CaptureCase(stream, "ordinary-berserk-golem-drops", depth, 22, ordinaryType_, false, 0, false, PlacementMode::Open, 0, false, MFLAG_GOLEM | MFLAG_BERSERK);
+			CaptureCase(stream, "native-goat-data-level-eight", depth, 22, goatType_, false, 0, false, PlacementMode::Open, 0);
 		}
 		stream << ']';
 		document.Number("caseCount", cases_);
-		document.Number("depthCount", 4);
-		document.Number("lanesPerDepth", 17);
+		document.Number("depthCount", 8);
+		document.Number("lanesPerDepth", 18);
 		document.Key("nativeCoverage");
 		JsonObject coverage(stream);
 		coverage.Number("droppedCases", droppedCases_);
@@ -981,19 +985,19 @@ TEST_F(CathedralMonsterLootOracleTest, CaptureOrdinaryMonsterDeathLoot)
 	stream.flush();
 	ASSERT_TRUE(stream.good());
 	stream.close();
-	ASSERT_EQ(cases_, 68);
-	ASSERT_EQ(droppedCases_, 48);
-	ASSERT_EQ(noDropFlagCases_, 4);
-	ASSERT_EQ(noDropRollCases_, 8);
-	ASSERT_EQ(poolFullCases_, 4);
-	ASSERT_EQ(minionSkippedCases_, 4);
-	ASSERT_EQ(weightedCases_, 28);
-	ASSERT_EQ(goldCases_, 8);
-	ASSERT_EQ(lastSlotCases_, 4);
-	ASSERT_EQ(fallbackCases_, 8);
-	ASSERT_EQ(exhaustedCases_, 4);
-	ASSERT_EQ(historyFreshCases_, 4);
-	ASSERT_EQ(historyRerollCases_, 4);
+	ASSERT_EQ(cases_, 144);
+	ASSERT_EQ(droppedCases_, 104);
+	ASSERT_EQ(noDropFlagCases_, 8);
+	ASSERT_EQ(noDropRollCases_, 16);
+	ASSERT_EQ(poolFullCases_, 8);
+	ASSERT_EQ(minionSkippedCases_, 8);
+	ASSERT_EQ(weightedCases_, 64);
+	ASSERT_EQ(goldCases_, 16);
+	ASSERT_EQ(lastSlotCases_, 8);
+	ASSERT_EQ(fallbackCases_, 16);
+	ASSERT_EQ(exhaustedCases_, 8);
+	ASSERT_EQ(historyFreshCases_, 8);
+	ASSERT_EQ(historyRerollCases_, 8);
 	std::error_code renameError;
 	std::filesystem::rename(temporaryPath, finalPath, renameError);
 	ASSERT_FALSE(renameError) << renameError.message();

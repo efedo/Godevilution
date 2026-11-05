@@ -22,6 +22,10 @@ public sealed partial class DiabloCombatCommandProcessor
                         out var projectile)) {
                     continue;
                 }
+                if (projectile.NativeTrapArrow is not null) {
+                    AdvanceNativeObjectMissile(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.NativeMonsterMissile is not null) {
                     AdvanceNativeMonsterMissile(tick, projectile, players, events);
                     continue;
@@ -264,10 +268,6 @@ public sealed partial class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
-        if (projectile.NativeTrapArrow is not null) {
-            AdvanceNativeTrapArrow(tick, projectile, players, events);
-            return;
-        }
         if (projectile.NativeWeaponArrow is not null) {
             AdvanceNativeWeaponArrow(tick, projectile, players, events);
             return;

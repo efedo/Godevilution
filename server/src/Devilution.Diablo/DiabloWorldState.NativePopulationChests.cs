@@ -3,7 +3,7 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     internal bool CanOperateNativeChest(AuthoritativeWorldObject value)
-        => NativePopulationForLevel(value.LevelId) is { Family: AuthoritativeNativePopulationFamily.Cathedral } policy
+        => NativePopulationForLevel(value.LevelId) is { } policy
             && Objects.TryGetValue(value.EntityId, out var current)
             && ReferenceEquals(current, value)
             && policy.CanOperateNativeChest(value);
@@ -30,6 +30,9 @@ public sealed partial class DiabloWorldState
     {
         if (!CanOperateNativeChest(value))
             return false;
-        return NativePopulationForLevel(value.LevelId)!.TryCommitNativeChestOpen(value);
+        if (!NativePopulationForLevel(value.LevelId)!.TryCommitNativeChestOpen(value))
+            return false;
+        SynchronizeIntrinsicChestWallTraps(value);
+        return true;
     }
 }

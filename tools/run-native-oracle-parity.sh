@@ -30,6 +30,10 @@ if [[ -n "$(ls -A "$output_root")" ]]; then
 	exit 2
 fi
 
+# The drop oracle is an existing registered fixture not built by the CI capture
+# target list. Build it here using the already configured native toolchain.
+cmake --build "$build_dir" --target cathedral_monster_loot_test --parallel 2
+
 # executable | gtest filter | oracle environment variable
 captures=(
 	"animationinfo_test|AnimationInfo.CaptureTimingOracle|GODEVILUTION_ANIMATION_TIMING_ORACLE_DIRECTORY"
@@ -41,6 +45,8 @@ captures=(
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeBarrelOperations|GODEVILUTION_CATHEDRAL_BARREL_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeSarcophagusOperations|GODEVILUTION_CATHEDRAL_SARCOPHAGUS_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeTrapArrowBoundaries|GODEVILUTION_CATHEDRAL_TRAP_ORACLE_DIRECTORY"
+	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeObjectTrapOperations|GODEVILUTION_OBJECT_TRAP_ORACLE_DIRECTORY"
+	"cathedral_monster_loot_test|CathedralMonsterLootOracleTest.CaptureOrdinaryMonsterDeathLoot|GODEVILUTION_CATHEDRAL_MONSTER_LOOT_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureMonsterRuntimeMetadata|GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureCompleteCatacombsThemePass|GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY"
 	"theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeCatacombsChestOperations|GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY"
@@ -66,6 +72,8 @@ diablo_classes=(
 	AuthoritativeCathedralNativePopulationBarrelIntegrationTests
 	AuthoritativeCathedralSarcophagusNativeOracleTests
 	AuthoritativeCathedralNativeTrapArrowTests
+	NativeObjectTrapNativeOracleTests
+	AuthoritativeCathedralMonsterLootNativeOracleTests
 	AuthoritativeCathedralMonsterRuntimeNativeOracleTests
 	AuthoritativeCatacombsThemeRoomNativeOracleTests
 	AuthoritativeCatacombsChestNativeOracleTests

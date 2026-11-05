@@ -40,11 +40,11 @@ public sealed record AuthoritativeCathedralNativeTrapFacts(
             || LinkX != TriggerX || LinkY != TriggerY
             || (uint)TriggerX >= AuthoritativeCathedralThemeRoomState.Width
             || (uint)TriggerY >= AuthoritativeCathedralThemeRoomState.Width
-            || MissileTypeId != 0 || InitialTrapVar4 != 0
+            || !AuthoritativeNativePopulationBindings.IsSupportedNativeTrapMissile(MissileTypeId) || InitialTrapVar4 != 0
             || TriggerObjectSlot is < 0 or >= AuthoritativeCathedralPopulationParameters.ObjectCapacity
-            || TriggerEntityId == 0 || TriggerNativeTypeId is not (1 or 2 or 5 or 6 or 7)
+            || TriggerEntityId == 0 || TriggerNativeTypeId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 68 or 69 or 70)
             || !InitialTriggerTrapArmed)
-            throw new InvalidDataException("Native wall-trap facts do not describe a supported L1 Arrow trigger link.");
+            throw new InvalidDataException("Native wall-trap facts do not describe a supported L1-L8 trigger link.");
     }
 }
 
@@ -62,9 +62,11 @@ public sealed record DiabloNativeTrapState(
         if (TrapVar4 is < 0 or > 1 || !Enum.IsDefined(Disposition))
             throw new InvalidDataException("A native wall-trap state is outside its bounded schema.");
         if (Disposition == DiabloNativeTrapDisposition.Armed) {
-            if (TrapVar4 != Facts.InitialTrapVar4 || !TriggerTrapArmed)
+            if (TrapVar4 != Facts.InitialTrapVar4
+                || !TriggerTrapArmed && Facts.TriggerNativeTypeId is not (68 or 69 or 70))
                 throw new InvalidDataException("An armed native wall trap lost its initial armed state.");
-        } else if (TrapVar4 != 1 || TriggerTrapArmed) {
+        } else if (TrapVar4 != 1 || TriggerTrapArmed
+            || Disposition == DiabloNativeTrapDisposition.Fired && Facts.TriggerNativeTypeId is (68 or 69 or 70)) {
             throw new InvalidDataException("A consumed native wall trap must retain its one-shot state and cleared trigger flag.");
         }
     }

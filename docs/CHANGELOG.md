@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-05
+
+- Traps, chests and drops (2.5a): trapped doors and chests fire native missiles on L1–L8 and survive
+  resume; drops keep native item levels. Host and client now admit every legal trap missile, and a
+  Familiar's Lightning no longer fences the host. Mechanical file splits are included.
+
 ## 2026-11-04
 
 - Cheaper capture (P5): a timed checkpoint builds a detached state graph under the lock and validates

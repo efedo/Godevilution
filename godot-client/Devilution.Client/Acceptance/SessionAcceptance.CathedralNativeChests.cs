@@ -365,66 +365,27 @@ public partial class SessionAcceptance
         => snapshot.LevelGeometry.Single(level => level.LevelId == levelId);
 
     private static List<(int X, int Y)>? FindNativeChestApproachPath(
-        Snapshot snapshot,
-        LevelGeometrySnapshot geometry,
-        ObjectSnapshot chest)
-    {
-        var player = snapshot.Players.Single();
-        var blocked = geometry.BlockedCells.Concat(geometry.StaticObjectBlockedCells).ToHashSet();
-        foreach (var trigger in geometry.WarpTriggers)
-            blocked.Add(trigger.TriggerY * geometry.Width + trigger.TriggerX);
-        foreach (var monster in snapshot.Monsters.Where(value => value.LevelId == player.LevelId && value.Alive)) {
-            blocked.Add(monster.PositionY * geometry.Width + monster.PositionX);
-            if (monster.Moving)
-                blocked.Add(monster.FuturePositionY * geometry.Width + monster.FuturePositionX);
-        }
-        var origin = player.PositionY * geometry.Width + player.PositionX;
-        if ((uint)player.PositionX >= geometry.Width || (uint)player.PositionY >= geometry.Height)
-            return null;
-        var parents = new Dictionary<int, int> { [origin] = -1 };
-        var queue = new Queue<int>();
-        queue.Enqueue(origin);
-        while (queue.TryDequeue(out var cell)) {
-            var x = cell % geometry.Width;
-            var y = cell / geometry.Width;
-            if (Math.Abs(chest.PositionX - x) + Math.Abs(chest.PositionY - y) == 1) {
-                var path = new List<(int X, int Y)>();
-                for (var cursor = cell; cursor != origin; cursor = parents[cursor])
-                    path.Add((cursor % geometry.Width, cursor / geometry.Width));
-                path.Reverse();
-                return path;
-            }
-            foreach (var offset in CardinalOffsets) {
-                var nextX = x + offset.X;
-                var nextY = y + offset.Y;
-                if ((uint)nextX >= geometry.Width || (uint)nextY >= geometry.Height)
-                    continue;
-                var next = nextY * geometry.Width + nextX;
-                if (blocked.Contains(next) || parents.ContainsKey(next))
-                    continue;
-                parents.Add(next, cell);
-                queue.Enqueue(next);
-            }
-        }
-        return null;
-    }
+        Snapshot snapshot, LevelGeometrySnapshot geometry, ObjectSnapshot chest)
+        => NativeObjectApproachPath.Find(snapshot, geometry, chest);
 
     private async Task MoveAdjacentToNativeChest(Main main, uint entityId,
         Func<bool, Task<bool>>? resolveObstruction = null)
         => await MoveAdjacentToNativePosition(main, snapshot => FindNativeChest(snapshot, entityId), resolveObstruction);
 
     private async Task MoveAdjacentToNativePosition(Main main, Func<Snapshot, ObjectSnapshot> destination,
-        Func<bool, Task<bool>>? resolveObstruction = null)
+        Func<bool, Task<bool>>? resolveObstruction = null, bool pickup = false)
     {
-        while (true) {
+        var interruptions = 0;
+        for (var attempt = 0; attempt < 256; attempt++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var chest = destination(snapshot);
             if (player.LevelId == chest.LevelId
-                && Math.Abs(player.PositionX - chest.PositionX) + Math.Abs(player.PositionY - chest.PositionY) == 1)
+                && NativeObjectApproachPath.IsInRange(player.PositionX, player.PositionY,
+                    chest.PositionX, chest.PositionY, pickup))
                 return;
             var geometry = DepthGeometryFromSnapshot(snapshot, chest.LevelId);
-            var path = FindNativeChestApproachPath(snapshot, geometry, chest);
+            var path = NativeObjectApproachPath.Find(snapshot, geometry, chest, pickup);
             if (resolveObstruction is not null && await resolveObstruction(path is null))
                 continue;
             Require(path is { Count: > 0 }, $"No ordinary walk path reaches native target {chest.PositionX},{chest.PositionY}.");
@@ -444,26 +405,44 @@ public partial class SessionAcceptance
             GetViewport().GuiReleaseFocus();
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
             Input.FlushBufferedEvents();
-            await Frame();
-            var sequence = main.ObservedLastQueuedSequence;
-            Require(sequence == checked(previousSequence + 1),
-                "The cardinal chest-approach key did not queue exactly one fresh movement command.");
-            Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
-            Input.FlushBufferedEvents();
+            ulong sequence;
+            try {
+                await Frame();
+                sequence = main.ObservedLastQueuedSequence;
+                Require(sequence == checked(previousSequence + 1),
+                    "The cardinal chest-approach key did not queue exactly one fresh movement command.");
+            } finally {
+                Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
+                Input.FlushBufferedEvents();
+            }
             await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == sequence
                 && main.ObservedLastQueuedSequence == sequence && main.ObservedPendingCommandCount == 0
                 && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
                 "The cardinal native chest approach command did not settle.", stageSeconds: 10);
             var receipt = main.ObservedCommandResult!;
+            // A wall trap can start Block/GetHit after the standing snapshot that
+            // queued this key. Keep the target and retry from a fresh settled boundary.
+            var actorBlocked = receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.InvalidTarget }
+                && NativeObjectApproachPath.IsActorOccupied(main.ObservedSnapshot!, player.LevelId, step.X, step.Y);
+            if ((receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.NotAllowed } || actorBlocked)
+                && main.ObservedSnapshot!.Players.Single() is { Life: > 0 } interrupted
+                && interrupted.LevelId == player.LevelId && interrupted.PositionX == player.PositionX
+                && interrupted.PositionY == player.PositionY && ++interruptions <= 8) {
+                GD.Print($"Native target {chest.EntityId} approach interrupted by {receipt.RejectReason} at ({step.X},{step.Y}), tick {receipt.AppliedTick}; retry {interruptions}.");
+                await Until(() => NativeWalkBoundarySettled(main), "The interrupted native target approach did not settle.", 10);
+                continue; // Replan from the fresh snapshot, including the blocking actor's future cell.
+            }
             Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt),
                 $"The cardinal native chest approach was rejected: {receipt.Status}/{receipt.RejectReason}; "
                 + $"step=({step.X},{step.Y}); observedTick={snapshot.Tick}; appliedTick={receipt.AppliedTick}; "
                 + $"before[{DescribeNativeAttackSnapshot(snapshot, 0)}]; "
                 + $"after[{DescribeNativeAttackSnapshot(main.ObservedSnapshot!, 0)}].");
+            interruptions = 0;
             var after = main.ObservedSnapshot!.Players.Single();
             Require(after.LevelId == player.LevelId && after.PositionX == step.X && after.PositionY == step.Y,
                 "The ordinary native chest approach did not reach its requested adjacent path cell.");
         }
+        throw new InvalidOperationException("The native target approach exceeded 256 input attempts without arriving.");
     }
 
     /** Whether the client can queue a fresh walk: no command is pending and the last queued one has its receipt. */

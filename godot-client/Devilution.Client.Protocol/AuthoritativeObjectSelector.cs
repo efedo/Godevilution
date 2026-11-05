@@ -112,21 +112,24 @@ public static class AuthoritativeObjectSelector
             || @object.TrapArmed;
     }
 
-    /** Validates the explicit native L1 trap capability without inferring authority from armed state alone. */
+    /** Validates native L1-L8 trap triggers without inferring authority from armed state alone. */
     public static bool IsValidNativeTrapInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
         if (!@object.NativeTrapInteractable
             || !@object.TrapArmed
-            || @object.NativeChestInteractable
             || @object.NativeSarcophagusInteractable
             || @object.NativeBarrelMeleeBreakable
-            || @object.NativeObjectId is not (1 or 2 or 5 or 6 or 7)
+            || @object.NativeObjectId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 68 or 69 or 70)
             || @object.LevelId == 0
             || @object.Activated
             || @object.Destroyed)
             return false;
 
+        // A trapped chest can be opened as well as disarmed. Doors cannot carry
+        // the chest capability; Cathedral doors additionally retain their typed state.
+        if (@object.NativeChestInteractable && @object.NativeObjectId is 1 or 2 or 42 or 43)
+            return false;
         return @object.NativeObjectId is 1 or 2
             ? @object.CathedralDoor is not null
                 && IsValidCathedralDoorInteraction(@object, allowArmedNativeTrap: true)
@@ -141,9 +144,9 @@ public static class AuthoritativeObjectSelector
         return @object.NativeChestInteractable
             && !@object.NativeSarcophagusInteractable
             && !@object.NativeBarrelMeleeBreakable
-            && !@object.NativeTrapInteractable
-            && @object.NativeObjectId is >= 5 and <= 7
-            && IsPlainNativeInteraction(@object);
+            && (!@object.NativeTrapInteractable || IsValidNativeTrapInteraction(@object))
+            && @object.NativeObjectId is 5 or 6 or 7 or 68 or 69 or 70
+            && IsPlainNativeInteraction(@object, allowArmedTrap: @object.NativeTrapInteractable);
     }
 
     /** Requires the explicit sarcophagus capability and a consistent closed native shape. */

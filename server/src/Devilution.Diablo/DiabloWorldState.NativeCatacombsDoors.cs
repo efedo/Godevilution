@@ -133,7 +133,7 @@ public sealed partial class DiabloWorldState
             return false;
         var catalog = RequireNativeCatacombsDoorCatalog();
         ValidateNativeCatacombsDoor(entry);
-        if (Objects[entityId].TrapArmed)
+        if (Objects[entityId].TrapArmed && !IsNativeTrapTrigger(Objects[entityId]))
             return false;
         var transition = AuthoritativeCatacombsDoors.Operate(
             levelStates[entry.LevelId].CatacombsDoorLevel!, checked((uint)entry.Depth), catalog,

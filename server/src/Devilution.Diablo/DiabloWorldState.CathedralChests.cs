@@ -6,8 +6,10 @@ public sealed partial class DiabloWorldState
         AuthoritativeWorldObject chest,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> participants,
-        Func<uint> allocateEntityId)
+        Func<uint> allocateEntityId,
+        out AuthoritativeCatacombsChestTrapPlan? trapPlan)
     {
+        trapPlan = null;
         ArgumentNullException.ThrowIfNull(chest);
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(participants);
@@ -52,13 +54,25 @@ public sealed partial class DiabloWorldState
             chest.PositionY,
             itemCount,
             itemBranch,
-            // Linked wall traps belong to the object owner. Raw5..7 has no
-            // intrinsic chest missile; that remains a separate refused family.
+            // Raw ordinary chests fire their linked wall trap on ProcessObjects.
+            // TCHEST missiles are created after this ordered item transaction.
             TrapArmed: false,
             Player: new(true, false, player.BaseManaMaximum, player.BaseLifeMaximum)) {
                 ChestObjectSlot = objectBinding.NativeObjectSlot,
             };
-        var transaction = cathedralItems.PrepareChestLoot(chest.LevelId, request);
+        AuthoritativeCathedralItemChestTransaction transaction;
+        var owner = NativePopulationForLevel(chest.LevelId)!;
+        if (owner.Family == AuthoritativeNativePopulationFamily.Catacombs) {
+            if (!owner.TryGetNativeChestFacts(chest, out var facts))
+                return null;
+            var prepared = cathedralItems.PrepareCatacombsChestLoot(chest.LevelId,
+                new(worldState, cathedralItems.Profile.ItemCatalog, policy, facts!,
+                    player.PositionX, player.PositionY, request.Player));
+            transaction = prepared.Items;
+            trapPlan = prepared.Operation.TrapPlan;
+        } else {
+            transaction = cathedralItems.PrepareChestLoot(chest.LevelId, request);
+        }
         var mutation = cathedralItems.CommitChestLoot(
             transaction,
             allocateEntityId,

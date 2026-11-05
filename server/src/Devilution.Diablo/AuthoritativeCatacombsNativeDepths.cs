@@ -27,23 +27,25 @@ internal sealed class AuthoritativeCatacombsNativeDepths
     private readonly AuthoritativeCatacombsPopulationMetadata metadata;
     private readonly AuthoritativeCatacombsAutomapMetadata automap;
     private readonly uint storySeed;
+    private readonly uint dungeonSeed;
     private readonly IReadOnlyDictionary<uint, AuthoritativeCathedralLevel1RoutePoints> routes;
     /** L5's piece-558 warp-up trigger and its native ENTRY_TWARPDN view position. */
     private readonly (AuthoritativeCathedralPoint Trigger, AuthoritativeCathedralPoint Entry) townWarp;
 
     private AuthoritativeCatacombsNativeDepths(AuthoritativeCatacombsPopulationMetadata metadata,
-        AuthoritativeCatacombsAutomapMetadata automap, uint storySeed, IReadOnlyList<AuthoritativeLevel> levels,
+        AuthoritativeCatacombsAutomapMetadata automap, uint storySeed, uint dungeonSeed, IReadOnlyList<AuthoritativeLevel> levels,
         IReadOnlyDictionary<uint, AuthoritativeCathedralLevel1RoutePoints> routes,
         (AuthoritativeCathedralPoint Trigger, AuthoritativeCathedralPoint Entry) townWarp)
     {
         this.metadata = metadata;
         this.automap = automap;
         this.storySeed = storySeed;
+        this.dungeonSeed = dungeonSeed;
         this.routes = routes;
         this.townWarp = townWarp;
         Levels = levels;
         Fingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
-            RunId = "native-catacombs-l5-l8-v1", Seed = DungeonSeed, StorySeed = storySeed,
+            RunId = "native-catacombs-l5-l8-v1", Seed = dungeonSeed, StorySeed = storySeed,
             Metadata = metadata.Fingerprint, Automap = automap.Fingerprint,
             Routes = routes.OrderBy(entry => entry.Key).Select(entry => new { entry.Key, entry.Value }).ToArray(),
         });
@@ -58,11 +60,18 @@ internal sealed class AuthoritativeCatacombsNativeDepths
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(automap);
+        // The existing journey launcher may select another native C2 seed; ordinary
+        // launches and all existing saves keep 2588 and the same fingerprint bytes.
+        var selected = Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED");
+        var dungeonSeed = DungeonSeed;
+        if (selected is not null && !uint.TryParse(selected, System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out dungeonSeed))
+            throw new InvalidDataException("The explicit native Catacombs seed must be a uint32.");
         var levels = new List<AuthoritativeLevel>();
         var routes = new Dictionary<uint, AuthoritativeCathedralLevel1RoutePoints>();
         (AuthoritativeCathedralPoint Trigger, AuthoritativeCathedralPoint Entry)? townWarp = null;
         for (var depth = FirstDepth; depth <= LastDepth; depth++) {
-            var generation = AuthoritativeCatacombsGenerator.Generate(depth, DungeonSeed,
+            var generation = AuthoritativeCatacombsGenerator.Generate(depth, dungeonSeed,
                 AuthoritativeCatacombsEntry.Main, null, AuthoritativeCatacombsGenerationPolicy.QuestDisabledOriginalDiabloStairs);
             var level = AuthoritativeCatacombsGeometryMaterializer.Materialize((uint)depth, generation,
                 metadata.Geometry.Pieces, metadata.EffectivePieceProperties, Symbol(depth)).Level;
@@ -88,7 +97,7 @@ internal sealed class AuthoritativeCatacombsNativeDepths
             levels.Add(new AuthoritativeLevel((uint)depth, level.Width, level.Height) { StableSymbol = level.StableSymbol });
             routes.Add((uint)depth, points);
         }
-        return new(metadata, automap, storySeed, levels, routes,
+        return new(metadata, automap, storySeed, dungeonSeed, levels, routes,
             townWarp ?? throw new InvalidDataException("Native L5 requires its Town warp stair."));
     }
 
@@ -137,7 +146,7 @@ internal sealed class AuthoritativeCatacombsNativeDepths
         var hero = new AuthoritativeCatacombsFreshLevelHeroContext(entry.Hero.MaximumLifeBase, entry.Hero.MaximumManaBase,
             entry.Hero.LightRadius, entry.Hero.IdleFrames, entry.Hero.PreEntryFuture, entry.Hero.LevelChanging,
             entry.Hero.LevelLoading);
-        var fresh = AuthoritativeCatacombsFreshLevelGenerator.Generate(metadata, depth, DungeonSeed, storySeed,
+        var fresh = AuthoritativeCatacombsFreshLevelGenerator.Generate(metadata, depth, dungeonSeed, storySeed,
             entry.CatacombsEntry ?? AuthoritativeCatacombsEntry.Main, hero, Symbol(depth), initialUniqueItemFlags: entry.InitialUniqueItemFlags.ToHashSet(),
             gameMode: gameMode);
         var ready = AuthoritativeCatacombsLevelReadyGenerator.Generate(new(fresh,

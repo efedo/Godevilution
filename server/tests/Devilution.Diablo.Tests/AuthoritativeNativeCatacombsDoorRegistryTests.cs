@@ -191,7 +191,7 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 	}
 
 	[Fact(Explicit = true)]
-	public void GeneratedOwnerExecutesTypedDoorCommandsAndRefusesArmedCatacombsChests()
+	public void GeneratedOwnerExecutesTypedDoorAndChestCommands()
 	{
 		using var fixture = CreateFixture(0);
 		var build = fixture.CreateBuild(5, 700, dungeonSeed: 2588);
@@ -263,15 +263,18 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 			var chestPlayer = CreatePlayer(0xF5000002, 700, chestPlayerX, chest.PositionY, 0);
 			var chestFrame = chest.AnimationFrame;
 			var chestTrapArmed = chest.TrapArmed;
-			var randomBeforeChest = processorRandom.State;
 			result = processor.Execute(chestPlayer, new DiabloOperateObjectIntent(chest.EntityId), 3, [chestPlayer]);
-			Assert.False(result.Succeeded);
-			Assert.Equal(chestTrapArmed ? DiabloRuleFailure.NotAllowed : DiabloRuleFailure.InvalidTarget,
-				result.Failure);
-			Assert.Equal(chestFrame, chest.AnimationFrame);
-			Assert.False(chest.Activated);
-			Assert.Equal(chestTrapArmed, chest.TrapArmed);
-			Assert.Equal(randomBeforeChest, processorRandom.State);
+			Assert.True(result.Succeeded, result.Failure?.ToString());
+			Assert.Equal(chestFrame + 2, chest.AnimationFrame);
+			Assert.True(chest.Activated);
+			var intrinsic = chest.NativeObjectId is >= 68 and <= 70;
+			Assert.Equal(intrinsic ? false : chestTrapArmed, chest.TrapArmed);
+			if (intrinsic && chestTrapArmed)
+				Assert.Contains(world.Projectiles.Values, shot => shot.SourceEntityId == chest.EntityId
+					&& shot.NativeTrapArrow is { IntrinsicChest: true });
+			var after = processorRandom.State;
+			Assert.False(processor.Execute(chestPlayer, new DiabloOperateObjectIntent(chest.EntityId), 4, [chestPlayer]).Succeeded);
+			Assert.Equal(after, processorRandom.State);
 		}
 	}
 
