@@ -47,11 +47,11 @@ public sealed partial class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(existing, "preserve", cancellationToken);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => {
-                using var unexpected = await StartedServer.StartAsync(cancellationToken, performanceOutput: existing);
+                using var unexpected = await StartedServer.StartAsync(cancellationToken, performanceOutput: existing, useProcess: true);
             });
             Assert.Equal("preserve", await File.ReadAllTextAsync(existing, cancellationToken));
             var output = Path.Combine(directory, "not-started.json");
-            using var server = await StartedServer.StartAsync(cancellationToken, performanceOutput: output);
+            using var server = await StartedServer.StartAsync(cancellationToken, performanceOutput: output, useProcess: true);
             await server.QuitAsync(cancellationToken);
             using var evidence = JsonDocument.Parse(await File.ReadAllTextAsync(output, cancellationToken));
             Assert.Equal("NotStarted", evidence.RootElement.GetProperty("Status").GetString());
@@ -209,7 +209,7 @@ public sealed partial class LiveAuthoritativeServerTests
         using var server = await StartedServer.StartAsync(cancellationToken,
             startingLevelOverride: 0, randomSeed: 0, gameMode: mode,
             saveRootOverride: Path.Combine(directory, "save"), deleteSaveRootOnDispose: false,
-            performanceOutput: outputPath, commandSchedulingMode: expectedSchedulingMode);
+            performanceOutput: outputPath, commandSchedulingMode: expectedSchedulingMode, useProcess: true);
         var clients = new List<AuthoritativeClient>();
         var snapshots = new Snapshot?[participants];
         var accepted = new HashSet<ulong>();

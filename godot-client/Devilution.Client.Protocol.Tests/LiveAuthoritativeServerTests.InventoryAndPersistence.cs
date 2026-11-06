@@ -179,7 +179,7 @@ public sealed partial class LiveAuthoritativeServerTests
     }
 
     [Fact]
-    public async Task LiveServerRestoresAuthoritativeStateAfterProcessRestart()
+    public async Task LiveServerRestoresAuthoritativeStateAfterHostRestart()
     {
         var saveRoot = Path.Combine(
             Path.GetTempPath(),
@@ -252,7 +252,7 @@ public sealed partial class LiveAuthoritativeServerTests
     }
 
     [Fact]
-    public async Task LiveServerRestoresTwoParticipantsAfterProcessRestart()
+    public async Task LiveServerRestoresTwoParticipantsAfterHostRestart()
     {
         var saveRoot = Path.Combine(
             Path.GetTempPath(),

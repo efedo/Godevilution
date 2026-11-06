@@ -29,7 +29,7 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
     [Fact]
     public async Task LiveHostFixtureTracksActualHostAndReleasesSaveRootOnAbruptStop()
     {
-        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
+        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken, useProcess: true);
         var saveRoot = server.SaveRoot;
         using var observedHost = Process.GetProcessById(server.ProcessId);
         await using (var client = new AuthoritativeClient(CreateOptions(server, "owned-host-stop", requestedClassId: 1))) {
@@ -58,7 +58,7 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
         var saveRoot = Path.Combine(directory, "save");
         try {
             using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken,
-                saveRootOverride: saveRoot, deleteSaveRootOnDispose: false, performanceOutput: output);
+                saveRootOverride: saveRoot, deleteSaveRootOnDispose: false, performanceOutput: output, useProcess: true);
             await server.StartPerformanceRecordingAsync(TestContext.Current.CancellationToken);
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => server.StartPerformanceRecordingAsync(TestContext.Current.CancellationToken));
@@ -87,7 +87,7 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
             await File.WriteAllTextAsync(existingOutput, "preserve-output", TestContext.Current.CancellationToken);
             var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => StartedServer.StartAsync(
                 TestContext.Current.CancellationToken, saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: true, performanceOutput: existingOutput));
+                deleteSaveRootOnDispose: true, performanceOutput: existingOutput, useProcess: true));
             Assert.Equal("preserve", await File.ReadAllTextAsync(marker, TestContext.Current.CancellationToken));
             Assert.Equal("preserve-output", await File.ReadAllTextAsync(existingOutput, TestContext.Current.CancellationToken));
             Assert.Contains("startup failed", Assert.IsType<string>(failure.Data["LiveServerDiagnostics"]), StringComparison.OrdinalIgnoreCase);
@@ -98,8 +98,10 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
         }
     }
 
-    [Fact]
-    public async Task AlreadyCanceledStartupDoesNotStartHostOrTouchBorrowedRoot()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AlreadyCanceledStartupDoesNotStartHostOrTouchBorrowedRoot(bool useProcess)
     {
         var directory = Path.Combine(Path.GetTempPath(), "Godevilution-Canceled-Startup-" + Guid.NewGuid().ToString("N"));
         var lease = LiveTestSaveRoot.Register(directory);
@@ -110,7 +112,7 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
             Directory.CreateDirectory(directory);
             await File.WriteAllTextAsync(marker, "preserve", TestContext.Current.CancellationToken);
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => StartedServer.StartAsync(
-                canceled.Token, saveRootOverride: directory));
+                canceled.Token, saveRootOverride: directory, useProcess: useProcess));
             Assert.Empty(ownedServers);
             Assert.Empty(cleanupFailures);
             Assert.Equal([marker], Directory.GetFiles(directory));
@@ -194,12 +196,14 @@ public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
         }
     }
 
-    [Fact]
-    public async Task CleanupFailureDoesNotMaskBodyFailureAndStillFailsLifecycle()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CleanupFailureDoesNotMaskBodyFailureAndStillFailsLifecycle(bool useProcess)
     {
         if (!OperatingSystem.IsWindows())
             Assert.Skip("Requires Windows delete-sharing semantics for a controlled cleanup refusal.");
-        var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
+        var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken, useProcess: useProcess);
         var marker = Path.Combine(server.SaveRoot, "locked-cleanup-marker.txt");
         var lease = LiveTestSaveRoot.Register(server.SaveRoot);
         var primary = new InvalidOperationException("controlled-test-body-failure");

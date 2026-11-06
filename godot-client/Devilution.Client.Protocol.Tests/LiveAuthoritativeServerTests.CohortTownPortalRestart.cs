@@ -756,7 +756,7 @@ public sealed partial class LiveAuthoritativeServerTests
             saveRootOverride: saveRoot,
             deleteSaveRootOnDispose: false,
             commandSchedulingMode: CommandSchedulingMode.ClockGated,
-            persistenceMode: "cohort");
+            persistenceMode: "cohort", useProcess: true);
 
     private static AuthoritativeClient CreateCohortPortalClient(
         StartedServer server,

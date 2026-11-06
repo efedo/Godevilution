@@ -62,7 +62,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 randomSeed: 1,
                 startingLevelOverride: 0,
                 saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: false);
+                deleteSaveRootOnDispose: false, useProcess: true);
             var firstProcessId = firstServer.ProcessId;
             var firstPort = firstServer.Port;
             contentHash = firstServer.ContentHash;
@@ -302,7 +302,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 startingLevelOverride: 0,
                 portOverride: firstPort,
                 saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: false);
+                deleteSaveRootOnDispose: false, useProcess: true);
             Assert.NotEqual(firstProcessId, restartedServer.ProcessId);
             Assert.True(firstServer.HasExited);
             Assert.Equal(contentHash, restartedServer.ContentHash);
@@ -431,7 +431,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 startingLevelOverride: 0,
                 portOverride: firstPort,
                 saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: false);
+                deleteSaveRootOnDispose: false, useProcess: true);
             Assert.NotEqual(restartedServer.ProcessId, returnRestartedServer.ProcessId);
             Assert.True(restartedServer.HasExited);
             Assert.Equal(contentHash, returnRestartedServer.ContentHash);

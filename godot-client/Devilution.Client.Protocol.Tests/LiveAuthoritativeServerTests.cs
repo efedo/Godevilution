@@ -99,7 +99,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 deleteSaveRootOnDispose: false,
                 gameAdapterPackageRoot: package.Root,
                 gameAdapterId: "godevilution.diablo.package",
-                gameMode: "single-player")) {
+                gameMode: "single-player", useProcess: true)) {
                 serverPort = server.Port;
                 client = new AuthoritativeClient(
                     CreateOptions(server, "godot-live-packaged-diablo-restart", requestedClassId: 2));
@@ -152,7 +152,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 saveRootOverride: saveRoot,
                 gameAdapterPackageRoot: upgradedPackage.Root,
                 gameAdapterId: "godevilution.diablo.package",
-                gameMode: "single-player");
+                gameMode: "single-player", useProcess: true);
             Assert.NotEqual(package.Version, upgradedPackage.Version);
             Assert.Equal(client.ServerIdentity!.ContentManifestHash, restartedServer.ContentHash);
             Assert.Equal(client.ServerIdentity.RulesetIdentityHash, restartedServer.RulesetHash);
@@ -381,7 +381,8 @@ public sealed partial class LiveAuthoritativeServerTests
 
     private sealed class StartedServer : IDisposable
     {
-        private readonly LiveServerProcess process;
+        private readonly LiveServerProcess? process;
+        private readonly InProcessLiveServer? inProcess;
         private readonly string saveRoot;
         private readonly bool deleteSaveRootOnDispose;
         private readonly bool ownsSaveRoot;
@@ -393,14 +394,16 @@ public sealed partial class LiveAuthoritativeServerTests
         private bool retainRootAfterCleanupFailure;
 
         private StartedServer(
-            LiveServerProcess process,
+            LiveServerProcess? process,
             string saveRoot,
             bool deleteSaveRootOnDispose,
             bool ownsSaveRoot,
             LiveAuthoritativeServerTests owner,
-            LiveTestSaveRoot? cleanupRoot)
+            LiveTestSaveRoot? cleanupRoot,
+            InProcessLiveServer? inProcess = null)
         {
             this.process = process;
+            this.inProcess = inProcess;
             this.saveRoot = saveRoot;
             this.deleteSaveRootOnDispose = deleteSaveRootOnDispose;
             this.ownsSaveRoot = ownsSaveRoot;
@@ -414,8 +417,9 @@ public sealed partial class LiveAuthoritativeServerTests
 
         public string RulesetHash => identity.RulesetHash;
 
-        public int ProcessId => process.Id;
-        public bool HasExited => process.HasExited;
+        public bool IsProcess => process is not null;
+        public int ProcessId => RequireProcess().Id;
+        public bool HasExited => process?.HasExited ?? inProcess!.HasStopped;
         public string SaveRoot => saveRoot;
 
         public static async Task<StartedServer> StartAsync(
@@ -438,8 +442,12 @@ public sealed partial class LiveAuthoritativeServerTests
             string? performanceOutput = null,
             CommandSchedulingMode? commandSchedulingMode = null,
             string? persistenceMode = null,
-            uint? tickRateHz = null)
+            uint? tickRateHz = null,
+            bool useProcess = false)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!useProcess && performanceOutput is not null)
+                throw new ArgumentException("Operator/performance tests require a real process.", nameof(useProcess));
             if (commandSchedulingMode.HasValue
                 && commandSchedulingMode.Value is not (CommandSchedulingMode.Immediate or CommandSchedulingMode.ClockGated)) {
                 throw new ArgumentOutOfRangeException(nameof(commandSchedulingMode),
@@ -452,11 +460,11 @@ public sealed partial class LiveAuthoritativeServerTests
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var owner = TestContext.Current.TestClassInstance as LiveAuthoritativeServerTests
                 ?? throw new InvalidOperationException("Live hosts require a per-test cleanup owner.");
-            var assembly = await LiveServerProcess.ResolveAssemblyAsync(
+            var assembly = useProcess ? await LiveServerProcess.ResolveAssemblyAsync(
                 repositoryRoot, ResolveBuildConfiguration(),
                 Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH"),
                 Environment.GetEnvironmentVariable("GODEVILUTION_SERVER_ASSEMBLY"),
-                cancellationToken);
+                cancellationToken) : null;
             cancellationToken.ThrowIfCancellationRequested();
             var ownsSaveRoot = string.IsNullOrWhiteSpace(saveRootOverride);
             var saveRoot = Path.GetFullPath(saveRootOverride ?? Path.Combine(
@@ -465,86 +473,108 @@ public sealed partial class LiveAuthoritativeServerTests
             var cleanupRoot = ownsSaveRoot || deleteSaveRootOnDispose
                 ? LiveTestSaveRoot.Register(saveRoot) : null;
             Directory.CreateDirectory(saveRoot);
-            var startInfo = LiveServerProcess.CreateStartInfo(repositoryRoot, assembly);
-            startInfo.ArgumentList.Add("--port");
-            startInfo.ArgumentList.Add((portOverride ?? 0).ToString(
+            var arguments = new List<string>();
+            arguments.Add("--port");
+            arguments.Add((portOverride ?? 0).ToString(
                 System.Globalization.CultureInfo.InvariantCulture));
-            startInfo.ArgumentList.Add("--protocol-version");
-            startInfo.ArgumentList.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
-            startInfo.ArgumentList.Add("--save-root");
-            startInfo.ArgumentList.Add(saveRoot);
+            arguments.Add("--protocol-version");
+            arguments.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
+            arguments.Add("--save-root");
+            arguments.Add(saveRoot);
             if (performanceOutput is not null) {
-                startInfo.ArgumentList.Add("--performance-output");
-                startInfo.ArgumentList.Add(performanceOutput);
+                arguments.Add("--performance-output");
+                arguments.Add(performanceOutput);
             }
             if (commandSchedulingMode.HasValue) {
-                startInfo.ArgumentList.Add("--command-scheduling");
-                startInfo.ArgumentList.Add(commandSchedulingMode.Value == CommandSchedulingMode.ClockGated
+                arguments.Add("--command-scheduling");
+                arguments.Add(commandSchedulingMode.Value == CommandSchedulingMode.ClockGated
                     ? "clock-gated" : "immediate");
             }
             if (persistenceMode is not null) {
-                startInfo.ArgumentList.Add("--persistence-mode");
-                startInfo.ArgumentList.Add(persistenceMode);
+                arguments.Add("--persistence-mode");
+                arguments.Add(persistenceMode);
             }
             if (tickRateHz.HasValue) {
-                startInfo.ArgumentList.Add("--tick-rate");
-                startInfo.ArgumentList.Add(tickRateHz.Value.ToString(
+                arguments.Add("--tick-rate");
+                arguments.Add(tickRateHz.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingGoldOverride.HasValue) {
-                startInfo.ArgumentList.Add("--starting-gold");
-                startInfo.ArgumentList.Add(startingGoldOverride.Value.ToString(
+                arguments.Add("--starting-gold");
+                arguments.Add(startingGoldOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingLifeOverride.HasValue) {
-                startInfo.ArgumentList.Add("--starting-life");
-                startInfo.ArgumentList.Add(startingLifeOverride.Value.ToString(
+                arguments.Add("--starting-life");
+                arguments.Add(startingLifeOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingManaOverride.HasValue) {
-                startInfo.ArgumentList.Add("--starting-mana");
-                startInfo.ArgumentList.Add(startingManaOverride.Value.ToString(
+                arguments.Add("--starting-mana");
+                arguments.Add(startingManaOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingStatPointsOverride.HasValue) {
-                startInfo.ArgumentList.Add("--starting-stat-points");
-                startInfo.ArgumentList.Add(startingStatPointsOverride.Value.ToString(
+                arguments.Add("--starting-stat-points");
+                arguments.Add(startingStatPointsOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingLevelOverride.HasValue) {
-                startInfo.ArgumentList.Add("--starting-level");
-                startInfo.ArgumentList.Add(startingLevelOverride.Value.ToString(
+                arguments.Add("--starting-level");
+                arguments.Add(startingLevelOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (randomSeed.HasValue) {
-                startInfo.ArgumentList.Add("--random-seed");
-                startInfo.ArgumentList.Add(randomSeed.Value.ToString(
+                arguments.Add("--random-seed");
+                arguments.Add(randomSeed.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (!string.IsNullOrWhiteSpace(gameMode)) {
-                startInfo.ArgumentList.Add("--game-mode");
-                startInfo.ArgumentList.Add(gameMode);
+                arguments.Add("--game-mode");
+                arguments.Add(gameMode);
             }
             if (!string.IsNullOrWhiteSpace(difficultyOverride)) {
-                startInfo.ArgumentList.Add("--difficulty");
-                startInfo.ArgumentList.Add(difficultyOverride);
+                arguments.Add("--difficulty");
+                arguments.Add(difficultyOverride);
             }
             if (!string.IsNullOrWhiteSpace(contentOverlayRoot)) {
-                startInfo.ArgumentList.Add("--content-overlay");
-                startInfo.ArgumentList.Add(Path.GetFullPath(contentOverlayRoot));
+                arguments.Add("--content-overlay");
+                arguments.Add(Path.GetFullPath(contentOverlayRoot));
             }
             if (!string.IsNullOrWhiteSpace(additionalContentOverlayRoot)) {
-                startInfo.ArgumentList.Add("--content-overlay");
-                startInfo.ArgumentList.Add(Path.GetFullPath(additionalContentOverlayRoot));
+                arguments.Add("--content-overlay");
+                arguments.Add(Path.GetFullPath(additionalContentOverlayRoot));
             }
             if (!string.IsNullOrWhiteSpace(gameAdapterPackageRoot)) {
-                startInfo.ArgumentList.Add("--game-adapter-package");
-                startInfo.ArgumentList.Add(Path.GetFullPath(gameAdapterPackageRoot));
+                arguments.Add("--game-adapter-package");
+                arguments.Add(Path.GetFullPath(gameAdapterPackageRoot));
             }
             if (!string.IsNullOrWhiteSpace(gameAdapterId)) {
-                startInfo.ArgumentList.Add("--game-adapter");
-                startInfo.ArgumentList.Add(gameAdapterId);
+                arguments.Add("--game-adapter");
+                arguments.Add(gameAdapterId);
             }
+            if (!useProcess) {
+                try {
+                    var host = InProcessLiveServer.Start(repositoryRoot, arguments, cancellationToken);
+                    var hosted = new StartedServer(null, saveRoot, deleteSaveRootOnDispose, ownsSaveRoot,
+                        owner, cleanupRoot, host) { identity = host.Identity, startupComplete = true };
+                    owner.ownedServers.Add(hosted);
+                    return hosted;
+                } catch (Exception failure) {
+                    if (failure.Data["InProcessHostCleanupFailure"] is Exception cleanupFailure) {
+                        owner.cleanupFailures.Add(cleanupFailure);
+                    } else if (ownsSaveRoot) {
+                        try { cleanupRoot!.Delete(); } catch (Exception cleanup) {
+                            failure.Data["LiveServerStartupCleanupFailure"] = cleanup;
+                            owner.cleanupFailures.Add(cleanup);
+                        }
+                    }
+                    throw;
+                }
+            }
+            var startInfo = LiveServerProcess.CreateStartInfo(repositoryRoot, assembly!);
+            foreach (var argument in arguments)
+                startInfo.ArgumentList.Add(argument);
             LiveServerProcess process;
             try {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -574,13 +604,16 @@ public sealed partial class LiveAuthoritativeServerTests
             }
         }
 
+        private LiveServerProcess RequireProcess()
+            => process ?? throw new InvalidOperationException("This fixture owns an in-process host, not a PID.");
+
         public async Task StartPerformanceRecordingAsync(CancellationToken cancellationToken)
-            => await process.StartPerformanceRecordingAsync(cancellationToken);
+            => await RequireProcess().StartPerformanceRecordingAsync(cancellationToken);
 
         public async Task QuitAsync(CancellationToken cancellationToken)
         {
-            await process.QuitAsync(cancellationToken);
-            Assert.Equal(0, process.ExitCode);
+            await RequireProcess().QuitAsync(cancellationToken);
+            Assert.Equal(0, RequireProcess().ExitCode);
         }
 
         public void Dispose()
@@ -588,7 +621,10 @@ public sealed partial class LiveAuthoritativeServerTests
             if (disposed)
                 return;
             try {
-                process.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                if (process is not null)
+                    process.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                else
+                    inProcess!.Dispose();
                 disposed = true;
                 if (!retainRootAfterCleanupFailure && (startupComplete ? deleteSaveRootOnDispose : ownsSaveRoot))
                     cleanupRoot!.Delete();
