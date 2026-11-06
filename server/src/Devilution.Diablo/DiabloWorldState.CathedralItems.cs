@@ -418,8 +418,9 @@ public sealed partial class DiabloWorldState
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused:
                 ValidateNativePopulationObjectForCapture(value, deferredValidations);
-                if (value.Activated || value.Destroyed)
+                if (value.Destroyed || value.Activated && value.NativeObjectId is not (59 or 60))
                     throw new InvalidDataException("An explicitly refused native object acquired unsupported gameplay state.");
+                isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
                 break;
             default:
                 throw new NotSupportedException("Native item placement does not yet admit this object mutation policy.");

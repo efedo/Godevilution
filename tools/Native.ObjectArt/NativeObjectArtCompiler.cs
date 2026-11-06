@@ -79,6 +79,20 @@ public static class NativeObjectArtCompiler
         CatacombsPalettePath, "Catacombs palette", CatacombsCatalogFileName, "sprites/catacombs", CatacombsObjects,
         CatacombsMinimumFrameCounts);
 
+    // Native objdat.tsv: AddShrine selects frames 1-11 or 12-22 in each 128px CEL;
+    // intrinsic trapped chests reuse the corresponding ordinary chest CEL.
+    private static ObjectFamily WithNativeInteractions(ObjectFamily family)
+        => family with {
+            LevelIds = family.Location == "cathedral" ? [1, 2, 3, 4] : family.LevelIds,
+            Objects = [.. family.Objects,
+                new(59, "OBJ_SHRINEL", "lshrineg", 1, 11, 128, false),
+                new(60, "OBJ_SHRINER", "rshrineg", 1, 11, 128, false),
+                new(68, "OBJ_TCHEST1", "chest1", 1, 0, 96, false),
+                new(69, "OBJ_TCHEST2", "chest2", 1, 0, 96, false),
+                new(70, "OBJ_TCHEST3", "chest3", 1, 0, 96, false)],
+            MinimumFrames = [.. family.MinimumFrames, 22, 22],
+        };
+
     public static NativeObjectImportResult Import(NativeObjectImportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -94,11 +108,13 @@ public static class NativeObjectArtCompiler
         if (Directory.Exists(outputRoot) || File.Exists(outputRoot))
             throw new IOException($"Output root already exists: {outputRoot}");
 
-        var bindings = SelectBindings(profileSet, CathedralFamily);
-        if (bindings.Length is < 1 or > 64)
-            throw new InvalidDataException("Verified native profiles must provide one to 64 explicit Cathedral level-1 bindings.");
+        var cathedral = WithNativeInteractions(CathedralFamily);
+        var catacombs = WithNativeInteractions(CatacombsFamily);
+        var bindings = SelectBindings(profileSet, cathedral);
+        if (bindings.Length is < 1 or > 256)
+            throw new InvalidDataException("Verified native profiles must provide one to 256 explicit Cathedral level bindings.");
         // Profiles that carry L5-L8 (batch 2.1) also get the Catacombs family.
-        var catacombsBindings = SelectBindings(profileSet, CatacombsFamily);
+        var catacombsBindings = SelectBindings(profileSet, catacombs);
         if (catacombsBindings.Length > 256)
             throw new InvalidDataException("Verified native profiles provide too many Catacombs level bindings.");
 
@@ -117,9 +133,9 @@ public static class NativeObjectArtCompiler
         Directory.CreateDirectory(staging);
 
         try {
-            var catalog = WriteFamilyCatalog(CathedralFamily, bindings, metadataBytes, options.Archive, sourceRoot, staging);
+            var catalog = WriteFamilyCatalog(cathedral, bindings, metadataBytes, options.Archive, sourceRoot, staging);
             if (catacombsBindings.Length != 0)
-                WriteFamilyCatalog(CatacombsFamily, catacombsBindings, metadataBytes, options.Archive, sourceRoot, staging);
+                WriteFamilyCatalog(catacombs, catacombsBindings, metadataBytes, options.Archive, sourceRoot, staging);
             Directory.Move(staging, outputRoot);
             return new NativeObjectImportResult(outputRoot, catalog.PackId, catalog.Sprites.Count, catalog.Objects.Count);
         } catch {

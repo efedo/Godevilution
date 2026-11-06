@@ -27,8 +27,10 @@ public static class AuthoritativeSpellSourceSelector
             return [];
 
         var sources = new List<AuthoritativeSpellSource>();
-        foreach (var spell in player.MemorizedSpells
-                     .Where(spell => spell.SpellId != 0 && spell.Level != 0)
+        var levelBonus = player.Equipment.Where(item => item.State is { StatFlag: true } state
+            && (state.Magical == 0 || state.Identified)).Sum(item => item.State.SpellLevelAdd);
+        foreach (var spell in player.MemorizedSpells.Concat(player.ZeroLevelMemorizedSpells)
+                     .Where(spell => spell.SpellId != 0 && (long)spell.Level + levelBonus > 0)
                      .OrderBy(spell => spell.SpellId)
                      .ThenBy(spell => spell.Level)) {
             sources.Add(new AuthoritativeSpellSource(

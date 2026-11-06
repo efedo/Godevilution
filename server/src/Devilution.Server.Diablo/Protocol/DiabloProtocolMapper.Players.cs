@@ -72,9 +72,11 @@ internal static partial class DiabloProtocolMapper
         if (state.Life < 0
             || state.LifeMaximum < 0
             || state.LifeMaximum > 0 && state.Life > state.LifeMaximum
-            || state.Mana < 0
-            || state.ManaMaximum < 0
-            || state.ManaMaximum > 0 && state.Mana > state.ManaMaximum
+            || (state.Mana < 0 || state.ManaMaximum < 0)
+                && (!state.NativeLifeBase.HasValue || !state.NativeManaBase.HasValue)
+            || state.Mana < -(2000 << 6)
+            || state.ManaMaximum < -(2000 << 6)
+            || state.ManaMaximum != 0 && state.Mana > state.ManaMaximum
             || state.BaseLifeMaximum < 0
             || state.BaseManaMaximum < 0
             || state.Gold > int.MaxValue
@@ -93,8 +95,8 @@ internal static partial class DiabloProtocolMapper
             Gold = state.Gold,
             ActiveStoreId = state.ActiveStoreId ?? 0,
             Life = state.Life,
-            Mana = state.Mana,
-            ManaMaximum = state.ManaMaximum,
+            Mana = Math.Max(0, state.Mana),
+            ManaMaximum = Math.Max(0, state.ManaMaximum),
             LifeMaximum = state.LifeMaximum,
             BaseManaMaximum = state.BaseManaMaximum,
             BaseLifeMaximum = state.BaseLifeMaximum,
@@ -122,8 +124,13 @@ internal static partial class DiabloProtocolMapper
                 Vitality = ToProtocolAttribute(state.Attributes.Vitality),
             },
         };
+        player.FullyExploredLevelIds.Add(state.FullyExploredLevelIds ?? []);
+        if (state.Mana < 0 || state.ManaMaximum < 0) {
+            player.NativeMana = state.Mana;
+            player.NativeManaMaximum = state.ManaMaximum;
+        }
         foreach (var spell in state.MemorizedSpells.OrderBy(spell => spell.SpellId)) {
-            player.MemorizedSpells.Add(new PlayerSpellLevelSnapshot {
+            (spell.Level == 0 ? player.ZeroLevelMemorizedSpells : player.MemorizedSpells).Add(new PlayerSpellLevelSnapshot {
                 SpellId = spell.SpellId,
                 Level = spell.Level,
                 DisplayName = ResolveSpellDisplayName(spell.SpellId, spells, spellBooks),
@@ -351,7 +358,6 @@ internal static partial class DiabloProtocolMapper
                 spell is null
                 || spell.SpellId == 0
                 || spell.SpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
-                || spell.Level == 0
                 || spell.Level > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
             || state.MemorizedSpells.Select(spell => spell.SpellId).Distinct().Count()
                 != state.MemorizedSpells.Count) {
@@ -598,8 +604,8 @@ internal static partial class DiabloProtocolMapper
                 FromProtocolItemState(item.State))).ToArray(),
             source.Experience,
             source.Life,
-            source.Mana,
-            source.ManaMaximum,
+            source.HasNativeMana ? source.NativeMana : source.Mana,
+            source.HasNativeManaMaximum ? source.NativeManaMaximum : source.ManaMaximum,
             new PlayerAttributesState(
                 FromProtocolAttribute(attributes.Strength),
                 FromProtocolAttribute(attributes.Magic),
@@ -617,12 +623,14 @@ internal static partial class DiabloProtocolMapper
             PositionX = source.PositionX,
             PositionY = source.PositionY,
             LifeMaximum = source.LifeMaximum,
-            BaseLifeMaximum = source.BaseLifeMaximum == 0
+            BaseLifeMaximum = source.BaseLifeMaximum == 0 && !source.HasNativeMana
                 ? source.LifeMaximum
                 : source.BaseLifeMaximum,
-            BaseManaMaximum = source.BaseManaMaximum == 0
+            BaseManaMaximum = source.BaseManaMaximum == 0 && !source.HasNativeMana
                 ? source.ManaMaximum
                 : source.BaseManaMaximum,
+            NativeLifeBase = source.HasNativeMana ? checked(source.Life + source.BaseLifeMaximum - source.LifeMaximum) : null,
+            NativeManaBase = source.HasNativeMana ? checked(source.NativeMana + source.BaseManaMaximum - source.NativeManaMaximum) : null,
             CharacterLevel = source.CharacterLevel,
             CharacterClassId = source.CharacterClassId,
             CharacterName = source.CharacterName,
@@ -633,7 +641,8 @@ internal static partial class DiabloProtocolMapper
             VisitedLevelIds = source.VisitedLevelIds.ToArray(),
             AbilitySpellId = source.AbilitySpellId,
             AbilityKind = (DiabloPlayerAbilityKind)source.AbilityKind,
-            MemorizedSpells = source.MemorizedSpells.Select(spell =>
+            FullyExploredLevelIds = source.FullyExploredLevelIds.Count == 0 ? null : source.FullyExploredLevelIds.ToArray(),
+            MemorizedSpells = source.MemorizedSpells.Concat(source.ZeroLevelMemorizedSpells).Select(spell =>
                 new MemorizedSpellState(spell.SpellId, spell.Level)).ToArray(),
             LevelId = source.LevelId,
             EntityId = source.EntityId,

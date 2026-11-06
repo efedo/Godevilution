@@ -27,6 +27,8 @@ public partial class Main
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private long modelGeneration;
     private ulong observedEventBatchCount;
+    internal IReadOnlyList<Devilution.Protocol.V1.GameEvent> ObservedRecentEvents
+        => model.RecentEvents.Select(value => value.Clone()).ToArray();
     private long sessionMenuPublicationCount;
     private long postExitMenuPublicationCount;
     private int acceptanceReturnCleanupGateEntered;

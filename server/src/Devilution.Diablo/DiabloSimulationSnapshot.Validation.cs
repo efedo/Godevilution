@@ -231,18 +231,23 @@ public sealed partial class DiabloSimulation
         destination.LevelId = source.LevelId;
         destination.StatusEffects = source.StatusEffects.ToList();
         destination.ActiveStoreId = source.ActiveStoreId;
+        destination.RestoreNativeResourceBases(null, null);
         destination.Inventory.Clear();
         destination.Inventory.AddRange(source.Inventory);
         destination.Equipment.Clear();
         destination.Equipment.AddRange(source.Equipment);
-        if (source.BaseLifeMaximum > 0)
+        if (source.BaseLifeMaximum > 0 || source.NativeLifeBase.HasValue)
             destination.BaseLifeMaximum = source.BaseLifeMaximum;
-        if (source.BaseManaMaximum > 0)
+        if (source.BaseManaMaximum > 0 || source.NativeManaBase.HasValue)
             destination.BaseManaMaximum = source.BaseManaMaximum;
         destination.AdoptEquipmentAttributeSnapshot();
+        destination.RestoreNativeResourceBases(source.NativeLifeBase, source.NativeManaBase);
         destination.RecalculateEquipmentResources();
         destination.Life = source.Life;
-        destination.Mana = source.Mana;
+        destination.RestoreNativeMana(source.Mana, source.ManaMaximum);
+        destination.RestoreNativeResourceBases(source.NativeLifeBase, source.NativeManaBase);
+        destination.FullyExploredLevelIds.Clear();
+        destination.FullyExploredLevelIds.UnionWith(source.FullyExploredLevelIds ?? []);
         destination.Belt.Clear();
         destination.Belt.AddRange(source.Belt);
         destination.InventoryGrid.Clear();
@@ -662,6 +667,7 @@ public sealed partial class DiabloSimulation
                 target.AnimationFrame = @object.AnimationFrame;
                 target.ActivatedAnimationFrame = @object.ActivatedAnimationFrame;
                 target.DialogueMessageId = @object.DialogueMessageId;
+                target.NativeRandomSeed = @object.NativeRandomSeed;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -706,6 +712,7 @@ public sealed partial class DiabloSimulation
                     @object.RewardSetLevelId,
                     @object.DialogueMessageId) {
                     PresentationKind = @object.PresentationKind,
+                    NativeRandomSeed = @object.NativeRandomSeed,
                 });
             }
         }
@@ -772,10 +779,10 @@ public sealed partial class DiabloSimulation
         AuthoritativePlayerState destination,
         ulong snapshotTick)
     {
-        var baseLifeMaximum = source.BaseLifeMaximum == 0
+        var baseLifeMaximum = source.BaseLifeMaximum == 0 && !source.NativeLifeBase.HasValue
             ? destination.BaseLifeMaximum
             : source.BaseLifeMaximum;
-        var baseManaMaximum = source.BaseManaMaximum == 0
+        var baseManaMaximum = source.BaseManaMaximum == 0 && !source.NativeManaBase.HasValue
             ? destination.BaseManaMaximum
             : source.BaseManaMaximum;
         AuthoritativePlayerClassDefinition? playerClass = null;
@@ -796,6 +803,9 @@ public sealed partial class DiabloSimulation
             || source.Life < 0
             || source.BaseLifeMaximum < 0
             || source.BaseManaMaximum < 0
+            || source.NativeLifeBase.HasValue != source.NativeManaBase.HasValue
+            || source.NativeLifeBase is < -(2000 << 6) || source.NativeLifeBase > source.BaseLifeMaximum
+            || source.NativeManaBase is < -(2000 << 6) || source.NativeManaBase > source.BaseManaMaximum
             || source.Inventory is null
             || source.Equipment is null
             || source.Belt is null
@@ -812,8 +822,14 @@ public sealed partial class DiabloSimulation
                 && !source.VisitedLevelIds.Contains(source.LevelId))
             || source.VisitedLevelIds.Distinct().Count() != source.VisitedLevelIds.Count
             || source.Life > expectedResources.LifeQ6
-            || source.Mana < 0
-            || source.Mana > expectedResources.ManaQ6
+            || (source.Mana < 0 || source.ManaMaximum < 0)
+                && (!source.NativeLifeBase.HasValue || !source.NativeManaBase.HasValue)
+            || source.Mana < -(2000 << 6)
+            || source.ManaMaximum < -(2000 << 6)
+            || source.FullyExploredLevelIds is { } maps && (maps.Count > 256
+                || maps.Distinct().Count() != maps.Count
+                || maps.Any(levelId => levelId == 0 || !AuthoritativeLevelIdentityRules.IsRegularLevel(levelId)))
+            || source.Mana > source.ManaMaximum
             || source.CharacterLevel is < 1 or > NativeCompatibilityLimits.MaximumNativeCharacterLevel
             || (!string.IsNullOrEmpty(source.CharacterName)
                 && !DiabloPlayerName.IsValid(source.CharacterName))
@@ -839,8 +855,8 @@ public sealed partial class DiabloSimulation
                     or DiabloPlayerCombatMode.GotHit)
                 && source.CombatModeEndTick == 0)
             || !IsValidPlayerAction(source, snapshotTick)
-            || source.LifeMaximum != expectedResources.LifeQ6
-            || source.ManaMaximum != expectedResources.ManaQ6
+            || source.LifeMaximum != (source.NativeLifeBase.HasValue ? Math.Clamp(expectedResources.LifeQ6, 64, 2000 << 6) : expectedResources.LifeQ6)
+            || source.ManaMaximum >= 0 && source.ManaMaximum != (source.NativeManaBase.HasValue ? Math.Clamp(expectedResources.ManaQ6, 0, 2000 << 6) : expectedResources.ManaQ6)
             || (source.StashOpen && source.ActiveStoreId is not null)
             || !HasValidAttributeState(source.Attributes)) {
             throw new InvalidDataException(
@@ -850,7 +866,7 @@ public sealed partial class DiabloSimulation
         if (source.MemorizedSpells.Any(spell =>
                 spell is null
                 || spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
-                || spell.Level is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
+                || spell.Level > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
             || source.MemorizedSpells.Select(spell => spell.SpellId).Distinct().Count()
                 != source.MemorizedSpells.Count) {
             throw new InvalidDataException(

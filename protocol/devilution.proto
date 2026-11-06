@@ -709,6 +709,15 @@ message PlayerSnapshot {
 	// True when a negotiated native destination walk has remaining directions.
 	// False preserves snapshots written before this optional projection.
 	bool native_walk_path_pending = 42;
+	// Persisted native map knowledge; older peers may ignore fully revealed floors.
+	repeated uint32 fully_explored_level_ids = 43;
+	// Native wisdom shrines may temporarily leave signed mana balances. The legacy
+	// mana fields remain clamped for readers that require non-negative resources.
+	optional int32 native_mana = 44;
+	optional int32 native_mana_maximum = 45;
+	// Enchanted retains the known-spell bit at level zero. Older peers keep their
+	// non-zero memorized_spells contract; new peers can still select these spells.
+	repeated PlayerSpellLevelSnapshot zero_level_memorized_spells = 46;
 }
 
 message StashItemSnapshot {
@@ -1052,6 +1061,10 @@ message ObjectSnapshot {
 	bool native_barrel_melee_breakable = 44;
 	// Server-validated ordinary Rogue disarm target for a native L1 door or chest.
 	bool native_trap_interactable = 45;
+	// Explicit vanilla shrine capability, absent from pre-shrine hosts.
+	bool native_shrine_interactable = 46;
+	// Native vanilla shrine identity, immutable in its populated level owner.
+	uint32 native_shrine_type = 47;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-05 — Vanilla shrines (2.5b)
+
+200 Hz Debug journeys and resumes passed: normal L8, seed 0 trapped door L8, and `-CatacombsSeed 98
+-RequireShrine -TargetDepth 5` (Mysterious shrine, native art, effect retained). 10 Hz and 20 Hz L1
+micro journeys passed. Suites: server 2137, Diablo 3873, client 1380 passed, none failed. Native
+comparisons passed locally (257 managed cases) except the CI-only MPQ capture. Sol 6.1 review: findings
+fixed, then accepted. Seed 98 to L8 died twice on L7 to Familiars, confirmed native-correct.
+
 ### 2026-11-05 — Traps, chests and drops (2.5a)
 
 Debug L8 Warrior journey and resume passed: chest and pickup 15.3 s; `-CatacombsSeed 0

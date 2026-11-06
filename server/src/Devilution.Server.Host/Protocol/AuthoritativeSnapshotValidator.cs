@@ -584,6 +584,7 @@ public static class AuthoritativeSnapshotValidator
 
     private static void ValidatePlayerSpells(PlayerSnapshot player)
     {
+        AuthoritativeNativePlayerState.Validate(player);
         if (player.AbilitySpellId > byte.MaxValue
             || player.MemorizedSpells.Count > MaximumMemorizedSpellCount)
             throw new InvalidDataException(
@@ -806,6 +807,7 @@ public static class AuthoritativeSnapshotValidator
             };
 
             if (@object.ObjectId == 0
+                || !AuthoritativeNativeShrineState.IsValidProjection(@object)
                 || @object.EffectAmount < 0
                 || effectKind < 0
                 || effectKind > MaximumObjectEffectKind

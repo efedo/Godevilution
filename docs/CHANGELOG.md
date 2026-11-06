@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-11-05
 
+- Vanilla shrines (2.5b): all 25 non-Hellfire shrine effects run natively on L1–L8 with their
+  messages, multiplayer scope and resume retention. A rejected snapshot now ends the session at
+  once instead of stalling, and the journey gains `-RequireShrine` and a startup stall detector.
 - Traps, chests and drops (2.5a): trapped doors and chests fire native missiles on L1–L8 and survive
   resume; drops keep native item levels. Host and client now admit every legal trap missile, and a
   Familiar's Lightning no longer fences the host. Mechanical file splits are included.

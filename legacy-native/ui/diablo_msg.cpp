@@ -138,6 +138,11 @@ void InitDiabloMsg(std::string_view msg, uint32_t duration /*= 3500*/)
 	}
 }
 
+std::string_view CurrentDiabloMsgForTesting()
+{
+    return DiabloMessages.empty() ? std::string_view {} : DiabloMessages.front().text;
+}
+
 bool IsDiabloMsgAvailable()
 {
 	return !DiabloMessages.empty();

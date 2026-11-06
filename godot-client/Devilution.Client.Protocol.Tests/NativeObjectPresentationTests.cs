@@ -87,6 +87,27 @@ public sealed class NativeObjectPresentationTests
         Assert.Contains("supported catacombs art family", unsupported, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ResolvesEveryShrineFrameAndOpenedTrappedChestOnAllNativeFloors(bool catacombs)
+    {
+        Assert.True(NativeObjectCatalog.TryParse(NativeObjectCatalogTestData.CreateJson(catacombs, interactions: true),
+            out var catalog, out var errors), string.Join(" ", errors));
+        foreach (var level in catacombs ? new uint[] { 5, 6, 7, 8 } : [1, 2, 3, 4]) {
+            foreach (var id in new uint[] { 59, 60, 68, 69, 70 }) {
+                foreach (var frame in Enumerable.Range(1, id is 59 or 60 ? 22 : 6)) {
+                    var value = new ObjectSnapshot { EntityId = 151265329, LevelId = level, NativeObjectId = id,
+                        PositionX = 81, PositionY = 65, AnimationFrame = (uint)frame, Activated = frame > 1 };
+                    Assert.True(NativeObjectPresentation.TryResolve(catalog, value, ContentHash, level,
+                        out var resolved, out var diagnostic), diagnostic);
+                    Assert.Equal((uint)frame, resolved!.NativeFrame);
+                    Assert.Equal(id is 59 or 60 ? 128 : 96, resolved.NativeWidth);
+                }
+            }
+        }
+    }
+
     private static ObjectSnapshot CreateValidOpenDoor()
         => new() {
             EntityId = 11,

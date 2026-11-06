@@ -16,7 +16,7 @@ public partial class SessionAcceptance
         ulong ExperienceBefore, ulong ExperienceAfter, int Attacks);
 
     private sealed record NativeWarriorDepthCheckpoint(string PlayerPayload, uint RandomState, ulong Sequence,
-        string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null);
+        string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null, NativeShrineCheckpoint? Shrine = null);
 
     private const int NativeWarriorAttacksPerFloor = 160;
     // L5-L8 melee families fight as native since batch 2.4a, so every floor records a kill.
@@ -109,6 +109,7 @@ public partial class SessionAcceptance
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
+                await TryNativeShrineAsync(main);
                 if (depth > NativeWarriorFoughtFloor || depth < NativeWarriorFirstFightFloor) {
                     if (depth >= 5)
                         nativeCatacombsObjects = await TryNativeCatacombsObjectsAsync(main);
@@ -135,14 +136,16 @@ public partial class SessionAcceptance
                     GD.Print($"Native Warrior healed in Town and returned to L{depth}");
                 }
             }
-            Require(target < NativeWarriorTownWarpDepth || nativeCatacombsObjects is not null,
-                "No visited Catacombs floor offered a reachable chest with a drop to pick up.");
+            NativeCatacombsChestStage.VerifyAvailability(target,
+                System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED"), nativeCatacombsObjects?.ChestEntity > 0);
+            Require(!NativeWarriorRequiresShrine || nativeShrine is not null,
+                "No visited floor offered a nearby reachable native shrine with a lasting effect. " + string.Join("; ", nativeShrineApproaches));
             // From L5 and below, the way home is L5's warp-up, which opens the Town warp (batch 2.2c).
             var stairsUpTo = target >= NativeWarriorTownWarpDepth ? (int)NativeWarriorTownWarpDepth : 0;
             for (var destination = (int)target - 1; destination >= stairsUpTo; destination--)
                 await TravelNativeWarriorAsync(main, directory, (uint)destination);
-            // Native Catacombs objects are seen on arrival or at an opened door (batch 2.3).
-            Require(target < NativeWarriorTownWarpDepth || nativeWarriorCatacombsDoorDraws
+            // Count actual draws on arrival and while operating visible objects along the route.
+            Require(target < NativeWarriorTownWarpDepth || nativeWarriorCatacombsDoorDraws + nativeWarriorCatacombsOperatedObjectDraws
                     + draws.Where(draw => draw.LevelId >= NativeWarriorTownWarpDepth).Sum(draw => draw.NativeObjects) > 0,
                 "No Catacombs object was drawn with native art on L5-L8.");
             var townWarp = target >= NativeWarriorTownWarpDepth ? await NativeWarriorTownWarpLegAsync(main, directory) : null;
@@ -151,19 +154,23 @@ public partial class SessionAcceptance
             draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, 0));
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
-            if (nativeCatacombsObjects is not null) nativeCatacombsObjects = WithNativeCatacombsDoor(nativeCatacombsObjects);
+            nativeCatacombsObjects = WithNativeCatacombsDoor(nativeCatacombsObjects);
             Require(!NativeWarriorRequiresTrappedDoor || nativeCatacombsRequiredDoorFiring is not null,
                 "The required seeded run did not fire a reachable Catacombs door trap.");
             var checkpoint = new NativeWarriorDepthCheckpoint(Convert.ToBase64String(player.ToByteArray()),
                 snapshot.RandomState, main.ObservedLastQueuedSequence, HashNativeProgressionWorld(snapshot),
                 floors.Select(floor => floor with { GeometryHash = HashProto(DepthGeometry(main, floor.LevelId)) }).ToArray(),
-                nativeCatacombsObjects);
+                nativeCatacombsObjects, nativeShrine);
             VerifyNativeWarriorRetention(main, checkpoint);
             WriteEvidence(directory, "nativedepthjourney.json", new {
                 Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
                 RulesetHash = identity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
                 LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY,
                 Sequence = checkpoint.Sequence, Visible = NativeWarriorVisible, NativeDepthWarrior = checkpoint,
+                RequiredChest = NativeCatacombsChestStage.RequiresEvidence(System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED")),
+                ChestPickedUp = checkpoint.Objects?.ChestEntity > 0,
+                ShrineApproaches = nativeShrineApproaches, RequiredShrine = NativeWarriorRequiresShrine,
+                ShrineOperated = checkpoint.Shrine is not null,
                 RequiredTrappedDoor = NativeWarriorRequiresTrappedDoor, TrappedDoorOperated = checkpoint.Objects?.DoorEntity > 0,
                 RequiredDoorTarget = nativeCatacombsRequiredDoor,
                 UnreachableNativeObjects = nativeCatacombsUnreachableObjects,
@@ -860,8 +867,14 @@ public partial class SessionAcceptance
     private static void VerifyNativeWarriorRetention(Main main, NativeWarriorDepthCheckpoint expected)
     {
         var snapshot = main.ObservedSnapshot!;
+        NativeCatacombsChestStage.VerifyAvailability((uint)expected.Floors.Length,
+            System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED"), expected.Objects?.ChestEntity > 0);
+        NativeDepthResumeEvidence.Verify(NativeWarriorRequiresShrine, expected.Shrine is not null,
+            NativeWarriorRequiresTrappedDoor, expected.Objects?.DoorEntity ?? 0,
+            expected.Objects?.DoorTrapSource ?? 0, expected.Objects?.DoorTrapTick ?? 0);
         if (expected.Objects is not null)
             VerifyNativeCatacombsObjects(snapshot, expected.Objects);
+        if (expected.Shrine is not null) VerifyNativeShrineRetention(snapshot, expected.Shrine);
         Require(expected.Floors.Length is >= 1 and <= (int)NativeWarriorDeepestFloor
             && expected.Floors.Select(floor => floor.LevelId).SequenceEqual(Enumerable.Range(1, expected.Floors.Length).Select(level => (uint)level)),
             "The depth checkpoint omitted or reordered a floor.");

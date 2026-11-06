@@ -20,6 +20,9 @@ public sealed class AuthoritativeWorldObject
 {
     private uint nativeObjectId;
 
+    /** Mutable native object RNG seed; absent retains the generated seed in older saves. */
+    public uint? NativeRandomSeed { get; internal set; }
+
     public AuthoritativeWorldObject(
         uint entityId,
         uint objectId,

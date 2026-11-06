@@ -118,6 +118,89 @@ public sealed class NativeObjectApproachTests
         Assert.NotNull(NativeObjectApproachPath.Find(snapshot, geometry, target));
     }
 
+    [Fact]
+    public void RequiredShrinePlanningRetainsAVisitBlockedByAMonsterAndARouteDoor()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 5, PositionX = 1, PositionY = 2 } },
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, LevelId = 5, NativeObjectId = 42, PositionX = 3, PositionY = 2 },
+                new ObjectSnapshot { EntityId = 21, LevelId = 5, NativeObjectId = 59, PositionX = 7, PositionY = 2,
+                    NativeShrineInteractable = true },
+            },
+            Monsters = { new MonsterSnapshot { EntityId = 30, LevelId = 5, Alive = true, PositionX = 6, PositionY = 2 } },
+        };
+        var geometry = new LevelGeometrySnapshot { LevelId = 5, Width = 9, Height = 5 };
+        for (var y = 0; y < geometry.Height; y++)
+            for (var x = 0; x < geometry.Width; x++)
+                if (y != 2) geometry.BlockedCells.Add(y * geometry.Width + x);
+        var shrine = snapshot.Objects[1];
+        Assert.Null(NativeObjectApproachPath.FindForShrine(snapshot, geometry, shrine, required: false));
+        var planned = NativeObjectApproachPath.FindForShrine(snapshot, geometry, shrine, required: true);
+        Assert.NotNull(planned);
+        Assert.Equal((6, 2), planned![^1]);
+        Assert.Equal(20U, NativeObjectApproachPath.FirstClosedDoorOnRoute(snapshot, 5, planned)!.EntityId);
+        snapshot.Objects[0].MissilePassable = true; snapshot.Monsters[0].Alive = false;
+        Assert.Equal(planned, NativeObjectApproachPath.FindForShrine(snapshot, geometry, shrine, required: false));
+    }
+
+    [Fact]
+    public void ChestPlanningCanClearAnActorButDoesNotOpenAClosedDoorForItsRoute()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 8, PositionX = 1, PositionY = 2 } },
+            Objects = { new ObjectSnapshot { EntityId = 20, LevelId = 8, NativeObjectId = 42, PositionX = 3, PositionY = 2 } },
+            Monsters = { new MonsterSnapshot { EntityId = 30, LevelId = 8, Alive = true, PositionX = 6, PositionY = 2 } },
+        };
+        var geometry = new LevelGeometrySnapshot { LevelId = 8, Width = 9, Height = 5 };
+        for (var y = 0; y < geometry.Height; y++)
+            for (var x = 0; x < geometry.Width; x++)
+                if (y != 2) geometry.BlockedCells.Add(y * geometry.Width + x);
+        var chest = new ObjectSnapshot { EntityId = 40, LevelId = 8, NativeObjectId = 69, PositionX = 7, PositionY = 2 };
+        Assert.Null(NativeObjectApproachPath.Find(snapshot, geometry, chest, ignoreActors: true));
+        snapshot.Objects[0].MissilePassable = true;
+        var planned = NativeObjectApproachPath.Find(snapshot, geometry, chest, ignoreActors: true);
+        Assert.NotNull(planned);
+        Assert.Null(NativeObjectApproachPath.Find(snapshot, geometry, chest));
+        snapshot.Monsters[0].Alive = false;
+        Assert.Equal(planned, NativeObjectApproachPath.Find(snapshot, geometry, chest));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AcceptedWalkCanEndOneTilePastItsDestinationAfterNativeRhinoKnockback(bool losesLife)
+    {
+        var before = new Snapshot { Players = { new PlayerSnapshot { EntityId = 1, LevelId = 8,
+            PositionX = 83, PositionY = 72, Life = 9000 } } };
+        var after = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 8, PositionX = 85, PositionY = 73,
+                Life = losesLife ? 8542 : 9000 } },
+            Monsters = { new MonsterSnapshot { EntityId = 151457899, LevelId = 8, Alive = true,
+                PositionX = 83, PositionY = 71, NativeAi = "Rhino" } },
+        };
+        Assert.True(NativeObjectApproachPath.WasCombatInterruptedMove(before, after, 84, 72));
+        after.Monsters.Clear(); after.Players[0].Life = before.Players[0].Life;
+        Assert.False(NativeObjectApproachPath.WasCombatInterruptedMove(before, after, 84, 72));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void AnUnexpectedJumpDeathOrLevelChangeIsNotATransientChestApproachObstruction(int corruption)
+    {
+        var before = new Snapshot { Players = { new PlayerSnapshot { EntityId = 1, LevelId = 8,
+            PositionX = 83, PositionY = 72, Life = 9000 } } };
+        var after = before.Clone(); after.Players[0].Life = 8500;
+        switch (corruption) {
+        case 0: after.Players[0].PositionX = 90; break;
+        case 1: after.Players[0].Life = 0; break;
+        case 2: after.Players[0].LevelId = 7; break;
+        }
+        Assert.False(NativeObjectApproachPath.WasCombatInterruptedMove(before, after, 84, 72));
+    }
+
     private static Snapshot DoorShot()
         => new() { Tick = 300,
             Objects = {

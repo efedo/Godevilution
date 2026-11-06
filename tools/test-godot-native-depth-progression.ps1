@@ -15,6 +15,7 @@ param(
     # Optional C2 dungeon seed; omitted preserves the existing fixed seed 2588.
     [Nullable[System.UInt32]]$CatacombsSeed,
     [switch]$RequireTrappedDoor,
+    [switch]$RequireShrine,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
     [switch]$Visible,
     # Development runs: server simulation rate for both phases; acceptance evidence uses the default 20 Hz.
@@ -56,6 +57,9 @@ if (($RequireTrappedDoor -and $TargetDepth -lt 5) -or
     (-not $allClass -and ($PSBoundParameters.ContainsKey('CatacombsSeed') -or $RequireTrappedDoor))) {
     throw 'Catacombs seed and required-door checks need an all-class journey through L5 or deeper.'
 }
+if ($RequireShrine -and (-not $allClass -or $TargetDepth -lt 5)) {
+    throw '-RequireShrine needs an all-class journey through L5 or deeper.'
+}
 if ($RequireTrappedDoor -and (-not $PSBoundParameters.ContainsKey('CatacombsSeed') -or $CatacombsSeed -ne 0 -or $TargetDepth -lt 7)) {
     throw '-RequireTrappedDoor needs -CatacombsSeed 0 and -TargetDepth 7 or 8 for the known L7 door at (68,74).'
 }
@@ -68,11 +72,13 @@ if ($allClass) {
 } else { $arguments.CathedralNativeDepthProgressionProfileDirectory = $profileRoot }
 $previousCatacombsSeed = $env:GODEVILUTION_NATIVE_CATACOMBS_SEED
 $previousRequiredDoor = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR
+$previousRequiredShrine = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE
 $previousDoorLevel = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL
 $previousDoorX = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X
 $previousDoorY = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y
 $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = if ($PSBoundParameters.ContainsKey('CatacombsSeed')) { [string]$CatacombsSeed } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = if ($RequireTrappedDoor) { '1' } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = if ($RequireShrine) { '1' } else { $null }
 # Acceptance-only destination, paired with the explicit seed; normal journeys have none.
 $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = if ($RequireTrappedDoor) { '7' } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = if ($RequireTrappedDoor) { '68' } else { $null }
@@ -108,6 +114,34 @@ function Invoke-TimedLauncher([string]$directory, [string]$phase, [hashtable]$la
     }
 }
 
+# Validate object evidence without launching a client; also exercised directly by focused tests.
+function Assert-NativeDepthObjectEvidence($journey, [int]$TargetDepth, [bool]$HasExplicitCatacombsSeed,
+    [bool]$RequireTrappedDoor, [bool]$RequireShrine) {
+    # Compile the same scalar policy used by the managed journey and resume.
+    if (-not ('Devilution.Client.Acceptance.NativeDepthResumeEvidence' -as [type])) {
+        Add-Type -Path (Join-Path $repositoryRoot 'godot-client/Devilution.Client/Acceptance/NativeDepthResumeEvidence.cs') -ErrorAction Stop
+    }
+    $route = $journey.NativeDepthWarrior
+    $objects = $route.Objects
+    $requiresChest = [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::RequiresChestEvidence($HasExplicitCatacombsSeed)
+    $hasChest = $null -ne $objects -and $objects.ChestEntity -gt 0 -and $objects.DropEntity -gt 0
+    $partialChest = $null -ne $objects -and ($objects.ChestEntity -gt 0 -or $objects.DropEntity -gt 0) -and -not $hasChest
+    if ($TargetDepth -ge 5 -and (($requiresChest -and -not $hasChest) -or $partialChest)) {
+        throw 'The Catacombs journey lacks complete chest/pickup evidence.'
+    }
+    [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::Verify($RequireShrine, ($null -ne $route.Shrine),
+        $RequireTrappedDoor, [uint32]$objects.DoorEntity, [uint32]$objects.DoorTrapSource, [uint64]$objects.DoorTrapTick)
+    if ($RequireTrappedDoor -and ($journey.TrappedDoorOperated -ne $true -or $objects.DoorLevel -ne 7 -or
+        $journey.RequiredDoorTarget.Level -ne 7 -or $journey.RequiredDoorTarget.X -ne 68 -or $journey.RequiredDoorTarget.Y -ne 74)) {
+        throw 'The Catacombs journey lacks its required door-trap evidence.'
+    }
+    if ($RequireShrine -and ($journey.ShrineOperated -ne $true -or $route.Shrine.Entity -le 0 -or
+        $route.Shrine.Level -lt 1 -or $route.Shrine.Level -gt 8 -or [string]::IsNullOrWhiteSpace($route.Shrine.Message) -or
+        [string]$route.Shrine.PlayerAfterEffect -notmatch '^[A-Za-z0-9+/]+={0,2}$')) {
+        throw 'The Catacombs journey lacks its required shrine and lasting-effect evidence.'
+    }
+}
+
 Write-Output "Native Town/L1-L4 Journey session: $sessionDirectory"
 $journeyArguments = $arguments.Clone()
 if ($Visible) { $journeyArguments.Headless = $false }
@@ -127,13 +161,7 @@ if ($allClass) {
             ($_.LevelId -lt $FirstFightDepth -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
-    if ($TargetDepth -ge 5 -and ($null -eq $route.Objects -or $route.Objects.ChestEntity -le 0 -or
-        $route.Objects.DropEntity -le 0 -or ($RequireTrappedDoor -and ($journey.TrappedDoorOperated -ne $true -or
-        $route.Objects.DoorEntity -le 0 -or $route.Objects.DoorLevel -ne 7 -or $route.Objects.DoorTrapSource -le 0 -or
-        $route.Objects.DoorTrapTick -le 0 -or $journey.RequiredDoorTarget.Level -ne 7 -or
-        $journey.RequiredDoorTarget.X -ne 68 -or $journey.RequiredDoorTarget.Y -ne 74)))) {
-        throw 'The Catacombs journey lacks its chest/pickup or required door-trap evidence.'
-    }
+    Assert-NativeDepthObjectEvidence $journey $TargetDepth ($null -ne $env:GODEVILUTION_NATIVE_CATACOMBS_SEED) ([bool]$RequireTrappedDoor) ([bool]$RequireShrine)
     # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
     if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
         throw 'The Warrior Journey did not open and take the single-player Town warp.'
@@ -312,6 +340,7 @@ Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summar
 } finally {
     $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = $previousCatacombsSeed
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = $previousRequiredDoor
+    $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = $previousRequiredShrine
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = $previousDoorLevel
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = $previousDoorX
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y = $previousDoorY

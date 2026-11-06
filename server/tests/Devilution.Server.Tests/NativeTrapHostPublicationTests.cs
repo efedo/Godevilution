@@ -254,7 +254,7 @@ public sealed partial class NativeTrapHostPublicationTests(ITestOutputHelper out
     }
 
     /** The production host builds and validates each snapshot before its real protobuf/TCP publication. */
-    private sealed class SnapshotHost : IAsyncDisposable
+    internal sealed class SnapshotHost : IAsyncDisposable
     {
         private static readonly string ContentHash = new('a', 64);
         private static readonly string RulesetHash = new('b', 64);
@@ -266,7 +266,7 @@ public sealed partial class NativeTrapHostPublicationTests(ITestOutputHelper out
         public AuthoritativeTcpServer Server { get; }
         public AuthoritativeClientModel Model { get; } = new();
 
-        public SnapshotHost(ulong initialTick, Func<ulong, Snapshot> build, Action<ulong> advance)
+        public SnapshotHost(ulong initialTick, Func<ulong, Snapshot> build, Action<ulong> advance, Action<Exception>? failureObserver = null)
         {
             timeout.CancelAfter(TimeSpan.FromSeconds(30));
             clock = new MutableClock(initialTick);
@@ -277,6 +277,7 @@ public sealed partial class NativeTrapHostPublicationTests(ITestOutputHelper out
                 }), clock, adapter, port: 0, address: IPAddress.Loopback) {
                 CohortStore = new AuthoritativeCohortStore(root),
                 UseClockGatedCommandScheduling = true,
+                ClientFailureObserver = failureObserver,
             };
         }
 

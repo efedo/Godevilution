@@ -237,6 +237,11 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         if (current.LevelId != LevelId || !objectRows.TryGetValue(current.EntityId, out var raw))
             throw new InvalidDataException("A populated native object has no owned generation binding.");
         var expected = objectSnapshots[current.EntityId];
+        if (current.NativeRandomSeed is not null) {
+            if (!IsSupportedNativeChest(raw))
+                throw new InvalidDataException("Only native chests have mutable shrine RNG state.");
+            current = current with { NativeRandomSeed = null };
+        }
         if (expected.TrapArmed && !current.TrapArmed
             && (HasSupportedNativeTrapLink(InitialState, raw)
                 || Family == AuthoritativeNativePopulationFamily.Catacombs && raw.Type is >= 68 and <= 70)) {
@@ -251,6 +256,10 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             };
         }
         if (current == expected)
+            return;
+        if (IsSupportedNativeShrine(raw) && current.Activated
+            && current.AnimationFrame == raw.AnimLength
+            && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected)
             return;
         if (IsSupportedNativeChest(raw)) {
             var opened = expected with {
@@ -284,7 +293,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         return raw.DoorFlag && (!raw.TrapFlag || supportedLinkedTrapDoor)
                 && (Family == AuthoritativeNativePopulationFamily.Catacombs || value.CathedralDoor is not null)
             || CanOperateNativeChest(value)
-            || CanOperateNativeSarcophagus(value);
+            || CanOperateNativeSarcophagus(value)
+            || IsSupportedNativeShrine(raw) && !value.Activated;
     }
 
     internal bool CanOperateNativeChest(AuthoritativeWorldObject value)
@@ -313,7 +323,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             return false;
 
         nativeType = raw.Type;
-        randomSeed = raw.RndSeed;
+        randomSeed = value.NativeRandomSeed ?? raw.RndSeed;
         itemCount = raw.Var1;
         itemBranch = raw.Var2;
         return true;

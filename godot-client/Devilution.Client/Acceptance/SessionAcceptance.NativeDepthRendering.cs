@@ -12,7 +12,8 @@ public partial class SessionAcceptance
 
     private int nativeWarriorCaptureCount;
     private int nativeWarriorCatacombsDoorDraws;
-    private static readonly uint[] NativeCatacombsObjectIds = [5, 6, 7, 42, 43, 53, 54, 57, 58];
+    private int nativeWarriorCatacombsOperatedObjectDraws;
+    private static readonly uint[] NativeCatacombsObjectIds = [5, 6, 7, 42, 43, 53, 54, 57, 58, 59, 60, 68, 69, 70];
 
     private static bool NativeWarriorVisible => DisplayServer.GetName() != "headless";
 
@@ -73,6 +74,21 @@ public partial class SessionAcceptance
             main.ObservedNativeObjectDrawing.Count(item => item.NativeArt && item.LevelId == levelId), capture);
         GD.Print($"Native Warrior L{levelId} drew natively: {result}");
         return result;
+    }
+
+    /** Arrival views can contain no objects. The operated object must actually draw after its state changes. */
+    private async Task ObserveNativeWarriorOperatedObjectDrawAsync(Main main, ObjectSnapshot value)
+    {
+        var tick = main.ObservedSnapshot!.Tick;
+        await Until(() => main.ObservedNativeObjectDrawing.Any(draw => draw.EntityId == value.EntityId
+                && draw.LevelId == value.LevelId && draw.SnapshotTick >= tick && draw.Activated
+                && draw.NativeArt && !draw.GenericFallback && draw.AnchorInsideViewport),
+            $"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} did not draw with native art; "
+                + "regenerate the native object pack if it predates shrines.", 10);
+        if (value.LevelId is >= 5 and <= 8) nativeWarriorCatacombsOperatedObjectDraws++;
+        var observed = main.ObservedNativeObjectDrawing.Last(draw => draw.EntityId == value.EntityId && draw.NativeArt);
+        GD.Print($"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} drew natively: "
+            + $"tick {observed.SnapshotTick}, frame {observed.NativeFrame}, atlas {observed.AtlasPath}.");
     }
 
     /** L5-L8 use the Catacombs scene family and the bound Catacombs object catalog (batch 2.3). */

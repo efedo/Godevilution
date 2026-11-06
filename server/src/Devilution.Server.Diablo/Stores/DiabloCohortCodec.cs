@@ -527,8 +527,14 @@ public sealed partial class DiabloCohortCodec
                 || IsOptionalNativeWalkPathField(type, name, schema)
                 || IsOptionalNativeQueuedRangedAttackField(type, name, schema)
                 || IsOptionalCatacombsActorField(type, name, schema)
-                || IsOptionalObjectTrapMissileField(type, name));
+                || IsOptionalObjectTrapMissileField(type, name)
+                || IsOptionalNativeShrineField(type, name));
     }
+
+    private static bool IsOptionalNativeShrineField(Type type, string name)
+        => type == typeof(DiabloObjectState) && name == nameof(DiabloObjectState.NativeRandomSeed)
+            || type == typeof(StorePlayerSnapshot) && name is nameof(StorePlayerSnapshot.FullyExploredLevelIds)
+                or nameof(StorePlayerSnapshot.NativeLifeBase) or nameof(StorePlayerSnapshot.NativeManaBase);
 
     /** Pre-2.5a Arrow payloads have only the three original scalars; additive defaults stay omitted. */
     private static bool IsOptionalObjectTrapMissileField(Type type, string name)
@@ -664,6 +670,7 @@ public sealed partial class DiabloCohortCodec
         private readonly bool[] horkMoveFields;
         private readonly bool[] optionalNativeWalkPathFields;
         private readonly bool[] optionalNativeQueuedRangedAttackFields;
+        private readonly bool[] optionalNativeShrineFields;
 
         public CompleteRecordConverter(CodecSchema schema)
         {
@@ -688,6 +695,7 @@ public sealed partial class DiabloCohortCodec
                 IsOptionalNativeWalkPathField(typeof(T), field.Name, schema)).ToArray();
             optionalNativeQueuedRangedAttackFields = fields.Select(field =>
                 IsOptionalNativeQueuedRangedAttackField(typeof(T), field.Name, schema)).ToArray();
+            optionalNativeShrineFields = fields.Select(field => IsOptionalNativeShrineField(typeof(T), field.Name)).ToArray();
         }
 
         private static Action<Utf8JsonWriter, T, JsonSerializerOptions> CreateTypedFieldWriter<TProperty>(PropertyInfo field)
@@ -714,6 +722,7 @@ public sealed partial class DiabloCohortCodec
                         ? field.Name == nameof(DiabloMonsterState.HorkDemonMoveTicks) ? -1 : 0
                         : IsOptionalNativeWalkPathField(typeof(T), field.Name, schema) ? null
                         : IsOptionalNativeQueuedRangedAttackField(typeof(T), field.Name, schema) ? null
+                        : IsOptionalNativeShrineField(typeof(T), field.Name) ? null
                         : IsOptionalCatacombsActorField(typeof(T), field.Name, schema)
                             ? field.PropertyType.IsValueType ? Activator.CreateInstance(field.PropertyType) : null
                         : throw new InvalidDataException($"Missing cohort field '{field.Name}'."),
@@ -747,6 +756,8 @@ public sealed partial class DiabloCohortCodec
                     continue;
                 if (optionalNativeQueuedRangedAttackFields[index]
                     && fields[index].GetValue(value) is null)
+                    continue;
+                if (optionalNativeShrineFields[index] && fields[index].GetValue(value) is null)
                     continue;
                 fieldWriters[index](writer, value, options);
             }

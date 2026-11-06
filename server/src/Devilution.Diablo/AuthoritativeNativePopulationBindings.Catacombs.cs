@@ -34,7 +34,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         facts = null;
         if (!objectRows.TryGetValue(value.EntityId, out var raw) || !IsSupportedNativeChest(raw))
             return false;
-        facts = new(raw.Slot, raw.Type, raw.Position.X, raw.Position.Y, raw.RndSeed,
+        facts = new(raw.Slot, raw.Type, raw.Position.X, raw.Position.Y, value.NativeRandomSeed ?? raw.RndSeed,
             raw.Var1, raw.Var2, raw.Var4, value.TrapArmed, raw.AnimFrame) {
             LinkedWallTrap = InitialState.ActiveObjectIds.Take(InitialState.ActiveObjectCount)
                 .Select(slot => InitialState.ObjectSlots[slot])

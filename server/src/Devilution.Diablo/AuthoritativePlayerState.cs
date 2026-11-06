@@ -160,6 +160,16 @@ public sealed record StorePlayerSnapshot(
     /** Native persistent hero rank set after a single-player Diablo defeat. */
     public uint DiabloKillLevel { get; init; }
 
+    /** Independent native current base resources, absent in older saves. */
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? NativeLifeBase { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? NativeManaBase { get; init; }
+
+    /** Fully revealed map levels; absent in older snapshots and cohorts. */
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<uint>? FullyExploredLevelIds { get; init; }
+
     /** Server-owned level-up points available for primary attributes. */
     public uint StatPoints { get; init; }
     /** Native per-player dungeon visitation flags used by authored quest gates. */
@@ -209,7 +219,7 @@ public sealed record StorePlayerSnapshot(
 }
 
 /** Mutable authoritative state consumed by protocol-independent Diablo rules. */
-public sealed class AuthoritativePlayerState(
+public sealed partial class AuthoritativePlayerState(
     uint gold,
     uint experience,
     int life,
@@ -257,7 +267,15 @@ public sealed class AuthoritativePlayerState(
 
     public uint Experience { get; set; } = experience;
 
-    public int Life { get; set; } = Math.Clamp(life, 0, Math.Max(lifeMaximum, 0));
+    private int lifeValue = Math.Clamp(life, 0, Math.Max(lifeMaximum, 0));
+    public int Life {
+        get => lifeValue;
+        set {
+            if (nativeResourceBases) nativeLifeBase = value == LifeMaximum ? BaseLifeMaximum
+                : Math.Min(BaseLifeMaximum, checked(nativeLifeBase + value - lifeValue));
+            lifeValue = value;
+        }
+    }
 
     /** Native base life maximum, before equipment conversions. */
     public int BaseLifeMaximum { get; internal set; } = Math.Max(
@@ -397,7 +415,15 @@ public sealed class AuthoritativePlayerState(
     /** Server-owned level-up points available for primary attributes. */
     public uint StatPoints { get; set; } = statPoints;
 
-    public int Mana { get; set; } = mana;
+    private int manaValue = mana;
+    public int Mana {
+        get => manaValue;
+        set {
+            if (nativeResourceBases) nativeManaBase = value == ManaMaximum ? BaseManaMaximum
+                : Math.Min(BaseManaMaximum, checked(nativeManaBase + value - manaValue));
+            manaValue = value;
+        }
+    }
 
     /** Native base mana maximum, before equipment conversions. */
     public int BaseManaMaximum { get; internal set; } = Math.Max(
@@ -405,6 +431,9 @@ public sealed class AuthoritativePlayerState(
         0);
 
     public int ManaMaximum { get; private set; } = Math.Max(manaMaximum, 0);
+
+    /** Shared player map knowledge; a fully revealed native floor retains all MAP_EXP_SHRINE cells. */
+    public HashSet<uint> FullyExploredLevelIds { get; } = [];
 
     public PlayerAttributesState Attributes { get; set; } = attributes;
 
@@ -439,7 +468,14 @@ public sealed class AuthoritativePlayerState(
     /** Recomputes native equipment attributes, resources, and defense. */
     public void RecalculateEquipmentResources()
     {
+        if (nativeResourceBases) CalcSelfItems();
         RecalculateEquipmentAttributes();
+        if (nativeResourceBases) {
+            RecalculateNativeResources();
+            RecalculateEquipmentArmor();
+            RefreshNativeCarryStatFlags();
+            return;
+        }
         var lifeBase = checked(Life + BaseLifeMaximum - LifeMaximum);
         var manaBase = checked(Mana + BaseManaMaximum - ManaMaximum);
         var adjusted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
@@ -453,10 +489,7 @@ public sealed class AuthoritativePlayerState(
             checked(adjusted.LifeQ6 - BaseLifeMaximum + lifeBase),
             0,
             LifeMaximum);
-        Mana = Math.Clamp(
-            checked(adjusted.ManaQ6 - BaseManaMaximum + manaBase),
-            0,
-            ManaMaximum);
+        Mana = Math.Clamp(checked(adjusted.ManaQ6 - BaseManaMaximum + manaBase), 0, ManaMaximum);
         RecalculateEquipmentArmor();
     }
 

@@ -96,6 +96,81 @@ public sealed class NativeObjectLauncherEvidenceTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
+    [Fact(SkipUnless = nameof(IsWindows), Skip = "Uses the Windows PowerShell launcher runtime.")]
+    public void NativeDepthChestAvailabilityMatchesTheManagedPolicyAndKeepsRequiredFeatureEvidence()
+    {
+        var root = FindRepositoryRoot();
+        var script = "$ErrorActionPreference = 'Stop'\r\n$repositoryRoot = " + QuotePowerShell(root) + "\r\n" + """
+            $path = Join-Path $repositoryRoot 'tools/test-godot-native-depth-progression.ps1'
+            $tokens = $null; $errors = $null
+            $ast = [Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -ne 0) { throw ($errors | Out-String) }
+            $functions = @($ast.FindAll({ param($node)
+                $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Assert-NativeDepthObjectEvidence'
+            }, $true))
+            if ($functions.Count -ne 1) { throw 'Expected the production object-evidence guard.' }
+            . ([scriptblock]::Create($functions[0].Extent.Text))
+            function New-Evidence {
+                [pscustomobject]@{
+                    NativeDepthWarrior = [pscustomobject]@{ Objects = $null; Shrine = $null }
+                    TrappedDoorOperated = $false; ShrineOperated = $false
+                    RequiredDoorTarget = [pscustomobject]@{ Level = 7; X = 68; Y = 74 }
+                }
+            }
+            function Assert-Rejected([scriptblock]$Action) {
+                $rejected = $false
+                try { & $Action } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Expected missing or corrupt evidence to be refused.' }
+            }
+            $empty = New-Evidence
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $empty 8 $false $false $false }
+            Assert-NativeDepthObjectEvidence $empty 4 $false $false $false
+            Assert-NativeDepthObjectEvidence $empty 8 $true $false $false
+            $door = New-Evidence
+            $door.NativeDepthWarrior.Objects = [pscustomobject]@{
+                ChestEntity = 0; DropEntity = 0; DoorEntity = 20; DoorLevel = 7; DoorTrapSource = 21; DoorTrapTick = 300
+            }
+            $door.TrappedDoorOperated = $true
+            Assert-NativeDepthObjectEvidence $door 8 $true $true $false
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $door 8 $false $true $false }
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $empty 8 $true $true $false }
+            foreach ($field in @('DoorEntity', 'DoorTrapSource', 'DoorTrapTick')) {
+                $saved = $door.NativeDepthWarrior.Objects.$field
+                $door.NativeDepthWarrior.Objects.$field = 0
+                Assert-Rejected { Assert-NativeDepthObjectEvidence $door 8 $true $true $false }
+                $door.NativeDepthWarrior.Objects.$field = $saved
+            }
+            $door.RequiredDoorTarget.X = 67
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $door 8 $true $true $false }
+            $door.RequiredDoorTarget.X = 68; $door.TrappedDoorOperated = $false
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $door 8 $true $true $false }
+            $shrine = New-Evidence
+            $shrine.NativeDepthWarrior.Shrine = [pscustomobject]@{
+                Level = 5; Entity = 151265329; Type = 0; MessageId = 12
+                Message = 'Some are weakened as one grows strong'; PlayerAfterEffect = 'AQID'
+            }
+            $shrine.ShrineOperated = $true
+            Assert-NativeDepthObjectEvidence $shrine 8 $true $false $true
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $empty 8 $true $false $true }
+            $shrine.ShrineOperated = $false
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $shrine 8 $true $false $true }
+            $shrine.ShrineOperated = $true
+            $shrine.NativeDepthWarrior.Shrine = $null
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $shrine 8 $true $false $true }
+            $chest = New-Evidence
+            $chest.NativeDepthWarrior.Objects = [pscustomobject]@{ ChestEntity = 23; DropEntity = 24 }
+            Assert-NativeDepthObjectEvidence $chest 8 $false $false $false
+            Assert-NativeDepthObjectEvidence $chest 8 $true $false $false
+            $chest.NativeDepthWarrior.Objects.DropEntity = 0
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $chest 8 $false $false $false }
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $chest 8 $true $false $false }
+            $chest.NativeDepthWarrior.Objects.ChestEntity = 0; $chest.NativeDepthWarrior.Objects.DropEntity = 24
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $chest 8 $true $false $false }
+            Write-Output 'PASS'
+            """;
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
     private static string RunPowerShell(string script)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), $"godevilution-native-object-evidence-{Guid.NewGuid():N}.ps1");

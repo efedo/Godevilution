@@ -1236,7 +1236,8 @@ public sealed partial class DiabloCombatCommandProcessor
 
     private static bool HasMemorizedSpell(AuthoritativePlayerState player, uint spellId)
     {
-        return player.MemorizedSpells.Any(spell => spell.SpellId == spellId && spell.Level > 0);
+        return player.MemorizedSpells.Any(spell => spell.SpellId == spellId)
+            && GetEffectiveSpellLevel(player, spellId) > 0;
     }
 
     private static int GetEffectiveSpellLevel(

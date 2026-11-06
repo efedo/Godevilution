@@ -46,6 +46,7 @@
 #include "game/players/inventory.hpp"
 #include "game/players/players.hpp"
 #include "game/portals/portal.hpp"
+#include "game/spells/spells.hpp"
 #include "game/quests/quests.hpp"
 #include "network/protocol/msg.h"
 #include "network/storm/storm_net.hpp"
@@ -57,6 +58,8 @@
 #include "tables/textdat.h"
 #include "utils/language.h"
 #include "utils/parse_int.hpp"
+#include "ui/automap.h"
+#include "ui/diablo_msg.hpp"
 #include "utils/paths.h"
 
 namespace devilution {
@@ -1856,6 +1859,7 @@ void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget);
 #include "theme_item_generation_missiles_test.inc"
 #include "theme_item_generation_actors_test.inc"
 #include "theme_item_generation_traps_test.inc"
+#include "theme_item_generation_shrines_test.inc"
 
 } // namespace
 } // namespace devilution

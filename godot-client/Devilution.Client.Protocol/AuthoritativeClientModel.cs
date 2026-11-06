@@ -1164,6 +1164,7 @@ public sealed partial class AuthoritativeClientModel
             || @object.ProjectileSourceKind is < 0 or > MaximumObjectProjectileSourceKind
             || !producesProjectile && @object.ProjectileSourceKind != 0
             || @object.NativeObjectId > NativeMaximumObjectId
+            || !AuthoritativeNativeShrineState.IsValidProjection(@object)
             || @object.NativeChestInteractable
                 && !AuthoritativeObjectSelector.IsValidNativeChestInteraction(@object)
             || @object.NativeSarcophagusInteractable
@@ -1863,6 +1864,7 @@ public sealed partial class AuthoritativeClientModel
 
     private static void ValidatePlayerSpells(PlayerSnapshot player)
     {
+        AuthoritativeNativePlayerState.Validate(player);
         if (player.AbilitySpellId > MaximumStableSpellId
             || player.MemorizedSpells.Count > MaximumMemorizedSpellCount) {
             throw new InvalidDataException(

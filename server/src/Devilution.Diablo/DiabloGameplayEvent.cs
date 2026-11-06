@@ -22,6 +22,9 @@ public readonly record struct DiabloGameplayEvent(
     /** Optional quest speech identity carried by Dialogue events. */
     public int MessageId { get; init; }
 
+    /** Optional native system message, carried by the existing dialogue text path. */
+    public string Text { get; init; } = string.Empty;
+
     /** Optional quest identity carried by Dialogue events. */
     public uint QuestId { get; init; }
 

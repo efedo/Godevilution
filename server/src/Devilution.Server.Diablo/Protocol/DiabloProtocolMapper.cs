@@ -324,6 +324,7 @@ internal static partial class DiabloProtocolMapper
             });
         }
         foreach (var @object in source.Objects) {
+            var nativeShrine = source.NativeShrineTypes.SingleOrDefault(value => value.EntityId == @object.EntityId);
             var projectedObject = new ObjectSnapshot {
                 EntityId = @object.EntityId,
                 ObjectId = @object.ObjectId,
@@ -341,7 +342,8 @@ internal static partial class DiabloProtocolMapper
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
                 TrapArmed = revealTraps && @object.TrapArmed,
-                IsShrine = @object.IsShrine,
+                // Generated native owners predate the authored-shrine flag; keep saved object identity unchanged.
+                IsShrine = @object.IsShrine || nativeShrine.EntityId != 0,
                 QuestTransitionKind = (int)@object.QuestTransitionKind,
                 QuestTransitionAmount = @object.QuestTransitionAmount,
                 QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1,
@@ -362,6 +364,8 @@ internal static partial class DiabloProtocolMapper
                 ProjectileSourceKind = (int)@object.ProjectileSourceKind,
                 NativeObjectId = @object.NativeObjectId,
                 NativeChestInteractable = source.NativeChestInteractableEntityIds.Contains(@object.EntityId),
+                NativeShrineInteractable = source.NativeShrineInteractableEntityIds.Contains(@object.EntityId),
+                NativeShrineType = (uint)nativeShrine.Type,
                 NativeSarcophagusInteractable = source.NativeSarcophagusInteractableEntityIds.Contains(@object.EntityId),
                 NativeBarrelMeleeBreakable = source.NativeBarrelMeleeBreakableEntityIds.Contains(@object.EntityId),
                 NativeTrapInteractable = revealTraps
@@ -1741,7 +1745,8 @@ internal static partial class DiabloProtocolMapper
                 });
                 break;
             case DiabloGameplayEventKind.Dialogue:
-                var dialogueText = dialogueMessages is not null
+                var dialogueText = !string.IsNullOrEmpty(gameplayEvent.Text)
+                    ? gameplayEvent.Text : dialogueMessages is not null
                     && dialogueMessages.TryGet(gameplayEvent.MessageId, out var dialogueMessage)
                     ? dialogueMessage.Text
                     : string.Empty;

@@ -608,6 +608,7 @@ public sealed partial class DiabloSimulation
         this.worldCommands.SetNativeStoreTransitionInvalidator(
             this.storeCommands.InvalidateNativeStoreAfterCrossLevelTransition);
         this.combatCommands = combatCommands ?? throw new ArgumentNullException(nameof(combatCommands));
+        this.worldCommands.SetNativeShrineMissileHandler(this.combatCommands.AddNativeShrineMissile);
         Spells = spells ?? throw new ArgumentNullException(nameof(spells));
         Experience = experience;
         NativeMissiles = nativeMissiles;
@@ -1360,7 +1361,7 @@ public sealed partial class DiabloSimulation
         WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
         WorldState.UpdateNativeCatacombsDoorOccupancy(players);
-        return events;
+        return events.Concat(worldCommands.DrainDirectedEvents()).ToArray();
     }
 
     /**
@@ -1396,7 +1397,7 @@ public sealed partial class DiabloSimulation
         WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
         WorldState.UpdateNativeCatacombsDoorOccupancy(players);
-        return events;
+        return events.Concat(worldCommands.DrainDirectedEvents()).ToArray();
     }
 
     internal DiabloCommandCallbackPhase? GetCurrentCommandCallbackPhase(
@@ -1407,5 +1408,6 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(player);
         player.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
+        if (WorldState.HasNativePopulation) player.EnableNativeResourceBases();
     }
 }

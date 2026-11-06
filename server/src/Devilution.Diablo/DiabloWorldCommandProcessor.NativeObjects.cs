@@ -12,6 +12,9 @@ public sealed partial class DiabloWorldCommandProcessor
         if (!world.OwnsNativePopulationLevel(value.LevelId))
             return false;
         switch (value.NativeObjectId) {
+        case 59: case 60:
+            result = applyEffects ? OperateShrine(player, value, participants) : DiabloWorldIntentResult.Accepted;
+            return true;
         case 1: case 2:
             result = !applyEffects || world.TryOperateCathedralDoor(value.EntityId, participants)
                 ? DiabloWorldIntentResult.Accepted : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);

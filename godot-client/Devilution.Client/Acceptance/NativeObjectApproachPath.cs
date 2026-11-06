@@ -63,6 +63,11 @@ internal static class NativeObjectApproachPath
         return null;
     }
 
+    /** Selection and availability use the same route; required runs clear actors and open only route doors. */
+    internal static List<(int X, int Y)>? FindForShrine(Snapshot snapshot, LevelGeometrySnapshot geometry,
+        ObjectSnapshot shrine, bool required)
+        => Find(snapshot, geometry, shrine, allowClosedDoors: required, ignoreActors: required);
+
     internal static ObjectSnapshot? FirstClosedDoorOnRoute(Snapshot snapshot, uint levelId, IReadOnlyList<(int X, int Y)> path)
         => path.Select(cell => snapshot.Objects.FirstOrDefault(value => value.LevelId == levelId
                 && value.NativeObjectId is 42 or 43 && !value.MissilePassable
@@ -73,4 +78,27 @@ internal static class NativeObjectApproachPath
         => snapshot.Monsters.Any(value => value.Alive && value.LevelId == levelId
             && (value.PositionX == x && value.PositionY == y
                 || value.Moving && value.FuturePositionX == x && value.FuturePositionY == y));
+
+    /** Native MissToMonst/MonsterAttackPlayer can cancel a walk or knock its completed position one tile away. */
+    internal static bool WasCombatInterruptedMove(Snapshot before, Snapshot after, int requestedX, int requestedY)
+    {
+        var oldPlayer = before.Players.Single();
+        var player = after.Players.Single();
+        if (player.Life <= 0 || player.LevelId != oldPlayer.LevelId
+            || player.PositionX == requestedX && player.PositionY == requestedY
+            || Math.Max(Math.Abs((long)player.PositionX - requestedX), Math.Abs((long)player.PositionY - requestedY)) > 1)
+            return false;
+        if (player.Life < oldPlayer.Life || oldPlayer.ManaShieldActive && player.Mana < oldPlayer.Mana)
+            return true;
+        // A blocked Rhino hit can still displace the player. Require the exact
+        // one-tile direction away from a native knockback source beside the requested cell.
+        return after.Monsters.Any(monster => monster.Alive && monster.LevelId == player.LevelId
+            && (monster.HasKnockback || monster.NativeAi == "Rhino")
+            && Math.Max(Math.Abs((long)monster.PositionX - requestedX), Math.Abs((long)monster.PositionY - requestedY)) == 1
+            && player.PositionX == requestedX + Math.Sign(requestedX - monster.PositionX)
+            && player.PositionY == requestedY + Math.Sign(requestedY - monster.PositionY));
+    }
 }
+
+/** Availability failures can try another candidate; command, planner and evidence faults propagate. */
+internal sealed class NativeObjectApproachUnavailableException(string message) : InvalidOperationException(message);

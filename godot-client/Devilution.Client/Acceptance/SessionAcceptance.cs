@@ -57,6 +57,13 @@ public partial class SessionAcceptance : Node
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
+        using var startup = phase is "NativeDepthJourney" or "NativeDepthResume"
+            ? new AcceptanceStartupWatchdog(TimeSpan.FromSeconds(60), stage => {
+                var failure = $"Native acceptance startup stalled for 60s at: {stage}.";
+                System.IO.File.AppendAllText(System.IO.Path.Combine(directory, "native-startup.log"), failure + System.Environment.NewLine);
+                System.Console.Error.WriteLine(failure);
+                System.Environment.Exit(1);
+            }) : null;
         // The headless display driver otherwise supplies a 64x64 viewport.
         if (DisplayServer.GetName() == "headless")
             GetTree().Root.Size = new Vector2I(1280, 720);
@@ -86,11 +93,18 @@ public partial class SessionAcceptance : Node
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
         }
-        var main = GD.Load<PackedScene>("res://Main.tscn").Instantiate<Main>();
+        startup?.Mark("loading Main scene");
+        var mainScene = GD.Load<PackedScene>("res://Main.tscn");
+        startup?.Mark("instantiating Main scene");
+        var main = mainScene.Instantiate<Main>();
         timingObservedMain = main;
+        startup?.Mark("initializing Main scene");
         AddChild(main);
+        startup?.Mark("awaiting first frame");
         await Frame();
+        startup?.Mark("awaiting second frame");
         await Frame();
+        startup?.Mark("preparing connection controls");
         var setup = main.GetNode<CharacterSetupPresentation>("CharacterSetup");
         Require(setup.Visible && !main.TransportConnected, "Acceptance must enter through the setup form.");
         var mode = setup.FindChild("SessionMode", true, false) as OptionButton
@@ -172,6 +186,7 @@ public partial class SessionAcceptance : Node
             };
             setup.Submitted += nativeSubmissionObserver;
         }
+        startup?.Mark("connecting to authoritative host");
         Input.ParseInputEvent(new InputEventMouseButton {
             ButtonIndex = MouseButton.Left, Position = center, GlobalPosition = center, Pressed = true,
         });
@@ -202,6 +217,7 @@ public partial class SessionAcceptance : Node
             if (nativeSubmissionObserver is not null)
                 setup.Submitted -= nativeSubmissionObserver;
         }
+        startup?.Dispose();
         var initial = main.ObservedSnapshot!.Players.Single();
         var lifecyclePhase = phase is "Lifecycle" or "LifecycleResume";
         var expectedClass = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) || phase.StartsWith("NativeDepth", StringComparison.Ordinal) ? 0U

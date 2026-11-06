@@ -370,6 +370,10 @@ public sealed record DiabloObjectState(
     /** Native-compatible animation frame selected when the object activates. */
     public int ActivatedAnimationFrame { get; init; }
 
+    /** Mutable object RNG state, absent in pre-shrine saves. */
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public uint? NativeRandomSeed { get; init; }
+
     /** Optional authored dialogue emitted when this object is activated. */
     public int DialogueMessageId { get; init; }
 }
@@ -612,6 +616,14 @@ public sealed record DiabloSimulationSnapshot(
     [JsonIgnore]
     public IReadOnlySet<uint> NativeBarrelMeleeBreakableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
 
+    /** Immutable native identity projected from the existing population owner. */
+    [JsonIgnore]
+    public IReadOnlyList<DiabloNativeShrineProjection> NativeShrineTypes { get; internal init; } = [];
+
+    /** Transient native shrine capability, never imported as gameplay state. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeShrineInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
     /** Transient native trap capability, never imported as gameplay state. */
     [JsonIgnore]
     public IReadOnlySet<uint> NativeTrapInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
@@ -678,6 +690,7 @@ public sealed partial class DiabloSimulation
             LifeMaximum = player.LifeMaximum,
             BaseLifeMaximum = player.BaseLifeMaximum,
             BaseManaMaximum = player.BaseManaMaximum,
+            NativeLifeBase = player.NativeLifeBase, NativeManaBase = player.NativeManaBase,
             CharacterLevel = player.CharacterLevel,
             LevelId = player.LevelId,
             EntityId = player.EntityId,
@@ -697,6 +710,7 @@ public sealed partial class DiabloSimulation
             AbilitySpellId = player.AbilitySpellId,
             AbilityKind = player.AbilityKind,
             MemorizedSpells = player.MemorizedSpells.ToArray(),
+            FullyExploredLevelIds = player.FullyExploredLevelIds.Count == 0 ? null : player.FullyExploredLevelIds.Order().ToArray(),
             StatusEffects = player.StatusEffects.ToArray(),
             FriendlyMode = player.FriendlyMode,
             FacingDirection = player.FacingDirection,
@@ -917,6 +931,7 @@ public sealed partial class DiabloSimulation
                     AnimationFrame = @object.AnimationFrame,
                     ActivatedAnimationFrame = @object.ActivatedAnimationFrame,
                     DialogueMessageId = @object.DialogueMessageId,
+                    NativeRandomSeed = @object.NativeRandomSeed,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -1051,6 +1066,8 @@ public sealed partial class DiabloSimulation
             CathedralDoors = includeDoorPersistence ? WorldState.CaptureCathedralDoors() : null,
             CathedralDoorObjects = WorldState.CaptureCathedralDoorObjects(),
             NativeChestInteractableEntityIds = WorldState.CaptureNativeChestInteractableEntityIds(),
+            NativeShrineInteractableEntityIds = WorldState.CaptureNativeShrineInteractableEntityIds(),
+            NativeShrineTypes = WorldState.CaptureNativeShrineTypes(),
             NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             NativeBarrelMeleeBreakableEntityIds = WorldState.CaptureNativeBarrelMeleeBreakableEntityIds(),
             NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),

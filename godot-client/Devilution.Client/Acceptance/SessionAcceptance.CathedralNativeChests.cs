@@ -388,7 +388,8 @@ public partial class SessionAcceptance
             var path = NativeObjectApproachPath.Find(snapshot, geometry, chest, pickup);
             if (resolveObstruction is not null && await resolveObstruction(path is null))
                 continue;
-            Require(path is { Count: > 0 }, $"No ordinary walk path reaches native target {chest.PositionX},{chest.PositionY}.");
+            if (path is not { Count: > 0 })
+                throw new NativeObjectApproachUnavailableException($"No ordinary walk path reaches native target {chest.PositionX},{chest.PositionY}.");
             var step = path![0];
             var dx = step.X - player.PositionX;
             var dy = step.Y - player.PositionY;
@@ -427,9 +428,12 @@ public partial class SessionAcceptance
             if ((receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.NotAllowed } || actorBlocked)
                 && main.ObservedSnapshot!.Players.Single() is { Life: > 0 } interrupted
                 && interrupted.LevelId == player.LevelId && interrupted.PositionX == player.PositionX
-                && interrupted.PositionY == player.PositionY && ++interruptions <= 8) {
+                && interrupted.PositionY == player.PositionY) {
+                if (++interruptions > 8)
+                    throw new NativeObjectApproachUnavailableException($"Native target {chest.EntityId} approach stayed interrupted by combat after 8 retries.");
                 GD.Print($"Native target {chest.EntityId} approach interrupted by {receipt.RejectReason} at ({step.X},{step.Y}), tick {receipt.AppliedTick}; retry {interruptions}.");
                 await Until(() => NativeWalkBoundarySettled(main), "The interrupted native target approach did not settle.", 10);
+                if (resolveObstruction is not null) await resolveObstruction(true);
                 continue; // Replan from the fresh snapshot, including the blocking actor's future cell.
             }
             Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt),
@@ -437,10 +441,20 @@ public partial class SessionAcceptance
                 + $"step=({step.X},{step.Y}); observedTick={snapshot.Tick}; appliedTick={receipt.AppliedTick}; "
                 + $"before[{DescribeNativeAttackSnapshot(snapshot, 0)}]; "
                 + $"after[{DescribeNativeAttackSnapshot(main.ObservedSnapshot!, 0)}].");
-            interruptions = 0;
-            var after = main.ObservedSnapshot!.Players.Single();
+            var afterSnapshot = main.ObservedSnapshot!;
+            var after = afterSnapshot.Players.Single();
+            if (NativeObjectApproachPath.WasCombatInterruptedMove(snapshot, afterSnapshot, step.X, step.Y)) {
+                if (++interruptions > 8)
+                    throw new NativeObjectApproachUnavailableException($"Native target {chest.EntityId} approach stayed interrupted by combat after 8 retries.");
+                GD.Print($"Native target {chest.EntityId} walk to ({step.X},{step.Y}) interrupted by combat at "
+                    + $"({after.PositionX},{after.PositionY}), tick {afterSnapshot.Tick}; retry {interruptions}.");
+                if (resolveObstruction is not null) await resolveObstruction(true);
+                continue;
+            }
             Require(after.LevelId == player.LevelId && after.PositionX == step.X && after.PositionY == step.Y,
-                "The ordinary native chest approach did not reach its requested adjacent path cell.");
+                $"The ordinary native chest approach did not reach its requested adjacent path cell: "
+                    + $"expected ({step.X},{step.Y}), actual ({after.PositionX},{after.PositionY}), tick {afterSnapshot.Tick}.");
+            interruptions = 0;
         }
         throw new InvalidOperationException("The native target approach exceeded 256 input attempts without arriving.");
     }

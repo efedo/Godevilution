@@ -20,4 +20,7 @@
     <ProjectReference Include="../../../tools/Cathedral.Playtest/Cathedral.Playtest.csproj" />
     <ProjectReference Include="../../../tools/Native.Setup/Native.Setup.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/NativeShrineTestFixture.cs" Link="NativeShrineTestFixture.cs" />
+  </ItemGroup>
 </Project>

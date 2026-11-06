@@ -894,7 +894,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             } catch (Exception) {
             }
         } catch (InvalidDataException exception)
-            when (!clockGatedPipelineOwnsWrites) {
+            when (!clockGatedPipelineOwnsWrites && Volatile.Read(ref cohortFailure) is null) {
+            // Only peer input errors use this recovery; fenced adapter output must reach the fatal observer.
             try {
                 if (stream is not null) {
                     await SendErrorAsync(

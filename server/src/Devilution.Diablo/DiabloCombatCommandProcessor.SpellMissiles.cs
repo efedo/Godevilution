@@ -1360,6 +1360,7 @@ public sealed partial class DiabloCombatCommandProcessor
             target.LifeMaximum,
             checked(spell.ResurrectionLife * spell.ResurrectionLifeScale));
         target.Mana = 0;
+        target.ResetNativeCurrentResourceBases();
         target.ManaShieldActive = false;
         DiabloPlayerActionLifecycle.Cancel(target);
         target.CombatMode = DiabloPlayerCombatMode.Stand;

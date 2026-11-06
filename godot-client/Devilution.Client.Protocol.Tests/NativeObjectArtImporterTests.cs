@@ -91,8 +91,8 @@ public sealed class NativeObjectArtImporterTests
         var optionsB = new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], outputB);
         var first = NativeObjectArtCompiler.Import(optionsA);
         var second = NativeObjectArtCompiler.Import(optionsB);
-        Assert.Equal(8, first.SpriteCount);
-        Assert.Equal(10, first.ObjectCount);
+        Assert.Equal(10, first.SpriteCount);
+        Assert.Equal(15, first.ObjectCount);
         Assert.Equal(first.PackId, second.PackId);
         Assert.Equal(File.ReadAllBytes(Path.Combine(outputA, NativeObjectArtCompiler.CatalogFileName)),
             File.ReadAllBytes(Path.Combine(outputB, NativeObjectArtCompiler.CatalogFileName)));
@@ -109,9 +109,8 @@ public sealed class NativeObjectArtImporterTests
         Assert.DoesNotContain("\n", jsonText.Replace("\r\n", string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
         Assert.True(NativeObjectCatalog.TryParse(jsonText, out var catalog, out var catalogErrors), string.Join(" ", catalogErrors));
         Assert.NotNull(catalog);
-        Assert.Single(catalog.ProfileBindings);
-        Assert.Equal(1U, catalog.ProfileBindings[0].LevelId);
-        Assert.Equal("cathedral", catalog.ProfileBindings[0].Location);
+        Assert.Equal(new uint[] { 1, 2, 3, 4 }, catalog.ProfileBindings.Select(binding => binding.LevelId));
+        Assert.All(catalog.ProfileBindings, binding => Assert.Equal("cathedral", binding.Location));
         var malformedPath = Path.Combine(sourceRoot, "objects", "l1doors.cel");
         File.WriteAllBytes(malformedPath, BuildCel(64, 3));
         var exception = Assert.Throws<InvalidDataException>(() => NativeObjectArtCompiler.Import(
@@ -144,14 +143,14 @@ public sealed class NativeObjectArtImporterTests
         var result = NativeObjectArtCompiler.Import(
             new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], withCatacombs), profileSet);
 
-        Assert.Equal(8, result.SpriteCount);
+        Assert.Equal(10, result.SpriteCount);
         Assert.Equal(File.ReadAllBytes(Path.Combine(cathedralOnly, NativeObjectArtCompiler.CatalogFileName)),
             File.ReadAllBytes(Path.Combine(withCatacombs, NativeObjectArtCompiler.CatalogFileName)));
         var json = File.ReadAllText(Path.Combine(withCatacombs, NativeObjectArtCompiler.CatacombsCatalogFileName), Encoding.UTF8);
         Assert.True(NativeObjectCatalog.TryParse(json, out var catalog, out var errors), string.Join(" ", errors));
         Assert.Equal("catacombs", catalog!.Location);
         Assert.Equal(new uint[] { 5, 6, 7, 8 }, catalog.ProfileBindings.Select(binding => binding.LevelId));
-        Assert.Equal(new uint[] { 5, 6, 7, 42, 43, 53, 54, 57, 58 }, catalog.Objects.Select(item => item.NativeObjectId));
+        Assert.Equal(new uint[] { 5, 6, 7, 42, 43, 53, 54, 57, 58, 59, 60, 68, 69, 70 }, catalog.Objects.Select(item => item.NativeObjectId));
         Assert.Contains(catalog.SourceHashes, source => source.Path == NativeObjectArtCompiler.CatacombsPalettePath);
         Assert.All(catalog.Atlases, atlas =>
             Assert.True(File.Exists(Path.Combine(withCatacombs, atlas.Path.Replace('/', Path.DirectorySeparatorChar))), atlas.Path));
@@ -167,6 +166,55 @@ public sealed class NativeObjectArtImporterTests
         Assert.ThrowsAny<Exception>(() => NativeObjectArtCompiler.Import(
             new NativeObjectImportOptions(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], failed), profileSet));
         Assert.False(Directory.Exists(failed));
+    }
+
+    [Fact]
+    public void ImportsBothNativeShrineOrientationsAndChestTrapArtForEveryNativeFloor()
+    {
+        using var profile = new NativeObjectProfileFixture();
+        var sourceRoot = Path.Combine(profile.Root, "shrine-source");
+        WriteSyntheticOriginalFiles(sourceRoot);
+        WriteSyntheticCatacombsFiles(sourceRoot);
+        var loaded = NativePlayerArtProfiles.LoadDirectories([profile.ProfileDirectory]);
+        var hash = Assert.Single(loaded.ContentManifestHashes);
+        var bindings = new NativePlayerArtProfileSet(loaded.ContentManifestHashes, [
+            .. Enumerable.Range(1, 4).Select(level => new NativePlayerArtLevelBinding(hash, (uint)level, "cathedral")),
+            .. Enumerable.Range(5, 4).Select(level => new NativePlayerArtLevelBinding(hash, (uint)level, "catacombs")),
+        ]);
+        var output = Path.Combine(profile.Root, "shrine-output");
+        NativeObjectArtCompiler.Import(new(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], output), bindings);
+        foreach (var name in new[] { NativeObjectArtCompiler.CatalogFileName, NativeObjectArtCompiler.CatacombsCatalogFileName }) {
+            Assert.True(NativeObjectCatalog.TryParse(File.ReadAllText(Path.Combine(output, name)), out var catalog, out var errors),
+                string.Join(" ", errors));
+            Assert.Equal(4, catalog!.ProfileBindings.Count);
+            foreach (var id in new uint[] { 59, 60, 68, 69, 70 }) Assert.True(catalog.TryGetObject(id, out _), $"Missing native object {id} in {name}.");
+            foreach (var binding in catalog.ProfileBindings) {
+                foreach (var id in new uint[] { 59, 60 }) {
+                    for (uint frame = 1; frame <= 22; frame++) {
+                        var value = new Devilution.Protocol.V1.ObjectSnapshot { EntityId = 151265329, NativeObjectId = id,
+                            LevelId = binding.LevelId, AnimationFrame = frame, Activated = true };
+                        Assert.True(NativeObjectPresentation.TryResolve(catalog, value, hash, binding.LevelId, out var art, out var diagnostic), diagnostic);
+                        Assert.Equal((128, frame), (art!.NativeWidth, art.NativeFrame));
+                        Assert.True(catalog.TryGetAtlas(art.AtlasId, out var atlas));
+                        Assert.True(File.Exists(Path.Combine(output, atlas.Path)));
+                    }
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("lshrineg")]
+    [InlineData("rshrineg")]
+    public void RefusesATruncatedShrineAnimation(string stem)
+    {
+        using var profile = new NativeObjectProfileFixture();
+        var sourceRoot = Path.Combine(profile.Root, "truncated-shrine");
+        WriteSyntheticOriginalFiles(sourceRoot);
+        File.WriteAllBytes(Path.Combine(sourceRoot, "objects", stem + ".cel"), BuildCel(128, 21));
+        var error = Assert.Throws<InvalidDataException>(() => NativeObjectArtCompiler.Import(
+            new(sourceRoot, profile.TextDataRoot, [profile.ProfileDirectory], Path.Combine(profile.Root, "output"))));
+        Assert.Contains("at least 22 source frames", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -205,6 +253,9 @@ public sealed class NativeObjectArtImporterTests
             palette[index * 3 + 2] = checked((byte)(index / 2));
         }
         File.WriteAllBytes(palettePath, palette);
+        Directory.CreateDirectory(Path.Combine(sourceRoot, "objects"));
+        foreach (var stem in new[] { "lshrineg", "rshrineg" })
+            File.WriteAllBytes(Path.Combine(sourceRoot, "objects", stem + ".cel"), BuildCel(128, 22));
         foreach (var sprite in NativeObjectArtCompiler.ReadBaseSpriteDefinitions(Path.Combine(FindRepositoryRoot(), "assets", "txtdata"))) {
             var path = Path.Combine(sourceRoot, sprite.SourcePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);

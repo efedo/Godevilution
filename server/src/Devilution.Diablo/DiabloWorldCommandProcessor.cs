@@ -659,6 +659,7 @@ public sealed partial class DiabloWorldCommandProcessor
             player.LifeMaximum,
             checked(combatRules.RestartLife * combatRules.RestartLifeScale));
         player.Mana = 0;
+        player.ResetNativeCurrentResourceBases();
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         player.ActiveStoreId = null;

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Devilution.Protocol.V1;
 using Godot;
 
@@ -51,15 +52,15 @@ public partial class SessionAcceptance
         using var timed = NativeWarriorStep("objects", $"L{levelId} chest and pickup");
         using var stage = NativeObjectStage(nativeChestBudget);
         var attempted = new HashSet<uint>();
-        // Only nearby chests reachable through the current open floor belong to
-        // the normal journey. Never open a door or clear a remote room for one.
+        // Stay within the current open floor and the same 24-step limit. Clear
+        // nearby actors that cross the route; never open a door or hunt another room.
         for (var attempt = 0; attempt < 4; attempt++) {
             snapshot = main.ObservedSnapshot!;
             var geometry = DepthGeometryFromSnapshot(snapshot, levelId);
             var candidate = snapshot.Objects.Where(value => value.LevelId == levelId && value.NativeChestInteractable
                     && !value.Activated && !value.Destroyed && !attempted.Contains(value.EntityId)
                     && value.NativeObjectId is 5 or 6 or 7 or 68 or 69 or 70)
-                .Select(value => (Object: value, Path: NativeObjectApproachPath.Find(snapshot, geometry, value)))
+                .Select(value => (Object: value, Path: NativeObjectApproachPath.Find(snapshot, geometry, value, ignoreActors: true)))
                 .Where(value => value.Path is { Count: <= 24 })
                 .OrderBy(value => value.Path!.Count).ThenBy(value => value.Object.EntityId).FirstOrDefault();
             if (candidate.Object is not { } chest) return null;
@@ -67,8 +68,9 @@ public partial class SessionAcceptance
             await UseNativeHealingPotionIfNeeded(main);
             try {
                 await MoveAdjacentToNativePosition(main,
-                    current => current.Objects.Single(value => value.EntityId == chest.EntityId));
-            } catch (InvalidOperationException exception) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                    current => current.Objects.Single(value => value.EntityId == chest.EntityId),
+                    NativeObjectObstruction(main, chest, allowClosedDoors: false));
+            } catch (NativeObjectApproachUnavailableException exception) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
                 && alive.LevelId == levelId) {
                 RecordUnreachableNativeCatacombsObject(chest, exception);
                 await SettleInterruptedNativeDoorApproachAsync(main);
@@ -82,6 +84,7 @@ public partial class SessionAcceptance
             var opened = main.ObservedSnapshot!.Objects.Single(value => value.EntityId == chest.EntityId);
             Require(opened.Activated && opened.AnimationFrame == chest.AnimationFrame + 2
                 && !opened.NativeChestInteractable, "The Catacombs chest did not retain its native opened state.");
+            await ObserveNativeWarriorOperatedObjectDrawAsync(main, opened);
             var drops = main.ObservedSnapshot.WorldItems.Where(value => value.LevelId == levelId
                     && !oldItems.Contains(value.EntityId)).OrderBy(value => value.EntityId).ToArray();
             foreach (var drop in drops) {
@@ -91,8 +94,9 @@ public partial class SessionAcceptance
                         var item = current.WorldItems.Single(value => value.EntityId == drop.EntityId);
                         return new ObjectSnapshot { EntityId = item.EntityId, LevelId = item.LevelId,
                             PositionX = item.PositionX, PositionY = item.PositionY };
-                    }, pickup: true);
-                } catch (InvalidOperationException exception) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
+                    }, NativeObjectObstruction(main, new ObjectSnapshot { EntityId = drop.EntityId, LevelId = levelId,
+                        PositionX = drop.PositionX, PositionY = drop.PositionY }, allowClosedDoors: false, pickup: true), pickup: true);
+                } catch (NativeObjectApproachUnavailableException exception) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
                     && alive.LevelId == levelId) {
                     RecordUnreachableNativeCatacombsObject(new ObjectSnapshot { EntityId = drop.EntityId,
                         LevelId = levelId, PositionX = drop.PositionX, PositionY = drop.PositionY }, exception);
@@ -106,12 +110,8 @@ public partial class SessionAcceptance
                 await AcceptedAndSettled(main, sequence, "Pick up a native Catacombs chest drop");
                 var after = main.ObservedSnapshot!;
                 var gold = drop.State.ItemType == 11;
-                Require(!NativePickedUpItemIdentity.IsOnFloor(after, drop.ItemSeed, drop.State.StableItemId),
-                    "The Catacombs drop was not completely picked up through the client control.");
-                var value = gold ? after.Players.Single().Gold - goldBefore : 0;
-                Require(gold ? value > 0 : CountNativeItemOccurrences(main, after.Players.Single(),
-                        drop.State.StableItemId, drop.ItemSeed) == 1,
-                    "The Catacombs chest drop did not reach the player's inventory.");
+                var value = NativeCatacombsChestStage.VerifyPickup(main.ObservedCommandResult!, after, drop,
+                    levelId, goldBefore, CountNativeItemOccurrences(main, after.Players.Single(), drop.State.StableItemId, drop.ItemSeed));
                 var result = WithNativeCatacombsDoor(new(0, 0, levelId, chest.EntityId, drop.EntityId,
                     drop.ItemSeed, drop.State.StableItemId, gold, value, drop.State.ItemType == 0));
                 VerifyNativeCatacombsObjects(after, result);
@@ -121,9 +121,16 @@ public partial class SessionAcceptance
         return null;
     }
 
-    private NativeCatacombsObjectCheckpoint WithNativeCatacombsDoor(NativeCatacombsObjectCheckpoint checkpoint)
+    [return: NotNullIfNotNull(nameof(checkpoint))]
+    private NativeCatacombsObjectCheckpoint? WithNativeCatacombsDoor(NativeCatacombsObjectCheckpoint? checkpoint)
     {
         var firing = nativeCatacombsRequiredDoor is null ? nativeCatacombsTrappedDoor : nativeCatacombsRequiredDoorFiring;
+        if (checkpoint is null) {
+            if (firing is null) return null;
+            // A seeded door run can retain its firing evidence even when no chest was available.
+            checkpoint = new(DoorLevel: 0, DoorEntity: 0, ChestLevel: 0, ChestEntity: 0, DropEntity: 0,
+                ItemSeed: 0, StableItemId: 0, Gold: false, PickupValue: 0, Consumable: false);
+        }
         return checkpoint with { DoorLevel = firing?.Level ?? 0, DoorEntity = firing?.DoorEntity ?? 0,
             DoorTrapSource = firing?.TrapEntity ?? 0, DoorTrapTick = firing?.Tick ?? 0 };
     }
@@ -150,27 +157,30 @@ public partial class SessionAcceptance
             ?? throw new InvalidOperationException($"Required native door is absent at L{target.Level} ({target.X},{target.Y}).");
         await MoveAdjacentToNativePosition(main,
             current => current.Objects.Single(value => value.EntityId == door.EntityId),
-            RequiredNativeDoorObstruction(main, door));
+            NativeObjectObstruction(main, door));
         var retainedDoor = main.ObservedSnapshot!.Objects.Single(value => value.EntityId == door.EntityId);
         if (!retainedDoor.MissilePassable) await OperateNativeWarriorCatacombsDoorAsync(main, retainedDoor);
         await Until(() => nativeCatacombsRequiredDoorFiring?.DoorEntity == door.EntityId,
             $"Required L{target.Level} door ({target.X},{target.Y}) opened without firing its linked native trap.", 5);
     }
 
-    private Func<bool, Task<bool>> RequiredNativeDoorObstruction(Main main, ObjectSnapshot target)
+    private Func<bool, Task<bool>> NativeObjectObstruction(Main main, ObjectSnapshot target,
+        bool allowClosedDoors = true, bool pickup = false)
     {
         var operations = 0;
         return async blocked => {
             if (!blocked) return false;
-            Require(++operations <= 16, $"The route to required door {target.EntityId} stayed blocked after 16 attempts.");
+            if (++operations > 16)
+                throw new NativeObjectApproachUnavailableException($"The route to native object {target.EntityId} stayed blocked after 16 attempts.");
             await UseNativeHealingPotionIfNeeded(main);
             await ClearNativeWarriorThreatsAsync(main, target.LevelId);
             var snapshot = main.ObservedSnapshot!;
             Require(snapshot.Players.Single().LevelId == target.LevelId,
-                $"The required-door approach unexpectedly left L{target.LevelId}.");
+                $"The required-object approach unexpectedly left L{target.LevelId}.");
             var geometry = DepthGeometryFromSnapshot(snapshot, target.LevelId);
-            var route = NativeObjectApproachPath.Find(snapshot, geometry, target, allowClosedDoors: true, ignoreActors: true);
-            Require(route is not null, $"No native floor route reaches required door {target.EntityId}.");
+            var route = NativeObjectApproachPath.Find(snapshot, geometry, target, pickup, allowClosedDoors, ignoreActors: true);
+            if (route is null)
+                throw new NativeObjectApproachUnavailableException($"No native floor route reaches object {target.EntityId}.");
             var neededDoor = NativeObjectApproachPath.FirstClosedDoorOnRoute(snapshot, target.LevelId, route!);
             if (neededDoor is not null) {
                 await MoveAdjacentToNativePosition(main,
@@ -209,6 +219,11 @@ public partial class SessionAcceptance
                 && snapshot.Objects.Any(value => value.EntityId == expected.DoorTrapSource
                     && value.LevelId == expected.DoorLevel && value.NativeObjectId is 53 or 54),
                 "The Catacombs door checkpoint has no observed linked wall-missile firing.");
+        }
+        // A seeded run may retain only its independently required door firing.
+        if (expected.ChestEntity == 0) {
+            Require(expected.DoorEntity != 0, "The native object checkpoint contains neither chest nor trapped-door evidence.");
+            return;
         }
         var chest = snapshot.Objects.Single(value => value.EntityId == expected.ChestEntity);
         Require(chest.LevelId == expected.ChestLevel && chest.Activated && !chest.NativeChestInteractable,

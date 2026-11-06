@@ -386,6 +386,7 @@ public sealed partial class DiabloSimulation
             state.RewardSetLevelId,
             state.DialogueMessageId) {
             PresentationKind = state.PresentationKind,
+            NativeRandomSeed = state.NativeRandomSeed,
         };
         RequireExactActor(state, CaptureObject(result), "object");
         return result;
@@ -830,6 +831,9 @@ public sealed partial class DiabloSimulation
             ? participant.EntityId
             : snapshot.EntityId;
         player.ActiveStoreId = snapshot.ActiveStoreId;
+        player.RestoreNativeMana(snapshot.Mana, snapshot.ManaMaximum);
+        player.RestoreNativeResourceBases(snapshot.NativeLifeBase, snapshot.NativeManaBase);
+        player.FullyExploredLevelIds.UnionWith(snapshot.FullyExploredLevelIds ?? []);
         player.StatusEffects = snapshot.StatusEffects?.Select(effect => effect with { }).ToList() ?? [];
         player.StashOpen = snapshot.StashOpen;
         player.CurrentAction = snapshot.CurrentAction is null
@@ -889,10 +893,18 @@ public sealed partial class DiabloSimulation
                 $"Participant '{participant.SessionId}' lies outside the fallback world.");
         if (snapshot.Life < 0 || snapshot.Life > snapshot.LifeMaximum
             || snapshot.LifeMaximum < 0
-            || snapshot.Mana < 0 || snapshot.Mana > snapshot.ManaMaximum
-            || snapshot.ManaMaximum < 0
+            || (snapshot.Mana < 0 || snapshot.ManaMaximum < 0)
+                && (!snapshot.NativeLifeBase.HasValue || !snapshot.NativeManaBase.HasValue)
+            || snapshot.Mana < -(2000 << 6) || snapshot.Mana > snapshot.ManaMaximum
+            || snapshot.ManaMaximum < -(2000 << 6)
+            || snapshot.FullyExploredLevelIds is { } maps && (maps.Count > 256
+                || maps.Distinct().Count() != maps.Count
+                || maps.Any(levelId => levelId == 0 || !AuthoritativeLevelIdentityRules.IsRegularLevel(levelId)))
             || snapshot.BaseLifeMaximum < 0
-            || snapshot.BaseManaMaximum < 0)
+            || snapshot.BaseManaMaximum < 0
+            || snapshot.NativeLifeBase.HasValue != snapshot.NativeManaBase.HasValue
+            || snapshot.NativeLifeBase is < -(2000 << 6) || snapshot.NativeLifeBase > snapshot.BaseLifeMaximum
+            || snapshot.NativeManaBase is < -(2000 << 6) || snapshot.NativeManaBase > snapshot.BaseManaMaximum)
             throw new InvalidDataException(
                 $"Participant '{participant.SessionId}' has inconsistent resources.");
         if (snapshot.CharacterLevel == 0
@@ -1054,6 +1066,8 @@ public sealed partial class DiabloSimulation
             && SequenceEqual(expected.Inventory, actual.Inventory)
             && SequenceEqual(expected.Stash, actual.Stash)
             && SequenceEqual(expected.MemorizedSpells, actual.MemorizedSpells)
+            && expected.NativeLifeBase == actual.NativeLifeBase && expected.NativeManaBase == actual.NativeManaBase
+            && SequenceEqual(expected.FullyExploredLevelIds ?? [], actual.FullyExploredLevelIds ?? [])
             && SequenceEqual(expected.VisitedLevelIds, actual.VisitedLevelIds)
             && SequenceEqual(expected.StatusEffects, actual.StatusEffects)
             && Equals(expected.HeldItem, actual.HeldItem)
@@ -1513,6 +1527,7 @@ public sealed partial class DiabloSimulation
             LifeMaximum = player.LifeMaximum,
             BaseLifeMaximum = player.BaseLifeMaximum,
             BaseManaMaximum = player.BaseManaMaximum,
+            NativeLifeBase = player.NativeLifeBase, NativeManaBase = player.NativeManaBase,
             CharacterLevel = player.CharacterLevel,
             LevelId = player.LevelId,
             EntityId = player.EntityId,
@@ -1526,6 +1541,7 @@ public sealed partial class DiabloSimulation
             AbilitySpellId = player.AbilitySpellId,
             AbilityKind = player.AbilityKind,
             MemorizedSpells = player.MemorizedSpells.ToArray(),
+            FullyExploredLevelIds = player.FullyExploredLevelIds.Count == 0 ? null : player.FullyExploredLevelIds.Order().ToArray(),
             StatusEffects = player.StatusEffects.ToArray(),
             FriendlyMode = player.FriendlyMode,
             FacingDirection = player.FacingDirection,
@@ -1622,6 +1638,7 @@ public sealed partial class DiabloSimulation
             AnimationFrame = @object.AnimationFrame,
             ActivatedAnimationFrame = @object.ActivatedAnimationFrame,
             DialogueMessageId = @object.DialogueMessageId,
+            NativeRandomSeed = @object.NativeRandomSeed,
         };
     }
 

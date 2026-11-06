@@ -428,4 +428,8 @@
     <None Include="../../../test/fixtures/replay/gameplay-multi-level-occupancy.json" Link="Fixtures/gameplay-multi-level-occupancy.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../protocol/test-vectors/command-delivery-retry.json" Link="Vectors/command-delivery-retry.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/NativeShrineTestFixture.cs" Link="NativeShrineTestFixture.cs" />
+    <Compile Include="../../../godot-client/Devilution.Client/Acceptance/NativeObjectApproachPath.cs" Link="NativeObjectApproachPath.cs" />
+  </ItemGroup>
 </Project>

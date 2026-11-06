@@ -134,6 +134,21 @@ public sealed class NativeObjectCatalog
             (58, 6, 1, 10, 96, false),
         ]);
 
+    /** Additive native interaction set; the original catalogs remain accepted unchanged. */
+    private static FamilySpec WithNativeInteractions(FamilySpec family)
+        => family with {
+            LevelIds = family.Location == CathedralLocation ? [1, 2, 3, 4] : family.LevelIds,
+            SpriteStems = [.. family.SpriteStems, "lshrineg", "rshrineg"],
+            SpriteWidths = [.. family.SpriteWidths, 128, 128],
+            SpriteMinimumFrameCounts = [.. family.SpriteMinimumFrameCounts, 22, 22],
+            Objects = [.. family.Objects,
+                (59, family.SpriteStems.Length, 1, 11, 128, false),
+                (60, family.SpriteStems.Length + 1, 1, 11, 128, false),
+                (68, family.Location == CathedralLocation ? 1 : 0, 1, 0, 96, false),
+                (69, family.Location == CathedralLocation ? 2 : 1, 1, 0, 96, false),
+                (70, family.Location == CathedralLocation ? 3 : 2, 1, 0, 96, false)],
+        };
+
     private readonly IReadOnlySet<(string Hash, uint LevelId)> bindings;
     private readonly IReadOnlyDictionary<uint, NativeObjectDefinition> objectsById;
     private readonly IReadOnlyDictionary<int, NativeObjectSprite> spritesById;
@@ -253,6 +268,9 @@ public sealed class NativeObjectCatalog
 
         var bindingEntries = RequiredArray(root, "profileBindings");
         var family = SelectFamily(bindingEntries);
+        // Both exact native sets are supported; arbitrary extra objects still fail ParseObjects.
+        if (RequiredArray(root, "objects").GetArrayLength() == family.Objects.Length + 5)
+            family = WithNativeInteractions(family);
         var profileBindings = ParseBindings(bindingEntries, family);
         var sourceHashes = ParseSourceHashes(RequiredArray(root, "sourceHashes"), family);
         var atlases = ParseAtlases(RequiredArray(root, "atlases"), family);

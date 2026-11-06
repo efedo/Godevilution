@@ -73,6 +73,8 @@ enum diablo_message : uint8_t {
 void InitDiabloMsg(diablo_message e, uint32_t duration = 3500);
 void InitDiabloMsg(std::string_view msg, uint32_t duration = 3500);
 bool IsDiabloMsgAvailable();
+/** Read-only oracle seam: observes the message produced by actual native handlers. */
+std::string_view CurrentDiabloMsgForTesting();
 void CancelCurrentDiabloMsg();
 void ClrDiabloMsg();
 void DrawDiabloMsg(const Surface &out);

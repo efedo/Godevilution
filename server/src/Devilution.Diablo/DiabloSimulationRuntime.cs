@@ -342,7 +342,7 @@ public sealed class DiabloPlayerTemplate
             if (spells.Any(spell =>
                     spell is null
                     || spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
-                    || spell.Level is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
+                    || spell.Level > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
                 || spells.Where(spell => spell is not null)
                     .Select(spell => spell.SpellId)
                     .Distinct()

@@ -216,19 +216,27 @@ internal static class NativeObjectCatalogTestData
     private static readonly int[] CatacombsWidths = [96, 96, 96, 64, 64, 96, 96];
     private static readonly int[] CatacombsMinimumFrameCounts = [6, 6, 6, 4, 2, 9, 10];
 
-    public static string CreateJson(bool catacombs = false)
+    public static string CreateJson(bool catacombs = false, bool interactions = false)
     {
-        var root = ParseJson(catacombs);
+        var root = ParseJson(catacombs, interactions);
         return Repack(root);
     }
 
     /** Builds a synthetic Cathedral catalog, or the batch 2.3 Catacombs catalog bound to levels 5-8. */
-    public static JsonObject ParseJson(bool catacombs = false)
+    public static JsonObject ParseJson(bool catacombs = false, bool interactions = false)
     {
         var objects = catacombs ? CatacombsObjects : Objects;
         var stems = catacombs ? CatacombsStems : Stems;
         var widths = catacombs ? CatacombsWidths : Widths;
         var minimumFrameCounts = catacombs ? CatacombsMinimumFrameCounts : MinimumFrameCounts;
+        if (interactions) {
+            var shrineSprite = stems.Length;
+            objects = [.. objects, (59, shrineSprite, 1, 11, 128), (60, shrineSprite + 1, 1, 11, 128),
+                (68, catacombs ? 0 : 1, 1, 0, 96), (69, catacombs ? 1 : 2, 1, 0, 96), (70, catacombs ? 2 : 3, 1, 0, 96)];
+            stems = [.. stems, "lshrineg", "rshrineg"];
+            widths = [.. widths, 128, 128];
+            minimumFrameCounts = [.. minimumFrameCounts, 22, 22];
+        }
         var atlasDirectory = catacombs ? "sprites/catacombs" : "sprites";
         string[] paths = [
             "assets/txtdata/objects/objdat.tsv",
@@ -236,7 +244,7 @@ internal static class NativeObjectCatalogTestData
             .. stems.Select(stem => $"objects/{stem}.cel"),
         ];
         var bindings = new JsonArray();
-        foreach (var level in catacombs ? new[] { 5, 6, 7, 8 } : [1]) {
+        foreach (var level in catacombs ? new[] { 5, 6, 7, 8 } : interactions ? [1, 2, 3, 4] : [1]) {
             bindings.Add(new JsonObject {
                 ["contentManifestHash"] = ContentHash,
                 ["levelId"] = level,
