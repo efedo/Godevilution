@@ -5,6 +5,19 @@ namespace Devilution.Client.Acceptance
     /** Scalar acceptance policy shared with the launcher via Windows PowerShell Add-Type (C# 5). */
     public static class NativeDepthResumeEvidence
     {
+        public const uint TrappedSarcophagusLevel = 4;
+        public const int TrappedSarcophagusX = 33;
+        public const int TrappedSarcophagusY = 62;
+
+        public static void VerifyTrappedSarcophagus(bool required, bool hasRecord, uint level, uint entity,
+            uint source, ulong openingTick, ulong firingTick, bool hasOutcome)
+        {
+            if (!required && !hasRecord) return;
+            if (!hasRecord || level < 1 || level > 4 || entity == 0 || source == 0 || entity == source
+                || openingTick == 0 || firingTick <= openingTick || !hasOutcome)
+                throw new InvalidOperationException("The resume checkpoint has no complete required trapped sarcophagus opening, fresh firing and release evidence.");
+        }
+
         public static bool RequiresChestEvidence(bool hasExplicitCatacombsSeed)
         {
             return !hasExplicitCatacombsSeed;
