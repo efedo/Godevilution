@@ -17,18 +17,36 @@ internal sealed class InProcessLiveServer : IDisposable
     private AuthoritativeCohortStore? cohortStore;
     private HostCommandLog? commandLog;
     private bool disposed;
+    private readonly ObservationTimeProvider observationTime = new();
+    private RealtimeAuthoritativeClock? clock;
+    private IDisposable? controlledClock;
 
     public LiveServerProcess.Identity Identity { get; private set; }
     public bool HasStopped { get; private set; }
+    public ulong CurrentTick => clock!.CurrentTick;
+    public bool IsClockHeld => observationTime.IsHeld;
+    public IDisposable HoldClockForObservation(ulong? tick = null)
+    {
+        var hold = observationTime.Hold();
+        if (tick is { } boundary)
+            clock!.RestoreAtTick(boundary);
+        return hold;
+    }
+    public void AdvanceObservedClock(ulong tick)
+    {
+        if (!IsClockHeld)
+            throw new InvalidOperationException("Advancing an observation requires a held clock.");
+        clock!.RestoreAtTick(tick);
+    }
 
-    public static InProcessLiveServer Start(string repositoryRoot, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
+    public static InProcessLiveServer Start(string repositoryRoot, IReadOnlyList<string> arguments, CancellationToken cancellationToken, bool controlClock = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!ServerHostOptions.TryParse(arguments, out var options, out var error))
             throw new ArgumentException(error, nameof(arguments));
         var host = new InProcessLiveServer();
         try {
-            host.StartCore(repositoryRoot, options, arguments);
+            host.StartCore(repositoryRoot, options, arguments, controlClock);
             cancellationToken.ThrowIfCancellationRequested();
             return host;
         } catch (Exception failure) {
@@ -38,7 +56,7 @@ internal sealed class InProcessLiveServer : IDisposable
         }
     }
 
-    private void StartCore(string repositoryRoot, ServerHostOptions options, IReadOnlyList<string> arguments)
+    private void StartCore(string repositoryRoot, ServerHostOptions options, IReadOnlyList<string> arguments, bool controlClock)
     {
         // Match Program's content, activation, clock, admission and persistence configuration.
         // Startup/operator/crash tests continue to run Program in a separate process.
@@ -68,7 +86,11 @@ internal sealed class InProcessLiveServer : IDisposable
             .SelectMany(root => moduleLoader.LoadDirectory(root).Modules)).ToArray();
         var seedStore = cohortStore?.CreateWorldSeedStore() ?? new AuthoritativeWorldSeedStore(options.SaveRoot);
         var seed = seedStore.LoadOrCreate(options.RandomSeed);
-        var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
+        // Combat fixtures must not consume ambient RNG during connection setup.
+        // Only their explicit game-condition observations advance this per-host clock.
+        if (controlClock)
+            controlledClock = observationTime.Hold();
+        clock = new RealtimeAuthoritativeClock(options.TickRateHz, observationTime);
         var start = new AuthoritativePlayerStartConfiguration(options.StartingGold, options.StartingLife, options.StartingMana) {
             StatPoints = options.StartingStatPoints,
             StartingLevelId = options.StartingLevelId,
@@ -123,6 +145,7 @@ internal sealed class InProcessLiveServer : IDisposable
             failure = exception;
         }
         HasStopped = true;
+        controlledClock?.Dispose();
         DisposeOwned(adapter, "adapter");
         DisposeOwned(cohortStore, "cohort-store");
         DisposeOwned(commandLog, "command-log");
@@ -141,4 +164,47 @@ internal sealed class InProcessLiveServer : IDisposable
             }
         }
     }
+    // A single test may inspect a transient game phase without racing the machine's load.
+    // Unheld hosts use the system timestamp at their normal advertised rate.
+    private sealed class ObservationTimeProvider : TimeProvider
+    {
+        private readonly object synchronization = new();
+        private long? held;
+        private long pausedTimestamps;
+        private int holdDepth;
+        public bool IsHeld { get { lock (synchronization) return held is not null; } }
+        public override long TimestampFrequency => global::System.Diagnostics.Stopwatch.Frequency;
+        public override long GetTimestamp()
+        {
+            lock (synchronization)
+                return held ?? (global::System.Diagnostics.Stopwatch.GetTimestamp() - pausedTimestamps);
+        }
+        public IDisposable Hold()
+        {
+            lock (synchronization) {
+                if (holdDepth++ == 0)
+                    held = global::System.Diagnostics.Stopwatch.GetTimestamp() - pausedTimestamps;
+                return new Observation(this);
+            }
+        }
+        private sealed class Observation(ObservationTimeProvider owner) : IDisposable
+        {
+            private bool disposed;
+            public void Dispose()
+            {
+                lock (owner.synchronization) {
+                    if (disposed)
+                        return;
+                    disposed = true;
+                    if (--owner.holdDepth != 0)
+                        return;
+                    // Observing a phase pauses game time; resuming must not replay the
+                    // entire wall-clock observation interval as an artificial tick jump.
+                    owner.pausedTimestamps = global::System.Diagnostics.Stopwatch.GetTimestamp() - owner.held!.Value;
+                    owner.held = null;
+                }
+            }
+        }
+    }
+
 }

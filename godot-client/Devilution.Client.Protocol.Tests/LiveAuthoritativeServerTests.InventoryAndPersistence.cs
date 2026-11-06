@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeInventoryPersistenceTests : LiveAuthoritativeTestBase
 {
 
     [Fact]
@@ -219,7 +219,10 @@ public sealed partial class LiveAuthoritativeServerTests
                 for (var attempt = 0; attempt < 200 && !Directory.EnumerateFiles(saveRoot, "*.json").Any(); attempt++)
                     await Task.Delay(25, TestContext.Current.CancellationToken);
                 Assert.NotEmpty(Directory.EnumerateFiles(saveRoot, "*.json"));
-                await Task.Delay(500, TestContext.Current.CancellationToken);
+                await WaitForMessageAsync(client, message => message.Snapshot is { } settled
+                    && settled.Tick >= moveAcknowledgement.AppliedTick
+                    && settled.Players.Single().CombatMode == PlayerCombatMode.Stand
+                    && settled.Players.Single().CurrentAction is null);
             }
 
             using var restartedServer = await StartedServer.StartAsync(
@@ -320,7 +323,10 @@ public sealed partial class LiveAuthoritativeServerTests
                     await Task.Delay(25, TestContext.Current.CancellationToken);
                 }
                 Assert.True(Directory.EnumerateFiles(saveRoot, "*.json").Count() >= 2);
-                await Task.Delay(500, TestContext.Current.CancellationToken);
+                await WaitForMessageAsync(firstClient, message => message.Snapshot is { } settled
+                    && settled.Tick >= moved.Snapshot!.Tick
+                    && settled.Players.Single(player => player.EntityId == firstEntityId).CombatMode == PlayerCombatMode.Stand
+                    && settled.Players.Single(player => player.EntityId == firstEntityId).CurrentAction is null);
             }
 
             using var restartedServer = await StartedServer.StartAsync(

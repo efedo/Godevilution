@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientClockOnlyProbeTests
 {
     [Fact]
@@ -340,6 +341,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         timeout.CancelAfter(TimeSpan.FromSeconds(8));
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var initialResponsesSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
             using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
             await using var stream = connection.GetStream();
@@ -356,6 +358,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                 },
             }, timeout.Token);
             await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } }, timeout.Token);
+            initialResponsesSent.TrySetResult();
 
             var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -388,14 +391,33 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                     ServerSchedulingClockTick = 120,
                 },
             }, timeout.Token);
-            var resumedPoll = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, resumedPoll.PayloadCase);
+            // Probes and polls have independent cadences. Further probes may be due
+            // while the next snapshot poll is being scheduled. Require both to resume.
+            while (true) {
+                var resumed = await ReadEnvelopeAsync(stream, timeout.Token);
+                if (resumed.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest)
+                    break;
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, resumed.PayloadCase);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = resumed.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 120,
+                    },
+                }, timeout.Token);
+            }
         }, timeout.Token);
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
-        await client.PollAsync(timeout.Token);
+        // Complete the initial poll/calibration before queuing input. A fixed delay
+        // could queue input while the first full poll was still not due.
+        for (var poll = 0; poll < 200 && !initialResponsesSent.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(10, timeout.Token);
+        }
+        if (serverTask.IsCompleted)
+            await serverTask;
+        await initialResponsesSent.Task.WaitAsync(timeout.Token);
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);
@@ -414,6 +436,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         timeout.CancelAfter(TimeSpan.FromSeconds(6));
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var initialResponsesSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
             using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
             await using var stream = connection.GetStream();
@@ -430,6 +453,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                 },
             }, timeout.Token);
             await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } }, timeout.Token);
+            initialResponsesSent.TrySetResult();
 
             var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -448,14 +472,31 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                     ServerSchedulingClockTick = 120,
                 },
             }, timeout.Token);
-            var retriedSnapshot = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, retriedSnapshot.PayloadCase);
+            while (true) {
+                var retriedSnapshot = await ReadEnvelopeAsync(stream, timeout.Token);
+                if (retriedSnapshot.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest)
+                    break;
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, retriedSnapshot.PayloadCase);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = retriedSnapshot.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 120,
+                    },
+                }, timeout.Token);
+            }
         }, timeout.Token);
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
-        await client.PollAsync(timeout.Token);
+        // Complete the initial poll/calibration before queuing input. A fixed delay
+        // could queue input while the first full poll was still not due.
+        for (var poll = 0; poll < 200 && !initialResponsesSent.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(10, timeout.Token);
+        }
+        if (serverTask.IsCompleted)
+            await serverTask;
+        await initialResponsesSent.Task.WaitAsync(timeout.Token);
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);
@@ -475,6 +516,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var firstAcknowledgementSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var initialPollSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
             using (var connection = await listener.AcceptTcpClientAsync(timeout.Token)) {
                 await using var stream = connection.GetStream();
@@ -489,6 +531,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                         ServerSchedulingClockTick = 9000,
                     },
                 }, timeout.Token);
+                initialPollSeen.TrySetResult();
                 var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
                 Assert.True(command.RequestedTick >= 9000);
                 await WriteEnvelopeAsync(stream, new Envelope {
@@ -531,8 +574,14 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
-        await client.PollAsync(timeout.Token);
+        // Leave the initial snapshot unanswered deliberately, after it was requested.
+        for (var poll = 0; poll < 200 && !initialPollSeen.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(10, timeout.Token);
+        }
+        if (serverTask.IsCompleted)
+            await serverTask;
+        await initialPollSeen.Task.WaitAsync(timeout.Token);
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);

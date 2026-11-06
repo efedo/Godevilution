@@ -4,27 +4,8 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests : IAsyncLifetime
+public sealed class LiveAuthoritativeProcessLifetimeTests : LiveAuthoritativeTestBase
 {
-    private readonly List<StartedServer> ownedServers = [];
-    private readonly List<Exception> cleanupFailures = [];
-
-    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
-
-    public ValueTask DisposeAsync()
-    {
-        foreach (var server in ownedServers)
-            server.Dispose();
-        if (cleanupFailures.Count != 0)
-            throw new AggregateException("Live authoritative test cleanup failed.", cleanupFailures);
-        return ValueTask.CompletedTask;
-    }
-
-    private void CleanupLocalRoot(LiveTestSaveRoot lease)
-    {
-        try { lease.Delete(); }
-        catch (Exception failure) { cleanupFailures.Add(failure); }
-    }
 
     [Fact]
     public async Task LiveHostFixtureTracksActualHostAndReleasesSaveRootOnAbruptStop()

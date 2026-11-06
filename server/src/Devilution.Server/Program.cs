@@ -256,7 +256,10 @@ internal static class Program
                 $"Cohort checkpoint write failed; retrying next interval: {exception.GetType().Name}: {exception.Message}"),
         };
         server.Start();
-        StartFloorEntryWarmup(gameAdapter);
+        if (options.SkipFloorEntryWarmup)
+            Console.WriteLine("Floor entry warm-up skipped by host option.");
+        else
+            StartFloorEntryWarmup(gameAdapter);
         commandTimingPublisher = commandTimingSink?.RunAsync();
         Console.WriteLine($"Godevilution authoritative server listening on {options.BindAddress}:{server.Port}");
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");

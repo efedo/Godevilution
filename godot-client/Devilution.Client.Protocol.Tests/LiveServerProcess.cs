@@ -8,6 +8,7 @@ namespace Devilution.Client.Protocol.Tests;
 /** Owns the actual host PID and its output, never a dotnet-run parent process. */
 internal sealed class LiveServerProcess : IAsyncDisposable
 {
+    internal const uint DefaultTickRateHz = 200;
     private static readonly ConcurrentDictionary<BuildLocation, Lazy<Task<string>>> targetPaths = new();
     private readonly Process process;
     private readonly int id;
@@ -70,7 +71,7 @@ internal sealed class LiveServerProcess : IAsyncDisposable
         return assembly;
     }
 
-    public static ProcessStartInfo CreateStartInfo(string repositoryRoot, string assembly)
+    public static ProcessStartInfo CreateStartInfo(string repositoryRoot, string assembly, uint? tickRateHz = DefaultTickRateHz, bool fastStartup = true)
     {
         var info = new ProcessStartInfo {
             FileName = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet",
@@ -82,6 +83,16 @@ internal sealed class LiveServerProcess : IAsyncDisposable
             CreateNoWindow = true,
         };
         info.ArgumentList.Add(assembly);
+        if (tickRateHz is { } rate) {
+            info.ArgumentList.Add("--tick-rate");
+            info.ArgumentList.Add(rate.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        if (fastStartup) {
+            // Override only this child; retain the production runtimeconfig's optimized first use.
+            info.Environment["DOTNET_TC_QuickJit"] = "1";
+            info.ArgumentList.Add("--skip-floor-entry-warmup");
+            info.ArgumentList.Add("true");
+        }
         return info;
     }
 

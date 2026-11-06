@@ -206,10 +206,11 @@ public sealed partial class LiveAuthoritativeServerTests
         var directory = Path.Combine(Path.GetFullPath(root), $"{participants}-participants-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
         var outputPath = Path.Combine(directory, "host.json");
+        // Keep 20 Hz and production JIT/warm-up: this explicit benchmark measures production defaults.
         using var server = await StartedServer.StartAsync(cancellationToken,
-            startingLevelOverride: 0, randomSeed: 0, gameMode: mode,
+            tickRateHz: 20, startingLevelOverride: 0, randomSeed: 0, gameMode: mode,
             saveRootOverride: Path.Combine(directory, "save"), deleteSaveRootOnDispose: false,
-            performanceOutput: outputPath, commandSchedulingMode: expectedSchedulingMode, useProcess: true);
+            performanceOutput: outputPath, commandSchedulingMode: expectedSchedulingMode, useProcess: true, productionStartup: true);
         var clients = new List<AuthoritativeClient>();
         var snapshots = new Snapshot?[participants];
         var accepted = new HashSet<ulong>();
@@ -219,6 +220,8 @@ public sealed partial class LiveAuthoritativeServerTests
             for (var index = 0; index < participants; index++) {
                 var client = new AuthoritativeClient(CreateOptions(server, "host-performance", 1) with {
                     RequestedCharacterName = $"Perf-Rogue-{index + 1}",
+                    SnapshotPollInterval = TimeSpan.FromMilliseconds(250),
+                    MaximumRetryTimeout = TimeSpan.FromSeconds(2),
                 }) {
                     CommandTimingRecorder = index == 0 && expectedSchedulingMode == CommandSchedulingMode.ClockGated
                         ? new AuthoritativeClientCommandTimingRecorder()

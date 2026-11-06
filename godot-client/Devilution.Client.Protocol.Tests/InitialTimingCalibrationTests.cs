@@ -9,6 +9,7 @@ using Xunit;
 namespace Devilution.Client.Protocol.Tests;
 
 /** Ordered loopback coverage for clock-gated startup readiness. */
+[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class InitialTimingCalibrationTests
 {
     [Fact]

@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeSorcererRechargeRestartTests : LiveAuthoritativeTestBase
 {
     [Fact]
     public async Task LiveServerRestoresSorcererRechargeAfterProcessRestart()
@@ -50,7 +50,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 cancellationToken,
                 randomSeed: 1,
                 saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: false, useProcess: true);
+                deleteSaveRootOnDispose: false, useProcess: true, passiveMonsters: true);
             var firstProcessId = firstServer.ProcessId;
             var firstPort = firstServer.Port;
             contentHash = firstServer.ContentHash;
@@ -218,7 +218,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 cancellationToken,
                 portOverride: firstPort,
                 saveRootOverride: saveRoot,
-                deleteSaveRootOnDispose: false, useProcess: true);
+                deleteSaveRootOnDispose: false, useProcess: true, passiveMonsters: true);
             Assert.NotEqual(firstProcessId, restartedServer.ProcessId);
             Assert.True(firstServer.HasExited);
             Assert.Equal(contentHash, restartedServer.ContentHash);

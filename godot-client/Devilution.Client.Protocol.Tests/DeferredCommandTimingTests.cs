@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Devilution.Client.Protocol;
@@ -10,6 +11,7 @@ using Xunit;
 namespace Devilution.Client.Protocol.Tests;
 
 /** Transport-only coverage for the negotiated clock-gated command mode. */
+[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class DeferredCommandTimingTests
 {
     [Fact]
@@ -152,7 +154,12 @@ public sealed class DeferredCommandTimingTests
             await using var stream = connection.GetStream();
             await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100, cancellationToken: cancellationToken);
             var readinessProbe = (await ReadEnvelopeAsync(stream, cancellationToken)).SnapshotRequest;
+            var stall = Stopwatch.StartNew();
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            // Timer wake-up resolution can undershoot one measured second. Keep the
+            // slow-probe precondition exact without relaxing the RTT or dispatch limits.
+            while (stall.Elapsed < TimeSpan.FromSeconds(1))
+                await Task.Delay(1, cancellationToken);
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
             }, cancellationToken);
@@ -170,7 +177,8 @@ public sealed class DeferredCommandTimingTests
         }
 
         var sent = await serverTask;
-        Assert.True(client.RoundTripMilliseconds >= 1000);
+        Assert.True(client.RoundTripMilliseconds >= 1000,
+            $"Slow readiness sample was {client.RoundTripMilliseconds:F3} ms; dispatch tick {sent.RequestedTick}.");
         // At 20 Hz: one second of projection (20 ticks) and the 500 ms lead limit (10) plus one.
         Assert.InRange(sent.RequestedTick, 101UL, 131UL);
     }
@@ -314,7 +322,9 @@ public sealed class DeferredCommandTimingTests
         await Task.Delay(10, TestContext.Current.CancellationToken);
         await client.PollAsync(TestContext.Current.CancellationToken);
 
-        for (var attempt = 0; attempt < 350 && !serverTask.IsCompleted; attempt++) {
+        // A completed server write does not mean the client's receive loop applied it.
+        for (var attempt = 0; attempt < 350
+            && (!serverTask.IsCompleted || client.RetryTimeout <= TimeSpan.FromMilliseconds(400)); attempt++) {
             await Task.Delay(10, TestContext.Current.CancellationToken);
             await client.PollAsync(TestContext.Current.CancellationToken);
         }

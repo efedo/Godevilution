@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(WallClockTimingCollection.CollectionName)]
 public sealed partial class AuthoritativeClientTransportTests
 {
     [Fact]

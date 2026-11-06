@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativePortalLifetimeRestartTests : LiveAuthoritativeTestBase
 {
     [Fact]
     public async Task LiveServerRestoresTownPortalLifetimeAfterProcessRestart()
@@ -598,39 +598,10 @@ public sealed partial class LiveAuthoritativeServerTests
         return candidates[0];
     }
 
-    private static void AssertTownPortalAcceptedReceipt(CommandResult acknowledgement, ulong sequence)
-    {
-        Assert.Equal(sequence, acknowledgement.ClientSequence);
-        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
-        Assert.Equal(CommandRejectReason.Unspecified, acknowledgement.RejectReason);
-        Assert.True(acknowledgement.ServerReceiptSequence > 0);
-        Assert.True(acknowledgement.AppliedTick > 0);
-    }
-
     private static void AssertTownPortalReceiptFollows(CommandResult previous, CommandResult next)
     {
         Assert.True(next.ClientSequence > previous.ClientSequence);
         Assert.True(next.ServerReceiptSequence > previous.ServerReceiptSequence);
         Assert.True(next.AppliedTick >= previous.AppliedTick);
-    }
-
-    private static PortalSnapshot AssertTownPortalAtTick(
-        Snapshot snapshot,
-        PortalSnapshot portalIdentity,
-        ulong baselineTick,
-        uint baselineRemaining)
-    {
-        Assert.True(baselineRemaining > 0);
-        Assert.True(snapshot.Tick >= baselineTick);
-        var elapsedTicks = snapshot.Tick - baselineTick;
-        var expectedRemaining = elapsedTicks >= (ulong)(baselineRemaining - 1)
-            ? 1U
-            : baselineRemaining - checked((uint)elapsedTicks);
-        var expected = portalIdentity.Clone();
-        expected.RemainingTicks = expectedRemaining;
-        var actual = Assert.Single(snapshot.Portals, portal => portal.PortalId == portalIdentity.PortalId);
-        Assert.Equal(expected, actual);
-        Assert.True(actual.RemainingTicks > 0);
-        return actual;
     }
 }

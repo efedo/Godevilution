@@ -14,7 +14,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeCohortPortalRestartTests : LiveAuthoritativeTestBase
 {
     [Fact]
     public async Task LiveCohortRestoresOwnedTownPortalAndNonOwnerUseAfterProcessRestart()
@@ -739,7 +739,7 @@ public sealed partial class LiveAuthoritativeServerTests
         }
     }
 
-    private static async Task<StartedServer> StartCohortPortalServerAsync(
+    private async Task<StartedServer> StartCohortPortalServerAsync(
         CancellationToken cancellationToken,
         string townLoopPreviewRoot,
         string townPortalPreviewRoot,
@@ -779,7 +779,7 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.Equal(server.ContentHash, identity.ContentManifestHash);
         Assert.Equal(server.RulesetHash, identity.RulesetIdentityHash);
         Assert.Equal(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity, identity.ProtocolSchemaVersion);
-        Assert.Equal(20U, identity.TickRateHz);
+        Assert.Equal(LiveServerProcess.DefaultTickRateHz, identity.TickRateHz);
         Assert.Equal(GameMode.Multiplayer, identity.GameMode);
         Assert.Equal(GameMode.Multiplayer, client.ServerGameMode);
         Assert.True(client.IsClockGatedCommandScheduling);
@@ -787,7 +787,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(expectedBuildId, identity.BuildId);
     }
 
-    private static async Task<CommandResult> SubmitCohortCommandAsync(
+    private async Task<CommandResult> SubmitCohortCommandAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         Command command,
@@ -826,7 +826,7 @@ public sealed partial class LiveAuthoritativeServerTests
         return acknowledgement;
     }
 
-    private static async Task<Snapshot> WaitForCohortSnapshotAsync(
+    private async Task<Snapshot> WaitForCohortSnapshotAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         Func<Snapshot, bool> predicate,
@@ -842,7 +842,7 @@ public sealed partial class LiveAuthoritativeServerTests
         return model.Snapshot!;
     }
 
-    private static async Task<Snapshot> RefreshCohortModelAsync(
+    private async Task<Snapshot> RefreshCohortModelAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         ulong minimumTick,
@@ -858,7 +858,7 @@ public sealed partial class LiveAuthoritativeServerTests
             cancellationToken);
     }
 
-    private static async Task MoveActorNearTownerAsync(
+    private async Task MoveActorNearTownerAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         uint entityId,
@@ -905,7 +905,7 @@ public sealed partial class LiveAuthoritativeServerTests
         throw new TimeoutException("The cohort actor could not reach the Smith's ordinary interaction range.");
     }
 
-    private static async Task MoveActorToWarpAsync(
+    private async Task MoveActorToWarpAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         uint entityId,
@@ -954,7 +954,7 @@ public sealed partial class LiveAuthoritativeServerTests
         throw new TimeoutException($"The cohort actor could not reach warp '{warpSymbol}'.");
     }
 
-    private static async Task<CommandResult?> MoveActorToCellAsync(
+    private async Task<CommandResult?> MoveActorToCellAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         uint entityId,
@@ -1008,7 +1008,7 @@ public sealed partial class LiveAuthoritativeServerTests
         throw new TimeoutException("The cohort actor could not reach the requested ordinary movement target.");
     }
 
-    private static async Task MoveActorToAdjacentOfPortalEndpointAsync(
+    private async Task MoveActorToAdjacentOfPortalEndpointAsync(
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         uint entityId,
@@ -1235,7 +1235,7 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.True(document.NextEntityId > 0);
         Assert.True(document.NextServerReceiptSequence > 0);
         Assert.Equal(AuthoritativeGameMode.Multiplayer, document.Identity.GameMode);
-        Assert.Equal(20U, document.Identity.TickRateHz);
+        Assert.Equal(LiveServerProcess.DefaultTickRateHz, document.Identity.TickRateHz);
         Assert.Equal(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             document.Identity.ProtocolSchemaVersion);
         Assert.True(document.Identity.ModuleFormatVersion > 0);
@@ -1371,6 +1371,6 @@ public sealed partial class LiveAuthoritativeServerTests
     private static int ChebyshevDistance(int x1, int y1, int x2, int y2)
         => Math.Max(Math.Abs(x1 - x2), Math.Abs(y1 - y2));
 
-    private static async Task DisposeCohortClientAsync(AuthoritativeClient client)
+    private async Task DisposeCohortClientAsync(AuthoritativeClient client)
         => await client.DisposeAsync();
 }

@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeClassAbilityTests : LiveAuthoritativeTestBase
 {
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed partial class LiveAuthoritativeServerTests
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
             hellfireRoot,
-            randomSeed: 0x00000001);
+            randomSeed: 0x00000001, passiveMonsters: true);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-hellfire-sorcerer", requestedClassId: 2));
 
@@ -110,6 +110,7 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.Equal(40, staff.State.MaxCharges);
         Assert.Equal(ItemSpellSourceKind.ChargedItem, staff.State.SpellSourceKind);
 
+        using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
         var sequence = client.Queue(new Command {
             CastRequested = new CastRequested {
                 SpellId = (uint)staff.State.SpellId,
@@ -124,14 +125,14 @@ public sealed partial class LiveAuthoritativeServerTests
                     StableItemId = staff.State.StableItemId,
                 },
             },
-        }, client.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await client.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
             $"Hellfire Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; staff item was {staff.State.ItemIndex} with {staff.State.Charges} charges.");
 
-        var consumed = await WaitForMessageAsync(
+        var consumed = await WaitForGameConditionAsync(server,
             client,
             message => message.Snapshot is { } snapshot && snapshot.Players.Single().Equipment
                 .Any(item => item.Slot == 4 && item.State.StableItemId == staff.State.StableItemId
@@ -149,7 +150,7 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.True(bolt.Damage > 0);
         // A native Firebolt may miss. Verify the live source and lifecycle;
         // deterministic replay tests own exact hit/damage/RNG expectations.
-        _ = await WaitForMessageAsync(client, message =>
+        _ = await WaitForGameConditionAsync(server, client, message =>
             message.Snapshot is { } snapshot && snapshot.Tick >= consumed.Snapshot.Tick
                 && snapshot.Projectiles.All(projectile => projectile.EntityId != bolt.EntityId));
     }
@@ -599,19 +600,20 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.Equal(PlayerAbilityKind.Rage, player.AbilityKind);
         var initialLife = player.Life;
 
+        using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
         var sequence = client.Queue(new Command {
             CastRequested = new CastRequested {
                 SpellId = 22,
                 Source = CastSourceKind.Ability,
             },
-        }, client.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await client.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
             $"Barbarian Rage was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; class was {player.CharacterClassId}, ability was {player.AbilitySpellId}.");
 
-        var active = await WaitForMessageAsync(
+        var active = await WaitForGameConditionAsync(server,
             client,
             message => message.Snapshot?.Projectiles.Any(projectile =>
                 projectile.SourceEntityId == player.EntityId

@@ -9,11 +9,24 @@ public sealed class LiveServerProcessTests
     {
         var assembly = Path.Combine(Path.GetTempPath(), "selected", "Devilution.Server.dll");
         var info = LiveServerProcess.CreateStartInfo(Path.GetTempPath(), assembly);
-        Assert.Equal([assembly], info.ArgumentList);
+        Assert.Equal([assembly, "--tick-rate", "200", "--skip-floor-entry-warmup", "true"], info.ArgumentList);
         Assert.True(info.CreateNoWindow);
         Assert.True(info.RedirectStandardOutput && info.RedirectStandardError && info.RedirectStandardInput);
         Assert.False(info.UseShellExecute);
         Assert.DoesNotContain("run", info.ArgumentList);
+    }
+
+    [Fact]
+    public void FastStartupOverridesOnlyTheChildAndProductionBenchmarkCanOptOut()
+    {
+        var original = Environment.GetEnvironmentVariable("DOTNET_TC_QuickJit");
+        var fast = LiveServerProcess.CreateStartInfo(Path.GetTempPath(), "selected.dll");
+        Assert.Equal("1", fast.Environment["DOTNET_TC_QuickJit"]);
+        Assert.Equal(original, Environment.GetEnvironmentVariable("DOTNET_TC_QuickJit"));
+        var production = LiveServerProcess.CreateStartInfo(Path.GetTempPath(), "selected.dll", tickRateHz: 20, fastStartup: false);
+        Assert.Equal(["selected.dll", "--tick-rate", "20"], production.ArgumentList);
+        production.Environment.TryGetValue("DOTNET_TC_QuickJit", out var productionOverride);
+        Assert.Equal(original, productionOverride);
     }
 
     [Fact]

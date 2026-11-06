@@ -5,7 +5,8 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+[Collection(WallClockTimingCollection.CollectionName)]
+public sealed class LiveAuthoritativeTickRateSynchronizationTests : LiveAuthoritativeTestBase
 {
     /**
      * Brief clock-gated play at a slow, the default and a fast odd rate: the client adopts
@@ -21,10 +22,14 @@ public sealed partial class LiveAuthoritativeServerTests
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(60));
         var cancellationToken = deadline.Token;
+        // Keep the supplied 9/20/41 Hz rates: this test checks negotiation and real clock rate.
         using var server = await StartedServer.StartAsync(cancellationToken,
             startingLevelOverride: 0, randomSeed: 0, gameMode: "single-player",
             commandSchedulingMode: CommandSchedulingMode.ClockGated, tickRateHz: tickRateHz);
-        await using var client = new AuthoritativeClient(CreateOptions(server, "godot-live-tick-rate-sync", 1));
+        await using var client = new AuthoritativeClient(CreateOptions(server, "godot-live-tick-rate-sync", 1) with {
+            SnapshotPollInterval = TimeSpan.FromMilliseconds(250),
+            MaximumRetryTimeout = TimeSpan.FromSeconds(2),
+        });
         await client.ConnectAsync(cancellationToken);
         Assert.Equal(CommandSchedulingMode.ClockGated, client.ServerCommandSchedulingMode);
         Assert.Equal(tickRateHz, client.ServerTickRateHz);
@@ -40,7 +45,9 @@ public sealed partial class LiveAuthoritativeServerTests
                 if (message.Snapshot is { } received && (snapshot is null || received.Tick >= snapshot.Tick))
                     snapshot = received;
                 foreach (var result in message.Acknowledgement?.Results ?? [])
-                    results[result.ClientSequence] = result;
+                    // A legitimate retry may follow acceptance in the same drain.
+                    // Judge the first receipt, rather than replacing it with Duplicate.
+                    results.TryAdd(result.ClientSequence, result);
             }
         }
         async Task<Snapshot> PumpUntilAsync(Func<Snapshot, bool> done, string failure)

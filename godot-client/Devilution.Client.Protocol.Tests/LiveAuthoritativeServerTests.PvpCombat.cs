@@ -9,18 +9,18 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativePvpCombatTests : LiveAuthoritativeTestBase
 {
 
     [Fact]
     public async Task LiveServerAdmitsEntityTargetedAttackAndPublishesActionState()
     {
-        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
+        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken, controlledClock: true);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-live-attack", requestedClassId: 0));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
-        var initial = await WaitForMessageAsync(
+        var initial = await WaitForGameConditionAsync(server,
             client,
             message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
@@ -30,18 +30,20 @@ public sealed partial class LiveAuthoritativeServerTests
             model.Snapshot.Monsters,
             monster => monster.EntityId == 9 && monster.Alive);
 
+        var observedRequestTick = server.CurrentTick;
+        using var observation = server.HoldClockForObservation(observedRequestTick);
         var sequence = client.Queue(new Command {
             AttackRequested = new AttackRequested {
                 TargetEntityId = target.EntityId,
             },
-        }, client.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await client.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
             $"Attack was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; player was ({player.PositionX},{player.PositionY}), target was ({target.PositionX},{target.PositionY}).");
 
-        var action = await WaitForMessageAsync(
+        var action = await WaitForGameConditionAsync(server,
             client,
             message => message.Snapshot?.Players.Single().CurrentAction is {
                 Kind: PlayerActionKind.Attack,
@@ -59,11 +61,11 @@ public sealed partial class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            randomSeed: 1);
+            randomSeed: 1, passiveMonsters: true, controlledClock: true);
         await using var attackerClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-pvp-attacker", requestedClassId: 0));
         await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var attackerInitial = await WaitForMessageAsync(
+        var attackerInitial = await WaitForGameConditionAsync(server,
             attackerClient,
             message => message.Snapshot is not null);
         var attackerEntityId = Assert.Single(attackerInitial.Snapshot!.Players).EntityId;
@@ -71,7 +73,7 @@ public sealed partial class LiveAuthoritativeServerTests
         await using var victimClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-pvp-victim", requestedClassId: 1));
         await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var victimInitial = await WaitForMessageAsync(
+        var victimInitial = await WaitForGameConditionAsync(server,
             victimClient,
             message => message.Snapshot is { Players.Count: 2 });
         var victim = victimInitial.Snapshot!.Players.Single(
@@ -92,28 +94,28 @@ public sealed partial class LiveAuthoritativeServerTests
             SetFriendlyModeRequested = new SetFriendlyModeRequested {
                 FriendlyMode = false,
             },
-        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await attackerClient.PollAsync(TestContext.Current.CancellationToken);
         var friendlyModeAcknowledgement = await WaitForAcknowledgementAsync(
             attackerClient,
             friendlyModeSequence);
         Assert.Equal(CommandStatus.Accepted, friendlyModeAcknowledgement.Status);
-        model.Apply(await WaitForMessageAsync(attackerClient, message =>
+        model.Apply(await WaitForGameConditionAsync(server, attackerClient, message =>
             message.Snapshot?.Tick >= friendlyModeAcknowledgement.AppliedTick));
 
+        var requestedTick = FindGuaranteedHitTick(
+            server.CurrentTick, attackerEntityId, victim.EntityId);
+        using var observation = server.HoldClockForObservation(requestedTick);
         var sequence = attackerClient.Queue(new Command {
             AttackRequested = new AttackRequested {
                 TargetEntityId = victim.EntityId,
             },
-        }, FindGuaranteedHitTick(
-            attackerClient.SuggestedCommandTick(model.CurrentTick),
-            attackerEntityId,
-            victim.EntityId));
+        }, requestedTick);
         await attackerClient.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
         Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-        var action = await WaitForMessageAsync(
+        var action = await WaitForGameConditionAsync(server,
             attackerClient,
             message => message.Snapshot?.Players.Single(
                 player => player.EntityId == attackerEntityId).CurrentAction is {
@@ -127,7 +129,7 @@ public sealed partial class LiveAuthoritativeServerTests
         var victimLifeBeforeImpact = action.Snapshot.Players.Single(
             player => player.EntityId == victim.EntityId).Life;
 
-        var resolved = await WaitForMessageAsync(
+        var resolved = await WaitForGameConditionAsync(server,
             attackerClient,
             message => message.Snapshot?.Players.Single(
                     player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
@@ -151,11 +153,11 @@ public sealed partial class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            randomSeed: 1);
+            randomSeed: 1, passiveMonsters: true, controlledClock: true);
         await using var victimClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-pvp-ranged-victim", requestedClassId: 0));
         await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var victimInitial = await WaitForMessageAsync(
+        var victimInitial = await WaitForGameConditionAsync(server,
             victimClient,
             message => message.Snapshot is not null);
         var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -163,13 +165,13 @@ public sealed partial class LiveAuthoritativeServerTests
         moveModel.Apply(victimInitial);
         var moveSequence = victimClient.Queue(new Command {
             MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-        }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+        }, server.CurrentTick);
         await victimClient.PollAsync(TestContext.Current.CancellationToken);
         var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
         Assert.True(
             moveAcknowledgement.Status == CommandStatus.Accepted,
             $"Move was {moveAcknowledgement.Status}/{moveAcknowledgement.RejectReason} at tick {moveAcknowledgement.AppliedTick}.");
-        var moved = await WaitForMessageAsync(
+        var moved = await WaitForGameConditionAsync(server,
             victimClient,
             message => message.Snapshot?.Players.Single(
                 player => player.EntityId == initialVictim.EntityId).PositionY
@@ -180,7 +182,7 @@ public sealed partial class LiveAuthoritativeServerTests
         await using var attackerClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-pvp-ranged-attacker", requestedClassId: 1));
         await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var attackerInitial = await WaitForMessageAsync(
+        var attackerInitial = await WaitForGameConditionAsync(server,
             attackerClient,
             message => message.Snapshot is { Players.Count: 2 });
         var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -189,46 +191,71 @@ public sealed partial class LiveAuthoritativeServerTests
             player => player.EntityId == victim.EntityId).PositionY);
         var model = new AuthoritativeClientModel();
         model.Apply(attackerInitial);
-        var sequence = attackerClient.Queue(new Command {
-            AttackRequested = new AttackRequested {
-                TargetEntityId = victim.EntityId,
-            },
-        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
-        await attackerClient.PollAsync(TestContext.Current.CancellationToken);
-        var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
-        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+        var observedRequestTick = server.CurrentTick;
+        using var observation = server.HoldClockForObservation(observedRequestTick);
+        // Keep the native hit/miss rolls. A bounded series must produce a witnessed impact;
+        // the old single-shot check accidentally depended on the real-time tick/RNG alignment.
+        for (var attempt = 0; attempt < 8; attempt++) {
+            var ready = await WaitForGameConditionAsync(server, attackerClient, message => message.Snapshot is { } snapshot
+                && snapshot.Tick >= server.CurrentTick
+                && snapshot.Players.Single(player => player.EntityId == attackerEntityId) is {
+                    CurrentAction: null, CombatMode: PlayerCombatMode.Stand });
+            model.Apply(ready);
+            // The legacy PvP hit seed includes the action's start tick. Select a
+            // witnessed hit with the same rules as the melee scenario; retain native blocks.
+            server.AdvanceObservedClock(FindGuaranteedHitTick(
+                checked(server.CurrentTick + 1), attackerEntityId, victim.EntityId));
+            var sequence = attackerClient.Queue(new Command {
+                AttackRequested = new AttackRequested {
+                    TargetEntityId = victim.EntityId,
+                },
+            }, server.CurrentTick);
+            await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-        var action = await WaitForMessageAsync(
-            attackerClient,
-            message => message.Snapshot?.Players.Single(
-                player => player.EntityId == attackerEntityId).CurrentAction is {
-                    Kind: PlayerActionKind.Attack,
-                    TargetEntityId: var targetEntityId,
-                } && targetEntityId == victim.EntityId);
-        Assert.Equal(
-            PlayerActionKind.Attack,
-            action.Snapshot!.Players.Single(
-                player => player.EntityId == attackerEntityId).CurrentAction!.Kind);
-        var victimLifeBeforeImpact = action.Snapshot.Players.Single(
-            player => player.EntityId == victim.EntityId).Life;
+            var action = await WaitForGameConditionAsync(server,
+                attackerClient,
+                message => message.Snapshot is { } snapshot
+                    && snapshot.Tick >= acknowledgement.AppliedTick
+                    && snapshot.Players.Single(player => player.EntityId == attackerEntityId).CurrentAction is {
+                        Kind: PlayerActionKind.Attack,
+                        TargetEntityId: var targetEntityId,
+                    } && targetEntityId == victim.EntityId);
+            Assert.Equal(
+                PlayerActionKind.Attack,
+                action.Snapshot!.Players.Single(
+                    player => player.EntityId == attackerEntityId).CurrentAction!.Kind);
+            var victimLifeBeforeImpact = action.Snapshot.Players.Single(
+                player => player.EntityId == victim.EntityId).Life;
 
-        var resolved = await WaitForMessageAsync(
-            attackerClient,
-            message => message.Snapshot?.Players.Single(
-                player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
-                || message.Events?.Events.Any(gameEvent =>
-                    gameEvent.Damage is not null
-                    && gameEvent.Damage.TargetEntityId == victim.EntityId
-                    && gameEvent.Damage.Amount > 0) == true);
-        if (resolved.Snapshot is not null) {
-            Assert.True(
-                resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
-                    < victimLifeBeforeImpact);
-        } else {
-            var damage = Assert.Single(resolved.Events!.Events).Damage;
-            Assert.Equal(victim.EntityId, damage.TargetEntityId);
-            Assert.True(damage.Amount > 0);
+            var resolved = await WaitForGameConditionAsync(server,
+                attackerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
+                    || message.Events?.Events.Any(gameEvent =>
+                        gameEvent.Damage is not null
+                        && gameEvent.Damage.TargetEntityId == victim.EntityId
+                        && gameEvent.Damage.Amount > 0) == true
+                    || message.Snapshot is { } finished
+                        && finished.Tick >= action.Snapshot.Players.Single(player => player.EntityId == attackerEntityId).CurrentAction!.EndTick
+                        && finished.Players.Single(player => player.EntityId == attackerEntityId).CurrentAction is null
+                        && !finished.Projectiles.Any(projectile => projectile.SourceEntityId == attackerEntityId));
+            if (resolved.Snapshot is { } missed && missed.Players.Single(
+                player => player.EntityId == victim.EntityId).Life >= victimLifeBeforeImpact)
+                continue; // Native arrows may miss; the damage assertion must still be witnessed.
+            if (resolved.Snapshot is not null) {
+                Assert.True(
+                    resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
+                        < victimLifeBeforeImpact);
+            } else {
+                var damage = Assert.Single(resolved.Events!.Events).Damage;
+                Assert.Equal(victim.EntityId, damage.TargetEntityId);
+                Assert.True(damage.Amount > 0);
+            }
+            return;
         }
+        Assert.Fail("No native weapon arrow damaged the peer in eight seeded attempts.");
     }
 
     [Fact]
@@ -236,11 +263,11 @@ public sealed partial class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            randomSeed: 1);
+            randomSeed: 1, passiveMonsters: true, controlledClock: true);
         await using var victimClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-spell-victim", requestedClassId: 1));
         await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var victimInitial = await WaitForMessageAsync(
+        var victimInitial = await WaitForGameConditionAsync(server,
             victimClient,
             message => message.Snapshot is not null);
         var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -248,11 +275,11 @@ public sealed partial class LiveAuthoritativeServerTests
         moveModel.Apply(victimInitial);
         var moveSequence = victimClient.Queue(new Command {
             MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-        }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+        }, server.CurrentTick);
         await victimClient.PollAsync(TestContext.Current.CancellationToken);
         var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
         Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-        var moved = await WaitForMessageAsync(
+        var moved = await WaitForGameConditionAsync(server,
             victimClient,
             message => message.Snapshot?.Players.Single(
                 player => player.EntityId == initialVictim.EntityId).PositionY
@@ -263,7 +290,7 @@ public sealed partial class LiveAuthoritativeServerTests
         await using var attackerClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-spell-attacker", requestedClassId: 2));
         await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var attackerInitial = await WaitForMessageAsync(
+        var attackerInitial = await WaitForGameConditionAsync(server,
             attackerClient,
             message => message.Snapshot is { Players.Count: 2 });
         var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -273,53 +300,72 @@ public sealed partial class LiveAuthoritativeServerTests
         Assert.Equal(victim.PositionY, targetSnapshot.PositionY);
         var model = new AuthoritativeClientModel();
         model.Apply(attackerInitial);
-        var sequence = attackerClient.Queue(new Command {
-            CastRequested = new CastRequested {
-                SpellId = 1,
-                TargetEntityId = victim.EntityId,
-                TargetX = victim.PositionX,
-                TargetY = victim.PositionY,
-                Source = CastSourceKind.MemorizedSpell,
-            },
-        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
-        await attackerClient.PollAsync(TestContext.Current.CancellationToken);
-        var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
-        Assert.True(
-            acknowledgement.Status == CommandStatus.Accepted,
-            $"Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
-
-        var action = await WaitForMessageAsync(
-            attackerClient,
-            message => message.Snapshot?.Players.Single(
-                player => player.EntityId == attackerEntityId).CurrentAction is {
-                    Kind: PlayerActionKind.Cast,
-                    TargetEntityId: var targetEntityId,
-                } && targetEntityId == victim.EntityId);
-        var actionSnapshot = action.Snapshot!.Players.Single(
-            player => player.EntityId == attackerEntityId).CurrentAction!;
-        Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
-        Assert.Equal(1U, actionSnapshot.Cast.SpellId);
-        Assert.Equal(victim.EntityId, actionSnapshot.TargetEntityId);
-        var victimLifeBeforeImpact = action.Snapshot.Players.Single(
-            player => player.EntityId == victim.EntityId).Life;
-
-        var resolved = await WaitForMessageAsync(
-            attackerClient,
-            message => message.Snapshot?.Players.Single(
-                player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
-                || message.Events?.Events.Any(gameEvent =>
-                    gameEvent.Damage is not null
-                    && gameEvent.Damage.TargetEntityId == victim.EntityId
-                    && gameEvent.Damage.Amount > 0) == true);
-        if (resolved.Snapshot is not null) {
+        var observedRequestTick = server.CurrentTick;
+        using var observation = server.HoldClockForObservation(observedRequestTick);
+        for (var shot = 0; shot < 8; shot++) {
+            var ready = await WaitForGameConditionAsync(server, attackerClient, message => message.Snapshot is { } snapshot
+                && snapshot.Tick >= server.CurrentTick
+                && snapshot.Players.Single(player => player.EntityId == attackerEntityId) is {
+                    CombatMode: PlayerCombatMode.Stand, CurrentAction: null });
+            var beforeCast = ready.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life;
+            var sequence = attackerClient.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 1,
+                    TargetEntityId = victim.EntityId,
+                    TargetX = victim.PositionX,
+                    TargetY = victim.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, server.CurrentTick);
+            await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
             Assert.True(
-                resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
-                    < victimLifeBeforeImpact);
-        } else {
-            var damage = Assert.Single(resolved.Events!.Events).Damage;
-            Assert.Equal(victim.EntityId, damage.TargetEntityId);
-            Assert.True(damage.Amount > 0);
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
+
+            var action = await WaitForGameConditionAsync(server,
+                attackerClient,
+                message => message.Snapshot is { } snapshot
+                    && snapshot.Tick >= acknowledgement.AppliedTick
+                    && snapshot.Players.Single(player => player.EntityId == attackerEntityId).CurrentAction is {
+                        Kind: PlayerActionKind.Cast,
+                        TargetEntityId: var targetEntityId,
+                    } && targetEntityId == victim.EntityId);
+            var actionSnapshot = action.Snapshot!.Players.Single(
+                player => player.EntityId == attackerEntityId).CurrentAction!;
+            Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
+            Assert.Equal(1U, actionSnapshot.Cast.SpellId);
+            Assert.Equal(victim.EntityId, actionSnapshot.TargetEntityId);
+            var victimLifeBeforeImpact = action.Snapshot.Players.Single(
+                player => player.EntityId == victim.EntityId).Life;
+
+            var resolved = await WaitForGameConditionAsync(server,
+                attackerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
+                    || message.Events?.Events.Any(gameEvent =>
+                        gameEvent.Damage is not null
+                        && gameEvent.Damage.TargetEntityId == victim.EntityId
+                        && gameEvent.Damage.Amount > 0) == true
+                    || message.Snapshot is { } finished
+                        && finished.Tick > actionSnapshot.EndTick
+                        && finished.Players.Single(player => player.EntityId == attackerEntityId).CurrentAction is null
+                        && !finished.Projectiles.Any(projectile => projectile.SourceEntityId == attackerEntityId));
+            if (resolved.Snapshot is { } missed && missed.Players.Single(
+                player => player.EntityId == victim.EntityId).Life >= beforeCast)
+                continue; // The native spell hit roll may miss; require a real damaging impact.
+            if (resolved.Snapshot is not null) {
+                Assert.True(
+                    resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
+                        < victimLifeBeforeImpact);
+            } else {
+                var damage = Assert.Single(resolved.Events!.Events).Damage;
+                Assert.Equal(victim.EntityId, damage.TargetEntityId);
+                Assert.True(damage.Amount > 0);
+            }
+            return;
         }
+        Assert.Fail("No native Firebolt damaged the peer in eight seeded attempts.");
     }
 
     [Fact]
@@ -364,13 +410,13 @@ public sealed partial class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingLifeOverride: 640,
+                startingLifeOverride: 6400,
                 startingManaOverride: 10000,
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true, controlledClock: true);
             await using var victimClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-heal-other-victim", requestedClassId: 1));
             await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var victimInitial = await WaitForMessageAsync(
+            var victimInitial = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot is not null);
             var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -379,11 +425,11 @@ public sealed partial class LiveAuthoritativeServerTests
             moveModel.Apply(victimInitial);
             var moveSequence = victimClient.Queue(new Command {
                 MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            }, server.CurrentTick);
             await victimClient.PollAsync(TestContext.Current.CancellationToken);
             var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
             Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-            var moved = await WaitForMessageAsync(
+            var moved = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId).PositionY
@@ -394,7 +440,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var healerClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-heal-other-healer", requestedClassId: 2));
             await healerClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var healerInitial = await WaitForMessageAsync(
+            var healerInitial = await WaitForGameConditionAsync(server,
                 healerClient,
                 message => message.Snapshot is { Players.Count: 2 });
             var healerEntityId = healerInitial.Snapshot!.Players.Single(
@@ -410,42 +456,84 @@ public sealed partial class LiveAuthoritativeServerTests
 
             var model = new AuthoritativeClientModel();
             model.Apply(healerInitial);
-            var sequence = healerClient.Queue(new Command {
-                CastRequested = new CastRequested {
-                    SpellId = 34,
-                    TargetEntityId = victim.EntityId,
-                    TargetX = victim.PositionX,
-                    TargetY = victim.PositionY,
-                    Source = CastSourceKind.MemorizedSpell,
-                },
-            }, healerClient.SuggestedCommandTick(model.CurrentTick));
+            // Damage the peer deliberately; healing must not depend on an ambient monster
+            // hitting during connection setup or on which cast frame the client observes.
+            var friendlySequence = healerClient.Queue(new Command {
+                SetFriendlyModeRequested = new SetFriendlyModeRequested { FriendlyMode = false },
+            }, server.CurrentTick);
             await healerClient.PollAsync(TestContext.Current.CancellationToken);
-            var acknowledgement = await WaitForAcknowledgementAsync(healerClient, sequence);
-            Assert.True(
-                acknowledgement.Status == CommandStatus.Accepted,
-                $"Heal Other was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
+            Assert.Equal(CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(healerClient, friendlySequence)).Status);
+            var hitTick = FindGuaranteedHitTick(
+                server.CurrentTick + LiveServerProcess.DefaultTickRateHz,
+                healerEntityId, victim.EntityId);
+            var woundSequence = healerClient.Queue(new Command {
+                AttackRequested = new AttackRequested {
+                    TargetEntityId = victim.EntityId, TargetX = victim.PositionX, TargetY = victim.PositionY,
+                },
+            }, hitTick);
+            await healerClient.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(healerClient, woundSequence)).Status);
+            var wounded = await WaitForGameConditionAsync(server, healerClient, message => message.Snapshot is { } current
+                && current.Tick >= hitTick
+                && current.Players.Single(player => player.EntityId == victim.EntityId).Life is > 0 and < 6400
+                && current.Players.Single(player => player.EntityId == healerEntityId).CurrentAction is null
+                && current.Players.Single(player => player.EntityId == healerEntityId).CombatMode == PlayerCombatMode.Stand);
+            model.Apply(wounded);
+            var woundedLife = wounded.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life;
+            using (server.HoldClockForObservation()) {
+                var sequence = healerClient.Queue(new Command {
+                    CastRequested = new CastRequested {
+                        SpellId = 34,
+                        TargetEntityId = victim.EntityId,
+                        TargetX = victim.PositionX,
+                        TargetY = victim.PositionY,
+                        Source = CastSourceKind.MemorizedSpell,
+                    },
+                }, server.CurrentTick);
+                await healerClient.PollAsync(TestContext.Current.CancellationToken);
+                var acknowledgement = await WaitForAcknowledgementAsync(healerClient, sequence);
+                Assert.True(
+                    acknowledgement.Status == CommandStatus.Accepted,
+                    $"Heal Other was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
 
-            var action = await WaitForMessageAsync(
-                healerClient,
-                message => message.Snapshot?.Players.Single(
-                    player => player.EntityId == healerEntityId).CurrentAction is {
-                        Kind: PlayerActionKind.Cast,
-                        TargetEntityId: var targetEntityId,
-                    } && targetEntityId == victim.EntityId);
-            var actionSnapshot = action.Snapshot!.Players.Single(
-                player => player.EntityId == healerEntityId).CurrentAction!;
-            Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
-            Assert.Equal(34U, actionSnapshot.Cast.SpellId);
-            var victimLifeBeforeHealing = action.Snapshot.Players.Single(
-                player => player.EntityId == victim.EntityId).Life;
+                var action = await WaitForGameConditionAsync(server,
+                    healerClient,
+                    message => message.Snapshot is { } snapshot
+                        && snapshot.Tick >= acknowledgement.AppliedTick
+                        && snapshot.Players.Single(player => player.EntityId == healerEntityId).CurrentAction is {
+                            Kind: PlayerActionKind.Cast,
+                            TargetEntityId: var targetEntityId,
+                        } && targetEntityId == victim.EntityId);
+                var actionSnapshot = action.Snapshot!.Players.Single(
+                    player => player.EntityId == healerEntityId).CurrentAction!;
+                Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
+                Assert.Equal(34U, actionSnapshot.Cast.SpellId);
+                Assert.True(action.Snapshot.Tick < actionSnapshot.EffectTick);
 
-            var resolved = await WaitForMessageAsync(
-                healerClient,
-                message => message.Snapshot?.Players.Single(
-                    player => player.EntityId == victim.EntityId).Life > victimLifeBeforeHealing);
-            Assert.True(
-                resolved.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
-                    > victimLifeBeforeHealing);
+                // Establish the baseline after witnessing Cast, and forbid healing on
+                // admission or during any wind-up tick before the advertised effect.
+                var victimLifeBeforeHealing = action.Snapshot.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life;
+                Assert.Equal(woundedLife, victimLifeBeforeHealing);
+                for (var tick = action.Snapshot.Tick + 1; tick < actionSnapshot.EffectTick; tick++) {
+                    server.AdvanceObservedClock(tick);
+                    var windingUp = await WaitForMessageAsync(healerClient,
+                        message => message.Snapshot?.Tick == tick);
+                    Assert.Equal(victimLifeBeforeHealing, windingUp.Snapshot!.Players.Single(
+                        player => player.EntityId == victim.EntityId).Life);
+                }
+
+                server.AdvanceObservedClock(actionSnapshot.EffectTick);
+                var resolved = await WaitForMessageAsync(healerClient,
+                    message => message.Snapshot is { } snapshot
+                        && snapshot.Tick == actionSnapshot.EffectTick
+                        && snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life > victimLifeBeforeHealing);
+                Assert.True(
+                    resolved.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
+                        > victimLifeBeforeHealing);
+            }
         } finally {
             if (Directory.Exists(overlayRoot))
                 Directory.Delete(overlayRoot, recursive: true);
@@ -494,13 +582,13 @@ public sealed partial class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingLifeOverride: 640,
+                startingLifeOverride: 64,
                 startingManaOverride: 10000,
-                randomSeed: 1);
+                randomSeed: 1, passiveMonsters: true, controlledClock: true);
             await using var victimClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-resurrection-victim", requestedClassId: 1));
             await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var victimInitial = await WaitForMessageAsync(
+            var victimInitial = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot is not null);
             var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -508,11 +596,11 @@ public sealed partial class LiveAuthoritativeServerTests
             moveModel.Apply(victimInitial);
             var moveSequence = victimClient.Queue(new Command {
                 MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            }, server.CurrentTick);
             await victimClient.PollAsync(TestContext.Current.CancellationToken);
             var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
             Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-            var moved = await WaitForMessageAsync(
+            var moved = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId).PositionY
@@ -523,7 +611,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var attackerClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-resurrection-attacker", requestedClassId: 2));
             await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var attackerInitial = await WaitForMessageAsync(
+            var attackerInitial = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot is { Players.Count: 2 });
             var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -535,6 +623,8 @@ public sealed partial class LiveAuthoritativeServerTests
                 memorized => memorized.SpellId == 1 && memorized.Level == 1);
             var attackModel = new AuthoritativeClientModel();
             attackModel.Apply(attackerInitial);
+            var observedRequestTick = server.CurrentTick;
+            using var observation = server.HoldClockForObservation(observedRequestTick);
             var attackSequence = attackerClient.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 1,
@@ -543,11 +633,11 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = victim.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, attackerClient.SuggestedCommandTick(attackModel.CurrentTick));
+            }, server.CurrentTick);
             await attackerClient.PollAsync(TestContext.Current.CancellationToken);
             var attackAcknowledgement = await WaitForAcknowledgementAsync(attackerClient, attackSequence);
             Assert.Equal(CommandStatus.Accepted, attackAcknowledgement.Status);
-            var attackAction = await WaitForMessageAsync(
+            var attackAction = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == attackerEntityId).CurrentAction is {
@@ -556,7 +646,7 @@ public sealed partial class LiveAuthoritativeServerTests
                     } && targetEntityId == victim.EntityId);
             var victimLifeBeforeImpact = attackAction.Snapshot!.Players.Single(
                 player => player.EntityId == victim.EntityId).Life;
-            var dead = await WaitForMessageAsync(
+            var dead = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == victim.EntityId).Life == 0);
@@ -567,7 +657,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var resurrectorClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-resurrection-caster", requestedClassId: 3));
             await resurrectorClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var resurrectorInitial = await WaitForMessageAsync(
+            var resurrectorInitial = await WaitForGameConditionAsync(server,
                 resurrectorClient,
                 message => message.Snapshot is { Players.Count: 3 });
             var resurrectorEntityId = resurrectorInitial.Snapshot!.Players.Single(
@@ -591,7 +681,7 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = deadTargetSnapshot.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, resurrectorClient.SuggestedCommandTick(resurrectModel.CurrentTick));
+            }, server.CurrentTick);
             await resurrectorClient.PollAsync(TestContext.Current.CancellationToken);
             var resurrectAcknowledgement = await WaitForAcknowledgementAsync(
                 resurrectorClient,
@@ -599,7 +689,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.True(
                 resurrectAcknowledgement.Status == CommandStatus.Accepted,
                 $"Resurrection was {resurrectAcknowledgement.Status}/{resurrectAcknowledgement.RejectReason} at tick {resurrectAcknowledgement.AppliedTick}.");
-            var resurrectAction = await WaitForMessageAsync(
+            var resurrectAction = await WaitForGameConditionAsync(server,
                 resurrectorClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == resurrectorEntityId).CurrentAction is {
@@ -611,7 +701,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
             Assert.Equal(32U, actionSnapshot.Cast.SpellId);
 
-            var restored = await WaitForMessageAsync(
+            var restored = await WaitForGameConditionAsync(server,
                 resurrectorClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == victim.EntityId).Life > 0);
@@ -667,11 +757,11 @@ public sealed partial class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken,
                 overlayRoot,
                 startingManaOverride: 10000,
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true, controlledClock: true);
             await using var victimClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-charged-bolt-victim", requestedClassId: 1));
             await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var victimInitial = await WaitForMessageAsync(
+            var victimInitial = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot is not null);
             var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -679,11 +769,11 @@ public sealed partial class LiveAuthoritativeServerTests
             moveModel.Apply(victimInitial);
             var moveSequence = victimClient.Queue(new Command {
                 MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            }, server.CurrentTick);
             await victimClient.PollAsync(TestContext.Current.CancellationToken);
             var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
             Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-            var moved = await WaitForMessageAsync(
+            var moved = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId).PositionY
@@ -694,7 +784,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var attackerClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-charged-bolt-attacker", requestedClassId: 2));
             await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var attackerInitial = await WaitForMessageAsync(
+            var attackerInitial = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot is { Players.Count: 2 });
             var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -709,6 +799,8 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(victim.PositionY, targetSnapshot.PositionY);
             var model = new AuthoritativeClientModel();
             model.Apply(attackerInitial);
+            var observedRequestTick = server.CurrentTick;
+            using var observation = server.HoldClockForObservation(observedRequestTick);
             var sequence = attackerClient.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 30,
@@ -717,14 +809,14 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = victim.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await attackerClient.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
             Assert.True(
                 acknowledgement.Status == CommandStatus.Accepted,
                 $"Charged Bolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
 
-            var action = await WaitForMessageAsync(
+            var action = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == attackerEntityId).CurrentAction is {
@@ -738,7 +830,7 @@ public sealed partial class LiveAuthoritativeServerTests
             var victimLifeBeforeImpact = action.Snapshot.Players.Single(
                 player => player.EntityId == victim.EntityId).Life;
 
-            var resolved = await WaitForMessageAsync(
+            var resolved = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
@@ -804,11 +896,11 @@ public sealed partial class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken,
                 overlayRoot,
                 startingManaOverride: 10000,
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true, controlledClock: true);
             await using var victimClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-bone-spirit-victim", requestedClassId: 1));
             await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var victimInitial = await WaitForMessageAsync(
+            var victimInitial = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot is not null);
             var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -816,11 +908,11 @@ public sealed partial class LiveAuthoritativeServerTests
             moveModel.Apply(victimInitial);
             var moveSequence = victimClient.Queue(new Command {
                 MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            }, server.CurrentTick);
             await victimClient.PollAsync(TestContext.Current.CancellationToken);
             var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
             Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-            var moved = await WaitForMessageAsync(
+            var moved = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId).PositionY
@@ -831,7 +923,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var attackerClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-bone-spirit-attacker", requestedClassId: 2));
             await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var attackerInitial = await WaitForMessageAsync(
+            var attackerInitial = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot is { Players.Count: 2 });
             var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -846,6 +938,8 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(victim.PositionY, targetSnapshot.PositionY);
             var model = new AuthoritativeClientModel();
             model.Apply(attackerInitial);
+            var observedRequestTick = server.CurrentTick;
+            using var observation = server.HoldClockForObservation(observedRequestTick);
             var sequence = attackerClient.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 38,
@@ -854,14 +948,14 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = victim.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await attackerClient.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
             Assert.True(
                 acknowledgement.Status == CommandStatus.Accepted,
                 $"Bone Spirit was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
 
-            var action = await WaitForMessageAsync(
+            var action = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == attackerEntityId).CurrentAction is {
@@ -875,7 +969,7 @@ public sealed partial class LiveAuthoritativeServerTests
             var victimLifeBeforeImpact = action.Snapshot.Players.Single(
                 player => player.EntityId == victim.EntityId).Life;
 
-            var resolved = await WaitForMessageAsync(
+            var resolved = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
@@ -999,11 +1093,11 @@ public sealed partial class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true, controlledClock: true);
             await using var victimClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-pvp-block-victim", requestedClassId: 0));
             await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var victimInitial = await WaitForMessageAsync(
+            var victimInitial = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot is not null);
             var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
@@ -1011,16 +1105,16 @@ public sealed partial class LiveAuthoritativeServerTests
             moveModel.Apply(victimInitial);
             var moveSequence = victimClient.Queue(new Command {
                 MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
-            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            }, server.CurrentTick);
             await victimClient.PollAsync(TestContext.Current.CancellationToken);
             var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
             Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
-            _ = await WaitForMessageAsync(
+            _ = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId).PositionY
                     == initialVictim.PositionY + 1);
-            var ready = await WaitForMessageAsync(
+            var ready = await WaitForGameConditionAsync(server,
                 victimClient,
                 message => message.Snapshot?.Players.Single(
                     player => player.EntityId == initialVictim.EntityId) is {
@@ -1036,7 +1130,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await using var attackerClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-pvp-block-attacker", requestedClassId: 0));
             await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-            var attackerInitial = await WaitForMessageAsync(
+            var attackerInitial = await WaitForGameConditionAsync(server,
                 attackerClient,
                 message => message.Snapshot is { Players.Count: 2 });
             var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
@@ -1066,8 +1160,9 @@ public sealed partial class LiveAuthoritativeServerTests
                 // it depends only on seed mod 4 (23/48/73/98), so attempts that keep
                 // landing on one tick residue can miss every time. Cycle residues so
                 // at least three of every four attempts roll a hit.
-                var requestedTick = attackerClient.SuggestedCommandTick(model.CurrentTick);
+                var requestedTick = server.CurrentTick;
                 requestedTick += (ulong)((attempt - (int)(requestedTick % 4) + 4) % 4);
+                using var observation = server.HoldClockForObservation(requestedTick);
                 var sequence = attackerClient.Queue(new Command {
                     AttackRequested = new AttackRequested {
                         TargetEntityId = victim.EntityId,
@@ -1079,7 +1174,7 @@ public sealed partial class LiveAuthoritativeServerTests
                     acknowledgement.Status == CommandStatus.Accepted,
                     $"Melee block attempt {attempt} was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; client tick was {model.CurrentTick}.");
 
-                var action = await WaitForMessageAsync(
+                var action = await WaitForGameConditionAsync(server,
                     attackerClient,
                     message => message.Snapshot?.Players.Single(
                         player => player.EntityId == attackerEntityId).CurrentAction is {
@@ -1095,7 +1190,7 @@ public sealed partial class LiveAuthoritativeServerTests
                     player => player.EntityId == attackerEntityId).CurrentAction!.EndTick;
                 var victimLifeBeforeImpact = action.Snapshot.Players.Single(
                     player => player.EntityId == victim.EntityId).Life;
-                var resolved = await WaitForMessageAsync(
+                var resolved = await WaitForGameConditionAsync(server,
                     attackerClient,
                     message => {
                         if (message.Snapshot is not { Tick: var tick }

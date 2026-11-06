@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeCheckpointReadTests : LiveAuthoritativeTestBase
 {
     public static bool WindowsCheckpointSharing => OperatingSystem.IsWindows();
 

@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed partial class LiveAuthoritativeServerTests
+public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
 {
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed partial class LiveAuthoritativeServerTests
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingManaOverride: 10000);
+                startingManaOverride: 10000, passiveMonsters: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-reflect-overlay", requestedClassId: 2));
 
@@ -337,6 +337,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal("Immolation", spell.DisplayName);
             var initialMana = player.Mana;
 
+            using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
             var sequence = client.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 45,
@@ -344,14 +345,14 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = player.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
             Assert.True(
                 acknowledgement.Status == CommandStatus.Accepted,
                 $"Immolation cast was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}.");
 
-            var cast = await WaitForMessageAsync(
+            var cast = await WaitForGameConditionAsync(server,
                 client,
                 message => message.Snapshot?.Players.Single().CurrentAction is {
                     Kind: PlayerActionKind.Cast,
@@ -426,6 +427,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal("Nova", spell.DisplayName);
             var initialMana = player.Mana;
 
+            using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
             var sequence = client.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 18,
@@ -433,12 +435,12 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = player.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
             Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            var cast = await WaitForMessageAsync(
+            var cast = await WaitForGameConditionAsync(server,
                 client,
                 message => message.Snapshot?.Players.Single().CurrentAction is {
                     Kind: PlayerActionKind.Cast,
@@ -583,7 +585,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 overlayRoot,
                 startingManaOverride: 10000,
                 gameMode: "single-player",
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-telekinesis-overlay", requestedClassId: 2));
             var model = new AuthoritativeClientModel();
@@ -774,7 +776,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 overlayRoot,
                 startingManaOverride: 10000,
                 gameMode: "multiplayer",
-                randomSeed: 0);
+                randomSeed: 0, passiveMonsters: true);
             await using var first = new AuthoritativeClient(
                 CreateOptions(server, "godot-mana-shield-first", requestedClassId: 2));
             await first.ConnectAsync(TestContext.Current.CancellationToken);
@@ -1007,6 +1009,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal("Ring of Fire", spell.DisplayName);
             var initialMana = player.Mana;
 
+            using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
             var sequence = client.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 44,
@@ -1014,13 +1017,13 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = player.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             Assert.Equal(
                 CommandStatus.Accepted,
                 (await WaitForAcknowledgementAsync(client, sequence)).Status);
 
-            var projected = await WaitForMessageAsync(
+            var projected = await WaitForGameConditionAsync(server,
                 client,
                 message => message.Snapshot?.Projectiles.Any(projectile =>
                     projectile.SpellId == 44
@@ -1102,6 +1105,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 monster => monster.EntityId == 9 && monster.Alive);
             var initialMana = player.Mana;
 
+            using var observation = server.HoldClockForObservation(client.SuggestedCommandTick(model.CurrentTick));
             var sequence = client.Queue(new Command {
                 CastRequested = new CastRequested {
                     SpellId = 50,
@@ -1109,13 +1113,13 @@ public sealed partial class LiveAuthoritativeServerTests
                     TargetY = target.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             Assert.Equal(
                 CommandStatus.Accepted,
                 (await WaitForAcknowledgementAsync(client, sequence)).Status);
 
-            var projected = await WaitForMessageAsync(
+            var projected = await WaitForGameConditionAsync(server,
                 client,
                 message => message.Snapshot?.Projectiles.Any(projectile =>
                     projectile.SpellId == 50
@@ -1405,7 +1409,7 @@ public sealed partial class LiveAuthoritativeServerTests
             TestContext.Current.CancellationToken,
             randomSeed: 1,
             additionalContentOverlayRoot: townLoopPreviewRoot,
-            startingLevelOverride: 1);
+            startingLevelOverride: 1, passiveMonsters: true);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-sorcerer-recharge-stash", requestedClassId: 2));
 

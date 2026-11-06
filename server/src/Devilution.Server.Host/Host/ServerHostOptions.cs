@@ -16,6 +16,9 @@ public sealed record ServerHostOptions(
     uint TickRateHz,
     uint? StartingGold)
 {
+    /** Opt out of background floor-entry preparation for short-lived hosts; production keeps it on. */
+    public bool SkipFloorEntryWarmup { get; init; }
+
     public int? StartingLife { get; init; }
 
     public int? StartingMana { get; init; }
@@ -150,6 +153,14 @@ public sealed record ServerHostOptions(
                     return false;
                 }
                 current = current with { UseClockGatedCommandScheduling = value == "clock-gated" };
+                break;
+            case "--skip-floor-entry-warmup":
+                if (!bool.TryParse(value, out var skipWarmup)) {
+                    options = current;
+                    error = $"'{value}' is not a valid floor-entry warm-up setting.";
+                    return false;
+                }
+                current = current with { SkipFloorEntryWarmup = skipWarmup };
                 break;
             case "--command-log":
                 if (!bool.TryParse(value, out var commandLog)) {
@@ -446,6 +457,7 @@ public sealed record ServerHostOptions(
           --build-id <id>              Server build identity
           --protocol-version <version> Protocol schema version
           --tick-rate <hz>             Authoritative simulation rate
+          --skip-floor-entry-warmup <bool> Skip background floor-entry preparation (default: false)
           --command-scheduling <mode>  immediate (default) or clock-gated; requires capable clients
           --starting-gold <amount>     Override content-defined initial wallet
           --starting-life <amount>     Override content-derived initial life (Q6)

@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientTimingPipelineRegressionTests
 {
     [Fact]

@@ -526,7 +526,7 @@ public sealed class LocalLauncherContractTests
         var performance = File.ReadAllText(Path.Combine(root,
             "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.Performance.cs"));
         var fixture = File.ReadAllText(Path.Combine(root,
-            "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"));
+            "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.Fixture.cs"));
 
         var releaseOverrideGuard = wrapper.IndexOf(
             "GODEVILUTION_SERVER_ASSEMBLY", StringComparison.Ordinal);
