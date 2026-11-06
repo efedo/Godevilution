@@ -18,7 +18,7 @@ public static class AuthoritativeNativeTrapFiringState
             if (source.NativeObjectId is not (53 or 54) || source.Destroyed || source.LevelId == 0
                 || trigger is null || trigger.LevelId != source.LevelId || trigger.Destroyed || trigger.TrapArmed
                 || source.HasNativeTrapFiredTick && source.NativeTrapFiredTick > snapshotTick
-                || trigger.NativeObjectId is not (1 or 2 or 5 or 6 or 7 or 42 or 43))
+                || trigger.NativeObjectId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 48))
                 throw new InvalidDataException("A retained native trap firing has an invalid wall source or trigger link.");
         }
     }

@@ -153,7 +153,7 @@ public static class AuthoritativeObjectSelector
             && IsPlainNativeInteraction(@object, allowArmedTrap: @object.NativeTrapInteractable);
     }
 
-    /** Requires the explicit sarcophagus capability and a consistent closed native shape. */
+    /** Native OperateSarcophagus accepts armed triggers; the closed shape still requires explicit authority. */
     public static bool IsValidNativeSarcophagusInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
@@ -162,7 +162,8 @@ public static class AuthoritativeObjectSelector
             && !@object.NativeBarrelMeleeBreakable
             && !@object.NativeTrapInteractable
             && @object.NativeObjectId == 48
-            && IsPlainNativeInteraction(@object);
+            && @object.PresentationKind != ProtocolObjectPresentationKind.Trap
+            && IsPlainNativeInteraction(@object, allowArmedTrap: true);
     }
 
     /** Validates the explicit capability without making barrels generic UI interactions. */
