@@ -482,7 +482,7 @@ public sealed partial class DiabloCombatCommandProcessor
             ResolveDeferredLevelTrigger(player, tick, players, events);
         }
         AdvanceMonsters(tick, players, events);
-        AdvanceNativeTraps(players);
+        AdvanceNativeTraps(tick, players);
         AdvanceNativeBurningCrosses(tick, players, events);
         AdvanceProjectiles(tick, players, events);
         ProcessManaShield(players);
@@ -546,7 +546,7 @@ public sealed partial class DiabloCombatCommandProcessor
             ResolveDeferredLevelTrigger(player, tick, players, events);
         }
         AdvanceMonsters(tick, players, events);
-        AdvanceNativeTraps(players);
+        AdvanceNativeTraps(tick, players);
         AdvanceNativeBurningCrosses(tick, players, events);
         AdvanceProjectiles(tick, players, events);
         ProcessManaShield(players);

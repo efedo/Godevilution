@@ -528,7 +528,8 @@ public sealed partial class DiabloCohortCodec
                 || IsOptionalNativeQueuedRangedAttackField(type, name, schema)
                 || IsOptionalCatacombsActorField(type, name, schema)
                 || IsOptionalObjectTrapMissileField(type, name)
-                || IsOptionalNativeShrineField(type, name));
+                || IsOptionalNativeShrineField(type, name)
+                || type == typeof(DiabloNativeTrapState) && name == nameof(DiabloNativeTrapState.FiredTick));
     }
 
     private static bool IsOptionalNativeShrineField(Type type, string name)

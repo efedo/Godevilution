@@ -15,6 +15,8 @@ public sealed partial record DiabloCohortState
             if (state.Facts is null)
                 throw new InvalidDataException("Native trap state is missing its immutable facts.");
             state.ValidateShape();
+            if (state.FiredTick is ulong firedTick && firedTick > Tick)
+                throw new InvalidDataException("A native trap firing tick is ahead of its checkpoint.");
         }
         if (FormatVersion is not (NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion)
             && CathedralItems?.Levels.Count != 1)

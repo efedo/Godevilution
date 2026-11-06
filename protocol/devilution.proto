@@ -1067,6 +1067,11 @@ message ObjectSnapshot {
 	uint32 native_shrine_type = 47;
 	// Native ordinary theme object capability; absent from older hosts and clients.
 	bool native_theme_object_interactable = 48;
+	// A wall trap's retained Fired link, visible after its missile has expired.
+	// Zero also preserves older snapshots and traps that are armed or disarmed.
+	uint32 native_trap_fired_trigger_entity_id = 49;
+	// Exact server firing tick; absent for fired links restored from older saves.
+	optional uint64 native_trap_fired_tick = 50;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

@@ -15,6 +15,7 @@ public partial class SessionAcceptance
     private NativeCatacombsObjectCheckpoint? nativeCatacombsObjects;
     private NativeCatacombsDoorTrapObservation.Firing? nativeCatacombsRequiredDoorFiring;
     private NativeCatacombsRequiredDoor? nativeCatacombsRequiredDoor;
+    private uint nativeCatacombsRequiredDoorEntity;
     private readonly AcceptanceStageBudget nativeChestBudget = new("Catacombs chest and pickup", 60);
     private readonly AcceptanceStageBudget nativeRequiredDoorBudget = new("Required Catacombs door", 180);
     private AcceptanceStageBudget? nativeObjectStageBudget;
@@ -135,33 +136,44 @@ public partial class SessionAcceptance
             DoorTrapSource = firing?.TrapEntity ?? 0, DoorTrapTick = firing?.Tick ?? 0 };
     }
 
-    private void ObserveNativeCatacombsDoorTraps(Snapshot snapshot)
+    private void RecordNativeCatacombsDoorFiring(NativeCatacombsDoorTrapObservation.Firing fired)
     {
-        foreach (var fired in NativeCatacombsDoorTrapObservation.Find(snapshot)) {
-            if (nativeCatacombsTrappedDoor is null)
-                GD.Print($"L{fired.Level} door {fired.DoorEntity} fired wall trap {fired.TrapEntity} at tick {fired.Tick}.");
-            nativeCatacombsTrappedDoor ??= fired;
-            if (nativeCatacombsRequiredDoor is { } target
-                && snapshot.Objects.Any(value => value.EntityId == fired.DoorEntity && target.Matches(value)))
-                nativeCatacombsRequiredDoorFiring ??= fired;
-        }
+        if (nativeCatacombsTrappedDoor is null)
+            GD.Print($"L{fired.Level} door {fired.DoorEntity} fired wall trap {fired.TrapEntity} at tick {fired.Tick}.");
+        nativeCatacombsTrappedDoor ??= fired;
+        if (nativeCatacombsRequiredDoor is { } target && fired.Level == target.Level
+            && fired.DoorEntity == nativeCatacombsRequiredDoorEntity)
+            nativeCatacombsRequiredDoorFiring = fired;
     }
 
     /** Only the launcher's one seeded door is an extra destination. Other doors must lie on its route. */
     private async Task RequireNativeCatacombsDoorAsync(Main main, NativeCatacombsRequiredDoor target)
     {
-        if (nativeCatacombsRequiredDoorFiring is not null) return;
+        var currentDoor = main.ObservedSnapshot!.Objects.SingleOrDefault(target.Matches)
+            ?? throw new InvalidOperationException($"Required native door is absent at L{target.Level} ({target.X},{target.Y}).");
+        nativeCatacombsRequiredDoorEntity = currentDoor.EntityId;
+        if (nativeCatacombsRequiredDoorFiring?.DoorEntity == currentDoor.EntityId && currentDoor.MissilePassable) return;
+        nativeCatacombsRequiredDoorFiring = null;
+        Require(!currentDoor.MissilePassable,
+            "The required door was already open without firing evidence from a fresh observed opening.");
         using var timed = NativeWarriorStep("objects", $"Required door L{target.Level}@{target.X},{target.Y}");
         using var stage = NativeObjectStage(nativeRequiredDoorBudget);
-        var door = main.ObservedSnapshot!.Objects.SingleOrDefault(target.Matches)
-            ?? throw new InvalidOperationException($"Required native door is absent at L{target.Level} ({target.X},{target.Y}).");
+        var door = currentDoor;
         await MoveAdjacentToNativePosition(main,
             current => current.Objects.Single(value => value.EntityId == door.EntityId),
             NativeObjectObstruction(main, door));
         var retainedDoor = main.ObservedSnapshot!.Objects.Single(value => value.EntityId == door.EntityId);
-        if (!retainedDoor.MissilePassable) await OperateNativeWarriorCatacombsDoorAsync(main, retainedDoor);
-        await Until(() => nativeCatacombsRequiredDoorFiring?.DoorEntity == door.EntityId,
-            $"Required L{target.Level} door ({target.X},{target.Y}) opened without firing its linked native trap.", 5);
+        if (retainedDoor.MissilePassable) {
+            Require(nativeCatacombsRequiredDoorFiring?.DoorEntity == door.EntityId,
+                "The required door opened during its approach without fresh firing evidence.");
+            return;
+        }
+        var opening = await OperateNativeWarriorCatacombsDoorAsync(main, retainedDoor);
+        await Until(() => {
+            if (opening.Find(main.ObservedSnapshot!) is not { } firing) return false;
+            RecordNativeCatacombsDoorFiring(firing);
+            return true;
+        }, $"Required L{target.Level} door ({target.X},{target.Y}) lacks firing evidence for this opening before its deadline.", 5);
     }
 
     private Func<bool, Task<bool>> NativeObjectObstruction(Main main, ObjectSnapshot target,

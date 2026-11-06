@@ -323,6 +323,7 @@ internal static partial class DiabloProtocolMapper
                 State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
             });
         }
+        var firedTrapLinks = source.NativeFiredTraps.ToDictionary(value => value.Facts.TrapEntityId);
         foreach (var @object in source.Objects) {
             var nativeShrine = source.NativeShrineTypes.SingleOrDefault(value => value.EntityId == @object.EntityId);
             var projectedObject = new ObjectSnapshot {
@@ -379,6 +380,10 @@ internal static partial class DiabloProtocolMapper
                 ActivateOnOccupancy = @object.ActivateOnOccupancy,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             };
+            if (firedTrapLinks.TryGetValue(@object.EntityId, out var firedTrap)) {
+                projectedObject.NativeTrapFiredTriggerEntityId = firedTrap.Facts.TriggerEntityId;
+                if (firedTrap.FiredTick is ulong firedTick) projectedObject.NativeTrapFiredTick = firedTick;
+            }
             if (cathedralDoors.TryGetValue(@object.EntityId, out var cathedralDoor))
                 projectedObject.CathedralDoor = ToProtocolCathedralDoor(cathedralDoor);
             snapshot.Objects.Add(projectedObject);

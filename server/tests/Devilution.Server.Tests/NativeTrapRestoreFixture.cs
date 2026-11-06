@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Reflection;
 using System.Security.Cryptography;
 using Devilution.Data;
+using Devilution.Engine;
 using Devilution.Diablo;
 using Xunit;
 
@@ -40,6 +41,7 @@ internal sealed class NativeTrapRestoreFixture
     private readonly uint level;
     private readonly bool hasDoor;
     private DiabloSimulation? simulation;
+    private AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>? runtime;
     private AuthoritativePlayerState? player;
 
     internal NativeTrapRestoreFixture(int depth, IReadOnlyList<DiabloObjectState> objects,
@@ -218,6 +220,18 @@ internal sealed class NativeTrapRestoreFixture
             }).ToArray();
     }
 
+    internal void AdvanceTo(ulong tick)
+    {
+        if (runtime is null) {
+            runtime = simulation!.CreateRuntime(DiabloPlayerTemplate.CreateDefault(0, 100, 100, level));
+            runtime.AddParticipant("trap-restore-player", player!);
+        }
+        runtime.AdvanceTo(tick);
+    }
+
+    internal DiabloSimulationSnapshot CapturePresentation(ulong tick)
+        => simulation!.CapturePresentationSnapshot(player!, tick);
+
     internal void Restore(DiabloCohortState checkpoint)
     {
         var objects = checkpoint.Objects.Where(value => objectIds.Contains(value.EntityId)).ToArray();
@@ -284,6 +298,7 @@ internal sealed class NativeTrapRestoreFixture
         }
         foreach (var door in objects.Where(value => value.NativeObjectId is 1 or 2))
             Assert.True(restored.TryOperateCathedralDoor(door.EntityId, []));
+        foreach (var value in objects) restored.Objects[value.EntityId].TrapArmed = value.TrapArmed;
         restored.ConfigureNativePopulationBindings(owner, items, Fingerprint, version, [], [], traps);
         player = new AuthoritativePlayerState(0, 0, 6400, 0, 0, PlayerAttributesState.Zero,
             [], [], [], 100, 100, 6400, 1, level, 0) { EntityId = 1 };

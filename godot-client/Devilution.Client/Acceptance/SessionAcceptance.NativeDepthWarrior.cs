@@ -101,7 +101,6 @@ public partial class SessionAcceptance
                 "The depth journey must start with a new Warrior in Town.");
             ConfigureNativeCatacombsRequiredDoor();
             StartNativeWarriorDrawCapture(main);
-            main.AcceptanceSnapshotObserver = ObserveNativeCatacombsDoorTraps;
             var draws = new List<NativeWarriorFloorDraw> { await VerifyNativeWarriorFloorDrawAsync(main, directory, 0) };
             var panels = await VerifyNativeWarriorPanelsAsync(main, directory);
             var controls = await VerifyNativeWarriorControlsAsync(main, directory);
@@ -557,23 +556,32 @@ public partial class SessionAcceptance
         };
     }
 
-    private async Task OperateNativeWarriorCatacombsDoorAsync(Main main, ObjectSnapshot door)
+    private async Task<NativeCatacombsDoorTrapObservation.Opened> OperateNativeWarriorCatacombsDoorAsync(Main main, ObjectSnapshot door)
     {
+        var baseline = new NativeCatacombsDoorTrapObservation.Opening(main.ObservedSnapshot!, door.EntityId);
+        if (nativeCatacombsRequiredDoor?.Matches(door) == true) {
+            nativeCatacombsRequiredDoorEntity = door.EntityId;
+            nativeCatacombsRequiredDoorFiring = null;
+        }
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickWorld(main, door.PositionX, door.PositionY);
         await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
+        var operatedTick = main.ObservedCommandResult!.AppliedTick;
+        var opening = new NativeCatacombsDoorTrapObservation.Opened(baseline, operatedTick,
+            checked(operatedTick + 5UL * (main.ObservedIdentity?.TickRateHz ?? 20)));
         await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
             $"Native Catacombs door {door.EntityId} did not open.", 5);
         await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
             $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
         nativeWarriorCatacombsDoorDraws++;
-        var operatedTick = main.ObservedCommandResult!.AppliedTick;
         await Until(() => main.ObservedSnapshot!.Tick > operatedTick,
             "The opened Catacombs door did not receive its native object tick.", 5);
         if (door.TrapArmed) {
             await Until(() => !main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).TrapArmed,
                 "The opened native Catacombs door did not consume its linked trap.");
         }
+        if (opening.Find(main.ObservedSnapshot!) is { } firing) RecordNativeCatacombsDoorFiring(firing);
+        return opening;
     }
 
     /**

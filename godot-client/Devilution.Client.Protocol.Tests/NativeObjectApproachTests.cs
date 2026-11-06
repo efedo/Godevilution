@@ -54,6 +54,23 @@ public sealed class NativeObjectApproachTests
         Assert.Empty(NativeCatacombsDoorTrapObservation.Find(snapshot));
     }
 
+    [Fact]
+    public void RetainedFiredLinkProvesTheDoorShotWhenSnapshotCadenceMissesTheWholeMissile()
+    {
+        var snapshot = DoorShot(); snapshot.Projectiles.Clear();
+        Assert.Empty(NativeCatacombsDoorTrapObservation.Find(snapshot));
+        snapshot.Objects[1].NativeTrapFiredTriggerEntityId = snapshot.Objects[0].EntityId;
+        snapshot.Objects[1].NativeTrapFiredTick = 250;
+        Assert.Equal(new NativeCatacombsDoorTrapObservation.Firing(7, 20, 21, 250),
+            Assert.Single(NativeCatacombsDoorTrapObservation.Find(snapshot)));
+        // Reclosing retains history on the server but cannot supply open-door evidence.
+        snapshot.Objects[0].MissilePassable = false;
+        Assert.Empty(NativeCatacombsDoorTrapObservation.Find(snapshot));
+        snapshot.Objects[0].MissilePassable = true;
+        snapshot.Projectiles.Add(DoorShot().Projectiles[0]);
+        Assert.Single(NativeCatacombsDoorTrapObservation.Find(snapshot));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]

@@ -5,9 +5,9 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloCombatCommandProcessor
 {
     /** Native ProcessObjects follows monsters and precedes this tick's missile processing. */
-    private void AdvanceNativeTraps(IReadOnlyList<AuthoritativePlayerState> players)
+    private void AdvanceNativeTraps(ulong tick, IReadOnlyList<AuthoritativePlayerState> players)
     {
-        foreach (var firing in world.ConsumeReadyNativeTraps(players)) {
+        foreach (var firing in world.ConsumeReadyNativeTraps(players, tick)) {
             var owner = world.RequireNativeTrapArrowOwner(firing.TrapEntityId, firing.TrapObjectSlot);
             var projectile = AddObjectTrapMissile(AllocateProjectileEntityId(), firing.TrapEntityId,
                 owner.TriggerEntityId, firing.LevelId, firing.TrapObjectSlot,

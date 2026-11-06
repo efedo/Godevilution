@@ -282,6 +282,7 @@ public sealed partial class AuthoritativeClientModel
                 ValidateEntityId(entityIds, @object.EntityId);
                 ValidateObject(@object, questIds);
             }
+            AuthoritativeNativeTrapFiringState.Validate(message.Snapshot.Objects, message.Snapshot.Tick);
             foreach (var projectile in message.Snapshot.Projectiles) {
                 ValidateEntityId(entityIds, projectile.EntityId);
                 ValidateProjectile(projectile, message.Snapshot);

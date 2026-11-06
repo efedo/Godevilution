@@ -636,6 +636,10 @@ public sealed record DiabloSimulationSnapshot(
     [JsonIgnore]
     public IReadOnlySet<uint> NativeTrapInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
 
+    /** Transient view of retained Fired owners; their lifecycle already lives in shared native trap state. */
+    [JsonIgnore]
+    public IReadOnlyList<DiabloNativeTrapState> NativeFiredTraps { get; internal init; } = [];
+
     /** Bounded presentation fields; clients never replay native door operations. */
     public IReadOnlyList<DiabloCathedralDoorObjectState> CathedralDoorObjects { get; init; } = [];
 
@@ -1081,6 +1085,7 @@ public sealed partial class DiabloSimulation
             NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             NativeBarrelMeleeBreakableEntityIds = WorldState.CaptureNativeBarrelMeleeBreakableEntityIds(),
             NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),
+            NativeFiredTraps = WorldState.CaptureNativeFiredTraps(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             NativeTownCatalogFingerprint = nativeTownCatalog?.Fingerprint ?? "",

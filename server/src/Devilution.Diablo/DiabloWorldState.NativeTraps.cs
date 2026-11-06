@@ -6,6 +6,11 @@ public sealed partial class DiabloWorldState
 {
     private Dictionary<uint, DiabloNativeTrapState> nativeTrapsByEntityId = [];
 
+    /** Project the existing one-shot state; never infer firing from a cleared/disarmed trigger. */
+    internal IReadOnlyList<DiabloNativeTrapState> CaptureNativeFiredTraps()
+        => nativeTrapsByEntityId.Values.Where(value => value.Disposition == DiabloNativeTrapDisposition.Fired)
+            .OrderBy(value => value.Facts.TrapEntityId).ToArray();
+
     internal bool HasMutatedNativeTraps
         => nativeTrapsByEntityId.Values.Any(state => state.Disposition != DiabloNativeTrapDisposition.Armed
             || !state.TriggerTrapArmed || IsNativeTrapTriggerReady(state.Facts));
@@ -152,7 +157,7 @@ public sealed partial class DiabloWorldState
 
     /** Commits ready traps once, in native active-object order, before callers create the returned missiles. */
     internal IReadOnlyList<DiabloNativeTrapFiringRecord> ConsumeReadyNativeTraps(
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players, ulong? firedTick = null)
     {
         ArgumentNullException.ThrowIfNull(players);
         var activeLevels = players.Select(player => player.LevelId).ToHashSet();
@@ -189,6 +194,7 @@ public sealed partial class DiabloWorldState
                 TrapVar4 = 1,
                 TriggerTrapArmed = false,
                 Disposition = DiabloNativeTrapDisposition.Fired,
+                FiredTick = firedTick,
             };
             Objects[state.Facts.TriggerEntityId].TrapArmed = false;
         }

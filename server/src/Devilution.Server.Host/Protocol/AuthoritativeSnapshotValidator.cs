@@ -767,6 +767,7 @@ public static class AuthoritativeSnapshotValidator
 
     private static void ValidateObjects(Snapshot snapshot)
     {
+        AuthoritativeNativeTrapFiringState.Validate(snapshot.Objects, snapshot.Tick);
         var questIds = snapshot.Quests
             .Select(quest => quest.QuestId)
             .ToHashSet();

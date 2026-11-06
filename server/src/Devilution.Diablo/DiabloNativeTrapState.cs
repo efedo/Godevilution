@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Devilution.Diablo;
 
 /** Native lifecycle of one retained wall trap and its linked trigger. */
@@ -55,11 +57,16 @@ public sealed record DiabloNativeTrapState(
     bool TriggerTrapArmed,
     DiabloNativeTrapDisposition Disposition)
 {
+    /** Server object tick; absent in older saves and direct native comparison inputs. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ulong? FiredTick { get; init; }
+
     internal void ValidateShape()
     {
         ArgumentNullException.ThrowIfNull(Facts);
         Facts.ValidateShape();
-        if (TrapVar4 is < 0 or > 1 || !Enum.IsDefined(Disposition))
+        if (TrapVar4 is < 0 or > 1 || !Enum.IsDefined(Disposition)
+            || FiredTick.HasValue && Disposition != DiabloNativeTrapDisposition.Fired)
             throw new InvalidDataException("A native wall-trap state is outside its bounded schema.");
         if (Disposition == DiabloNativeTrapDisposition.Armed) {
             if (TrapVar4 != Facts.InitialTrapVar4
