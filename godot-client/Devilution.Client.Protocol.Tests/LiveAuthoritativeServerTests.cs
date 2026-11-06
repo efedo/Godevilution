@@ -242,6 +242,7 @@ public sealed partial class LiveAuthoritativeServerTests : LiveAuthoritativeTest
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task GodotTransportReconcilesAuthoritativeStashSessionGoldAndMoves()
     {
         using var server = await StartedServer.StartAsync(

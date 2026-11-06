@@ -11,6 +11,7 @@ using Xunit.Sdk;
 namespace Devilution.Server.Tests;
 
 /** Fixture-only coverage for the explicit cohort launcher boundary. */
+[Trait("Category", "Slow")]
 public sealed class CohortLauncherBehaviorTests
 {
     private static readonly ConcurrentDictionary<string, byte> RetainedFixtureRoots = new(StringComparer.OrdinalIgnoreCase);

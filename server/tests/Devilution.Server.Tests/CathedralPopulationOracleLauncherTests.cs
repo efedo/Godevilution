@@ -9,6 +9,7 @@ namespace Devilution.Server.Tests;
 public sealed class CathedralPopulationOracleLauncherTests
 {
     [Fact]
+    [Trait("Category", "Slow")]
     public void MonsterLootReportsRequireExactCompletedNativeAndManagedInventories()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -86,6 +87,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void MonsterLootArtifactAndRepeatRejectIncompleteOrDivergentCaptures()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -142,6 +144,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemPlacementReportsRejectSkippedDuplicateOrWrongScopeResults()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -204,6 +207,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemPlacementArtifactRequiresOneBoundedRegularCorpus()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -241,6 +245,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemPlacementRunnerPreservesTheSealedSetupRunnerAndRuntimeProfiles()
     {
         var root = FindRepositoryRoot();
@@ -261,6 +266,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemStageRejectsEveryIncompleteOwnedProcessOutcome()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -288,6 +294,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemNativeReportRequiresExactCompletedFixtures()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -326,6 +333,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void ThemeItemRunnerKeepsIsolatedBoundedSharedHarnessAndNoRuntimeLaunch()
     {
         var source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "tools/test-theme-item-generation.ps1"));
@@ -344,6 +352,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     public static bool HasPowerShellCore => OperatingSystem.IsWindows() && FindPowerShellCore() is not null;
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void RestoresAbsentEmptyAndPopulatedEnvironmentInWindowsPowerShell()
     {
         if (OperatingSystem.IsWindows())
@@ -390,6 +399,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void PopulationModeIsExclusiveAndKeepsExistingModes()
     {
         if (!OperatingSystem.IsWindows())
@@ -449,6 +459,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void InitialItemArtifactHeaderRejectsCoercionsExtraFilesAndIncompleteScopes()
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -501,6 +512,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void EncounterArtifactHeaderRejectsCoercionsExtraFilesAndIncompleteScopes()
     {
         if (!OperatingSystem.IsWindows())
@@ -557,6 +569,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void MetadataReportAndArtifactValidatorsRejectMalformedEvidence()
     {
         if (!OperatingSystem.IsWindows())
@@ -692,6 +705,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void CaseValidatorUsesExactNativePoolsAndRejectsCoercions()
     {
         if (!OperatingSystem.IsWindows())
@@ -785,6 +799,7 @@ public sealed class CathedralPopulationOracleLauncherTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void NativeOracleProcessRetainsOutputPidAndBoundedTimeoutEvidence()
     {
         if (!OperatingSystem.IsWindows())

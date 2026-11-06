@@ -22,6 +22,7 @@ namespace Devilution.Client.Protocol.Tests;
  * checkpoint, which predates the command, so the client schedules it again from the
  * restored tick and the world converges on one application of it.
  */
+[Trait("Category", "Slow")]
 public sealed class CohortPendingCommandRecoveryTests
 {
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();

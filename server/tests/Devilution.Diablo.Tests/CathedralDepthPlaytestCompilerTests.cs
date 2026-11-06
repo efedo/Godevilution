@@ -6,6 +6,7 @@ using Xunit;
 namespace Devilution.Diablo.Tests;
 
 /** Offline Cathedral depths profile, remapping, and publication guards. */
+[Trait("Category", "Slow")]
 public sealed class CathedralDepthPlaytestCompilerTests
 {
     [Fact]

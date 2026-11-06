@@ -15,6 +15,7 @@ public sealed partial class NativeTrapHostPublicationTests
 {
     /** All ticks still cross the live host; checkpoint work uses observable boundary classes. */
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task EveryNativeMissileBoundaryCrossesHostClientAndCheckpointForItsEntireLife()
     {
         foreach (var type in new[] { 5, 6, 7, 68, 69, 70 })
@@ -30,6 +31,7 @@ public sealed partial class NativeTrapHostPublicationTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    [Trait("Category", "Slow")]
     public Task DoorTriggeredMissilesUseBothMatrixRestoreLegs(bool exhaustive)
         => RunNativeMissileMatrix(exhaustive, doorsOnly: true);
 

@@ -10,6 +10,7 @@ public sealed class CathedralL1PlaytestCompilerTests
     [Theory]
     [InlineData(0U)]
     [InlineData(2588U)]
+    [Trait("Category", "Slow")]
     public void CompilesFreshPackWithReachableDiagnosticPopulationWithoutMutatingBase(uint seed)
     {
         var basePack = LoadBasePack();

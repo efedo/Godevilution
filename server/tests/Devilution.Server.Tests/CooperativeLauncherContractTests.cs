@@ -118,6 +118,7 @@ public sealed class CooperativeLauncherContractTests
     }
 
     [Fact(SkipUnless = nameof(IsWindows), Skip = "The extracted process reader requires Windows PowerShell.")]
+    [Trait("Category", "Slow")]
     public void CooperativeProcessReaderRequiresHostHashesWithoutChangingLegacyProfiles()
     {
         const string script = """
@@ -203,6 +204,7 @@ public sealed class CooperativeLauncherContractTests
     }
 
     [Fact(SkipUnless = nameof(IsWindows), Skip = "The extracted evidence helper requires Windows PowerShell.")]
+    [Trait("Category", "Slow")]
     public void CooperativeEvidenceHelperAcceptsTwoClientContinuationEvidence()
     {
         var output = RunPowerShell(BuildCooperativeEvidenceHarness(string.Empty));
@@ -210,6 +212,7 @@ public sealed class CooperativeLauncherContractTests
     }
 
     [Fact(SkipUnless = nameof(IsWindows), Skip = "The extracted evidence helper requires Windows PowerShell.")]
+    [Trait("Category", "Slow")]
     public void CooperativeEvidenceHelperRejectsMismatchedIdsDropOwnershipRecoveryTickAndReceipts()
     {
         var mutations = @"
@@ -238,6 +241,7 @@ foreach ($case in @(
     }
 
     [Fact(SkipUnless = nameof(IsWindows), Skip = "The extracted canonical receipt helper requires Windows PowerShell.")]
+    [Trait("Category", "Slow")]
     public void CooperativePickupRequiresTheExactAcceptedCanonicalOwnerReceipt()
     {
         const string script = """

@@ -5,6 +5,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Exercises the real optional profile guards without starting Godot or a server. */
+[Trait("Category", "Slow")]
 public sealed class CathedralPlaytestLauncherTests
 {
     public static bool IsWindows => OperatingSystem.IsWindows();

@@ -5,6 +5,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Exercises the native-object evidence validator against valid evidence and scoped mutations. */
+[Trait("Category", "Slow")]
 public sealed class NativeObjectLauncherEvidenceTests
 {
     public static bool IsWindows => OperatingSystem.IsWindows();

@@ -201,6 +201,7 @@ public sealed class LiveAuthoritativeClassAbilityTests : LiveAuthoritativeTestBa
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task LiveServerUsesBardIdentifyAbilityOnAnOpenStashItem()
     {
         using var server = await StartedServer.StartAsync(
@@ -340,6 +341,7 @@ public sealed class LiveAuthoritativeClassAbilityTests : LiveAuthoritativeTestBa
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task LiveServerUsesWarriorRepairAbilityOnAnOpenStashItem()
     {
         using var server = await StartedServer.StartAsync(

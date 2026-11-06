@@ -470,6 +470,7 @@ public sealed class DiabloModuleQuestPoolSelectionTests
 }
 /** Actual opt-in bootstrap forwarding checks over compiler-produced Cathedral profiles. The
  * compiler fixture uses labeled synthetic TIL/SOL semantics and makes no native geometry claim. */
+[Trait("Category", "Slow")]
 public sealed class DiabloModuleCathedralBootstrapQuestPolicyTests
 {
     private const uint QuestSelectionSeed = 1;

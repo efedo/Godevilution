@@ -21,6 +21,7 @@ namespace Devilution.Server.Tests;
  * tests deliberately use TCP participants and the production Server entry
  * point so a passing in-process host cannot mask launcher or recovery drift.
  */
+[Trait("Category", "Slow")]
 public sealed class CohortCliParticipantRecoveryTests
 {
     private const uint FixedWorldSeed = 2588;
@@ -1000,6 +1001,10 @@ public sealed class CohortCliParticipantRecoveryTests
                 RedirectStandardError = true,
             };
             startInfo.ArgumentList.Add(FindServerAssembly());
+            // Recovery keeps its real host clock; suppress unrelated startup work only in this child.
+            startInfo.Environment["DOTNET_TC_QuickJit"] = "1";
+            startInfo.ArgumentList.Add("--skip-floor-entry-warmup");
+            startInfo.ArgumentList.Add("true");
             startInfo.ArgumentList.Add("--content-root");
             startInfo.ArgumentList.Add(contentRoot);
             startInfo.ArgumentList.Add("--save-root");

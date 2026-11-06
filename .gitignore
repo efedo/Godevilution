@@ -506,3 +506,6 @@ Testing/
 /Microsoft/
 /NUL*
 /.tmp/
+
+# Microsoft Testing Platform first-use sentinels
+**/Microsoft/TestingPlatform/

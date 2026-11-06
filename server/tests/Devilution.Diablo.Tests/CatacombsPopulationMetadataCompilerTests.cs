@@ -12,6 +12,7 @@ namespace Devilution.Diablo.Tests;
 public sealed class CatacombsPopulationMetadataCompilerTests
 {
     [Fact]
+    [Trait("Category", "Slow")]
     public void CompilerPublishesDeterministicReloadableCrLfPackAndRefusesExistingOutput()
     {
         using var root = new OwnedDirectory();
@@ -44,6 +45,7 @@ public sealed class CatacombsPopulationMetadataCompilerTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void DirectoryCompilerAndDedicatedCliModeRejectInvalidOrMixedInputs()
     {
         using var root = new OwnedDirectory();

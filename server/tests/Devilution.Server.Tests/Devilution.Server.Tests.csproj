@@ -9,6 +9,8 @@
     <!-- xUnit v3's in-process runner keeps this test project independent of the
          machine-wide VSTest/testhost package installation. -->
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <!-- Forward additional dotnet test arguments to the installed xUnit MTP runner. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <ItemGroup>

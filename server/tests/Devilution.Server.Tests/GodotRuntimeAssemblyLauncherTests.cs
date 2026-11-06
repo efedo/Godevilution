@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Devilution.Server.Tests;
 
+[Trait("Category", "Slow")]
 public sealed class GodotRuntimeAssemblyLauncherTests
 {
     [Fact]

@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Trait("Category", "Slow")]
 public sealed class LiveAuthoritativeStoreDefinitionTests : LiveAuthoritativeTestBase
 {
 

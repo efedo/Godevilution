@@ -133,6 +133,7 @@ public sealed class CathedralPopulationMetadataCompilerTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void AllGeometryPolicyAndCatalogChangesAreBoundToPackIdentity()
     {
         var tables = CreateCompleteTables();
@@ -234,6 +235,7 @@ public sealed class CathedralPopulationMetadataCompilerTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public void CompilerPublishesDeterministicReloadableCrLfPackWithoutExpectedStates()
     {
         using var root = new OwnedDirectory();

@@ -5,6 +5,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Exercises class-bound launcher guards and session markers through Windows PowerShell. */
+[Trait("Category", "Slow")]
 public sealed class NativeClassLauncherContractTests
 {
     public static bool IsWindows => OperatingSystem.IsWindows();

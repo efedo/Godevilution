@@ -6,6 +6,7 @@ using Xunit;
 namespace Devilution.Client.Protocol.Tests;
 
 [Collection(WallClockTimingCollection.CollectionName)]
+[Trait("Category", "Slow")]
 public sealed class LiveAuthoritativeTickRateSynchronizationTests : LiveAuthoritativeTestBase
 {
     /**

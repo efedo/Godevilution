@@ -74,7 +74,13 @@ jobs:
         dotnet run --project server/tests/Devilution.Domain.Tests/Devilution.Domain.Tests.csproj --configuration Release
         dotnet run --project server/tests/Devilution.Data.Tests/Devilution.Data.Tests.csproj --configuration Release
         dotnet run --project server/tests/Devilution.Engine.Tests/Devilution.Engine.Tests.csproj --configuration Release
-        dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --configuration Release
+
+    # Category partitions run in the same required job; neither tier drops assertions or cases.
+    - name: Run default Diablo tests
+      run: dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --configuration Release -- --filter-not-trait Category=Slow
+
+    - name: Run slow Diablo tests
+      run: dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --configuration Release --no-build -- --filter-trait Category=Slow
 
     - name: Restore authoritative server tests
       run: dotnet restore server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
@@ -82,8 +88,11 @@ jobs:
     - name: Build authoritative server tests
       run: dotnet build server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-restore
 
-    - name: Run authoritative server replay fixtures
-      run: dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-build
+    - name: Run default server tests
+      run: dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-build -- --filter-not-trait Category=Slow
+
+    - name: Run slow server tests
+      run: dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-build -- --filter-trait Category=Slow
 
     - name: Restore authoritative protocol client tests
       run: dotnet restore godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
@@ -100,5 +109,8 @@ jobs:
     - name: Compare managed parity with generated native oracles
       run: bash tools/run-native-oracle-parity.sh build "$RUNNER_TEMP/native-oracles"
 
-    - name: Run authoritative client/server smoke tests
-      run: dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build
+    - name: Run default client tests
+      run: dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build -- --filter-not-trait Category=Slow
+
+    - name: Run slow client tests
+      run: dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build -- --filter-trait Category=Slow

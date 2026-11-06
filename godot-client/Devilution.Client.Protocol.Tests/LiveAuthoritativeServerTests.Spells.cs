@@ -1398,6 +1398,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task LiveServerUsesSorcererRechargeAbilityOnAnOpenStashStaff()
     {
         var townLoopPreviewRoot = Path.Combine(

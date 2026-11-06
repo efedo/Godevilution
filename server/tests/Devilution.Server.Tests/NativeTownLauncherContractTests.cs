@@ -5,6 +5,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Behavior checks for the opt-in format-5 Town launcher boundary. */
+[Trait("Category", "Slow")]
 public sealed class NativeTownLauncherContractTests
 {
     public static bool IsWindows => OperatingSystem.IsWindows();

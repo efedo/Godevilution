@@ -5,6 +5,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Exercises actual launcher guards/evidence validators, without starting Godot. */
+[Trait("Category", "Slow")]
 public sealed class MultiplayerRecoveryLauncherTests
 {
     public static bool IsWindows => OperatingSystem.IsWindows();

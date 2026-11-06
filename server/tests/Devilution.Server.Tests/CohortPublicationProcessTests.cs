@@ -18,6 +18,7 @@ public sealed class CohortPublicationProcessCollection
 
 /** Abruptly kills only a dedicated managed child at a reported durable boundary. */
 [Collection(CohortPublicationProcessCollection.CollectionName)]
+[Trait("Category", "Slow")]
 public sealed class CohortPublicationProcessTests
 {
     private const string StageDirectoryName = ".authoritative-staging";

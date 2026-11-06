@@ -21,6 +21,7 @@ namespace Devilution.Server.Tests;
  * not read its response; the canonical cohort document, rather than delivery
  * assumptions, proves whether the command committed before host loss.
  */
+[Trait("Category", "Slow")]
 public sealed class CohortCliPendingCommandRecoveryTests
 {
     private const uint FixedWorldSeed = 2588;
@@ -829,6 +830,10 @@ public sealed class CohortCliPendingCommandRecoveryTests
                 RedirectStandardError = true,
             };
             startInfo.ArgumentList.Add(FindServerAssembly());
+            // Recovery keeps its real host clock; suppress unrelated startup work only in this child.
+            startInfo.Environment["DOTNET_TC_QuickJit"] = "1";
+            startInfo.ArgumentList.Add("--skip-floor-entry-warmup");
+            startInfo.ArgumentList.Add("true");
             startInfo.ArgumentList.Add("--content-root");
             startInfo.ArgumentList.Add(contentRoot);
             startInfo.ArgumentList.Add("--save-root");

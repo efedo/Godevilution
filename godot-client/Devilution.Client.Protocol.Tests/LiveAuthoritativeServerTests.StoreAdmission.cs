@@ -74,6 +74,7 @@ public sealed class LiveAuthoritativeStoreAdmissionTests : LiveAuthoritativeTest
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task LiveStoreAdmissionRejectsRemoteEntryWithoutPlayerMutation()
     {
         using var server = await StartedServer.StartAsync(

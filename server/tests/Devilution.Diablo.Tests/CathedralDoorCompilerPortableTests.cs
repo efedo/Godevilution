@@ -14,6 +14,7 @@ namespace Devilution.Diablo.Tests;
  * semantics. These fixtures are diagnostic only; they are not native geometry
  * or a shipped-content claim.
  */
+[Trait("Category", "Slow")]
 public sealed class CathedralDoorCompilerPortableTests
 {
     [Fact]
