@@ -1860,6 +1860,7 @@ void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget);
 #include "theme_item_generation_actors_test.inc"
 #include "theme_item_generation_traps_test.inc"
 #include "theme_item_generation_shrines_test.inc"
+#include "theme_item_generation_theme_effects_test.inc"
 
 } // namespace
 } // namespace devilution

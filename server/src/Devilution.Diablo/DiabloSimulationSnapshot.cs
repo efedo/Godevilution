@@ -1077,6 +1077,7 @@ public sealed partial class DiabloSimulation
             NativeShrineInteractableEntityIds = WorldState.CaptureNativeShrineInteractableEntityIds(),
             NativeShrineTypes = WorldState.CaptureNativeShrineTypes(),
             NativeThemeObjectInteractableEntityIds = WorldState.CaptureNativeThemeObjectInteractableEntityIds(),
+            NativeThemeEffectInteractableEntityIds = WorldState.CaptureNativeThemeEffectInteractableEntityIds(),
             NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             NativeBarrelMeleeBreakableEntityIds = WorldState.CaptureNativeBarrelMeleeBreakableEntityIds(),
             NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),

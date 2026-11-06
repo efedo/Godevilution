@@ -483,7 +483,9 @@ public sealed partial class DiabloCombatCommandProcessor
         }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
+        AdvanceNativeBurningCrosses(tick, players, events);
         AdvanceProjectiles(tick, players, events);
+        ProcessManaShield(players);
         return events;
     }
 
@@ -545,7 +547,9 @@ public sealed partial class DiabloCombatCommandProcessor
         }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
+        AdvanceNativeBurningCrosses(tick, players, events);
         AdvanceProjectiles(tick, players, events);
+        ProcessManaShield(players);
         return events;
     }
 

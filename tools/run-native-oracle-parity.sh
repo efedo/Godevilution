@@ -88,6 +88,10 @@ diablo_classes=(
 )
 client_classes=(NativeArchiveOracleTests)
 
+# 2.5c part B: archive-free fountains, random shrines and burning crosses.
+captures+=("theme_item_generation_test|ThemeRoomGenerationTest.CaptureNativeThemeEffectsPartB|GODEVILUTION_THEME_EFFECTS_PART_B_ORACLE_DIRECTORY")
+diablo_classes+=(NativeThemeEffectsPartBNativeOracleTests)
+
 for entry in "${captures[@]}"; do
 	IFS='|' read -r executable filter variable <<<"$entry"
 	directory="$output_root/${variable#GODEVILUTION_}"

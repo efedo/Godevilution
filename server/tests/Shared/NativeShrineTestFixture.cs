@@ -26,6 +26,7 @@ internal sealed class NativeShrineTestFixture
     private readonly AuthoritativeCathedralMonsterRuntimeAdapterResult actors;
     private readonly uint level;
     internal const uint ShrineEntityId = 0x09003002;
+    internal const uint AdditionalObjectEntityId = 0x09003003;
     internal DiabloSimulation Simulation { get; }
     internal DiabloWorldState World { get; }
     internal DiabloWorldCommandProcessor Rules { get; }
@@ -36,11 +37,11 @@ internal sealed class NativeShrineTestFixture
     internal AuthoritativeSpellBookCatalog SpellBooks { get; }
     internal AuthoritativeWorldObject Shrine => World.Objects[ShrineEntityId];
 
-    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true)
-        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable) { }
+    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0)
+        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable, additionalNativeObjectType) { }
 
     internal NativeShrineTestFixture(int depth, int shrineType, uint seed,
-        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true)
+        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0)
     {
         level = (uint)depth;
         Spells = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(Path.Combine(RepositoryRoot(), "server/content/base/spells.tsv")));
@@ -74,19 +75,27 @@ internal sealed class NativeShrineTestFixture
             new AuthoritativeWorldObject(0x09003001, 6, level, 56, 50, nativeObjectId: 6, hideWhenActivated: false, animationFrame: 1),
             new AuthoritativeWorldObject(ShrineEntityId, objectType, level, 50, 50, nativeObjectId: objectType, hideWhenActivated: false, isShrine: false, animationFrame: initialFrame, missilePassable: nativeObjectType is 61 or 64 or 67),
         };
+        if (additionalNativeObjectType != 0) initial = [.. initial,
+            new AuthoritativeWorldObject(AdditionalObjectEntityId, (uint)additionalNativeObjectType,
+                level, 51, 50, nativeObjectId: (uint)additionalNativeObjectType,
+                hideWhenActivated: false, animationFrame: 1),
+        ];
         var slots = Enumerable.Range(0, 127).Select(slot => new AuthoritativeCathedralPopulationObjectState {
             Slot = slot, Type = -1, BookMessage = -1,
         }).ToArray();
         var refs = new int[Cells];
         var pieces = new ushort[Cells];
         var active = new List<int> { 2, 0, 1 };
+        if (additionalNativeObjectType != 0) active.Add(3);
         foreach (var value in initial) {
             var slot = (int)(value.EntityId - 0x09003000);
+            var itemObject = slot >= 2 && (slot == 2 ? nativeObjectType : additionalNativeObjectType) != 0
+                && value.NativeObjectId is not (26 or 66 or 76 or 79 or 80 or 81 or 82 or 91);
             slots[slot] = slots[slot] with { Type = (int)value.NativeObjectId,
-                Position = new(value.PositionX, value.PositionY), SelectionRegion = slot == 2 && !nativeObjectSelectable ? 0 : 3,
-                SolidFlag = slot == 2 && nativeObjectType != 0,
-                AnimFrame = (uint)value.AnimationFrame, AnimLength = nativeObjectType != 0 && slot == 2 ? 0U : 11U, MissilePassable = value.MissilePassable,
-                RndSeed = slot == 2 ? seed : (uint)(800 + slot), Var1 = slot == 2 ? shrineType : chestItemCount,
+                Position = new(value.PositionX, value.PositionY), SelectionRegion = value.NativeObjectId is 26 or 91 || slot == 2 && !nativeObjectSelectable ? 0 : 3,
+                SolidFlag = itemObject,
+                AnimFrame = (uint)value.AnimationFrame, AnimLength = itemObject || value.NativeObjectId == 80 ? 0U : value.NativeObjectId == 82 ? 4U : 11U, MissilePassable = value.MissilePassable,
+                RndSeed = slot >= 2 ? seed : (uint)(800 + slot), Var1 = slot >= 2 ? shrineType : chestItemCount,
             };
             refs[value.PositionY * 112 + value.PositionX] = slot + 1;
         }

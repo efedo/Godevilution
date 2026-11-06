@@ -27,7 +27,7 @@ public sealed class AuthoritativeCatacombsNativeObjectPolicyTests
         Assert.True(AuthoritativeCatacombsNativeObjectPolicy.Classify(53).SupportedInCatacombs);
         Assert.Equal(AuthoritativeCatacombsNativeObjectOperation.Cauldron,
             AuthoritativeCatacombsNativeObjectPolicy.Classify(80).Operation);
-        Assert.False(AuthoritativeCatacombsNativeObjectPolicy.Classify(80).SupportedInCatacombs);
+        Assert.True(AuthoritativeCatacombsNativeObjectPolicy.Classify(80).SupportedInCatacombs);
         Assert.Equal(AuthoritativeCatacombsNativeObjectRole.Decorative,
             AuthoritativeCatacombsNativeObjectPolicy.Classify(0).Role);
         Assert.Throws<InvalidDataException>(() => AuthoritativeCatacombsNativeObjectPolicy.Classify(-1));
@@ -56,14 +56,12 @@ public sealed class AuthoritativeCatacombsNativeObjectPolicyTests
     [InlineData(20, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(21, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(22, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]
-    [InlineData(26, AuthoritativeCatacombsNativeObjectOperation.BurningCross, AuthoritativeCatacombsNativeObjectRole.AutonomousEffect)]
     [InlineData(41, AuthoritativeCatacombsNativeObjectOperation.ChamberOfBoneBook, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(50, AuthoritativeCatacombsNativeObjectOperation.TrapLever, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(49, AuthoritativeCatacombsNativeObjectOperation.FlameTrap, AuthoritativeCatacombsNativeObjectRole.AutonomousTrap)]
     [InlineData(52, AuthoritativeCatacombsNativeObjectOperation.Unused, AuthoritativeCatacombsNativeObjectRole.InertSelectable)]
     [InlineData(84, AuthoritativeCatacombsNativeObjectOperation.MagicCircle, AuthoritativeCatacombsNativeObjectRole.AutonomousEffect)]
     [InlineData(85, AuthoritativeCatacombsNativeObjectOperation.MagicCircle, AuthoritativeCatacombsNativeObjectRole.AutonomousEffect)]
-    [InlineData(91, AuthoritativeCatacombsNativeObjectOperation.BurningCross, AuthoritativeCatacombsNativeObjectRole.AutonomousEffect)]
     [InlineData(99, AuthoritativeCatacombsNativeObjectOperation.Barrel, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(100, AuthoritativeCatacombsNativeObjectOperation.Barrel, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(101, AuthoritativeCatacombsNativeObjectOperation.Barrel, AuthoritativeCatacombsNativeObjectRole.Interactive)]
@@ -75,6 +73,19 @@ public sealed class AuthoritativeCatacombsNativeObjectPolicyTests
         Assert.Equal(operation, actual.Operation);
         Assert.Equal(role, actual.Role);
         Assert.False(actual.SupportedInCatacombs);
+    }
+
+    [Theory]
+    [InlineData(66)] [InlineData(76)] [InlineData(79)] [InlineData(80)] [InlineData(81)] [InlineData(82)]
+    [InlineData(26)] [InlineData(91)]
+    public void ThemeEffectsHaveImplementedOperationsAndKeepTheirNativeRole(int id)
+    {
+        var actual = AuthoritativeCatacombsNativeObjectPolicy.Classify(id);
+        Assert.True(actual.SupportedInCatacombs);
+        if (id is 26 or 91)
+            Assert.Equal(AuthoritativeCatacombsNativeObjectOperation.BurningCross, actual.Operation);
+        Assert.Equal(id is 26 or 91 ? AuthoritativeCatacombsNativeObjectRole.AutonomousEffect
+            : AuthoritativeCatacombsNativeObjectRole.Interactive, actual.Role);
     }
 
     [Theory]
