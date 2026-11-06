@@ -996,13 +996,7 @@ public partial class AuthoritativeCathedralItemRuntime
         if (slot is < 0 or >= PoolCapacity || raw.ItemIndex != binding.NativeItemIndex)
             throw new InvalidDataException("Native item projection has an unsafe slot or content identity.");
         AuthoritativeCathedralInitialItemGenerator.ValidateItemProjection(raw);
-        var stableSpellId = raw.SpellId;
-        if (raw.SpellId >= 0) {
-            if (profile.NativeSpellBindings is null
-                || !profile.NativeSpellBindings.TryGetValue(raw.SpellId, out stableSpellId))
-                throw new InvalidDataException(
-                    $"Native spell ordinal {raw.SpellId} has no explicit stable content binding.");
-        }
+        var stableSpellId = ResolveProjectedSpellId(raw, binding);
         var state = new AuthoritativeItemState(
             raw.CreateInfo,
             raw.ItemType,
@@ -1078,7 +1072,7 @@ public partial class AuthoritativeCathedralItemRuntime
         if (state.CreateInfo > ushort.MaxValue || state.NativeCursorGraphic is null
             || string.IsNullOrEmpty(state.BaseName) || state.ItemIndex < 0)
             throw new InvalidDataException("World item state cannot be represented as a native Cathedral item.");
-        var nativeSpellId = ToNativeSpellId(state.SpellId);
+        var nativeSpellId = ResolveNativeItemSpellId(state);
         var raw = new AuthoritativeCathedralInitialItemState {
             Seed = worldItem.ItemSeed,
             CreateInfo = (ushort)state.CreateInfo,
@@ -1585,11 +1579,7 @@ public partial class AuthoritativeCathedralItemRuntime
             || !profile.ItemBindings.TryGetValue(projection.Raw.ItemIndex, out var expectedBinding)
             || !Equals(expectedBinding, projection.Binding))
             throw new InvalidDataException("A live world-item projection requires a non-zero entity ID.");
-        var expectedSpellId = projection.Raw.SpellId;
-        if (expectedSpellId >= 0
-            && (profile.NativeSpellBindings is null
-                || !profile.NativeSpellBindings.TryGetValue(expectedSpellId, out expectedSpellId)))
-            throw new InvalidDataException("Native item projection has no stable spell binding.");
+        var expectedSpellId = ResolveProjectedSpellId(projection.Raw, projection.Binding);
         var state = projection.State;
         if (state.CreateInfo != projection.Raw.CreateInfo
             || state.ItemType != projection.Raw.ItemType
