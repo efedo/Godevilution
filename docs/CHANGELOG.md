@@ -5,6 +5,14 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-06
+
+- Fast test suites (T1): most live-host client tests run against an in-process host, in parallel at
+  200 Hz; client timing tests use a fake clock through a new `TimeProvider` connection option; slow
+  live-host, launcher and matrix tests carry `Category=Slow` and run in their own CI step. Default
+  client, server and Diablo runs now take about 14, 37 and 30 s. Test hosts may pass the additive
+  `--skip-floor-entry-warmup` option.
+
 ## 2026-11-05
 
 - Vanilla shrines (2.5b): all 25 non-Hellfire shrine effects run natively on L1–L8 with their

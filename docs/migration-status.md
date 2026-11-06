@@ -143,6 +143,8 @@ Passing a scoped test or adding a schema version does not close a milestone.
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;
   2.4a the ten-lane melee AI trace; 2.4b the seven-lane ranged AI trace; 2.5a door and chest traps; 2.5b vanilla shrines). Retail-archive corpora stay local by design (public
   repository), so those comparisons still skip in CI.
+- Since T1 the default client, server and Diablo suites run in about 14, 37 and 30 s;
+  149 `Category=Slow` live-host, launcher and matrix tests run in a separate CI step.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.
 - L3 player death is a failed bot scenario, not an established transport/combat

@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-06 — Fast test suites (T1)
+
+Default tiers (`--filter-not-trait Category=Slow`), three runs each: client 14 s, server 37 s, Diablo
+30 s, all passing; slow tiers (`--filter-trait Category=Slow`) passed once at 68, 89 and 57 s. Client
+suite before T1: 950 s. All 8,212 baseline cases kept, 149 moved to the slow tier; each converted family
+failed against a deliberate production fault (in-process hosts, 200 Hz, fake clock). Sol 6.1 review
+accepted every step. The town-travel receipt timeout seen once during step 4 did not recur.
+
 ### 2026-11-05 — Vanilla shrines (2.5b)
 
 200 Hz Debug journeys and resumes passed: normal L8, seed 0 trapped door L8, and `-CatacombsSeed 98

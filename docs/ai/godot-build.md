@@ -576,6 +576,17 @@ dotnet build server/src/Devilution.Server/Devilution.Server.csproj
 dotnet build godot-client/Devilution.Client/Devilution.Client.sln
 ```
 
+Day-to-day runs use the fast default tier; CI also runs the slow tier. The same
+filters apply to the server and Diablo test projects:
+
+```powershell
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj -- --filter-not-trait Category=Slow
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --no-build -- --filter-trait Category=Slow
+```
+
+Most live tests use an in-process host at 200 Hz in parallel classes; wall-clock
+timing cases share one non-parallel collection.
+
 The protocol-test project builds the current server once as an explicit,
 build-only dependency, then the live tests launch that matching-configuration
 server without starting concurrent rebuilds. Do not rebuild the same test
