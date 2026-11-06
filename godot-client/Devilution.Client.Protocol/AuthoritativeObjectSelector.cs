@@ -163,7 +163,6 @@ public static class AuthoritativeObjectSelector
             && !@object.NativeBarrelMeleeBreakable
             && (!@object.NativeTrapInteractable || IsValidNativeTrapInteraction(@object))
             && @object.NativeObjectId == 48
-            && @object.PresentationKind != ProtocolObjectPresentationKind.Trap
             && IsPlainNativeInteraction(@object, allowArmedTrap: @object.NativeTrapInteractable);
     }
 

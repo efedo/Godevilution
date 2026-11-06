@@ -21,17 +21,17 @@ public partial class SessionAcceptance
             && value.NativeObjectId == 48 && value.PositionX == NativeDepthResumeEvidence.TrappedSarcophagusX
             && value.PositionY == NativeDepthResumeEvidence.TrappedSarcophagusY)
             ?? throw new InvalidOperationException("The default L4 seed has no required sarcophagus at (33,62).");
-        Require(NativeTrappedSarcophagusJourneyEvidence.CanOpen(target),
-            "The required sarcophagus must start unopened, armed and authoritatively interactable.");
+        Require(NativeTrappedSarcophagusJourneyEvidence.CanOpen(main.ObservedSnapshot!, target.EntityId),
+            "The required sarcophagus must start unopened and interactable with an unspent linked wall trap.");
         await UseNativeHealingPotionIfNeeded(main);
         await MoveAdjacentToNativePosition(main, current => current.Objects.Single(value => value.EntityId == target.EntityId),
             NativeObjectObstruction(main, target, allowClosedDoors: false));
         await Until(() => Settled(main), "The trapped sarcophagus approach did not settle.", 10);
         var before = main.ObservedSnapshot!.Clone();
         target = before.Objects.Single(value => value.EntityId == target.EntityId);
-        Require(NativeTrappedSarcophagusJourneyEvidence.CanOpen(target)
+        Require(NativeTrappedSarcophagusJourneyEvidence.CanOpen(before, target.EntityId)
             && AuthoritativeObjectSelector.SelectAt(before, target.PositionX, target.PositionY)?.EntityId == target.EntityId,
-            "The trapped sarcophagus lost its closed, armed baseline or ordinary object selection before clicking.");
+            "The trapped sarcophagus lost its unopened baseline, unspent wall source or ordinary selection before clicking.");
         var opening = new NativeTrappedSarcophagusJourneyEvidence.Opening(before, target.EntityId);
         var sequence = main.ObservedLastQueuedSequence;
         GetViewport().GuiReleaseFocus();

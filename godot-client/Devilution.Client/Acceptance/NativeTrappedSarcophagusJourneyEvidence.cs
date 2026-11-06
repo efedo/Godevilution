@@ -11,6 +11,10 @@ internal sealed record NativeTrappedSarcophagusCheckpoint(uint Level, uint Entit
 /** Opening provenance survives sparse snapshots through the wall trap's retained firing tick. */
 internal static class NativeTrappedSarcophagusJourneyEvidence
 {
+    // The default L4 generator reserves monster slot 6 for object slot 113 at (33,62).
+    // NativePopulationBuilder binds it as 0x09001000 + (4 - 1) * 0x10000 + 6.
+    private const uint RequiredSkeletonEntity = 0x09031006;
+
     internal sealed record Firing(uint TrapSource, ulong Tick);
 
     internal sealed class Opening
@@ -30,7 +34,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
 
         internal Firing? Find(Snapshot after, ulong openingTick, ulong deadlineTick)
         {
-            if (!CanOpen(target) || openingTick < before.Tick || deadlineTick <= openingTick || after.Tick <= openingTick)
+            if (!CanOpen(target) || IsRequiredTarget(target) && !CanOpen(before, target.EntityId) || openingTick < before.Tick || deadlineTick <= openingTick || after.Tick <= openingTick)
                 return null;
             var opened = after.Objects.SingleOrDefault(value => value.EntityId == target.EntityId);
             if (!IsOpened(opened, target)) return null;
@@ -39,7 +43,8 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
                     && value.NativeTrapFiredTick < deadlineTick && value.NativeTrapFiredTick <= after.Tick)) {
                 var original = before.Objects.SingleOrDefault(value => value.EntityId == source.EntityId);
                 if (!spent.Contains(source.EntityId) && source.NativeObjectId is 53 or 54 && !source.Destroyed && !source.TrapArmed && !source.NativeTrapInteractable
-                    && source.LevelId == target.LevelId && original is not null && SameObject(source, original))
+                    && source.LevelId == target.LevelId && IsExpectedSource(source, target)
+                    && original is not null && SameObject(source, original))
                     return new(source.EntityId, source.NativeTrapFiredTick);
             }
             return null;
@@ -47,8 +52,18 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
     }
 
     internal static bool CanOpen(ObjectSnapshot value)
-        => value.NativeObjectId == 48 && value.LevelId is >= 1 and <= 4 && value.TrapArmed
+        => value.NativeObjectId == 48 && value.LevelId is >= 1 and <= 4
             && value.NativeSarcophagusInteractable && !value.Activated && !value.Destroyed;
+
+    /** TrapSense hides armed/disarm state from Warriors; the fixed wall source must still be unspent. */
+    internal static bool CanOpen(Snapshot snapshot, uint entity)
+    {
+        var target = snapshot.Objects.SingleOrDefault(value => value.EntityId == entity);
+        if (target is null || !IsRequiredTarget(target) || !CanOpen(target)) return false;
+        var source = snapshot.Objects.SingleOrDefault(value => value.LevelId == target.LevelId && IsExpectedSource(value, target));
+        return source is not null && !source.Destroyed && source.NativeTrapFiredTriggerEntityId == 0 && !source.HasNativeTrapFiredTick
+            && !snapshot.Projectiles.Any(value => value.SpellId == 0 && value.SourceEntityId == source.EntityId);
+    }
 
     internal static NativeTrappedSarcophagusCheckpoint Capture(Snapshot before, Snapshot after, uint entity,
         CommandResult receipt, ulong deadlineTick, uint terminalFrame)
@@ -58,9 +73,10 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         var firing = new Opening(before, entity).Find(after, receipt.AppliedTick, deadlineTick)
             ?? throw new InvalidOperationException("The trapped sarcophagus has no fresh firing after its opening command.");
         var target = before.Objects.Single(value => value.EntityId == entity);
-        var drops = after.WorldItems.Where(value => value.LevelId == target.LevelId
-            && !before.WorldItems.Any(old => old.EntityId == value.EntityId)).Select(value => value.EntityId).ToArray();
-        var skeletons = after.Monsters.Where(value => IsReleasedSkeleton(before, after, value, target.LevelId))
+        // The required L4 owner is a skeleton case, so even nearby combat loot is not its outcome.
+        var drops = IsRequiredTarget(target) ? [] : after.WorldItems.Where(value => IsNewDrop(before, value, target))
+            .Select(value => value.EntityId).ToArray();
+        var skeletons = after.Monsters.Where(value => IsReleasedSkeleton(before, after, value, target))
             .Select(value => value.EntityId).ToArray();
         var result = new NativeTrappedSarcophagusCheckpoint(target.LevelId, entity, target.PositionX, target.PositionY,
             firing.TrapSource, receipt.AppliedTick, firing.Tick, receipt.ClientSequence, deadlineTick, terminalFrame,
@@ -83,15 +99,18 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             || expected.TerminalFrame <= target.AnimationFrame
             || after.Objects.Single(value => value.EntityId == expected.Entity).AnimationFrame > expected.TerminalFrame)
             throw new InvalidOperationException("The recorded trapped sarcophagus lost its closed baseline, opening receipt or fresh firing provenance.");
+        if (IsRequiredTarget(target) && (expected.Drops.Length != 0 || expected.Skeletons.Length != 1
+                || expected.Skeletons[0] != RequiredSkeletonEntity))
+            throw new InvalidOperationException("The required L4 sarcophagus did not release its own reserved skeleton.");
         foreach (var id in expected.Drops) {
             var item = after.WorldItems.Single(value => value.EntityId == id);
-            if (before.WorldItems.Any(value => value.EntityId == id))
-                throw new InvalidOperationException("The sarcophagus reused preexisting floor loot as release evidence.");
+            if (!IsNewDrop(before, item, target))
+                throw new InvalidOperationException("The sarcophagus loot is preexisting or outside its native drop placement.");
             NativeThemeObjectJourneyEvidence.VerifyDrop(item, expected.Level);
         }
         foreach (var id in expected.Skeletons) {
             var monster = after.Monsters.Single(value => value.EntityId == id);
-            if (!IsReleasedSkeleton(before, after, monster, expected.Level))
+            if (!IsReleasedSkeleton(before, after, monster, target))
                 throw new InvalidOperationException("The sarcophagus has no newly released native skeleton.");
         }
     }
@@ -115,12 +134,25 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
     }
 
     // A sparse publication may show a newly released skeleton already killed by its wall trap.
-    private static bool IsReleasedSkeleton(Snapshot before, Snapshot after, MonsterSnapshot value, uint level)
-        => value.EntityId != 0 && value.LevelId == level && !value.IsPlayerMinion
+    private static bool IsReleasedSkeleton(Snapshot before, Snapshot after, MonsterSnapshot value, ObjectSnapshot target)
+        => value.EntityId != 0 && value.LevelId == target.LevelId && !value.IsPlayerMinion
+            && (!IsRequiredTarget(target) || value.EntityId == RequiredSkeletonEntity)
+            && IsNear(value.PositionX, value.PositionY, target)
             && value.NativeAi is "SkeletonMelee" or "SkeletonRanged"
-            && (value.Alive || after.Corpses.Any(corpse => corpse.EntityId == value.EntityId && corpse.LevelId == level))
+            && (value.Alive || after.Corpses.Any(corpse => corpse.EntityId == value.EntityId && corpse.LevelId == target.LevelId))
             && !before.Monsters.Any(old => old.EntityId == value.EntityId && old.Alive)
             && !before.Corpses.Any(old => old.EntityId == value.EntityId);
+
+    private static bool IsNewDrop(Snapshot before, WorldItemSnapshot value, ObjectSnapshot target)
+        => value.EntityId != 0 && value.LevelId == target.LevelId && IsNear(value.PositionX, value.PositionY, target)
+            && !before.WorldItems.Any(old => old.EntityId == value.EntityId);
+    private static bool IsNear(int x, int y, ObjectSnapshot target)
+        => Math.Max(Math.Abs((long)x - target.PositionX), Math.Abs((long)y - target.PositionY)) <= 1;
+    private static bool IsRequiredTarget(ObjectSnapshot target)
+        => target.LevelId == NativeDepthResumeEvidence.TrappedSarcophagusLevel && target.NativeObjectId == 48
+            && target.PositionX == NativeDepthResumeEvidence.TrappedSarcophagusX && target.PositionY == NativeDepthResumeEvidence.TrappedSarcophagusY;
+    private static bool IsExpectedSource(ObjectSnapshot source, ObjectSnapshot target)
+        => !IsRequiredTarget(target) || source.NativeObjectId == 54 && source.PositionX == 33 && source.PositionY == 44;
 
     private static bool SameObject(ObjectSnapshot value, ObjectSnapshot original)
         => value.EntityId == original.EntityId && value.LevelId == original.LevelId && value.NativeObjectId == original.NativeObjectId

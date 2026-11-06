@@ -32,6 +32,8 @@ public sealed class NativeSarcophagusCapabilityTests
     public void ClosedSarcophagiAreSelectableAndAdmittedWithOrWithoutTheirNativeTrap(uint level, bool armed)
     {
         var value = Sarcophagus(); value.LevelId = level; value.TrapArmed = armed;
+        value.NativeTrapInteractable = armed;
+        value.PresentationKind = armed ? Devilution.Protocol.V1.ObjectPresentationKind.Trap : Devilution.Protocol.V1.ObjectPresentationKind.Unspecified;
         var wire = ObjectSnapshot.Parser.ParseFrom(value.ToByteArray());
         Assert.True(AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(wire));
         var snapshot = Apply(wire, level);
@@ -71,17 +73,17 @@ public sealed class NativeSarcophagusCapabilityTests
             value => value.NativeChestInteractable = true,
             value => value.Activated = true,
             value => value.Destroyed = true,
-            value => value.NativeTrapInteractable = true,
+            value => value.NativeTrapInteractable = !armed,
             value => value.NativeBarrelMeleeBreakable = true,
             value => value.NativeObjectId = 91,
             value => value.Breakable = true,
             value => value.IsShrine = true,
             value => value.EffectKind = 1,
             value => value.QuestId = 1,
-            value => value.PresentationKind = Devilution.Protocol.V1.ObjectPresentationKind.Trap,
+            value => value.PresentationKind = Devilution.Protocol.V1.ObjectPresentationKind.Quest,
         };
         foreach (var corrupt in corruptions) {
-            var value = Sarcophagus(); value.TrapArmed = armed;
+            var value = Sarcophagus(); value.TrapArmed = armed; value.NativeTrapInteractable = armed;
             corrupt(value);
             Assert.False(AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(value));
             Assert.Throws<InvalidDataException>(() => Apply(value));
