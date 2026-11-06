@@ -817,7 +817,7 @@ public partial class SessionAcceptance
                 approaches++;
                 MonsterSnapshot approached;
                 try {
-                    approached = await FindNativeClassTargetAsync(main, ranged: false, levelId);
+                    approached = await FindNativeClassTargetAsync(main, ranged: false, levelId, requiredTarget: targetId);
                 } catch (InvalidOperationException) when (main.ObservedSnapshot!.Players.Single().Life > 0) {
                     return (null, attacks); // Not reachable from here (for example behind a wall).
                 }

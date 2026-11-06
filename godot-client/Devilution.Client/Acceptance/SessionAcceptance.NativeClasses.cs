@@ -252,8 +252,10 @@ public partial class SessionAcceptance
             "The native class did not reach its ordinary route destination.");
     }
 
-    private async Task<MonsterSnapshot> FindNativeClassTargetAsync(Main main, bool ranged, uint levelId = 1, int maximumMoves = 48)
+    private async Task<MonsterSnapshot> FindNativeClassTargetAsync(Main main, bool ranged, uint levelId = 1,
+        int maximumMoves = 48, uint? requiredTarget = null)
     {
+        var approach = new NativeCombatApproachTarget(requiredTarget);
         for (var movement = 0; movement < maximumMoves; movement++) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
@@ -261,25 +263,26 @@ public partial class SessionAcceptance
             var geometry = DepthGeometry(main, levelId);
             var blocked = geometry.MissileBlockedCells.ToHashSet();
             var nativeRangedViewport = ranged && IsNativeSceneViewportActive(main, player.LevelId);
-            var targets = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
-                .OrderBy(monster => NativeMonsterDistance(player, monster)).ThenBy(monster => monster.EntityId).Take(12);
+            bool AttackCell(MonsterSnapshot target, int x, int y) => ranged
+                ? NativeDistance(x, y, target.PositionX, target.PositionY) <= 6
+                    && CanSeeNativeRangedLane(player, target, geometry, x, y, (target.PositionX, target.PositionY))
+                    && HasClearNativeRangedLane(snapshot, geometry, blocked, levelId, x, y, target, (target.PositionX, target.PositionY))
+                : NativeDistance(x, y, target.PositionX, target.PositionY) <= 1;
+            bool CanAttackNow(MonsterSnapshot target) => AttackCell(target, player.PositionX, player.PositionY)
+                && (!nativeRangedViewport || IsRenderedWorldTileVisible(main, target.PositionX, target.PositionY))
+                && AuthoritativeTargetSelector.SelectCombatTarget(snapshot, player.EntityId, target.PositionX, target.PositionY) == target.EntityId;
+            var targets = approach.Candidates(snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion
+                && monster.LevelId == levelId), monster => NativeMonsterDistance(player, monster), CanAttackNow);
             var openCells = new Dictionary<(int X, int Y), bool>();
             var moved = false;
             foreach (var target in targets) {
-                bool AttackCell(int x, int y) => ranged
-                    ? NativeDistance(x, y, target.PositionX, target.PositionY) <= 6
-                        && CanSeeNativeRangedLane(player, target, geometry, x, y, (target.PositionX, target.PositionY))
-                        && HasClearNativeRangedLane(snapshot, geometry, blocked, levelId, x, y, target, (target.PositionX, target.PositionY))
-                    : NativeDistance(x, y, target.PositionX, target.PositionY) <= 1;
-                bool AttackGoal(int x, int y) => AttackCell(x, y)
+                bool AttackGoal(int x, int y) => AttackCell(target, x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
-                if (AttackCell(player.PositionX, player.PositionY)
-                    && (!nativeRangedViewport || IsRenderedWorldTileVisible(main, target.PositionX, target.PositionY))
-                    && AuthoritativeTargetSelector.SelectCombatTarget(snapshot, player.EntityId, target.PositionX, target.PositionY) == target.EntityId)
-                    return target;
+                if (CanAttackNow(target)) return target;
                 var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackGoal,
                     nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null, openCells);
                 if (firstStep is null) continue;
+                approach.Follow(target.EntityId);
                 var sequence = main.ObservedLastQueuedSequence;
                 await Click(main.ObservedTileScreenPosition(firstStep.Value.X, firstStep.Value.Y), walk: true);
                 await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter");
