@@ -53,7 +53,7 @@ public sealed partial class AuthoritativeClientModel
         var wall = source.NativeObjectId is 53 or 54
             // A fired door can be closed again while its missile is still alive.
             && (trigger.NativeObjectId is 1 or 2 or 42 or 43
-                || trigger.NativeObjectId is 5 or 6 or 7 && trigger.Activated);
+                || trigger.NativeObjectId is 5 or 6 or 7 or 48 && trigger.Activated);
         if (!intrinsic && !wall)
             return false;
         const int travel = 0;

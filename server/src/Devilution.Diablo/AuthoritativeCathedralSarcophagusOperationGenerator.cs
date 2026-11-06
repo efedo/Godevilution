@@ -227,7 +227,7 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
     {
         if (facts.NativeTypeId != NativeSarcophagusType || facts.EntityId == 0 || facts.LevelId == 0
             || facts.ObjectSlot < 0 || facts.ObjectSlot >= worldState.ObjectCanInteract.Count
-            || facts.SelectionRegion == 0 || facts.TrapArmed || facts.HasLinkedTrap
+            || facts.SelectionRegion == 0 || facts.TrapArmed != facts.HasLinkedTrap
             || facts.Var1 is < 0 or > 9
             || (uint)facts.PositionX >= AuthoritativeCathedralThemeItemWorldState.Width
             || facts.PositionY is <= 0 or >= AuthoritativeCathedralThemeItemWorldState.Height

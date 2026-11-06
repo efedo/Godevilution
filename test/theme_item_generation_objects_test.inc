@@ -291,6 +291,8 @@ TEST_F(ThemeRoomGenerationTest, NativeThemeRoomGuardRestoresBestiarySizeAndEntri
 
 // Capture complete ordinary L1 sarcophagus operation state without asking the
 // managed implementation to supply any expected native values.
+void WriteRangedMissile(std::ostream &out, const Missile &missile);
+
 TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 {
 	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_SARCOPHAGUS_ORACLE_DIRECTORY");
@@ -300,12 +302,21 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 	ASSERT_TRUE(std::filesystem::is_empty(root));
 	struct ExecutionGuard {
 		bool sound = gbSndInited, headless = HeadlessMode;
+		bool network = SNetInitializeProvider(SELCONN_LOOPBACK, nullptr);
+		bool preFlag = MissilePreFlag;
+		ScopedMissileDataForTest data;
+		std::list<Missile> missiles = std::move(Missiles);
 		~ExecutionGuard()
 		{
 			gbSndInited = sound;
 			HeadlessMode = headless;
+			Missiles = std::move(missiles);
+			MissilePreFlag = preFlag;
+			if (network) SNetDestroy();
 		}
 	} executionGuard;
+	ASSERT_TRUE(executionGuard.network);
+	LoadMissileData();
 	gbSndInited = false;
 	HeadlessMode = true;
 	Player remotePlayer;
@@ -316,7 +327,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 		JsonObject document(stream);
 		document.String("format", "godevilution-cathedral-sarcophagus-operations");
 		document.Number("version", 1);
-		document.String("policy", "original-diablo-single-player-normal-untrapped-cathedral-level1");
+		document.String("policy", "original-diablo-single-player-normal-cathedral-level1");
 		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
 		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
 		document.Key("catalog");
@@ -332,6 +343,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			int itemCount;
 			bool levelLoading;
 			int spawnPattern; // 0 native default availability, 1 clear neighbors/occupied center, 2 three clear neighbors, 3 blocked.
+			int trapMissileType = -1;
 		};
 		constexpr Lane lanes[] = {
 			{ "loot-var1-0", 0, 1, 2, false, 0 },
@@ -344,6 +356,12 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			{ "spawn-var1-8-clear-neighbors-center-occupied", 8, 1, 2, false, 1 },
 			{ "spawn-var1-9-negative-rng", 9, UINT32_C(1457187811), 2, false, 2 },
 			{ "spawn-var1-8-no-space", 8, UINT32_C(0x80000000), 2, false, 3 },
+			{ "trapped-loot-arrow", 0, 1, 2, false, 0, 0 },
+			{ "trapped-loot-firebolt", 0, 1, 2, false, 0, 1 },
+			{ "trapped-loot-lightning", 0, 1, 2, false, 0, 7 },
+			{ "trapped-skeleton-arrow", 8, 2588, 2, false, 0, 0 },
+			{ "trapped-skeleton-firebolt", 8, 2588, 2, false, 0, 1 },
+			{ "trapped-skeleton-lightning", 8, 2588, 2, false, 0, 7 },
 		};
 		constexpr std::array<Direction, 8> spawnDirections {
 			Direction::North,
@@ -449,6 +467,21 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 				EXPECT_TRUE(available[3]); // East
 				EXPECT_TRUE(available[4]); // NorthWest
 			}
+			Object *trap = nullptr;
+			Missiles.clear();
+			if (lane.trapMissileType >= 0) {
+				trap = AddObjectPresentation(OBJ_TRAPL, { 48, 50 });
+				ASSERT_NE(trap, nullptr);
+				trap->_oVar1 = 50;
+				trap->_oVar2 = 50;
+				trap->_oVar3 = lane.trapMissileType;
+				trap->_oVar4 = 0;
+				sarcophagus->_oTrapFlag = true;
+				tileAt(40, 40).setPlayer(0);
+				MyPlayer->position.tile = { 50, 51 };
+				MyPlayer->position.future = MyPlayer->position.tile;
+				tileAt(MyPlayer->position.tile).setPlayer(1);
+			}
 			SetRndSeed(UINT32_C(0x12345678));
 			const NativeItemWorldState beforeItems = CaptureItemWorld();
 			const size_t activeMonsterCountBefore = ActiveMonsterCount;
@@ -548,6 +581,26 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 			EXPECT_EQ(expectedActor.str(), repeatedActor.str());
 			EXPECT_EQ(expectedActiveMonsterIds, repeatedActiveMonsterIds);
 			EXPECT_EQ(ActiveMonsterCount, activeMonsterCountBefore);
+			row.Number("trapMissileType", lane.trapMissileType);
+			if (trap != nullptr) {
+				EXPECT_TRUE(sarcophagus->_oTrapFlag); // OperateSarcophagus does not fire or disarm it.
+				EXPECT_TRUE(Missiles.empty());
+				ProcessObjects(); // The native object pass updates the sarcophagus, then operates its later wall trap.
+				EXPECT_EQ(trap->_oVar4, 1);
+				EXPECT_FALSE(sarcophagus->_oTrapFlag);
+				EXPECT_EQ(Missiles.size(), 1U);
+			}
+			row.Number("firedVar4", trap == nullptr ? 0 : trap->_oVar4);
+			row.Boolean("firedTrapFlag", sarcophagus->_oTrapFlag);
+			row.Number("firedRng", GetLCGEngineState());
+			row.Key("firedMissiles");
+			WriteArray(stream, Missiles, [&](const Missile &missile) { WriteRangedMissile(stream, missile); });
+			if (trap != nullptr) {
+				const auto random = GetLCGEngineState();
+				ProcessObjects();
+				EXPECT_EQ(GetLCGEngineState(), random);
+				EXPECT_EQ(Missiles.size(), 1U);
+			}
 		}
 		stream << ']';
 		document.Number("caseCount", caseCount);
@@ -555,7 +608,7 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 	stream.flush();
 	ASSERT_TRUE(stream.good());
 	stream.close();
-	EXPECT_EQ(caseCount, 10);
+	EXPECT_EQ(caseCount, 16);
 	EXPECT_LE(std::filesystem::file_size(root / "native-sarcophagus-operations.json"), 64U * 1024U * 1024U);
 }
 

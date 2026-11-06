@@ -122,9 +122,10 @@ public static class AuthoritativeObjectSelector
         ArgumentNullException.ThrowIfNull(@object);
         if (!@object.NativeTrapInteractable
             || !@object.TrapArmed
-            || @object.NativeSarcophagusInteractable
+            || @object.NativeSarcophagusInteractable && @object.NativeObjectId != 48
+            || @object.NativeObjectId == 48 && !@object.NativeSarcophagusInteractable
             || @object.NativeBarrelMeleeBreakable
-            || @object.NativeObjectId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 68 or 69 or 70)
+            || @object.NativeObjectId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 48 or 68 or 69 or 70)
             || @object.LevelId == 0
             || @object.Activated
             || @object.Destroyed)
@@ -160,9 +161,9 @@ public static class AuthoritativeObjectSelector
         return @object.NativeSarcophagusInteractable
             && !@object.NativeChestInteractable
             && !@object.NativeBarrelMeleeBreakable
-            && !@object.NativeTrapInteractable
+            && (!@object.NativeTrapInteractable || IsValidNativeTrapInteraction(@object))
             && @object.NativeObjectId == 48
-            && IsPlainNativeInteraction(@object);
+            && IsPlainNativeInteraction(@object, allowArmedTrap: @object.NativeTrapInteractable);
     }
 
     /** Validates the explicit capability without making barrels generic UI interactions. */

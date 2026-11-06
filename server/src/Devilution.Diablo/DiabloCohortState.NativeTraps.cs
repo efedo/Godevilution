@@ -37,7 +37,8 @@ public sealed partial record DiabloCohortState
                 || !objects.TryGetValue(facts.TriggerEntityId, out var trigger)
                 || trigger.NativeObjectId != facts.TriggerNativeTypeId || trigger.LevelId != facts.LevelId
                 || trigger.PositionX != facts.TriggerX || trigger.PositionY != facts.TriggerY
-                || trigger.TrapArmed != state.TriggerTrapArmed)
+                || trigger.TrapArmed != state.TriggerTrapArmed
+                || facts.TriggerNativeTypeId == 48 && state.Disposition == DiabloNativeTrapDisposition.Fired && !trigger.Activated)
                 throw new InvalidDataException("Native trap state conflicts with its retained source or trigger.");
         }
         var arrows = Projectiles.Where(value => value.NativeTrapArrow is not null).ToArray();

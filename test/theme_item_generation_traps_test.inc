@@ -30,8 +30,8 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeObjectTrapOperations)
 		stream << '[';
 		bool first = true;
 		for (int depth = 1; depth <= 8; ++depth) {
-			for (int triggerType : { 1, 2, 5, 6, 7, 42, 43, 68, 69, 70 }) {
-				if (depth <= 4 ? triggerType >= 42 : triggerType <= 2) continue;
+			for (int triggerType : { 1, 2, 5, 6, 7, 42, 43, 48, 68, 69, 70 }) {
+				if (depth <= 4 ? triggerType >= 42 && triggerType != 48 : triggerType <= 2 || triggerType == 48) continue;
 				for (int type : { 0, 1, 7 }) {
 					for (bool opened : { false, true }) {
 						PrepareRoom(depth, 0, 2, 0, false);

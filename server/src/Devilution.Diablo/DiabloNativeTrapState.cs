@@ -44,7 +44,7 @@ public sealed record AuthoritativeCathedralNativeTrapFacts(
             || (uint)TriggerY >= AuthoritativeCathedralThemeRoomState.Width
             || !AuthoritativeNativePopulationBindings.IsSupportedNativeTrapMissile(MissileTypeId) || InitialTrapVar4 != 0
             || TriggerObjectSlot is < 0 or >= AuthoritativeCathedralPopulationParameters.ObjectCapacity
-            || TriggerEntityId == 0 || TriggerNativeTypeId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 68 or 69 or 70)
+            || TriggerEntityId == 0 || TriggerNativeTypeId is not (1 or 2 or 5 or 6 or 7 or 42 or 43 or 48 or 68 or 69 or 70)
             || !InitialTriggerTrapArmed)
             throw new InvalidDataException("Native wall-trap facts do not describe a supported L1-L8 trigger link.");
     }

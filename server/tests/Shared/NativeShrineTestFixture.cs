@@ -38,12 +38,13 @@ internal sealed class NativeShrineTestFixture
     internal AuthoritativeCathedralItemRuntimeProfile ItemProfile => items;
     internal AuthoritativeWorldObject Shrine => World.Objects[ShrineEntityId];
 
-    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false)
-        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable, additionalNativeObjectType, productionItemBindings) { }
+    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false, int? sarcophagusTrapMissile = null, IReadOnlyList<DiabloNativeSarcophagusState>? restoredSarcophagi = null, IReadOnlyList<DiabloNativeTrapState>? restoredTraps = null)
+        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable, additionalNativeObjectType, productionItemBindings, sarcophagusTrapMissile, restoredSarcophagi, restoredTraps) { }
 
     internal NativeShrineTestFixture(int depth, int shrineType, uint seed,
-        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false)
+        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false, int? sarcophagusTrapMissile = null, IReadOnlyList<DiabloNativeSarcophagusState>? restoredSarcophagi = null, IReadOnlyList<DiabloNativeTrapState>? restoredTraps = null)
     {
+        if (sarcophagusTrapMissile is not null) { nativeObjectType = 48; additionalNativeObjectType = 53; }
         level = (uint)depth;
         Spells = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(Path.Combine(RepositoryRoot(), "server/content/base/spells.tsv")));
         SpellBooks = AuthoritativeSpellBookCatalog.LoadTsv("spell_books.tsv", File.ReadAllText(Path.Combine(RepositoryRoot(), "server/content/base/spell_books.tsv")));
@@ -77,11 +78,11 @@ internal sealed class NativeShrineTestFixture
         var initial = new[] {
             new AuthoritativeWorldObject(0x09003000, 5, level, 55, 50, nativeObjectId: 5, hideWhenActivated: false, animationFrame: 1),
             new AuthoritativeWorldObject(0x09003001, 6, level, 56, 50, nativeObjectId: 6, hideWhenActivated: false, animationFrame: 1),
-            new AuthoritativeWorldObject(ShrineEntityId, objectType, level, 50, 50, nativeObjectId: objectType, hideWhenActivated: false, isShrine: false, animationFrame: initialFrame, missilePassable: nativeObjectType is 61 or 64 or 67),
+            new AuthoritativeWorldObject(ShrineEntityId, objectType, level, 50, 50, trapArmed: sarcophagusTrapMissile is not null, nativeObjectId: objectType, hideWhenActivated: false, isShrine: false, animationFrame: initialFrame, missilePassable: nativeObjectType is 61 or 64 or 67),
         };
         if (additionalNativeObjectType != 0) initial = [.. initial,
             new AuthoritativeWorldObject(AdditionalObjectEntityId, (uint)additionalNativeObjectType,
-                level, 51, 50, nativeObjectId: (uint)additionalNativeObjectType,
+                level, sarcophagusTrapMissile is not null ? 48 : 51, 50, nativeObjectId: (uint)additionalNativeObjectType,
                 hideWhenActivated: false, animationFrame: 1),
         ];
         var slots = Enumerable.Range(0, 127).Select(slot => new AuthoritativeCathedralPopulationObjectState {
@@ -98,10 +99,15 @@ internal sealed class NativeShrineTestFixture
             slots[slot] = slots[slot] with { Type = (int)value.NativeObjectId,
                 Position = new(value.PositionX, value.PositionY), SelectionRegion = value.NativeObjectId is 26 or 91 || slot == 2 && !nativeObjectSelectable ? 0 : 3,
                 SolidFlag = itemObject,
-                AnimFrame = (uint)value.AnimationFrame, AnimLength = itemObject || value.NativeObjectId == 80 ? 0U : value.NativeObjectId == 82 ? 4U : 11U, MissilePassable = value.MissilePassable,
-                RndSeed = slot >= 2 ? seed : (uint)(800 + slot), Var1 = slot >= 2 ? shrineType : chestItemCount,
+                AnimFrame = (uint)value.AnimationFrame, AnimDelay = value.NativeObjectId == 48 ? 1000 : 0,
+                AnimLength = value.NativeObjectId == 48 ? 8U : itemObject || value.NativeObjectId == 80 ? 0U : value.NativeObjectId == 82 ? 4U : 11U, MissilePassable = value.MissilePassable,
+                TrapFlag = value.TrapArmed,
+                RndSeed = slot >= 2 ? seed : (uint)(800 + slot), Var1 = sarcophagusTrapMissile is not null && slot == 3 ? 50 : slot >= 2 ? shrineType : chestItemCount,
+                Var2 = sarcophagusTrapMissile is not null && slot == 3 ? 50 : 0,
+                Var3 = sarcophagusTrapMissile is int missile && slot == 3 ? missile : 0,
             };
             refs[value.PositionY * 112 + value.PositionX] = slot + 1;
+            if (value.NativeObjectId == 48) refs[(value.PositionY - 1) * 112 + value.PositionX] = -(slot + 1);
         }
         initial = active.Select(slot => initial[slot]).ToArray();
         var monsters = Enumerable.Range(0, 200).Select(slot => new AuthoritativeCathedralPopulationMonsterState {
@@ -165,6 +171,7 @@ internal sealed class NativeShrineTestFixture
                         : AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor
                     : raw.Type is 5 or 6 or 7 or 68 or 69 or 70
                     ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                    : raw.Type == 48 ? AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
                     : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused);
         }).ToArray();
         var checkpoint = new DiabloCathedralItemCheckpoint(Fingerprint, Fingerprint, [], [new(
@@ -213,7 +220,12 @@ internal sealed class NativeShrineTestFixture
             World.ConfigureNativeCatacombsRangedActions(owner, new AuthoritativeMonsterMissileCatalog([new("Bat", "Lightning", AuthoritativeProjectileBehavior.MonsterMagic, MonsterId: 43, SpellId: 3, DamageType: AuthoritativeDamageType.Lightning, IsPostMeleeMissile: true)]), []);
             World.RestoreNativeCatacombsArrows(owner, []);
         }
-        World.ConfigureNativePopulationBindings(owner, items, Fingerprint, 8, [], [], []);
+        foreach (var saved in restoredSarcophagi ?? []) {
+            World.Objects[saved.EntityId].Activated = saved.Opened;
+            World.Objects[saved.EntityId].AnimationFrame = (int)saved.AnimationFrame;
+        }
+        foreach (var saved in restoredTraps ?? []) World.Objects[saved.Facts.TriggerEntityId].TrapArmed = saved.TriggerTrapArmed;
+        World.ConfigureNativePopulationBindings(owner, items, Fingerprint, 8, restoredSarcophagi ?? [], [], restoredTraps ?? []);
         if (restoredItems is not null) {
             var raw = new AuthoritativeCathedralItemRuntime(items, restoredItems, null,
                 new Dictionary<uint, AuthoritativeNativeDungeonFamilyContext> { [level] = owner.ItemFamilyContext });

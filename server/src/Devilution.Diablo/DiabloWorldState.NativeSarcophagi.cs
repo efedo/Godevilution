@@ -33,32 +33,38 @@ public sealed partial class DiabloWorldState
         if (formatVersion >= DiabloCohortState.NativeSarcophagusFormatVersion) {
             if (savedStates is null)
                 throw new InvalidDataException("Native sarcophagus cohorts require their complete object lifecycle records.");
-            if (savedStates.Count != initial.Count)
-                throw new InvalidDataException("Native sarcophagus cohort omits a supported generated object.");
             var restored = new Dictionary<uint, DiabloNativeSarcophagusState>();
-            for (var index = 0; index < initial.Count; index++) {
-                var actual = savedStates[index];
+            foreach (var actual in savedStates) {
                 actual.ValidateShape();
-                if (actual.ObjectSlot != initial[index].ObjectSlot
-                    || actual.EntityId != initial[index].EntityId
-                    || actual.NativeTypeId != initial[index].NativeTypeId
-                    || actual.InitialPositionX != initial[index].InitialPositionX
-                    || actual.InitialPositionY != initial[index].InitialPositionY
-                    || actual.RandomSeed != initial[index].RandomSeed
-                    || actual.Var1 != initial[index].Var1 || actual.Var2 != initial[index].Var2
-                    || actual.InitialSelectionRegion != initial[index].InitialSelectionRegion
-                    || actual.TrapArmed != initial[index].TrapArmed
-                    || actual.HasLinkedTrap != initial[index].HasLinkedTrap
-                    || actual.InitialAnimationFrame != initial[index].InitialAnimationFrame
-                    || actual.InitialAnimationFlag != initial[index].InitialAnimationFlag
-                    || actual.InitialAnimationDelay != initial[index].InitialAnimationDelay
-                    || actual.InitialAnimationCount != initial[index].InitialAnimationCount
-                    || actual.InitialAnimationLength != initial[index].InitialAnimationLength
-                    || actual.LinkedMonsterSlot != initial[index].LinkedMonsterSlot
-                    || actual.LinkedMonsterEntityId != initial[index].LinkedMonsterEntityId
-                    || actual.LinkedMonsterTypeId != initial[index].LinkedMonsterTypeId
+                var generated = initial.SingleOrDefault(value => value.EntityId == actual.EntityId)
+                    ?? throw new InvalidDataException("Native sarcophagus state has no generated owner.");
+                if (actual.ObjectSlot != generated.ObjectSlot
+                    || actual.EntityId != generated.EntityId
+                    || actual.NativeTypeId != generated.NativeTypeId
+                    || actual.InitialPositionX != generated.InitialPositionX
+                    || actual.InitialPositionY != generated.InitialPositionY
+                    || actual.RandomSeed != generated.RandomSeed
+                    || actual.Var1 != generated.Var1 || actual.Var2 != generated.Var2
+                    || actual.InitialSelectionRegion != generated.InitialSelectionRegion
+                    || actual.TrapArmed != generated.TrapArmed
+                    || actual.HasLinkedTrap != generated.HasLinkedTrap
+                    || actual.InitialAnimationFrame != generated.InitialAnimationFrame
+                    || actual.InitialAnimationFlag != generated.InitialAnimationFlag
+                    || actual.InitialAnimationDelay != generated.InitialAnimationDelay
+                    || actual.InitialAnimationCount != generated.InitialAnimationCount
+                    || actual.InitialAnimationLength != generated.InitialAnimationLength
+                    || actual.LinkedMonsterSlot != generated.LinkedMonsterSlot
+                    || actual.LinkedMonsterEntityId != generated.LinkedMonsterEntityId
+                    || actual.LinkedMonsterTypeId != generated.LinkedMonsterTypeId
                     || !restored.TryAdd(actual.EntityId, actual))
                     throw new InvalidDataException("Native sarcophagus lifecycle identity differs from the exact generated object and reservation.");
+            }
+            foreach (var generated in initial.Where(value => !restored.ContainsKey(value.EntityId))) {
+                // Before 2.5d these trapped objects were immutable and had no sarcophagus row.
+                // Only a still-closed newly supported object can inherit its initial lifecycle.
+                if (!generated.TrapArmed || !generated.HasLinkedTrap || Objects[generated.EntityId].Activated)
+                    throw new InvalidDataException("Native sarcophagus cohort omits a supported generated object.");
+                restored.Add(generated.EntityId, generated);
             }
             foreach (var entry in restored)
                 nativeSarcophagiByEntityId.Add(entry.Key, entry.Value);

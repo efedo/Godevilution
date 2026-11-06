@@ -94,7 +94,7 @@ public sealed partial class DiabloWorldState
         if (!TryGetNativeTrapFacts(value, out var facts) || facts.Count == 0)
             return false;
         var rawType = checked((int)value.NativeObjectId);
-        return rawType is 1 or 2 or 42 or 43 || (rawType is 5 or 6 or 7) && !value.Activated;
+        return rawType is 1 or 2 or 42 or 43 || (rawType is 5 or 6 or 7 or 48) && !value.Activated;
     }
 
     internal bool TryGetNativeTrapFacts(
@@ -246,7 +246,7 @@ public sealed partial class DiabloWorldState
         return UpdateTrapState(0, facts.TriggerNativeTypeId, doorStatus ?? 0, !trigger.Activated, trigger.TrapArmed);
     }
 
-    /** Native objects.cpp UpdateTrapState, L1-L8 door/chest branches in their native order. */
+    /** Native objects.cpp UpdateTrapState, L1-L8 door/chest/sarcophagus branches in their native order. */
     internal static bool UpdateTrapState(int trapVar4, int triggerType, int doorVar4, bool canInteract, bool trapFlag)
     {
         if (trapVar4 != 0)
@@ -256,7 +256,7 @@ public sealed partial class DiabloWorldState
             if (doorVar4 == 0 && trapFlag)
                 return false;
             break;
-        case 5: case 6: case 7:
+        case 5: case 6: case 7: case 48:
             if (canInteract && trapFlag)
                 return false;
             break;

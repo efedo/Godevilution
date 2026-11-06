@@ -91,7 +91,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
     internal static bool IsSupportedNativeTrapTriggerType(
         AuthoritativeCathedralPopulationObjectState value)
         => (value.Type is 1 or 2 or 42 or 43) && value.DoorFlag
-            || (value.Type is 5 or 6 or 7 or 68 or 69 or 70) && !value.DoorFlag;
+            || (value.Type is 5 or 6 or 7 or 48 or 68 or 69 or 70) && !value.DoorFlag;
 
     /** Native objects.cpp AddTrap admits Arrow, Firebolt and LightningControl on L1-L8. */
     internal static bool HasSupportedNativeTrapLink(

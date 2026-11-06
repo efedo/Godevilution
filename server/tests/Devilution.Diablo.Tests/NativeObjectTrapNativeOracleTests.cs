@@ -21,11 +21,11 @@ public sealed class NativeObjectTrapNativeOracleTests
     }
 
     [Fact]
-    public void DoorsAndOrdinaryChestsFireOnceWhileConvertedChestsRetainTheirWallTrap()
+    public void DoorsSarcophagiAndOrdinaryChestsFireOnceWhileConvertedChestsRetainTheirWallTrap()
     {
         using var corpus = Corpus();
         var cases = corpus.RootElement.GetProperty("wallCases").EnumerateArray().ToArray();
-        Assert.Equal(4 * (5 + 8) * 3 * 2, cases.Length);
+        Assert.Equal(4 * (6 + 8) * 3 * 2, cases.Length);
         foreach (var row in cases) {
             var opened = row.GetProperty("opened").GetBoolean();
             var ready = DiabloWorldState.UpdateTrapState(0, N(row, "triggerType"), opened ? 1 : 0, !opened, true);
@@ -180,7 +180,7 @@ public sealed class NativeObjectTrapNativeOracleTests
         Assert.False(shiftedHit.GetProperty("blocked").GetBoolean());
     }
 
-    private static void EqualMissile(JsonElement expected, AuthoritativeProjectile actual)
+    internal static void EqualMissile(JsonElement expected, AuthoritativeProjectile actual)
     {
         var state = actual.NativeTrapArrow!;
         var retained = JsonSerializer.Deserialize<DiabloProjectileState>(JsonSerializer.Serialize(actual))!;

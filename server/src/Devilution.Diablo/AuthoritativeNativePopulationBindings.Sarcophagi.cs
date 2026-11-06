@@ -115,11 +115,12 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         AuthoritativeCathedralThemeRoomState state,
         AuthoritativeCathedralPopulationObjectState raw)
     {
-        if (raw.Type != Sarcophagus || raw.TrapFlag || raw.SelectionRegion == 0
+        if (raw.Type != Sarcophagus || raw.SelectionRegion == 0
             || raw.AnimFlag != 0 || raw.AnimDelay < 1
             || raw.AnimCount < 0 || raw.AnimCount >= raw.AnimDelay
             || raw.AnimLength == 0 || raw.AnimFrame > raw.AnimLength
-            || raw.Var1 is < 0 or > 9 || HasLinkedNativeTrap(state, raw))
+            || raw.Var1 is < 0 or > 9
+            || (raw.TrapFlag || HasLinkedNativeTrap(state, raw)) && !HasSupportedNativeTrapLink(state, raw))
             return false;
         if (raw.Var1 >= 8 && raw.Var2 >= 0) {
             if (!state.ActiveMonsterIds.Take(state.ActiveMonsterCount).Contains(raw.Var2))

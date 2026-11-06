@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Devilution.Diablo;
+using Devilution.Engine;
 using Xunit;
 using static Devilution.Diablo.Tests.AuthoritativeCathedralThemeItemNativeOracleTests;
 using static Devilution.Diablo.Tests.AuthoritativeCathedralThemeItemWorldNativeOracleTests;
@@ -17,13 +18,13 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
         (0, 0), (-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1),
     ];
 
-    [Theory(Explicit = true)]
+    [Theory]
     [InlineData(1)]
     public void SarcophagusOperationsMatchNative(int depth)
     {
         var directory = Environment.GetEnvironmentVariable(DirectoryVariable);
         if (string.IsNullOrWhiteSpace(directory))
-            throw new InvalidOperationException($"Set {DirectoryVariable} to the captured native sarcophagus oracle directory.");
+            Assert.Skip($"Set {DirectoryVariable} to the captured native sarcophagus oracle directory.");
         directory = Path.GetFullPath(directory);
         Assert.True(Directory.Exists(directory), "Native sarcophagus oracle directory must exist.");
         Assert.Equal(new[] { FileName }, Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly)
@@ -35,16 +36,16 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
         Properties(corpus, "format", "version", "policy", "playerMaximumLife", "playerMaximumMana", "catalog", "roomCatalog", "cases", "caseCount");
         Assert.Equal("godevilution-cathedral-sarcophagus-operations", S(corpus, "format"));
         Assert.Equal(1, N(corpus, "version"));
-        Assert.Equal("original-diablo-single-player-normal-untrapped-cathedral-level1", S(corpus, "policy"));
+        Assert.Equal("original-diablo-single-player-normal-cathedral-level1", S(corpus, "policy"));
         Assert.Equal(6400, N(corpus, "playerMaximumLife"));
         Assert.Equal(3200, N(corpus, "playerMaximumMana"));
         var catalog = ReadCatalog(corpus.GetProperty("catalog"));
         var roomCatalog = corpus.GetProperty("roomCatalog");
         Properties(roomCatalog, "objects", "bestiary", "shrineAvailable");
         var cases = corpus.GetProperty("cases").EnumerateArray().ToArray();
-        Assert.Equal(10, N(corpus, "caseCount"));
-        Assert.Equal(10, cases.Length);
-        Assert.Equal(10, cases.Select(value => S(value, "name")).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(16, N(corpus, "caseCount"));
+        Assert.Equal(16, cases.Length);
+        Assert.Equal(16, cases.Select(value => S(value, "name")).Distinct(StringComparer.Ordinal).Count());
 
         foreach (var value in cases) {
             Properties(value, "name", "depth", "slot", "var1", "var2", "sarcophagusSeed", "levelLoading",
@@ -53,7 +54,8 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
                 "inputLinkedMonster", "inputLinkedMonsterPetrified", "expectedRandomState", "expectedSarcophagus", "expected",
                 "expectedActiveObjectCount", "expectedActiveObjectIds", "expectedActiveMonsterIds", "expectedSpawnTiles",
                 "expectedLinkedMonster", "expectedLinkedMonsterPetrified", "repeatedSarcophagus", "repeated", "repeatedActiveMonsterIds",
-                "repeatedActiveObjectCount", "repeatedActiveObjectIds", "repeatedLinkedMonster", "repeatedLinkedMonsterPetrified");
+                "repeatedActiveObjectCount", "repeatedActiveObjectIds", "repeatedLinkedMonster", "repeatedLinkedMonsterPetrified",
+                "trapMissileType", "firedVar4", "firedTrapFlag", "firedRng", "firedMissiles");
             Assert.Equal(depth, N(value, "depth"));
             var inputObject = value.GetProperty("inputSarcophagus");
             var expectedObject = value.GetProperty("expectedSarcophagus");
@@ -61,7 +63,8 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
             var slot = N(value, "slot");
             Assert.Equal(slot, N(inputObject, "slot"));
             Assert.Equal(48, N(inputObject, "type"));
-            Assert.False(B(inputObject, "trapFlag"));
+            var trapped = N(value, "trapMissileType") >= 0;
+            Assert.Equal(trapped, B(inputObject, "trapFlag"));
             Assert.Equal(N(value, "var1"), N(inputObject, "var1"));
             Assert.Equal(N(value, "var2"), N(inputObject, "var2"));
             Assert.Equal(U(value, "sarcophagusSeed"), U(inputObject, "rndSeed"));
@@ -96,7 +99,7 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
                 N(inputObject, "animCount"),
                 U(inputObject, "animLength"),
                 B(inputObject, "trapFlag"),
-                false,
+                trapped,
                 linked,
                 N(value, "specialFrameCount"),
                 N(value, "specialTicksPerFrame"));
@@ -172,6 +175,28 @@ public sealed class AuthoritativeCathedralSarcophagusNativeOracleTests
             } else {
                 Assert.Equal(JsonNode.Parse(value.GetProperty("inputLinkedMonster").GetRawText())!.ToJsonString(),
                     JsonNode.Parse(expectedActorValue.GetRawText())!.ToJsonString());
+            }
+
+            if (trapped) {
+                Assert.True(B(expectedObject, "trapFlag"));
+                Assert.True(DiabloWorldState.UpdateTrapState(0, 48, 0, false, true));
+                Assert.False(DiabloWorldState.UpdateTrapState(0, 48, 0, true, true));
+                Assert.Equal(1, N(value, "firedVar4"));
+                Assert.False(B(value, "firedTrapFlag"));
+                var random = new DeterministicLegacyRandom(actual.FinalRandomState);
+                var owner = new AuthoritativeCathedralNativeTrapFacts(126, 600_000, 53, (uint)depth,
+                    126, 48, 50, 0, x, y, N(value, "trapMissileType"), 0, slot, facts.EntityId, 48, x, y, true);
+                var player = new AuthoritativePlayerState(0, 0, 6400, 0, 0, PlayerAttributesState.Zero,
+                    [], [], [], 50, 51, 6400, 1, (uint)depth, 0) { EntityId = 900 };
+                var aim = DiabloWorldState.FindNativeTrapTarget(owner, [player]);
+                Assert.Equal((50, 51), aim);
+                var missile = DiabloCombatCommandProcessor.AddObjectTrapMissile(800, owner.TrapEntityId, facts.EntityId,
+                    (uint)depth, owner.TrapObjectSlot, 48, 50, aim.X, aim.Y,
+                    (int)DeterministicGridDirections.Toward(48, 50, aim.X, aim.Y), owner.MissileTypeId, false, random, depth);
+                NativeObjectTrapNativeOracleTests.EqualMissile(Assert.Single(value.GetProperty("firedMissiles").EnumerateArray()), missile);
+                Assert.Equal(U(value, "firedRng"), random.State);
+            } else {
+                Assert.Empty(value.GetProperty("firedMissiles").EnumerateArray());
             }
             if (expectedActorValue.ValueKind != JsonValueKind.Null)
                 Assert.Equal(JsonNode.Parse(expectedActorValue.GetRawText())!.ToJsonString(),
