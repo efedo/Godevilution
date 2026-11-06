@@ -9,9 +9,11 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed partial class AuthoritativeClientTransportTests
 {
+    private readonly ManualTimeProvider time = new();
+    private ClientConnectionOptions WithTime(ClientConnectionOptions options) => options with { TimeProvider = time };
+
     [Fact]
     public async Task SchedulesAnUnsentInteractiveCommandAfterAFrameStall()
     {
@@ -29,15 +31,15 @@ public sealed partial class AuthoritativeClientTransportTests
             var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             Assert.True(command.RequestedTick >= 119, $"Unsent command retained its pre-stall tick: {command.RequestedTick}");
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "stall-test", "0.1.0", "content-hash") {
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(150),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(150),
-        });
+        }));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 100);
         // Godot can queue during input/route handling and only poll on a later frame.
-        await Task.Delay(750, TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(750);
         await client.PollAsync(TestContext.Current.CancellationToken);
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
@@ -61,13 +63,13 @@ public sealed partial class AuthoritativeClientTransportTests
             // add at least six elapsed ticks, without changing the server policy.
             Assert.True(command.RequestedTick >= 110, $"Stale requested tick: {command.RequestedTick}");
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "clock-test", "0.1.0", "content-hash") {
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(150),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(150),
-        });
+        }));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(320, TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(320);
         client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, client.SuggestedCommandTick(100));
         await client.PollAsync(TestContext.Current.CancellationToken);
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
@@ -102,8 +104,8 @@ public sealed partial class AuthoritativeClientTransportTests
                 Assert.Equal(i < pendingCount ? (ulong)i + 1 : expectedSequence, command.ClientSequence);
             }
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
-            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "test", "0.1.0", "content-hash"));
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
+            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "test", "0.1.0", "content-hash")));
         for (var i = 0; i < pendingCount; i++)
             client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 1);
         await client.ConnectAsync(TestContext.Current.CancellationToken);
@@ -147,12 +149,12 @@ public sealed partial class AuthoritativeClientTransportTests
     [Fact]
     public async Task RequiresRulesetIdentityForProtocolV2()
     {
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             1,
             "godot-test",
             ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
-            "content-hash"));
+            "content-hash")));
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => client.ConnectAsync(TestContext.Current.CancellationToken));
@@ -165,7 +167,7 @@ public sealed partial class AuthoritativeClientTransportTests
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         var serverTask = RunServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             port,
             "godot-test",
@@ -173,7 +175,7 @@ public sealed partial class AuthoritativeClientTransportTests
             "content-hash") {
             RequestedCharacterClassId = 2,
             RequestedCharacterName = "Godot-Rogue",
-        });
+        }));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         Assert.Equal(GameMode.Multiplayer, client.ServerGameMode);
@@ -226,12 +228,12 @@ public sealed partial class AuthoritativeClientTransportTests
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         var serverTask = RunOwnedCommandServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             port,
             "godot-test",
             "0.1.0",
-            "content-hash"));
+            "content-hash")));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         _ = client.DrainMessages();
@@ -252,13 +254,13 @@ public sealed partial class AuthoritativeClientTransportTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var serverTask = RunMismatchedRulesetServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "godot-test",
             "0.1.0",
             "content-hash",
-            "client-ruleset-hash"));
+            "client-ruleset-hash")));
 
         await Assert.ThrowsAsync<InvalidDataException>(
             () => client.ConnectAsync(TestContext.Current.CancellationToken));
@@ -271,18 +273,22 @@ public sealed partial class AuthoritativeClientTransportTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var serverTask = RunInitialSnapshotIdentityServerAsync(listener, incomplete: false);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "godot-test",
             "0.1.0",
             "content-hash",
-            "ruleset-hash"));
+            "ruleset-hash")));
 
-        await client.ConnectAsync(TestContext.Current.CancellationToken);
-        Assert.True(client.IsConnected);
-        Assert.Equal("different-ruleset", client.ServerIdentity!.RulesetIdentityHash);
-        Assert.NotNull(Assert.Single(client.DrainMessages()).Snapshot);
+        try {
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            Assert.True(client.IsConnected);
+            Assert.Equal("different-ruleset", client.ServerIdentity!.RulesetIdentityHash);
+            Assert.NotNull(Assert.Single(client.DrainMessages()).Snapshot);
+        } finally {
+            await client.DisposeAsync();
+        }
         await serverTask;
     }
 
@@ -292,13 +298,13 @@ public sealed partial class AuthoritativeClientTransportTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var serverTask = RunInitialSnapshotIdentityServerAsync(listener, incomplete: true);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "godot-test",
             "0.1.0",
             "content-hash",
-            "ruleset-hash"));
+            "ruleset-hash")));
 
         await Assert.ThrowsAsync<InvalidDataException>(
             () => client.ConnectAsync(TestContext.Current.CancellationToken));
@@ -312,12 +318,12 @@ public sealed partial class AuthoritativeClientTransportTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var serverTask = RunInitialSnapshotErrorServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "godot-test",
             "0.1.0",
-            "content-hash"));
+            "content-hash")));
 
         var exception = await Assert.ThrowsAsync<InvalidDataException>(
             () => client.ConnectAsync(TestContext.Current.CancellationToken));
@@ -332,12 +338,12 @@ public sealed partial class AuthoritativeClientTransportTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var serverTask = RunInvalidGameModeServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "godot-test",
             "0.1.0",
-            "content-hash"));
+            "content-hash")));
 
         await Assert.ThrowsAsync<InvalidDataException>(
             () => client.ConnectAsync(TestContext.Current.CancellationToken));
@@ -352,20 +358,23 @@ public sealed partial class AuthoritativeClientTransportTests
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         var serverTask = RunMalformedAcknowledgementServerAsync(listener);
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             port,
             "godot-test",
             "0.1.0",
-            "content-hash"));
+            "content-hash")));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         _ = client.DrainMessages();
         client.Queue(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 13);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(25, TestContext.Current.CancellationToken);
-
-        var message = Assert.Single(client.DrainMessages());
+        var messages = new List<AuthoritativeClientMessage>();
+        await ClientTestIO.UntilAsync(() => {
+            messages.AddRange(client.DrainMessages());
+            return messages.Count != 0;
+        }, TestContext.Current.CancellationToken);
+        var message = Assert.Single(messages);
         Assert.NotNull(message.Error);
         Assert.Equal(ProtocolErrorCode.InvalidMessage, message.Error!.Code);
         Assert.Equal(1, client.PendingCommandCount);
@@ -466,7 +475,8 @@ public sealed partial class AuthoritativeClientTransportTests
                 Players = { new PlayerSnapshot { EntityId = 7 } },
             },
         });
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        // Keep the wire alive until admission is observed, rather than sleeping for it.
+        Assert.Equal(0, await stream.ReadAsync(new byte[1], TestContext.Current.CancellationToken));
         listener.Stop();
     }
 

@@ -13,9 +13,11 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientSchedulingClockAdmissionTests
 {
+    private readonly ManualTimeProvider time = new();
+    private ClientConnectionOptions WithTime(ClientConnectionOptions options) => options with { TimeProvider = time };
+
     [Fact]
     public async Task FirstRealtimeDispatchWaitsForOutstandingSnapshotAndRecomputesItsTick()
     {
@@ -45,7 +47,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
         server.Start();
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
             "first-dispatch-snapshot-gate-test",
@@ -55,7 +57,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             SnapshotPollInterval = TimeSpan.Zero,
             MinimumRetryTimeout = TimeSpan.FromSeconds(1),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
 
@@ -104,8 +106,8 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             Assert.Equal(0, adapter.ExecutedCommandCount);
 
             var staleSuggestion = client.SuggestedCommandTick(model.CurrentTick);
-            await Task.Delay(TimeSpan.FromMilliseconds(750), timeout.Token);
-            clock.Set(EstimatePhysicalTick(1000, identity.TickRateHz, sample.OutcomeStopwatchTimestamp));
+            time.AdvanceMilliseconds(750);
+            clock.Set(EstimatePhysicalTick(1000, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             Assert.True(clock.CurrentTick >= heldSnapshot.Tick + 10);
             Assert.True(staleSuggestion < clock.CurrentTick);
 
@@ -189,7 +191,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
         server.Start();
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
             "snapshot-refresh-cadence-test",
@@ -199,7 +201,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             SnapshotPollInterval = pollInterval,
             MinimumRetryTimeout = TimeSpan.FromSeconds(1),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
 
@@ -217,12 +219,12 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             Assert.Equal(0UL, model.CurrentTick);
 
             await client.PollAsync(timeout.Token);
-            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            time.AdvanceMilliseconds(50);
             Assert.Equal(1, adapter.SnapshotCallCount);
 
             // Let the handshake snapshot's ordinary refresh interval expire,
             // then hold a real server response to the ensuing idle poll.
-            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(100), timeout.Token);
+            time.Advance(pollInterval + TimeSpan.FromMilliseconds(100));
             clock.Set(1000);
             await adapter.AdvancedToPhysicalTick.Task.WaitAsync(timeout.Token);
             await client.PollAsync(timeout.Token);
@@ -236,7 +238,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
 
             // The response arrives after the interval measured from request
             // transmission. Its receipt must start a fresh ordinary-poll interval.
-            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(150), timeout.Token);
+            time.Advance(pollInterval + TimeSpan.FromMilliseconds(150));
             adapter.ReleaseSecondSnapshot();
             var refreshed = await WaitForSnapshotAsync(client, model, timeout.Token);
             Assert.Equal(1000UL, refreshed.Tick);
@@ -245,7 +247,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             Assert.Equal(2, snapshotsAfterRefresh);
 
             await client.PollAsync(timeout.Token);
-            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            time.AdvanceMilliseconds(50);
             Assert.Equal(2, adapter.SnapshotCallCount);
 
             // A command queued immediately after the refresh is dispatched on
@@ -288,12 +290,12 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
                 "the full snapshot following the accepted command");
 
             await client.PollAsync(timeout.Token);
-            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            time.AdvanceMilliseconds(50);
             Assert.Equal(3, adapter.SnapshotCallCount);
 
             // Once idle, the client resumes full refreshes after the configured
             // interval instead of suppressing them indefinitely.
-            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(100), timeout.Token);
+            time.Advance(pollInterval + TimeSpan.FromMilliseconds(100));
             var snapshotsBeforeIdleRefresh = recorder.CaptureReport().Snapshots.Count;
             await client.PollAsync(timeout.Token);
             await WaitUntilAsync(
@@ -343,7 +345,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
         server.Start();
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
             "first-dispatch-snapshot-fallback-test",
@@ -353,7 +355,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             SnapshotPollInterval = TimeSpan.Zero,
             MinimumRetryTimeout = TimeSpan.FromSeconds(1),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
 
@@ -385,13 +387,13 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             var sequence = client.QueueRealtime(
                 new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
                 model.CurrentTick);
-            var gateStartedAt = Stopwatch.GetTimestamp();
+            var gateStartedAt = time.GetElapsedTime(0).TotalMilliseconds;
             await client.PollAsync(timeout.Token);
             Assert.Equal(1, client.PendingCommandCount);
             Assert.Empty(recorder.CaptureReport().Commands);
             Assert.Equal(0, adapter.ExecutedCommandCount);
-            await Task.Delay(TimeSpan.FromMilliseconds(750), timeout.Token);
-            clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeStopwatchTimestamp));
+            time.AdvanceMilliseconds(750);
+            clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             await client.PollAsync(timeout.Token);
             Assert.Empty(recorder.CaptureReport().Commands);
             Assert.Equal(1, client.PendingCommandCount);
@@ -399,8 +401,8 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             // A response arriving within the two-second bound releases the
             // gate; if it never arrives, the existing bounded fallback must
             // still permit a first send without changing the command identity.
-            await Task.Delay(TimeSpan.FromMilliseconds(1400), timeout.Token);
-            clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeStopwatchTimestamp));
+            time.AdvanceMilliseconds(1400);
+            clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             await client.PollAsync(timeout.Token);
             AuthoritativeClientCommandTiming? dispatch = null;
             await WaitUntilAsync(
@@ -413,7 +415,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
                 timeout.Token,
                 "the first dispatch after the bounded full-snapshot fallback");
             Assert.NotNull(dispatch);
-            Assert.True(Stopwatch.GetElapsedTime(gateStartedAt, dispatch.FreezeStopwatchTimestamp)
+            Assert.True(TimeSpan.FromMilliseconds(dispatch.FreezeElapsedMilliseconds - gateStartedAt)
                 >= TimeSpan.FromSeconds(2));
             Assert.Equal(1, client.PendingCommandCount);
             Assert.Equal(0, adapter.ExecutedCommandCount);
@@ -472,7 +474,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
         server.Start();
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
             "scheduling-clock-admission-test",
@@ -482,7 +484,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             SnapshotPollInterval = TimeSpan.FromHours(1),
             MinimumRetryTimeout = TimeSpan.FromSeconds(1),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
 
@@ -641,9 +643,9 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
         throw new TimeoutException("Timed out waiting for the held full snapshot response.");
     }
 
-    private static ulong EstimatePhysicalTick(ulong sampleTick, uint tickRateHz, long sampleTimestamp)
+    private ulong EstimatePhysicalTick(ulong sampleTick, uint tickRateHz, long sampleElapsedMilliseconds)
     {
-        var elapsedSeconds = Stopwatch.GetElapsedTime(sampleTimestamp).TotalSeconds;
+        var elapsedSeconds = (time.GetElapsedTime(0).TotalMilliseconds - sampleElapsedMilliseconds) / 1000;
         var elapsedTicks = checked((ulong)Math.Ceiling(elapsedSeconds * tickRateHz));
         return checked(sampleTick + elapsedTicks);
     }

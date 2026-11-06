@@ -9,15 +9,17 @@ using Xunit;
 namespace Devilution.Client.Protocol.Tests;
 
 /** Ordered loopback coverage for clock-gated startup readiness. */
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class InitialTimingCalibrationTests
 {
+    private readonly ManualTimeProvider time = new();
     [Fact]
     public async Task RealtimeCommandWaitsForTheCurrentTimingReply()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var probeSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseCorrectReply = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
         var serverTask = Task.Run(async () => {
             using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
             await using var stream = connection.GetStream();
@@ -26,11 +28,10 @@ public sealed class InitialTimingCalibrationTests
             Assert.True(probe.TimingRequestId > 0);
             probeSeen.SetResult();
 
-            using var noCommand = CancellationTokenSource.CreateLinkedTokenSource(
-                TestContext.Current.CancellationToken);
-            noCommand.CancelAfter(100);
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => ReadEnvelopeAsync(stream, noCommand.Token));
+            using var noCommand = new CancellationTokenSource(TimeSpan.FromMilliseconds(100), time);
+            var noCommandRead = ReadEnvelopeAsync(stream, noCommand.Token);
+            time.AdvanceMilliseconds(100);
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => noCommandRead);
 
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = 0 },
@@ -38,12 +39,13 @@ public sealed class InitialTimingCalibrationTests
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = probe.TimingRequestId + 1 },
             });
-            using var noCommandAfterInvalidReplies = CancellationTokenSource.CreateLinkedTokenSource(
-                TestContext.Current.CancellationToken);
-            noCommandAfterInvalidReplies.CancelAfter(100);
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => ReadEnvelopeAsync(stream, noCommandAfterInvalidReplies.Token));
-            await Task.Delay(150, TestContext.Current.CancellationToken);
+            using var noCommandAfterInvalidReplies = new CancellationTokenSource(TimeSpan.FromMilliseconds(100), time);
+            var noCommandAfterInvalidRepliesRead = ReadEnvelopeAsync(stream, noCommandAfterInvalidReplies.Token);
+            time.AdvanceMilliseconds(100);
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => noCommandAfterInvalidRepliesRead);
+            await WriteEnvelopeAsync(stream, new Envelope { EventBatch = new EventBatch { Tick = 123 } });
+            await releaseCorrectReply.Task.WaitAsync(TestContext.Current.CancellationToken);
+            time.AdvanceMilliseconds(150);
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = probe.TimingRequestId },
             });
@@ -55,7 +57,7 @@ public sealed class InitialTimingCalibrationTests
             });
         }, TestContext.Current.CancellationToken);
 
-        await using var client = new AuthoritativeClient(Options(listener));
+        await using var client = new AuthoritativeClient(Options(listener)) { CommandTimingRecorder = recorder };
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         var initialRetryTimeout = client.RetryTimeout;
         client.QueueRealtime(
@@ -64,6 +66,11 @@ public sealed class InitialTimingCalibrationTests
         await client.PollAsync(TestContext.Current.CancellationToken);
         await probeSeen.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
+        await ClientTestIO.PumpUntilAsync(client,
+            () => client.DrainMessages().Any(message => message.Events?.Tick == 123), TestContext.Current.CancellationToken);
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Empty(recorder.CaptureReport().Commands);
+        releaseCorrectReply.SetResult();
         for (var attempt = 0; attempt < 300 && client.PendingCommandCount != 0; attempt++) {
             await Task.Delay(10, TestContext.Current.CancellationToken);
             await client.PollAsync(TestContext.Current.CancellationToken);
@@ -128,6 +135,8 @@ public sealed class InitialTimingCalibrationTests
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var releaseReplacementReply = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
         var serverTask = Task.Run(async () => {
             ulong firstRequestId;
             using (var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
@@ -145,11 +154,12 @@ public sealed class InitialTimingCalibrationTests
             await WriteEnvelopeAsync(resumedStream, new Envelope {
                 TimingReply = new TimingReply { RequestId = firstRequestId },
             });
-            using var noCommand = CancellationTokenSource.CreateLinkedTokenSource(
-                TestContext.Current.CancellationToken);
-            noCommand.CancelAfter(100);
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => ReadEnvelopeAsync(resumedStream, noCommand.Token));
+            using var noCommand = new CancellationTokenSource(TimeSpan.FromMilliseconds(100), time);
+            var noCommandRead = ReadEnvelopeAsync(resumedStream, noCommand.Token);
+            time.AdvanceMilliseconds(100);
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => noCommandRead);
+            await WriteEnvelopeAsync(resumedStream, new Envelope { EventBatch = new EventBatch { Tick = 123 } });
+            await releaseReplacementReply.Task.WaitAsync(TestContext.Current.CancellationToken);
             await WriteEnvelopeAsync(resumedStream, new Envelope {
                 TimingReply = new TimingReply { RequestId = replacementProbe.TimingRequestId },
             });
@@ -159,7 +169,7 @@ public sealed class InitialTimingCalibrationTests
             });
         }, TestContext.Current.CancellationToken);
 
-        await using var client = new AuthoritativeClient(Options(listener) with { ResumeToken = "resume" });
+        await using var client = new AuthoritativeClient(Options(listener) with { ResumeToken = "resume" }) { CommandTimingRecorder = recorder };
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
@@ -168,6 +178,11 @@ public sealed class InitialTimingCalibrationTests
         await client.ReconnectAsync(TestContext.Current.CancellationToken);
         await client.PollAsync(TestContext.Current.CancellationToken);
 
+        await ClientTestIO.PumpUntilAsync(client,
+            () => client.DrainMessages().Any(message => message.Events?.Tick == 123), TestContext.Current.CancellationToken);
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Empty(recorder.CaptureReport().Commands);
+        releaseReplacementReply.SetResult();
         for (var attempt = 0; attempt < 300 && client.PendingCommandCount != 0; attempt++) {
             await Task.Delay(10, TestContext.Current.CancellationToken);
             await client.PollAsync(TestContext.Current.CancellationToken);
@@ -187,10 +202,11 @@ public sealed class InitialTimingCalibrationTests
             await using var stream = connection.GetStream();
             await DispatchHandshake(stream, 100);
             var firstProbe = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
-            await Task.Delay(2100, TestContext.Current.CancellationToken);
+            time.AdvanceMilliseconds(2100);
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = firstProbe.TimingRequestId },
             });
+            await WriteEnvelopeAsync(stream, new Envelope { EventBatch = new EventBatch { Tick = 2100 } });
             var replacementProbe = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
             Assert.True(replacementProbe.TimingRequestId > firstProbe.TimingRequestId);
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -208,7 +224,9 @@ public sealed class InitialTimingCalibrationTests
             new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
             100);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(2200, TestContext.Current.CancellationToken);
+        await ClientTestIO.UntilAsync(() => client.DrainMessages().Any(message => message.Events?.Tick == 2100),
+            TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(100); // Client's original 2200 ms observation boundary.
 
         await client.PollAsync(TestContext.Current.CancellationToken);
         for (var attempt = 0; attempt < 300 && client.PendingCommandCount != 0; attempt++) {
@@ -321,7 +339,7 @@ public sealed class InitialTimingCalibrationTests
                     client.QueueRealtime(
                         new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
                         100);
-                await Task.Delay(100, TestContext.Current.CancellationToken);
+                time.AdvanceMilliseconds(100);
                 await client.PollAsync(TestContext.Current.CancellationToken);
             }
         });
@@ -331,7 +349,10 @@ public sealed class InitialTimingCalibrationTests
             client.DrainMessages(),
             message => message.Error?.Detail.Contains("bounded probe deadline", StringComparison.Ordinal) == true);
 
-        await client.ReconnectAsync(TestContext.Current.CancellationToken);
+        // Surface a mock-server assertion before waiting for a handshake it cannot send.
+        var reconnect = client.ReconnectAsync(TestContext.Current.CancellationToken);
+        await await Task.WhenAny(reconnect, serverTask);
+        await reconnect;
         await client.PollAsync(TestContext.Current.CancellationToken);
         for (var attempt = 0; attempt < 300 && client.PendingCommandCount != 0; attempt++) {
             await Task.Delay(10, TestContext.Current.CancellationToken);
@@ -342,13 +363,14 @@ public sealed class InitialTimingCalibrationTests
         Assert.Equal(0, client.PendingCommandCount);
     }
 
-    private static ClientConnectionOptions Options(TcpListener listener)
+    private ClientConnectionOptions Options(TcpListener listener)
         => new(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "timing-calibration-test",
             "0.1.0",
             "content-hash") {
+            TimeProvider = time,
             SnapshotPollInterval = TimeSpan.FromMinutes(1),
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(25),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),

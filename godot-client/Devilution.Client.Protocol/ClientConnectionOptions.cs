@@ -19,6 +19,9 @@ public sealed record ClientConnectionOptions(
     /** Native-compatible character identity requested only when creating a session. */
     public string? RequestedCharacterName { get; init; }
 
+    /** Monotonic scheduling time; System preserves the production clock and retry behaviour. */
+    public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
+
     public TimeSpan MinimumRetryTimeout { get; init; } = TimeSpan.FromMilliseconds(150);
 
     public TimeSpan MaximumRetryTimeout { get; init; } = TimeSpan.FromSeconds(2);

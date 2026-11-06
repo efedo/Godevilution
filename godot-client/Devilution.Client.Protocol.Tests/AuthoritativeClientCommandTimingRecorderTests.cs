@@ -8,9 +8,11 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientCommandTimingRecorderTests
 {
+    private readonly ManualTimeProvider time = new();
+    private ClientConnectionOptions WithTime(ClientConnectionOptions options) => options with { TimeProvider = time };
+
     [Fact]
     public void BoundedCaptureReportsDroppedRecordsExplicitly()
     {
@@ -123,8 +125,8 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
     [Fact]
     public async Task DefaultClientRecorderIsInert()
     {
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
-            "127.0.0.1", 1, "timing-test", "0.1.0", "content-hash"));
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
+            "127.0.0.1", 1, "timing-test", "0.1.0", "content-hash")));
 
         Assert.Null(client.CommandTimingRecorder);
     }
@@ -161,19 +163,19 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
         }, cancellationToken);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port,
             "timing-test", "0.1.0", "content-hash") {
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(20),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(20),
             SnapshotPollInterval = TimeSpan.FromMinutes(1),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(cancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         await client.PollAsync(cancellationToken);
-        await Task.Delay(80, cancellationToken);
+        time.AdvanceMilliseconds(80);
         await client.PollAsync(cancellationToken);
         await serverTask.WaitAsync(cancellationToken);
 
@@ -224,11 +226,11 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
         }, cancellationToken);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+        await using var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
             "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port,
             "timing-probe-test", "0.1.0", "content-hash") {
             SnapshotPollInterval = TimeSpan.FromMinutes(1),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(cancellationToken);

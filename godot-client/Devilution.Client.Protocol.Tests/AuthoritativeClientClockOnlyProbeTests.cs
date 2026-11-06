@@ -8,156 +8,9 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientClockOnlyProbeTests
 {
-    [Fact]
-    public async Task NegotiatedProbeCorrelatesSeparatelyAndDoesNotReplaceSnapshotPoll()
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(8));
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var probeSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
-            await using var stream = connection.GetStream();
-            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
-
-            var probeEnvelope = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probeEnvelope.PayloadCase);
-            var probe = probeEnvelope.ClockProbeRequest;
-            Assert.NotEqual(0UL, probe.RequestId);
-            probeSeen.TrySetResult();
-
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = probe.RequestId + 1,
-                    ServerSchedulingClockTick = 9000,
-                },
-            }, timeout.Token);
-            using (var noCommand = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token)) {
-                noCommand.CancelAfter(100);
-                await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                    () => ReadEnvelopeAsync(stream, noCommand.Token));
-            }
-
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = probe.RequestId,
-                    ServerSchedulingClockTick = 500,
-                },
-            }, timeout.Token);
-            // A delayed snapshot older than the physical server-clock sample
-            // must not rewind command scheduling.
-            await WriteEnvelopeAsync(stream, new Envelope {
-                Snapshot = new Snapshot { Tick = 101 },
-            }, timeout.Token);
-            var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
-            Assert.Equal(1UL, command.ClientSequence);
-            Assert.InRange(command.RequestedTick, 500UL, 8999UL);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                CommandAck = new CommandAck { Results = { new CommandResult {
-                    ClientSequence = command.ClientSequence,
-                    Status = CommandStatus.Accepted,
-                    AppliedTick = command.RequestedTick,
-                } } },
-            }, timeout.Token);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                Snapshot = new Snapshot { Tick = command.RequestedTick },
-            }, timeout.Token);
-
-            Envelope snapshotRequest;
-            while (true) {
-                snapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
-                if (snapshotRequest.PayloadCase != Envelope.PayloadOneofCase.ClockProbeRequest)
-                    break;
-                await WriteEnvelopeAsync(stream, new Envelope {
-                    TimingReply = new TimingReply {
-                        RequestId = snapshotRequest.ClockProbeRequest.RequestId,
-                        ServerSchedulingClockTick = command.RequestedTick,
-                    },
-                }, timeout.Token);
-            }
-            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, snapshotRequest.PayloadCase);
-            Assert.Equal(0UL, snapshotRequest.SnapshotRequest.TimingRequestId);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                Snapshot = new Snapshot { Tick = 102 },
-            }, timeout.Token);
-        }, timeout.Token);
-
-        await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromSeconds(1)));
-        await client.ConnectAsync(timeout.Token);
-        // Leave an ordinary snapshot poll due before forcing clock calibration.
-        await Task.Delay(1100, timeout.Token);
-        client.QueueRealtime(
-            new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
-            100);
-        await client.PollAsync(timeout.Token);
-        await probeSeen.Task.WaitAsync(TimeSpan.FromSeconds(2), timeout.Token);
-
-        for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
-            await Task.Delay(10, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
-        await serverTask.WaitAsync(timeout.Token);
-        Assert.Equal(0, client.PendingCommandCount);
-        var followupSnapshotObserved = false;
-        for (var attempt = 0; attempt < 100 && !followupSnapshotObserved; attempt++) {
-            followupSnapshotObserved = client.DrainMessages().Any(message => message.Snapshot?.Tick == 102);
-            if (!followupSnapshotObserved)
-                await Task.Delay(10, timeout.Token);
-        }
-        Assert.True(followupSnapshotObserved, "The admitted post-poll snapshot should reach the client after the server observes its request.");
-    }
-
-    [Fact]
-    public async Task NegotiatedProbeRequiresClockSampleAndTreatsPresentZeroAsValid()
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(5));
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
-            await using var stream = connection.GetStream();
-            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
-
-            var probe = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probe.PayloadCase);
-            Assert.NotEqual(0UL, probe.ClockProbeRequest.RequestId);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply { RequestId = probe.ClockProbeRequest.RequestId },
-            }, timeout.Token);
-            using (var noCommand = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token)) {
-                noCommand.CancelAfter(100);
-                await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                    () => ReadEnvelopeAsync(stream, noCommand.Token));
-            }
-
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = probe.ClockProbeRequest.RequestId,
-                    ServerSchedulingClockTick = 0,
-                },
-            }, timeout.Token);
-            var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
-            Assert.Equal(1UL, command.ClientSequence);
-            Assert.InRange(command.RequestedTick, 100UL, 999UL);
-        }, timeout.Token);
-
-        await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMinutes(1)));
-        await client.ConnectAsync(timeout.Token);
-        client.QueueRealtime(
-            new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
-            100);
-        await client.PollAsync(timeout.Token);
-        for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
-            await Task.Delay(10, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
-        await serverTask.WaitAsync(timeout.Token);
-    }
+    private readonly ManualTimeProvider time = new();
 
     [Fact]
     public async Task OutstandingClockProbeDoesNotStarvePeriodicSnapshotRequests()
@@ -190,12 +43,11 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
+        time.AdvanceMilliseconds(35);
         await client.PollAsync(timeout.Token);
-        for (var poll = 0; poll < 20 && !serverTask.IsCompleted; poll++) {
-            await Task.Delay(25, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
+        await ClientTestIO.UntilAsync(() => client.DrainMessages().Any(message => message.Snapshot?.Tick == 101), timeout.Token);
+        time.AdvanceMilliseconds(25);
+        await client.PollAsync(timeout.Token);
         await serverTask.WaitAsync(timeout.Token);
     }
 
@@ -206,6 +58,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         timeout.CancelAfter(TimeSpan.FromSeconds(8));
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var releaseInvalidSnapshot = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var invalidSnapshotSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var nextPollElapsed = new TaskCompletionSource<TimeSpan>(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
@@ -215,14 +68,15 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
             // The handshake snapshot is the last valid receipt. Send a partial
             // identity late in its interval; it must not move the poll baseline.
-            await Task.Delay(900, timeout.Token);
+            await releaseInvalidSnapshot.Task.WaitAsync(timeout.Token);
+            time.AdvanceMilliseconds(900);
             await WriteEnvelopeAsync(stream, new Envelope {
                 Snapshot = new Snapshot {
                     Tick = 101,
                     ContentManifestHash = "content-hash",
                 },
             }, timeout.Token);
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var invalidAt = time.GetTimestamp();
             invalidSnapshotSent.TrySetResult();
 
             while (true) {
@@ -239,7 +93,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
                 Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, envelope.PayloadCase);
                 Assert.Equal(0UL, envelope.SnapshotRequest.TimingRequestId);
-                nextPollElapsed.TrySetResult(stopwatch.Elapsed);
+                nextPollElapsed.TrySetResult(time.GetElapsedTime(invalidAt));
                 return;
             }
         }, timeout.Token);
@@ -248,12 +102,16 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         await using var client = new AuthoritativeClient(
             Options(listener, TimeSpan.FromMilliseconds(pollIntervalMilliseconds)));
         await client.ConnectAsync(timeout.Token);
+        releaseInvalidSnapshot.SetResult();
         await invalidSnapshotSent.Task.WaitAsync(timeout.Token);
+        var messages = new List<AuthoritativeClientMessage>();
+        await ClientTestIO.UntilAsync(() => {
+            messages.AddRange(client.DrainMessages());
+            return messages.Any(message => message.Error is not null);
+        }, timeout.Token);
 
-        for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
-            await client.PollAsync(timeout.Token);
-            await Task.Delay(10, timeout.Token);
-        }
+        time.AdvanceMilliseconds(pollIntervalMilliseconds - 900);
+        await client.PollAsync(timeout.Token);
 
         await serverTask.WaitAsync(timeout.Token);
         var elapsedAfterInvalid = await nextPollElapsed.Task;
@@ -261,172 +119,9 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
             elapsedAfterInvalid < TimeSpan.FromMilliseconds(1200),
             $"The poll should remain due from the last valid snapshot receipt; it arrived {elapsedAfterInvalid.TotalMilliseconds:F0} ms after the rejected identity snapshot.");
         Assert.Contains(
-            client.DrainMessages(),
+            messages,
             message => message.Error is { Code: ProtocolErrorCode.InvalidMessage } error
                 && error.Detail.Contains("incomplete ruleset identity", StringComparison.Ordinal));
-    }
-    [Fact]
-    public async Task NegotiatedSnapshotPollDoesNotQueueDuplicatesWhileResponseIsDelayed()
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(5));
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var delayedSnapshotSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var secondSnapshotRequestSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
-            await using var stream = connection.GetStream();
-            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
-
-            var probe = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probe.PayloadCase);
-            var firstSnapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, firstSnapshotRequest.PayloadCase);
-            Assert.Equal(0UL, firstSnapshotRequest.SnapshotRequest.TimingRequestId);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = probe.ClockProbeRequest.RequestId,
-                    ServerSchedulingClockTick = 100,
-                },
-            }, timeout.Token);
-
-            var noSnapshotWatch = System.Diagnostics.Stopwatch.StartNew();
-            while (noSnapshotWatch.Elapsed < TimeSpan.FromMilliseconds(150)) {
-                Assert.False(stream.DataAvailable, "An outstanding full snapshot must suppress clock-only probes and duplicate polls.");
-                await Task.Delay(2, timeout.Token);
-            }
-
-            await WriteEnvelopeAsync(stream, new Envelope {
-                Snapshot = new Snapshot { Tick = 101 },
-            }, timeout.Token);
-            delayedSnapshotSent.TrySetResult();
-            while (true) {
-                var envelope = await ReadEnvelopeAsync(stream, timeout.Token);
-                if (envelope.PayloadCase == Envelope.PayloadOneofCase.ClockProbeRequest) {
-                    await WriteEnvelopeAsync(stream, new Envelope {
-                        TimingReply = new TimingReply {
-                            RequestId = envelope.ClockProbeRequest.RequestId,
-                            ServerSchedulingClockTick = 100,
-                        },
-                    }, timeout.Token);
-                    continue;
-                }
-                Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, envelope.PayloadCase);
-                Assert.Equal(0UL, envelope.SnapshotRequest.TimingRequestId);
-                secondSnapshotRequestSeen.TrySetResult();
-                return;
-            }
-        }, timeout.Token);
-
-        await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
-        await client.ConnectAsync(timeout.Token);
-        for (var poll = 0; poll < 5; poll++) {
-            await Task.Delay(35, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
-        await delayedSnapshotSent.Task.WaitAsync(timeout.Token);
-        for (var poll = 0; poll < 20 && !secondSnapshotRequestSeen.Task.IsCompleted; poll++) {
-            await Task.Delay(25, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
-        await serverTask.WaitAsync(timeout.Token);
-        Assert.True(secondSnapshotRequestSeen.Task.IsCompletedSuccessfully);
-    }
-
-    [Fact]
-    public async Task ClockOnlyProbeWaitsForAckFollowingSnapshotAtOrBeyondAppliedTick()
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(8));
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var initialResponsesSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
-            await using var stream = connection.GetStream();
-            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
-
-            var initialProbe = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, initialProbe.PayloadCase);
-            var initialPoll = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, initialPoll.PayloadCase);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = initialProbe.ClockProbeRequest.RequestId,
-                    ServerSchedulingClockTick = 100,
-                },
-            }, timeout.Token);
-            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } }, timeout.Token);
-            initialResponsesSent.TrySetResult();
-
-            var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                CommandAck = new CommandAck { Results = { new CommandResult {
-                    ClientSequence = command.ClientSequence,
-                    Status = CommandStatus.Rejected,
-                    RejectReason = CommandRejectReason.NotAllowed,
-                    AppliedTick = 120,
-                } } },
-            }, timeout.Token);
-
-            var postAckWatch = System.Diagnostics.Stopwatch.StartNew();
-            while (postAckWatch.Elapsed < TimeSpan.FromMilliseconds(80)) {
-                Assert.False(stream.DataAvailable, "A validated ACK must hold due probes and polls until its following snapshot or timeout.");
-                await Task.Delay(2, timeout.Token);
-            }
-            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 119 } }, timeout.Token);
-            var lowerSnapshotWatch = System.Diagnostics.Stopwatch.StartNew();
-            while (lowerSnapshotWatch.Elapsed < TimeSpan.FromMilliseconds(80)) {
-                Assert.False(stream.DataAvailable, "A lower-tick snapshot must not release the post-ACK response gate or trigger another poll.");
-                await Task.Delay(2, timeout.Token);
-            }
-            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 120 } }, timeout.Token);
-
-            var nextProbe = await ReadEnvelopeAsync(stream, timeout.Token);
-            Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, nextProbe.PayloadCase);
-            await WriteEnvelopeAsync(stream, new Envelope {
-                TimingReply = new TimingReply {
-                    RequestId = nextProbe.ClockProbeRequest.RequestId,
-                    ServerSchedulingClockTick = 120,
-                },
-            }, timeout.Token);
-            // Probes and polls have independent cadences. Further probes may be due
-            // while the next snapshot poll is being scheduled. Require both to resume.
-            while (true) {
-                var resumed = await ReadEnvelopeAsync(stream, timeout.Token);
-                if (resumed.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest)
-                    break;
-                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, resumed.PayloadCase);
-                await WriteEnvelopeAsync(stream, new Envelope {
-                    TimingReply = new TimingReply {
-                        RequestId = resumed.ClockProbeRequest.RequestId,
-                        ServerSchedulingClockTick = 120,
-                    },
-                }, timeout.Token);
-            }
-        }, timeout.Token);
-
-        await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
-        await client.ConnectAsync(timeout.Token);
-        // Complete the initial poll/calibration before queuing input. A fixed delay
-        // could queue input while the first full poll was still not due.
-        for (var poll = 0; poll < 200 && !initialResponsesSent.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
-            await client.PollAsync(timeout.Token);
-            await Task.Delay(10, timeout.Token);
-        }
-        if (serverTask.IsCompleted)
-            await serverTask;
-        await initialResponsesSent.Task.WaitAsync(timeout.Token);
-        client.QueueRealtime(
-            new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
-            100);
-        for (var poll = 0; poll < 500 && !serverTask.IsCompleted; poll++) {
-            await Task.Delay(10, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
-        await serverTask.WaitAsync(timeout.Token);
-        Assert.Equal(0, client.PendingCommandCount);
     }
 
     [Fact]
@@ -488,6 +183,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
+        time.AdvanceMilliseconds(35);
         // Complete the initial poll/calibration before queuing input. A fixed delay
         // could queue input while the first full poll was still not due.
         for (var poll = 0; poll < 200 && !initialResponsesSent.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
@@ -500,10 +196,9 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);
-        for (var poll = 0; poll < 400 && !serverTask.IsCompleted; poll++) {
-            await Task.Delay(15, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
+        await ClientTestIO.PumpUntilAsync(client, () => client.PendingCommandCount == 0, timeout.Token);
+        time.AdvanceMilliseconds(2000);
+        await client.PollAsync(timeout.Token);
         await serverTask.WaitAsync(timeout.Token);
         Assert.Equal(0, client.PendingCommandCount);
     }
@@ -531,6 +226,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                         ServerSchedulingClockTick = 9000,
                     },
                 }, timeout.Token);
+                await WriteEnvelopeAsync(stream, new Envelope { EventBatch = new EventBatch { Tick = 9000 } }, timeout.Token);
                 initialPollSeen.TrySetResult();
                 var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
                 Assert.True(command.RequestedTick >= 9000);
@@ -574,6 +270,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
+        time.AdvanceMilliseconds(35);
         // Leave the initial snapshot unanswered deliberately, after it was requested.
         for (var poll = 0; poll < 200 && !initialPollSeen.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
             await client.PollAsync(timeout.Token);
@@ -582,6 +279,8 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         if (serverTask.IsCompleted)
             await serverTask;
         await initialPollSeen.Task.WaitAsync(timeout.Token);
+        await ClientTestIO.UntilAsync(() => client.DrainMessages().Any(message => message.Events?.Tick == 9000), timeout.Token);
+        time.AdvanceMilliseconds(2000);
         client.QueueRealtime(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);
@@ -614,6 +313,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         timeout.CancelAfter(TimeSpan.FromSeconds(5));
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var firstPollSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var retrySeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
             using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
@@ -624,6 +324,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
             Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probe.PayloadCase);
             var firstSnapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
             Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, firstSnapshotRequest.PayloadCase);
+            firstPollSeen.SetResult();
 
             while (true) {
                 var envelope = await ReadEnvelopeAsync(stream, timeout.Token);
@@ -637,12 +338,11 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
+        time.AdvanceMilliseconds(35);
         await client.PollAsync(timeout.Token);
-        for (var poll = 0; poll < 75 && !retrySeen.Task.IsCompleted; poll++) {
-            await Task.Delay(35, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
+        await firstPollSeen.Task.WaitAsync(timeout.Token);
+        time.AdvanceMilliseconds(2000);
+        await client.PollAsync(timeout.Token);
         await retrySeen.Task.WaitAsync(timeout.Token);
         await serverTask.WaitAsync(timeout.Token);
     }
@@ -669,7 +369,7 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
 
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromMilliseconds(25)));
         await client.ConnectAsync(timeout.Token);
-        await Task.Delay(35, timeout.Token);
+        time.AdvanceMilliseconds(35);
         await client.PollAsync(timeout.Token);
         await serverTask.WaitAsync(timeout.Token);
     }
@@ -694,10 +394,8 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         // Four seconds at 20 Hz are 0.4 s at 200 Hz; the unscaled interval would outlast the timeout.
         await using var client = new AuthoritativeClient(Options(listener, TimeSpan.FromSeconds(4)));
         await client.ConnectAsync(timeout.Token);
-        while (!snapshotRequested.Task.IsCompleted) {
-            await Task.Delay(10, timeout.Token);
-            await client.PollAsync(timeout.Token);
-        }
+        time.AdvanceMilliseconds(400);
+        await client.PollAsync(timeout.Token);
         await serverTask.WaitAsync(timeout.Token);
     }
 
@@ -739,13 +437,14 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         await serverTask.WaitAsync(timeout.Token);
     }
 
-    private static ClientConnectionOptions Options(TcpListener listener, TimeSpan snapshotPollInterval)
+    private ClientConnectionOptions Options(TcpListener listener, TimeSpan snapshotPollInterval, bool realTime = false)
         => new(
             "127.0.0.1",
             ((IPEndPoint)listener.LocalEndpoint).Port,
             "clock-only-probe-test",
             "0.1.0",
             "content-hash") {
+            TimeProvider = realTime ? TimeProvider.System : time,
             SnapshotPollInterval = snapshotPollInterval,
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(25),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
@@ -819,4 +518,325 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
             offset += read;
         }
     }
+
+    [Collection(WallClockTimingCollection.CollectionName)]
+    public sealed class RealSocketSilenceTests
+    {
+        private readonly AuthoritativeClientClockOnlyProbeTests fixture = new();
+        [Fact]
+        public async Task NegotiatedProbeCorrelatesSeparatelyAndDoesNotReplaceSnapshotPoll()
+        {
+            // Real TCP silence is the subject: retain the physical receive window and isolated collection.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(8));
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var probeSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+                await using var stream = connection.GetStream();
+                await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
+
+                var probeEnvelope = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probeEnvelope.PayloadCase);
+                var probe = probeEnvelope.ClockProbeRequest;
+                Assert.NotEqual(0UL, probe.RequestId);
+                probeSeen.TrySetResult();
+
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = probe.RequestId + 1,
+                        ServerSchedulingClockTick = 9000,
+                    },
+                }, timeout.Token);
+                using (var noCommand = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token)) {
+                    noCommand.CancelAfter(100);
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                        () => ReadEnvelopeAsync(stream, noCommand.Token));
+                }
+
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = probe.RequestId,
+                        ServerSchedulingClockTick = 500,
+                    },
+                }, timeout.Token);
+                // A delayed snapshot older than the physical server-clock sample
+                // must not rewind command scheduling.
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    Snapshot = new Snapshot { Tick = 101 },
+                }, timeout.Token);
+                var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
+                Assert.Equal(1UL, command.ClientSequence);
+                Assert.InRange(command.RequestedTick, 500UL, 8999UL);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    CommandAck = new CommandAck { Results = { new CommandResult {
+                        ClientSequence = command.ClientSequence,
+                        Status = CommandStatus.Accepted,
+                        AppliedTick = command.RequestedTick,
+                    } } },
+                }, timeout.Token);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    Snapshot = new Snapshot { Tick = command.RequestedTick },
+                }, timeout.Token);
+
+                Envelope snapshotRequest;
+                while (true) {
+                    snapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
+                    if (snapshotRequest.PayloadCase != Envelope.PayloadOneofCase.ClockProbeRequest)
+                        break;
+                    await WriteEnvelopeAsync(stream, new Envelope {
+                        TimingReply = new TimingReply {
+                            RequestId = snapshotRequest.ClockProbeRequest.RequestId,
+                            ServerSchedulingClockTick = command.RequestedTick,
+                        },
+                    }, timeout.Token);
+                }
+                Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, snapshotRequest.PayloadCase);
+                Assert.Equal(0UL, snapshotRequest.SnapshotRequest.TimingRequestId);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    Snapshot = new Snapshot { Tick = 102 },
+                }, timeout.Token);
+            }, timeout.Token);
+
+            await using var client = new AuthoritativeClient(fixture.Options(listener, TimeSpan.FromSeconds(1), realTime: true));
+            await client.ConnectAsync(timeout.Token);
+            // Leave an ordinary snapshot poll due before forcing clock calibration.
+            await Task.Delay(1100, timeout.Token);
+            client.QueueRealtime(
+                new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
+                100);
+            await client.PollAsync(timeout.Token);
+            await probeSeen.Task.WaitAsync(TimeSpan.FromSeconds(2), timeout.Token);
+
+            for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
+                await Task.Delay(10, timeout.Token);
+                await client.PollAsync(timeout.Token);
+            }
+            await serverTask.WaitAsync(timeout.Token);
+            Assert.Equal(0, client.PendingCommandCount);
+            var followupSnapshotObserved = false;
+            for (var attempt = 0; attempt < 100 && !followupSnapshotObserved; attempt++) {
+                followupSnapshotObserved = client.DrainMessages().Any(message => message.Snapshot?.Tick == 102);
+                if (!followupSnapshotObserved)
+                    await Task.Delay(10, timeout.Token);
+            }
+            Assert.True(followupSnapshotObserved, "The admitted post-poll snapshot should reach the client after the server observes its request.");
+        }
+
+        [Fact]
+        public async Task NegotiatedProbeRequiresClockSampleAndTreatsPresentZeroAsValid()
+        {
+            // Real TCP silence is the subject: retain the physical receive window and isolated collection.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(5));
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+                await using var stream = connection.GetStream();
+                await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
+
+                var probe = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probe.PayloadCase);
+                Assert.NotEqual(0UL, probe.ClockProbeRequest.RequestId);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply { RequestId = probe.ClockProbeRequest.RequestId },
+                }, timeout.Token);
+                using (var noCommand = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token)) {
+                    noCommand.CancelAfter(100);
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                        () => ReadEnvelopeAsync(stream, noCommand.Token));
+                }
+
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = probe.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 0,
+                    },
+                }, timeout.Token);
+                var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
+                Assert.Equal(1UL, command.ClientSequence);
+                Assert.InRange(command.RequestedTick, 100UL, 999UL);
+            }, timeout.Token);
+
+            await using var client = new AuthoritativeClient(fixture.Options(listener, TimeSpan.FromMinutes(1), realTime: true));
+            await client.ConnectAsync(timeout.Token);
+            client.QueueRealtime(
+                new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
+                100);
+            await client.PollAsync(timeout.Token);
+            for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
+                await Task.Delay(10, timeout.Token);
+                await client.PollAsync(timeout.Token);
+            }
+            await serverTask.WaitAsync(timeout.Token);
+        }
+        [Fact]
+        public async Task NegotiatedSnapshotPollDoesNotQueueDuplicatesWhileResponseIsDelayed()
+        {
+            // Real TCP silence is the subject: retain the physical receive window and isolated collection.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(5));
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var delayedSnapshotSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var secondSnapshotRequestSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+                await using var stream = connection.GetStream();
+                await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
+
+                var probe = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, probe.PayloadCase);
+                var firstSnapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, firstSnapshotRequest.PayloadCase);
+                Assert.Equal(0UL, firstSnapshotRequest.SnapshotRequest.TimingRequestId);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = probe.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 100,
+                    },
+                }, timeout.Token);
+
+                var noSnapshotWatch = System.Diagnostics.Stopwatch.StartNew();
+                while (noSnapshotWatch.Elapsed < TimeSpan.FromMilliseconds(150)) {
+                    Assert.False(stream.DataAvailable, "An outstanding full snapshot must suppress clock-only probes and duplicate polls.");
+                    await Task.Delay(2, timeout.Token);
+                }
+
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    Snapshot = new Snapshot { Tick = 101 },
+                }, timeout.Token);
+                delayedSnapshotSent.TrySetResult();
+                while (true) {
+                    var envelope = await ReadEnvelopeAsync(stream, timeout.Token);
+                    if (envelope.PayloadCase == Envelope.PayloadOneofCase.ClockProbeRequest) {
+                        await WriteEnvelopeAsync(stream, new Envelope {
+                            TimingReply = new TimingReply {
+                                RequestId = envelope.ClockProbeRequest.RequestId,
+                                ServerSchedulingClockTick = 100,
+                            },
+                        }, timeout.Token);
+                        continue;
+                    }
+                    Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, envelope.PayloadCase);
+                    Assert.Equal(0UL, envelope.SnapshotRequest.TimingRequestId);
+                    secondSnapshotRequestSeen.TrySetResult();
+                    return;
+                }
+            }, timeout.Token);
+
+            await using var client = new AuthoritativeClient(fixture.Options(listener, TimeSpan.FromMilliseconds(25), realTime: true));
+            await client.ConnectAsync(timeout.Token);
+            for (var poll = 0; poll < 5; poll++) {
+                await Task.Delay(35, timeout.Token);
+                await client.PollAsync(timeout.Token);
+            }
+            await delayedSnapshotSent.Task.WaitAsync(timeout.Token);
+            for (var poll = 0; poll < 20 && !secondSnapshotRequestSeen.Task.IsCompleted; poll++) {
+                await Task.Delay(25, timeout.Token);
+                await client.PollAsync(timeout.Token);
+            }
+            await serverTask.WaitAsync(timeout.Token);
+            Assert.True(secondSnapshotRequestSeen.Task.IsCompletedSuccessfully);
+        }
+
+        [Fact]
+        public async Task ClockOnlyProbeWaitsForAckFollowingSnapshotAtOrBeyondAppliedTick()
+        {
+            // Real TCP silence is the subject: retain the physical receive window and isolated collection.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(8));
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var initialResponsesSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+                await using var stream = connection.GetStream();
+                await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
+
+                var initialProbe = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, initialProbe.PayloadCase);
+                var initialPoll = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, initialPoll.PayloadCase);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = initialProbe.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 100,
+                    },
+                }, timeout.Token);
+                await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } }, timeout.Token);
+                initialResponsesSent.TrySetResult();
+
+                var command = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    CommandAck = new CommandAck { Results = { new CommandResult {
+                        ClientSequence = command.ClientSequence,
+                        Status = CommandStatus.Rejected,
+                        RejectReason = CommandRejectReason.NotAllowed,
+                        AppliedTick = 120,
+                    } } },
+                }, timeout.Token);
+
+                var postAckWatch = System.Diagnostics.Stopwatch.StartNew();
+                while (postAckWatch.Elapsed < TimeSpan.FromMilliseconds(80)) {
+                    Assert.False(stream.DataAvailable, "A validated ACK must hold due probes and polls until its following snapshot or timeout.");
+                    await Task.Delay(2, timeout.Token);
+                }
+                await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 119 } }, timeout.Token);
+                var lowerSnapshotWatch = System.Diagnostics.Stopwatch.StartNew();
+                while (lowerSnapshotWatch.Elapsed < TimeSpan.FromMilliseconds(80)) {
+                    Assert.False(stream.DataAvailable, "A lower-tick snapshot must not release the post-ACK response gate or trigger another poll.");
+                    await Task.Delay(2, timeout.Token);
+                }
+                await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 120 } }, timeout.Token);
+
+                var nextProbe = await ReadEnvelopeAsync(stream, timeout.Token);
+                Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, nextProbe.PayloadCase);
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = nextProbe.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = 120,
+                    },
+                }, timeout.Token);
+                // Probes and polls have independent cadences. Further probes may be due
+                // while the next snapshot poll is being scheduled. Require both to resume.
+                while (true) {
+                    var resumed = await ReadEnvelopeAsync(stream, timeout.Token);
+                    if (resumed.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest)
+                        break;
+                    Assert.Equal(Envelope.PayloadOneofCase.ClockProbeRequest, resumed.PayloadCase);
+                    await WriteEnvelopeAsync(stream, new Envelope {
+                        TimingReply = new TimingReply {
+                            RequestId = resumed.ClockProbeRequest.RequestId,
+                            ServerSchedulingClockTick = 120,
+                        },
+                    }, timeout.Token);
+                }
+            }, timeout.Token);
+
+            await using var client = new AuthoritativeClient(fixture.Options(listener, TimeSpan.FromMilliseconds(25), realTime: true));
+            await client.ConnectAsync(timeout.Token);
+            // Complete the initial poll/calibration before queuing input. A fixed delay
+            // could queue input while the first full poll was still not due.
+            for (var poll = 0; poll < 200 && !initialResponsesSent.Task.IsCompleted && !serverTask.IsCompleted; poll++) {
+                await client.PollAsync(timeout.Token);
+                await Task.Delay(10, timeout.Token);
+            }
+            if (serverTask.IsCompleted)
+                await serverTask;
+            await initialResponsesSent.Task.WaitAsync(timeout.Token);
+            client.QueueRealtime(
+                new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
+                100);
+            for (var poll = 0; poll < 500 && !serverTask.IsCompleted; poll++) {
+                await Task.Delay(10, timeout.Token);
+                await client.PollAsync(timeout.Token);
+            }
+            await serverTask.WaitAsync(timeout.Token);
+            Assert.Equal(0, client.PendingCommandCount);
+        }
+    }
+
 }

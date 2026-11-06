@@ -293,6 +293,7 @@ public sealed class ClientFrameEvidenceRecorderTests
     {
         var root = CreateTestRoot(out var outputDirectory);
         try {
+            var beforeWarmup = ClientFrameEvidenceRecorder.GetTimestamp();
             var recorder = ClientFrameEvidenceRecorder.Create(
                 new ClientFrameEvidenceConfiguration(
                     outputDirectory,
@@ -300,11 +301,10 @@ public sealed class ClientFrameEvidenceRecorderTests
                     TimeSpan.FromMilliseconds(10),
                     4096),
                 CreateMetadata());
-            var beforeWarmup = ClientFrameEvidenceRecorder.GetTimestamp();
             recorder.RecordFrame(beforeWarmup, beforeWarmup, beforeWarmup);
             Assert.Equal(0, recorder.SampleCount);
-            Thread.Sleep(75);
-            var expired = ClientFrameEvidenceRecorder.GetTimestamp();
+            // RecordFrame already accepts explicit timestamps; synthesize the original 75 ms gap.
+            var expired = ClientFrameEvidenceRecorder.GetTimestamp() + Stopwatch.Frequency * 75 / 1000;
             recorder.RecordFrame(expired, expired, expired);
 
             using var evidence = JsonDocument.Parse(File.ReadAllText(recorder.EvidenceFilePath));

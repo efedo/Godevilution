@@ -11,6 +11,7 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class LiveAuthoritativePurchaseReconnectTests : LiveAuthoritativeTestBase
 {
+    private readonly ManualTimeProvider time = new();
 
     [Fact]
     public async Task GodotClientReconnectPreservesPurchasedStateAndSecondParticipant()
@@ -18,9 +19,10 @@ public sealed class LiveAuthoritativePurchaseReconnectTests : LiveAuthoritativeT
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
             startingGoldOverride: 5000,
-            startingLevelOverride: 0);
+            startingLevelOverride: 0, controlledClock: true);
         await using var firstClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-store-first", requestedClassId: 0) with {
+                TimeProvider = time,
                 RequestedCharacterName = "Godot-Store-First",
             }) { CommandTimingRecorder = new AuthoritativeClientCommandTimingRecorder() };
         await firstClient.ConnectAsync(TestContext.Current.CancellationToken);
@@ -31,8 +33,9 @@ public sealed class LiveAuthoritativePurchaseReconnectTests : LiveAuthoritativeT
 
         await using var secondClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-store-second", requestedClassId: 1) with {
+                TimeProvider = time,
                 RequestedCharacterName = "Godot-Store-Second",
-            });
+            }) { CommandTimingRecorder = new AuthoritativeClientCommandTimingRecorder() };
         await secondClient.ConnectAsync(TestContext.Current.CancellationToken);
         var secondInitial = await WaitForMessageAsync(
             secondClient,
@@ -42,8 +45,9 @@ public sealed class LiveAuthoritativePurchaseReconnectTests : LiveAuthoritativeT
         var secondSnapshot = secondInitial.Snapshot!;
         var secondEntityId = secondSnapshot.Players.Single(player => player.EntityId != firstEntityId).EntityId;
 
-        await MoveToProjectedTownerAsync(firstClient, firstModel, 0);
-        await MoveToProjectedTownerAsync(secondClient, secondModel, 0, secondEntityId);
+        // Purchase/retention assertions depend on game boundaries, not elapsed socket time.
+        await MoveToProjectedTownerAsync(firstClient, firstModel, 0, observation: server);
+        await MoveToProjectedTownerAsync(secondClient, secondModel, 0, secondEntityId, server);
 
         var firstSettledPlayer = firstModel.Snapshot!.Players.Single(
             player => player.EntityId == firstEntityId);

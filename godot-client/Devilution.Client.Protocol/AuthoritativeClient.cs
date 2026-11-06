@@ -25,8 +25,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long initialConnectionAttemptEpoch;
     private AuthoritativeInitialConnectionObservation? initialConnectionObservation;
     private readonly CancellationTokenSource lifetime = new();
-    private readonly Stopwatch clock = Stopwatch.StartNew();
-    private readonly AuthoritativeCommandClock commandClock = new();
+    // Scheduling uses the injected clock; packet-profiling Stopwatch timestamps remain physical.
+    private readonly TimeProvider time;
+    private readonly long startedAt;
+    private readonly AuthoritativeCommandClock commandClock;
+    private long ElapsedMilliseconds => time.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
     private TcpClient? tcpClient;
     private NetworkStream? stream;
     private Task? receiveTask;
@@ -143,6 +146,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public AuthoritativeClient(ClientConnectionOptions options)
     {
         this.options = options ?? throw new ArgumentNullException(nameof(options));
+        time = options.TimeProvider ?? throw new ArgumentException("A client time provider is required.", nameof(options));
+        startedAt = time.GetTimestamp();
+        commandClock = new AuthoritativeCommandClock(time);
         effectiveContentManifestHash = options.ContentManifestHash;
         effectiveRulesetIdentityHash = options.RulesetIdentityHash;
     }
@@ -314,7 +320,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     RescheduleAfterHostRestartLocked(hello.ServerHello.LastClientSequence, initialSnapshot.Snapshot.Tick);
             }
             Enqueue(initialSnapshot);
-            var initialSnapshotReceiptMs = clock.ElapsedMilliseconds;
+            var initialSnapshotReceiptMs = ElapsedMilliseconds;
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
             var connectionGeneration = Interlocked.Increment(ref transportGeneration);
@@ -451,7 +457,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (!IsConnected || stream is null)
                 return;
 
-            var now = clock.ElapsedMilliseconds;
+            var now = ElapsedMilliseconds;
             var normalRetryMilliseconds = RetryTimeout.TotalMilliseconds;
             PendingCommand[] dueCommands;
             bool needsTimingCalibration;
@@ -529,7 +535,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                 if (entry.ObservedTick.HasValue
                                     && supportsClockOnlyProbes
                                     && IsClockGatedCommandScheduling) {
-                                    var dispatchNow = clock.ElapsedMilliseconds;
+                                    var dispatchNow = ElapsedMilliseconds;
                                     var currentGeneration = Volatile.Read(ref transportGeneration);
                                     var snapshotRequestBlocksDispatch
                                         = negotiatedSnapshotRequestSentMs is { } snapshotSentAt
@@ -555,7 +561,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             entry.TransmissionStarted = true;
                             if (commandTimingRecorder is not null)
                                 entry.DispatchAttempt++;
-                            var freezeElapsedMilliseconds = clock.ElapsedMilliseconds;
+                            var freezeElapsedMilliseconds = ElapsedMilliseconds;
                             var freezeStopwatchTimestamp = commandTimingRecorder is null
                                 ? 0
                                 : Stopwatch.GetTimestamp();
@@ -601,7 +607,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             bool forceTimingProbe;
             AuthoritativeClientProbeOutcomeTiming? laterExpiredTimingProbe;
             lock (pendingLock) {
-                var probeNow = clock.ElapsedMilliseconds;
+                var probeNow = ElapsedMilliseconds;
                 var probeStopwatchTimestamp = pollTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
                 laterExpiredTimingProbe = ExpireTimingProbeLocked(probeNow, probeStopwatchTimestamp);
                 hasPendingCommands = pending.Count > 0;
@@ -614,7 +620,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 TryRecordProbeOutcome(pollTimingRecorder, laterExpiredTimingProbe);
             if (timingCalibrationTimedOut || this.timingCalibrationTimedOut)
                 await FailTimingCalibrationAsync(cancellationToken);
-            now = clock.ElapsedMilliseconds;
+            now = ElapsedMilliseconds;
             if (supportsClockOnlyProbes && IsClockGatedCommandScheduling) {
                 var currentGeneration = Volatile.Read(ref transportGeneration);
                 var snapshotPollDue = !forceTimingProbe
@@ -632,7 +638,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     try {
                         await WriteEnvelopeAsync(() => {
                             lock (pendingLock) {
-                                var sentAt = clock.ElapsedMilliseconds;
+                                var sentAt = ElapsedMilliseconds;
                                 if (!IsNegotiatedSnapshotPollDueLocked(sentAt, currentGeneration))
                                     return null;
 
@@ -651,7 +657,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             }
                         }, cancellationToken);
                         if (requestRegistered)
-                            lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                            lastSnapshotRequestMs = ElapsedMilliseconds;
                     } catch {
                         if (requestRegistered)
                             CancelNegotiatedSnapshotRequest(requestToken, currentGeneration);
@@ -667,7 +673,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     await WriteEnvelopeAsync(
                         new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() },
                         cancellationToken);
-                    lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                    lastSnapshotRequestMs = ElapsedMilliseconds;
                     return;
                 }
                 await TrySendTimingProbeAsync(forceTimingProbe, cancellationToken);
@@ -713,7 +719,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         try {
             await WriteEnvelopeAsync(() => {
                 lock (pendingLock) {
-                    var dispatchNow = clock.ElapsedMilliseconds;
+                    var dispatchNow = ElapsedMilliseconds;
                     var requiresCalibration = forceCalibration
                         && !timingCalibrationReady
                         && pending.Values.Any(command =>
@@ -788,7 +794,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 if (usesClockOnlyProbe)
                     lastClockOnlyProbeSentMs = probeDispatchElapsedMilliseconds;
                 else
-                    lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                    lastSnapshotRequestMs = ElapsedMilliseconds;
             }
             return probeRegistered;
         } catch {
@@ -837,7 +843,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (!supportsClockOnlyProbes || !IsClockGatedCommandScheduling)
             return;
 
-        var receivedAt = clock.ElapsedMilliseconds;
+        var receivedAt = ElapsedMilliseconds;
         lock (pendingLock) {
             if (generation != Volatile.Read(ref transportGeneration))
                 return;
@@ -966,7 +972,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (CommandTimingRecorder is { } recorder) {
                 try {
                     recorder.RecordReceiveTerminal(new AuthoritativeClientReceiveTerminalTiming(
-                        connectionGeneration, terminalKind, clock.ElapsedMilliseconds,
+                        connectionGeneration, terminalKind, ElapsedMilliseconds,
                         Stopwatch.GetTimestamp(), terminalFailure?.GetType().FullName, terminalFailure?.HResult));
                 } catch { }
             }
@@ -1045,7 +1051,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (recorder is null)
             return null;
 
-        var receivedElapsedMilliseconds = clock.ElapsedMilliseconds;
+        var receivedElapsedMilliseconds = ElapsedMilliseconds;
         var receivedStopwatchTimestamp = Stopwatch.GetTimestamp();
         ulong? pendingTimingRequestId = null;
         bool calibrationReady;
@@ -1194,7 +1200,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (!IsClockGatedCommandScheduling || reply.RequestId == 0)
             return;
 
-        var now = clock.ElapsedMilliseconds;
+        var now = ElapsedMilliseconds;
         var recorder = CommandTimingRecorder;
         var outcomeStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
         AuthoritativeClientProbeOutcomeTiming? outcome = null;
@@ -1279,7 +1285,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private void Acknowledge(CommandAck acknowledgement, long? connectionGeneration)
     {
-        var now = clock.ElapsedMilliseconds;
+        var now = ElapsedMilliseconds;
         var recorder = CommandTimingRecorder;
         var receivedStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
         var transportGenerationForRecord = connectionGeneration ?? Volatile.Read(ref transportGeneration);
@@ -1360,7 +1366,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
             var currentStream = stream ?? throw new IOException("The authoritative transport is closed.");
             if (timingObserver is not null) {
-                writeStartElapsedMilliseconds = clock.ElapsedMilliseconds;
+                writeStartElapsedMilliseconds = ElapsedMilliseconds;
                 writeStartStopwatchTimestamp = Stopwatch.GetTimestamp();
             }
             await currentStream.WriteAsync(header, cancellationToken);
@@ -1369,7 +1375,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             writeOutcome = AuthoritativeClientWriteOutcome.Completed;
         } finally {
             if (timingObserver is not null && writeStartElapsedMilliseconds.HasValue) {
-                writeEndElapsedMilliseconds = clock.ElapsedMilliseconds;
+                writeEndElapsedMilliseconds = ElapsedMilliseconds;
                 writeEndStopwatchTimestamp = Stopwatch.GetTimestamp();
             }
             if (timingObserver is not null && envelope is not null) {

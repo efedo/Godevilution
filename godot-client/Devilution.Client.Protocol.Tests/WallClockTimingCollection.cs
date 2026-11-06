@@ -2,7 +2,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-/** Real RTT, retry and expiry tests run without competing collections until the fake-clock migration. */
+/** Only physical TCP silence windows and the live host-rate check require an isolated wall clock. */
 [CollectionDefinition(CollectionName, DisableParallelization = true)]
 public sealed class WallClockTimingCollection
 {

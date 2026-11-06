@@ -46,8 +46,8 @@ public sealed partial class AuthoritativeClientTransportTests
             if (mode == 2) await stream.WriteAsync(new byte[] { 0x0f }, timeout.Token);
             if (mode == 3) await stream.WriteAsync(new byte[] { 0x08, 0x01 }, timeout.Token);
         }, timeout.Token);
-        var client = new AuthoritativeClient(new ClientConnectionOptions(
-            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "receive-terminal-test", "0.1.0", "content-hash")) {
+        var client = new AuthoritativeClient(WithTime(new ClientConnectionOptions(
+            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "receive-terminal-test", "0.1.0", "content-hash"))) {
             CommandTimingRecorder = recorder,
         };
         var disposed = false;

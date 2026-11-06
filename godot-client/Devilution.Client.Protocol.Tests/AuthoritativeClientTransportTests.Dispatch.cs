@@ -43,13 +43,13 @@ public sealed partial class AuthoritativeClientTransportTests
                 } });
             }
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener));
+        await using var client = new AuthoritativeClient(WithTime(DispatchOptions(listener)));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         var command = new Command { MoveRequested = new MoveRequested { TargetCell = true, TargetX = 9, TargetY = 4 } };
         var sequence = realtime ? client.QueueRealtime(command, 100) : client.Queue(command, 109);
         command.MoveRequested.TargetX = 999;
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(80, TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(80);
         await client.PollAsync(TestContext.Current.CancellationToken);
         await secondRead.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         await client.ReconnectAsync(TestContext.Current.CancellationToken);
@@ -71,45 +71,14 @@ public sealed partial class AuthoritativeClientTransportTests
             var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             Assert.True(command.RequestedTick >= 115);
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener));
+        await using var client = new AuthoritativeClient(WithTime(DispatchOptions(listener)));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.PollAsync(cancelled.Token));
-        await Task.Delay(750, TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(750);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-    }
-
-    [Fact]
-    public async Task ConcurrentPollsDoNotDuplicateANewCommand()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var pollsFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
-            await using var stream = connection.GetStream();
-            await DispatchHandshake(stream, 100);
-            Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
-            await pollsFinished.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-            deadline.CancelAfter(150);
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
-                var nextByte = new byte[1];
-                var read = await stream.ReadAsync(nextByte, deadline.Token);
-                Assert.Fail($"Unexpected transport bytes after one send: {read}");
-            });
-        }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener) with {
-            MinimumRetryTimeout = TimeSpan.FromSeconds(30), MaximumRetryTimeout = TimeSpan.FromSeconds(30),
-        });
-        await client.ConnectAsync(TestContext.Current.CancellationToken);
-        client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
-        await Task.WhenAll(Enumerable.Range(0, 16).Select(_ => Task.Run(
-            () => client.PollAsync(TestContext.Current.CancellationToken), TestContext.Current.CancellationToken)));
-        pollsFinished.SetResult();
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
 
@@ -129,14 +98,14 @@ public sealed partial class AuthoritativeClientTransportTests
                 Results = { new CommandResult { ClientSequence = first.ClientSequence, Status = CommandStatus.Accepted } },
             } });
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener) with {
+        await using var client = new AuthoritativeClient(WithTime(DispatchOptions(listener) with {
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(25), MaximumRetryTimeout = TimeSpan.FromSeconds(2),
-        });
+        }));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         var originalTimeout = client.RetryTimeout;
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(originalTimeout + TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken);
+        time.Advance(originalTimeout + TimeSpan.FromMilliseconds(50));
         await client.PollAsync(TestContext.Current.CancellationToken);
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         await UntilAcknowledged(client);
@@ -165,7 +134,7 @@ public sealed partial class AuthoritativeClientTransportTests
             Assert.Equal(1UL, command.ClientSequence);
             Assert.True(command.RequestedTick >= 1002, "An unsent command ignored the replacement clock.");
         }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener));
+        await using var client = new AuthoritativeClient(WithTime(DispatchOptions(listener)));
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         var reconnect = client.ReconnectAsync(TestContext.Current.CancellationToken);
@@ -177,43 +146,6 @@ public sealed partial class AuthoritativeClientTransportTests
             releaseHandshake.TrySetResult();
         }
         await Task.WhenAll(reconnect, poll).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-        await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-    }
-
-    [Fact]
-    public async Task RejectedRealtimeCommandIsNotRestampedOrRetried()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var finalPoll = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var serverTask = Task.Run(async () => {
-            using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
-            await using var stream = connection.GetStream();
-            await DispatchHandshake(stream, 100);
-            var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
-            await WriteEnvelopeAsync(stream, new Envelope { CommandAck = new CommandAck {
-                Results = { new CommandResult { ClientSequence = command.ClientSequence,
-                    Status = CommandStatus.Rejected, RejectReason = CommandRejectReason.TooLate } },
-            } });
-            await finalPoll.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-            deadline.CancelAfter(150);
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
-                var nextByte = new byte[1];
-                var read = await stream.ReadAsync(nextByte, deadline.Token);
-                Assert.Fail($"A rejected command emitted new transport bytes: {read}");
-            });
-        }, TestContext.Current.CancellationToken);
-        await using var client = new AuthoritativeClient(DispatchOptions(listener));
-        await client.ConnectAsync(TestContext.Current.CancellationToken);
-        client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
-        await client.PollAsync(TestContext.Current.CancellationToken);
-        await UntilAcknowledged(client);
-        var acknowledgement = Assert.Single(client.DrainMessages().Where(message => message.Acknowledgement is not null)).Acknowledgement!;
-        Assert.Equal(CommandRejectReason.TooLate, Assert.Single(acknowledgement.Results).RejectReason);
-        await Task.Delay(80, TestContext.Current.CancellationToken);
-        await client.PollAsync(TestContext.Current.CancellationToken);
-        finalPoll.SetResult();
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
 
@@ -244,4 +176,81 @@ public sealed partial class AuthoritativeClientTransportTests
             await Task.Delay(10, TestContext.Current.CancellationToken);
         Assert.Equal(0, client.PendingCommandCount);
     }
+
+    [Collection(WallClockTimingCollection.CollectionName)]
+    public sealed class RealSocketSilenceTests
+    {
+        private readonly AuthoritativeClientTransportTests fixture = new();
+
+        [Fact]
+        public async Task ConcurrentPollsDoNotDuplicateANewCommand()
+        {
+            // Real TCP byte absence is the subject; retain the isolated physical receive window.
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var pollsFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+                await using var stream = connection.GetStream();
+                await DispatchHandshake(stream, 100);
+                Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
+                await pollsFinished.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                deadline.CancelAfter(150);
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
+                    var nextByte = new byte[1];
+                    var read = await stream.ReadAsync(nextByte, deadline.Token);
+                    Assert.Fail($"Unexpected transport bytes after one send: {read}");
+                });
+            }, TestContext.Current.CancellationToken);
+            await using var client = new AuthoritativeClient(fixture.WithTime(DispatchOptions(listener) with {
+                MinimumRetryTimeout = TimeSpan.FromSeconds(30), MaximumRetryTimeout = TimeSpan.FromSeconds(30),
+            }));
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
+            await Task.WhenAll(Enumerable.Range(0, 16).Select(_ => Task.Run(
+                () => client.PollAsync(TestContext.Current.CancellationToken), TestContext.Current.CancellationToken)));
+            pollsFinished.SetResult();
+            await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        }
+
+        [Fact]
+        public async Task RejectedRealtimeCommandIsNotRestampedOrRetried()
+        {
+            // Real TCP byte absence is the subject; retain the isolated physical receive window.
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var finalPoll = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var serverTask = Task.Run(async () => {
+                using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+                await using var stream = connection.GetStream();
+                await DispatchHandshake(stream, 100);
+                var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
+                await WriteEnvelopeAsync(stream, new Envelope { CommandAck = new CommandAck {
+                    Results = { new CommandResult { ClientSequence = command.ClientSequence,
+                        Status = CommandStatus.Rejected, RejectReason = CommandRejectReason.TooLate } },
+                } });
+                await finalPoll.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                deadline.CancelAfter(150);
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
+                    var nextByte = new byte[1];
+                    var read = await stream.ReadAsync(nextByte, deadline.Token);
+                    Assert.Fail($"A rejected command emitted new transport bytes: {read}");
+                });
+            }, TestContext.Current.CancellationToken);
+            await using var client = new AuthoritativeClient(fixture.WithTime(DispatchOptions(listener)));
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            await UntilAcknowledged(client);
+            var acknowledgement = Assert.Single(client.DrainMessages().Where(message => message.Acknowledgement is not null)).Acknowledgement!;
+            Assert.Equal(CommandRejectReason.TooLate, Assert.Single(acknowledgement.Results).RejectReason);
+            fixture.time.AdvanceMilliseconds(80);
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            finalPoll.SetResult();
+            await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        }
+    }
+
 }

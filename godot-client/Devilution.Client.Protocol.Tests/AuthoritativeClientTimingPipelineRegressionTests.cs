@@ -10,9 +10,11 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientTimingPipelineRegressionTests
 {
+    private readonly ManualTimeProvider time = new();
+    private ClientConnectionOptions WithTime(ClientConnectionOptions options) => options with { TimeProvider = time };
+
     [Fact]
     public async Task CalibratedRealtimeBurstSendsSeparateFrozenEnvelopesBeforeEitherAcknowledgement()
     {
@@ -52,10 +54,10 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         }, timeout.Token);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(ConnectionOptions(listener) with {
+        await using var client = new AuthoritativeClient(WithTime(ConnectionOptions(listener) with {
             MinimumRetryTimeout = TimeSpan.FromMinutes(1),
             MaximumRetryTimeout = TimeSpan.FromMinutes(1),
-        }) { CommandTimingRecorder = recorder };
+        })) { CommandTimingRecorder = recorder };
         Exception? primaryFailure = null;
         try {
             await client.ConnectAsync(timeout.Token);
@@ -136,7 +138,7 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         }, timeout.Token);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(ConnectionOptions(listener)) {
+        await using var client = new AuthoritativeClient(WithTime(ConnectionOptions(listener))) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(timeout.Token);
@@ -195,7 +197,7 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         }, timeout.Token);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(ConnectionOptions(listener)) {
+        await using var client = new AuthoritativeClient(WithTime(ConnectionOptions(listener))) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(timeout.Token);
@@ -245,7 +247,7 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         }, timeout.Token);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(ConnectionOptions(listener)) {
+        await using var client = new AuthoritativeClient(WithTime(ConnectionOptions(listener))) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(timeout.Token);
@@ -297,16 +299,16 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         }, timeout.Token);
 
         var recorder = new AuthoritativeClientCommandTimingRecorder();
-        await using var client = new AuthoritativeClient(ConnectionOptions(listener) with {
+        await using var client = new AuthoritativeClient(WithTime(ConnectionOptions(listener) with {
             SnapshotPollInterval = TimeSpan.FromMinutes(1),
-        }) {
+        })) {
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(timeout.Token);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         await client.PollAsync(timeout.Token);
         var requestId = await requestSeen.Task.WaitAsync(timeout.Token);
-        await Task.Delay(TimeSpan.FromMilliseconds(2150), timeout.Token);
+        time.AdvanceMilliseconds(2150);
         await client.PollAsync(timeout.Token);
         releaseServer.TrySetResult();
         await serverTask.WaitAsync(timeout.Token);

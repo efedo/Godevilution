@@ -573,7 +573,8 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
         AuthoritativeClient client,
         AuthoritativeClientModel model,
         int townerId,
-        uint? localEntityId = null)
+        uint? localEntityId = null,
+        StartedServer? observation = null)
     {
         var snapshot = model.Snapshot
             ?? throw new InvalidOperationException("A live snapshot is required before native town travel.");
@@ -621,7 +622,7 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
                 model.Apply(await WaitForMessageAsync(
                     client,
                     message => message.Snapshot is { } current
-                        && current.Tick >= acknowledgement.AppliedTick));
+                        && current.Tick >= acknowledgement.AppliedTick, observation));
                 continue;
             }
             var actionEndTick = player.CurrentAction is { } action
@@ -644,7 +645,7 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
                     && (candidate.PositionX, candidate.PositionY) != beforePosition
                     && candidate.CombatMode == PlayerCombatMode.Stand
                     && candidate.CurrentAction is null
-                    && !candidate.NativeWalkPathPending);
+                    && !candidate.NativeWalkPathPending, observation);
             model.Apply(moved);
         }
 

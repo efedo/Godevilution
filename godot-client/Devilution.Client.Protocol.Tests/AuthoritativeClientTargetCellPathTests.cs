@@ -9,9 +9,9 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class AuthoritativeClientTargetCellPathTests
 {
+    private readonly ManualTimeProvider time = new();
     [Fact]
     public async Task NegotiatedRealtimeTargetMoveKeepsPathFlagAcrossRetryAndReconnect()
     {
@@ -54,7 +54,7 @@ public sealed class AuthoritativeClientTargetCellPathTests
         var sequence = client.QueueRealtime(callerCommand, observedTick: 100);
         Assert.False(callerCommand.MoveRequested.FollowPath);
         await client.PollAsync(timeout.Token);
-        await Task.Delay(60, timeout.Token);
+        time.AdvanceMilliseconds(60);
         await client.PollAsync(timeout.Token);
         await firstCommandsRead.Task.WaitAsync(timeout.Token);
         await client.ReconnectAsync(timeout.Token);
@@ -190,8 +190,9 @@ public sealed class AuthoritativeClientTargetCellPathTests
         Assert.True(parsedMove.FollowPath);
     }
 
-    private static ClientConnectionOptions Options(TcpListener listener)
+    private ClientConnectionOptions Options(TcpListener listener)
         => new("127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "target-path-test", "0.1.0", "content-hash") {
+            TimeProvider = time,
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(25),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(25),
             SnapshotPollInterval = TimeSpan.FromMinutes(1),

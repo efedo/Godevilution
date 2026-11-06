@@ -9,17 +9,19 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-[Collection(WallClockTimingCollection.CollectionName)]
 public sealed class RetryReconnectTests
 {
+    private readonly ManualTimeProvider time = new();
     [Fact]
     public async Task ResubmitsACommandWhenTheAcknowledgementIsDelayed()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        var serverTask = RunDelayedAcknowledgementServerAsync(listener);
+        var firstRead = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var serverTask = RunDelayedAcknowledgementServerAsync(listener, firstRead);
         await using var client = new AuthoritativeClient(new ClientConnectionOptions(
             "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "godot-test", "0.1.0", "content-hash") {
+            TimeProvider = time,
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(25),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(50),
         });
@@ -28,9 +30,11 @@ public sealed class RetryReconnectTests
         _ = client.DrainMessages();
         var sequence = client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 100);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(80, TestContext.Current.CancellationToken);
+        await firstRead.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        time.AdvanceMilliseconds(80);
         await client.PollAsync(TestContext.Current.CancellationToken);
 
+        time.AdvanceMilliseconds(20);
         await serverTask;
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
@@ -156,13 +160,15 @@ public sealed class RetryReconnectTests
         throw new TimeoutException("Timed out waiting for the retried command acknowledgement.");
     }
 
-    private static async Task RunDelayedAcknowledgementServerAsync(TcpListener listener)
+    private async Task RunDelayedAcknowledgementServerAsync(TcpListener listener, TaskCompletionSource firstRead)
     {
         using var client = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
         await using var stream = client.GetStream();
         await CompleteHandshakeAsync(stream, "resume-token", 4);
         _ = await ReadEnvelopeAsync(stream);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var ackDelay = Task.Delay(TimeSpan.FromMilliseconds(100), time, TestContext.Current.CancellationToken);
+        firstRead.SetResult();
+        await ackDelay;
         var retried = await ReadEnvelopeAsync(stream);
         var command = Assert.Single(retried.CommandBatch.Commands);
         await WriteEnvelopeAsync(stream, new Envelope {

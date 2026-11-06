@@ -110,7 +110,10 @@ public sealed class LiveAuthoritativeProgressionTests : LiveAuthoritativeTestBas
     [Fact]
     public async Task GodotTransportCompletesLiveMoveAndCastSlice()
     {
-        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
+        // Observe the completed move before casting; ambient attacks and IO stalls are outside this slice.
+        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken,
+            passiveMonsters: true, controlledClock: true);
+        var time = new ManualTimeProvider();
         await using var client = new AuthoritativeClient(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
@@ -118,6 +121,9 @@ public sealed class LiveAuthoritativeProgressionTests : LiveAuthoritativeTestBas
             ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             server.ContentHash,
             server.RulesetHash) {
+            TimeProvider = time,
+            // Fresh observations are explicit while the host's game clock is held.
+            SnapshotPollInterval = TimeSpan.Zero,
             RequestedCharacterClassId = 2,
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(50),
             MaximumRetryTimeout = TimeSpan.FromMilliseconds(500),
@@ -126,7 +132,7 @@ public sealed class LiveAuthoritativeProgressionTests : LiveAuthoritativeTestBas
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         Assert.Equal(GameMode.Multiplayer, client.ServerGameMode);
-        var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
+        var initial = await WaitForGameConditionAsync(server, client, message => message.Snapshot is not null);
         model.Apply(initial);
         var player = model.Snapshot!.Players.Single();
         Assert.Equal("Firebolt", Assert.Single(player.MemorizedSpells).DisplayName);
@@ -146,7 +152,9 @@ public sealed class LiveAuthoritativeProgressionTests : LiveAuthoritativeTestBas
         var moveAcknowledgement = await WaitForAcknowledgementAsync(client, moveSequence);
         Assert.True(moveAcknowledgement.Status == CommandStatus.Accepted,
             $"Move was {moveAcknowledgement.Status}/{moveAcknowledgement.RejectReason} at tick {moveAcknowledgement.AppliedTick}; player was ({player.PositionX},{player.PositionY}) level {player.LevelId}.");
-        var moved = await WaitForMessageAsync(client, message => message.Snapshot?.Players.Single().PositionY == player.PositionY + 1);
+        var moved = await WaitForGameConditionAsync(server, client, message =>
+            message.Snapshot?.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } candidate
+                && candidate.PositionY == player.PositionY + 1);
         model.Apply(moved);
 
         var castSequence = client.Queue(new Command {
