@@ -15,6 +15,7 @@ param(
     # Optional C2 dungeon seed; omitted preserves the existing fixed seed 2588.
     [Nullable[System.UInt32]]$CatacombsSeed,
     [switch]$RequireTrappedDoor,
+    [switch]$RequireTrappedSarcophagus,
     [switch]$RequireShrine,
     [switch]$RequireThemeObject,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
@@ -58,6 +59,9 @@ if (($RequireTrappedDoor -and $TargetDepth -lt 5) -or
     (-not $allClass -and ($PSBoundParameters.ContainsKey('CatacombsSeed') -or $RequireTrappedDoor))) {
     throw 'Catacombs seed and required-door checks need an all-class journey through L5 or deeper.'
 }
+if ($RequireTrappedSarcophagus -and (-not $allClass -or $TargetDepth -lt 4)) {
+    throw '-RequireTrappedSarcophagus needs an all-class journey through L4 for the default-seed sarcophagus at (33,62).'
+}
 if ($RequireShrine -and (-not $allClass -or $TargetDepth -lt 5)) {
     throw '-RequireShrine needs an all-class journey through L5 or deeper.'
 }
@@ -76,6 +80,7 @@ if ($allClass) {
 } else { $arguments.CathedralNativeDepthProgressionProfileDirectory = $profileRoot }
 $previousCatacombsSeed = $env:GODEVILUTION_NATIVE_CATACOMBS_SEED
 $previousRequiredDoor = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR
+$previousRequiredSarcophagus = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_SARCOPHAGUS
 $previousRequiredShrine = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE
 $previousRequiredThemeObject = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT
 $previousDoorLevel = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL
@@ -83,6 +88,7 @@ $previousDoorX = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X
 $previousDoorY = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y
 $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = if ($PSBoundParameters.ContainsKey('CatacombsSeed')) { [string]$CatacombsSeed } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = if ($RequireTrappedDoor) { '1' } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_SARCOPHAGUS = if ($RequireTrappedSarcophagus) { '1' } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = if ($RequireShrine) { '1' } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT = if ($RequireThemeObject) { '1' } else { $null }
 # Acceptance-only destination, paired with the explicit seed; normal journeys have none.
@@ -122,7 +128,7 @@ function Invoke-TimedLauncher([string]$directory, [string]$phase, [hashtable]$la
 
 # Validate object evidence without launching a client; also exercised directly by focused tests.
 function Assert-NativeDepthObjectEvidence($journey, [int]$TargetDepth, [bool]$HasExplicitCatacombsSeed,
-    [bool]$RequireTrappedDoor, [bool]$RequireShrine, [bool]$RequireThemeObject = $false) {
+    [bool]$RequireTrappedDoor, [bool]$RequireShrine, [bool]$RequireThemeObject = $false, [bool]$RequireTrappedSarcophagus = $false) {
     # Compile the same scalar policy used by the managed journey and resume.
     if (-not ('Devilution.Client.Acceptance.NativeDepthResumeEvidence' -as [type])) {
         Add-Type -Path (Join-Path $repositoryRoot 'godot-client/Devilution.Client/Acceptance/NativeDepthResumeEvidence.cs') -ErrorAction Stop
@@ -138,6 +144,19 @@ function Assert-NativeDepthObjectEvidence($journey, [int]$TargetDepth, [bool]$Ha
     [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::Verify($RequireShrine, ($null -ne $route.Shrine),
         $RequireTrappedDoor, [uint32]$objects.DoorEntity, [uint32]$objects.DoorTrapSource, [uint64]$objects.DoorTrapTick)
     [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::VerifyThemeObject($RequireThemeObject, ($null -ne $route.ThemeObject))
+    $sarcophagus = $route.TrappedSarcophagus
+    $hasRelease = @($sarcophagus.Drops | Where-Object { $_ -gt 0 }).Count -gt 0 -or @($sarcophagus.Skeletons | Where-Object { $_ -gt 0 }).Count -gt 0
+    [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::VerifyTrappedSarcophagus($RequireTrappedSarcophagus,
+        ($null -ne $sarcophagus), [uint32]$sarcophagus.Level, [uint32]$sarcophagus.Entity, [uint32]$sarcophagus.TrapSource,
+        [uint64]$sarcophagus.OpeningTick, [uint64]$sarcophagus.FiringTick, $hasRelease)
+    if ($RequireTrappedSarcophagus -and ($journey.TrappedSarcophagusOpened -ne $true -or $journey.RequiredTrappedSarcophagus -ne $true -or
+        $sarcophagus.Level -ne [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::TrappedSarcophagusLevel -or
+        $sarcophagus.X -ne [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::TrappedSarcophagusX -or
+        $sarcophagus.Y -ne [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::TrappedSarcophagusY -or
+        $sarcophagus.Sequence -le 0 -or $sarcophagus.TerminalFrame -le 0 -or $sarcophagus.FiringTick -ge $sarcophagus.DeadlineTick -or
+        [string]$sarcophagus.Before -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or [string]$sarcophagus.After -notmatch '^[A-Za-z0-9+/]+={0,2}$')) {
+        throw 'The journey lacks its required default L4 trapped sarcophagus opening, firing and release evidence.'
+    }
     if ($RequireThemeObject) {
         $theme = $route.ThemeObject
         $type = [uint32]$theme.Type
@@ -179,7 +198,7 @@ if ($allClass) {
             ($_.LevelId -lt $FirstFightDepth -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
-    Assert-NativeDepthObjectEvidence $journey $TargetDepth ($null -ne $env:GODEVILUTION_NATIVE_CATACOMBS_SEED) ([bool]$RequireTrappedDoor) ([bool]$RequireShrine) ([bool]$RequireThemeObject)
+    Assert-NativeDepthObjectEvidence $journey $TargetDepth ($null -ne $env:GODEVILUTION_NATIVE_CATACOMBS_SEED) ([bool]$RequireTrappedDoor) ([bool]$RequireShrine) ([bool]$RequireThemeObject) ([bool]$RequireTrappedSarcophagus)
     # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
     if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
         throw 'The Warrior Journey did not open and take the single-player Town warp.'
@@ -294,6 +313,9 @@ if ($allClass) {
         $resume.ExactColdBaseline -ne $true -or $resume.AllFloorsRetained -ne $true) {
         throw 'The fresh-host Resume did not prove the exact cold baseline and four retained floors.'
     }
+    if ($RequireTrappedSarcophagus -and $resume.TrappedSarcophagusRetained -ne $true) {
+        throw 'The fresh-host Resume did not retain the opened sarcophagus and disarmed wall-trap firing state.'
+    }
     if ($RequireThemeObject -and ($resume.ThemeObjectRetained -ne $true -or
         ([Devilution.Client.Acceptance.NativeDepthResumeEvidence]::IsReusableThemeObject([uint32]$route.ThemeObject.Type) -and
             $resume.ThemeObjectReusableVerified -ne $true))) {
@@ -363,6 +385,7 @@ Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summar
 } finally {
     $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = $previousCatacombsSeed
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = $previousRequiredDoor
+    $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_SARCOPHAGUS = $previousRequiredSarcophagus
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = $previousRequiredShrine
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT = $previousRequiredThemeObject
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = $previousDoorLevel

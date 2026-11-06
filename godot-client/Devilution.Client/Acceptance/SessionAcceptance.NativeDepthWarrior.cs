@@ -17,7 +17,7 @@ public partial class SessionAcceptance
 
     private sealed record NativeWarriorDepthCheckpoint(string PlayerPayload, uint RandomState, ulong Sequence,
         string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null, NativeShrineCheckpoint? Shrine = null,
-        NativeThemeObjectCheckpoint? ThemeObject = null);
+        NativeThemeObjectCheckpoint? ThemeObject = null, NativeTrappedSarcophagusCheckpoint? TrappedSarcophagus = null);
 
     private const int NativeWarriorAttacksPerFloor = 160;
     // L5-L8 melee families fight as native since batch 2.4a, so every floor records a kill.
@@ -109,6 +109,7 @@ public partial class SessionAcceptance
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
+                await TryNativeTrappedSarcophagusAsync(main);
                 await TryNativeThemeObjectAsync(main);
                 await TryNativeShrineAsync(main);
                 if (depth > NativeWarriorFoughtFloor || depth < NativeWarriorFirstFightFloor) {
@@ -163,7 +164,7 @@ public partial class SessionAcceptance
             var checkpoint = new NativeWarriorDepthCheckpoint(Convert.ToBase64String(player.ToByteArray()),
                 snapshot.RandomState, main.ObservedLastQueuedSequence, HashNativeProgressionWorld(snapshot),
                 floors.Select(floor => floor with { GeometryHash = HashProto(DepthGeometry(main, floor.LevelId)) }).ToArray(),
-                nativeCatacombsObjects, nativeShrine, nativeThemeObject);
+                nativeCatacombsObjects, nativeShrine, nativeThemeObject, nativeTrappedSarcophagus);
             VerifyNativeWarriorRetention(main, checkpoint);
             WriteEvidence(directory, "nativedepthjourney.json", new {
                 Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
@@ -176,6 +177,7 @@ public partial class SessionAcceptance
                 ShrineOperated = checkpoint.Shrine is not null,
                 RequiredThemeObject = NativeWarriorRequiresThemeObject, ThemeObjectOperated = checkpoint.ThemeObject is not null,
                 ThemeObjectApproaches = nativeThemeObjectApproaches,
+                RequiredTrappedSarcophagus = NativeWarriorRequiresTrappedSarcophagus, TrappedSarcophagusOpened = checkpoint.TrappedSarcophagus is not null,
                 RequiredTrappedDoor = NativeWarriorRequiresTrappedDoor, TrappedDoorOperated = checkpoint.Objects?.DoorEntity > 0,
                 RequiredDoorTarget = nativeCatacombsRequiredDoor,
                 UnreachableNativeObjects = nativeCatacombsUnreachableObjects,
@@ -225,6 +227,7 @@ public partial class SessionAcceptance
             RulesetHash = identity.RulesetIdentityHash, EntityId = final.EntityId, ClassId = final.CharacterClassId,
             LevelId = final.LevelId, X = final.PositionX, Y = final.PositionY,
             Sequence = main.ObservedLastQueuedSequence, Visible = false, ExactColdBaseline = true, AllFloorsRetained = true,
+            TrappedSarcophagusRetained = expected.TrappedSarcophagus is not null,
             ThemeObjectRetained = expected.ThemeObject is not null, ThemeObjectReusableVerified = nativeThemeObjectReuseVerified,
         });
         GD.Print("Native Warrior Town/L1-L4 fresh-host resume and retained revisit passed");
@@ -891,6 +894,12 @@ public partial class SessionAcceptance
             NativeWarriorRequiresTrappedDoor, expected.Objects?.DoorEntity ?? 0,
             expected.Objects?.DoorTrapSource ?? 0, expected.Objects?.DoorTrapTick ?? 0);
         NativeDepthResumeEvidence.VerifyThemeObject(NativeWarriorRequiresThemeObject, expected.ThemeObject is not null);
+        var sarcophagus = expected.TrappedSarcophagus;
+        NativeDepthResumeEvidence.VerifyTrappedSarcophagus(NativeWarriorRequiresTrappedSarcophagus, sarcophagus is not null,
+            sarcophagus?.Level ?? 0, sarcophagus?.Entity ?? 0, sarcophagus?.TrapSource ?? 0,
+            sarcophagus?.OpeningTick ?? 0, sarcophagus?.FiringTick ?? 0,
+            sarcophagus is not null && (sarcophagus.Drops?.Length ?? 0) + (sarcophagus.Skeletons?.Length ?? 0) > 0);
+        if (sarcophagus is not null) NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(snapshot, sarcophagus);
         if (expected.ThemeObject is not null) VerifyNativeThemeObjectRetention(snapshot, expected.ThemeObject);
         if (expected.Objects is not null)
             VerifyNativeCatacombsObjects(snapshot, expected.Objects);

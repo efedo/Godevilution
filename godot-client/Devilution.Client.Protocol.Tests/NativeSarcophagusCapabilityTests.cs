@@ -1,5 +1,6 @@
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
+using Google.Protobuf;
 using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
@@ -21,6 +22,21 @@ public sealed class NativeSarcophagusCapabilityTests
         sarcophagus.NativeSarcophagusInteractable = true;
         sarcophagus.Activated = true;
         Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
+    }
+
+    [Theory]
+    [InlineData(1U, false)] [InlineData(1U, true)]
+    [InlineData(2U, false)] [InlineData(2U, true)]
+    [InlineData(3U, false)] [InlineData(3U, true)]
+    [InlineData(4U, false)] [InlineData(4U, true)]
+    public void ClosedSarcophagiAreSelectableAndAdmittedWithOrWithoutTheirNativeTrap(uint level, bool armed)
+    {
+        var value = Sarcophagus(); value.LevelId = level; value.TrapArmed = armed;
+        var wire = ObjectSnapshot.Parser.ParseFrom(value.ToByteArray());
+        Assert.True(AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(wire));
+        var snapshot = Apply(wire, level);
+        Assert.Equal(armed, Assert.Single(snapshot.Objects).TrapArmed);
+        Assert.Equal(value.EntityId, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
     }
 
     [Fact]
@@ -45,8 +61,9 @@ public sealed class NativeSarcophagusCapabilityTests
         Assert.True(Assert.Single(Apply(Sarcophagus()).Objects).NativeSarcophagusInteractable);
     }
 
-    [Fact]
-    public void ClientModelRejectsForgedOrInconsistentNativeSarcophagus()
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void ClientModelRejectsForgedOrInconsistentNativeSarcophagus(bool armed)
     {
         var corruptions = new Action<ObjectSnapshot>[] {
             value => value.LevelId = 0,
@@ -54,7 +71,9 @@ public sealed class NativeSarcophagusCapabilityTests
             value => value.NativeChestInteractable = true,
             value => value.Activated = true,
             value => value.Destroyed = true,
-            value => value.TrapArmed = true,
+            value => value.NativeTrapInteractable = true,
+            value => value.NativeBarrelMeleeBreakable = true,
+            value => value.NativeObjectId = 91,
             value => value.Breakable = true,
             value => value.IsShrine = true,
             value => value.EffectKind = 1,
@@ -62,17 +81,18 @@ public sealed class NativeSarcophagusCapabilityTests
             value => value.PresentationKind = Devilution.Protocol.V1.ObjectPresentationKind.Trap,
         };
         foreach (var corrupt in corruptions) {
-            var value = Sarcophagus();
+            var value = Sarcophagus(); value.TrapArmed = armed;
             corrupt(value);
+            Assert.False(AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(value));
             Assert.Throws<InvalidDataException>(() => Apply(value));
         }
     }
 
-    private static Snapshot Apply(ObjectSnapshot value)
+    private static Snapshot Apply(ObjectSnapshot value, uint level = 4)
     {
         var model = new AuthoritativeClientModel();
         model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
-            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 4, VisitedLevelIds = { 0, 4 } } },
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = level, VisitedLevelIds = { 0, level } } },
             Objects = { value },
         }));
         return model.Snapshot!;
