@@ -140,3 +140,8 @@ mapfile -t client_filters < <(filters "${client_classes[@]}")
 dotnet run --no-build --configuration Release \
 	--project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj -- \
 	"${client_filters[@]}" --explicit on --fail-skips on
+
+# 2.5c generated items must cross real content bindings and publication/restore.
+dotnet run --no-build --configuration Release \
+    --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj -- \
+    --filter-class '*.NativeThemeCorpusItemPublicationTests' --fail-skips on

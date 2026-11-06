@@ -35,13 +35,14 @@ internal sealed class NativeShrineTestFixture
     internal AuthoritativeSpellCatalog Spells { get; }
     internal AuthoritativePlayerClassCatalog Classes { get; }
     internal AuthoritativeSpellBookCatalog SpellBooks { get; }
+    internal AuthoritativeCathedralItemRuntimeProfile ItemProfile => items;
     internal AuthoritativeWorldObject Shrine => World.Objects[ShrineEntityId];
 
-    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0)
-        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable, additionalNativeObjectType) { }
+    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false)
+        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable, additionalNativeObjectType, productionItemBindings) { }
 
     internal NativeShrineTestFixture(int depth, int shrineType, uint seed,
-        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0)
+        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true, int additionalNativeObjectType = 0, bool productionItemBindings = false)
     {
         level = (uint)depth;
         Spells = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(Path.Combine(RepositoryRoot(), "server/content/base/spells.tsv")));
@@ -64,7 +65,10 @@ internal sealed class NativeShrineTestFixture
         Items = Items.WithNativePopulationOverlay(new Dictionary<uint, AuthoritativeItemDefinition> { [gold.ItemId] = gold }, new(
             gold.NativeItemIndex, gold.ItemId, gold.ItemType, gold.EquipLocation, gold.ItemClass,
             gold.Flags, gold.MiscId, gold.SpellId, gold.Name, gold.IdentifiedName, 1, 1, 4, 5, 6));
-        var itemBindings = Items.Definitions.ToDictionary(item => item.NativeItemIndex, item =>
+        var production = productionItemBindings ? (depth <= 4 ? CathedralItemContent.Value : CatacombsItemContent.Value) : null;
+        if (production is not null) Items = production.Items;
+        IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> itemBindings = production is not null
+            ? new Dictionary<int, AuthoritativeCathedralItemContentBinding>() : Items.Definitions.ToDictionary(item => item.NativeItemIndex, item =>
             new AuthoritativeCathedralItemContentBinding(item.NativeItemIndex, item.ItemId, item.StableSymbol,
                 1, 1, item.SpellSourceKind, item.ItemActionKind));
         var objectType = nativeObjectType != 0 ? (uint)nativeObjectType : depth % 2 == 0 ? 60U : 59U;
@@ -145,6 +149,11 @@ internal sealed class NativeShrineTestFixture
             Enumerable.Range(0, 127).ToArray(), 0, new int[Cells], new HashSet<int>(),
             pieces, transparency, new byte[Cells], new byte[1379], new byte[Cells], refs,
             new byte[Cells], new byte[Cells], Enumerable.Range(0, 32).ToArray(), 0, lights, false, false);
+        if (production is not null)
+            itemBindings = AuthoritativeCathedralNativePopulationBuilder.BuildItemBindings(nativeItems, Items, Spells,
+                state, [(sbyte)(2 * depth)], [], [], production.Sidecars, includeUniqueLoot: true,
+                includeCompleteAllowlist: true, depth <= 4 ? AuthoritativeNativeDungeonFamilyContext.Cathedral(depth)
+                    : AuthoritativeNativeDungeonFamilyContext.Catacombs(depth));
         actors = new(Fingerprint, state.MonsterSlots, state.ActiveMonsterIds, 5, state.MonsterPetrified,
             records, (_, _, _, _) => throw new InvalidOperationException("No skeleton reservations in this fixture."), []);
         var bindings = active.Select(slot => {
@@ -222,6 +231,42 @@ internal sealed class NativeShrineTestFixture
         Rules.SetNativeShrineMissileHandler(missiles.AddNativeShrineMissile);
         foreach (var chest in World.Objects.Values.Where(value => value.NativeObjectId is 5 or 6))
             Assert.True(owner.TryCommitNativeChestOpen(chest));
+    }
+
+    private sealed record ProductionItemContent(AuthoritativeItemCatalog Items, AuthoritativeCathedralNativeItemSidecars Sidecars);
+    private static readonly Lazy<ProductionItemContent> CathedralItemContent = new(() => CreateProductionItemContent(false));
+    private static readonly Lazy<ProductionItemContent> CatacombsItemContent = new(() => CreateProductionItemContent(true));
+
+    private static ProductionItemContent CreateProductionItemContent(bool catacombs)
+    {
+        var pack = ContentPackLoader.LoadManifestDirectory(Path.Combine(RepositoryRoot(), "server/content/base"));
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(ComposedContent.Compose(new(pack.Id, pack.Version, [pack])));
+        var native = Cathedral.Value.Items.Catalog;
+        var content = activation.Simulation.Items!;
+        // CI has no retail sprites. Use the shipped inventory dimensions, with the production
+        // sidecar compiler and exact native identity matcher (never synthesize stable bindings).
+        var text = new System.Text.StringBuilder("native_item_index\tnative_cursor_id\tpixel_width\tpixel_height\tinventory_width\tinventory_height\n");
+        foreach (var group in content.Definitions.Where(item => item.NativeItemIndex >= 0).GroupBy(item => item.NativeItemIndex)) {
+            var raw = native.Items.SingleOrDefault(item => item.NativeItemIndex == group.Key);
+            if (raw is null) continue;
+            var spellId = raw.SpellId == 0 || raw.MiscId == 21 && raw.SpellId == 5 ? 0 : activation.Simulation.Spells!.TryGetByNativeId((uint)raw.SpellId, out var spell)
+                ? (int)spell.SpellId : -1;
+            if (spellId < 0) continue;
+            var matches = group.Where(item => AuthoritativeCathedralNativePopulationBuilder.MatchesNativeItemDefinition(raw, item, spellId, includeNativeDepthItems: true)
+                || catacombs && AuthoritativeCatacombsNativeItemBindings.MatchesElixir(raw, item, spellId)).ToArray();
+            if (matches.Length == 0) continue;
+            var size = matches.Select(item => (item.InventoryWidth, item.InventoryHeight)).Distinct().Single();
+            text.Append($"{group.Key}\t{raw.CursorGraphic + 12}\t{size.InventoryWidth * 28}\t{size.InventoryHeight * 28}\t{size.InventoryWidth}\t{size.InventoryHeight}\n");
+        }
+        var table = TsvTable.Parse("native-rogue-l1-inventory.tsv", text.ToString());
+        var footprints = AuthoritativeCathedralNativeItemSidecars.LoadFootprints(table);
+        var semantics = AuthoritativeCathedralNativePopulationBuilder.CreateSemanticTable(native, content,
+            activation.Simulation.Spells!, footprints, includeNativeJewelry: true, includeNativeDepthItems: true);
+        var sidecars = AuthoritativeCathedralNativeItemSidecars.Load(table, semantics);
+        var effective = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(native, content, activation.Simulation.Spells!, sidecars);
+        if (catacombs) sidecars = AuthoritativeCathedralNativeItemSidecars.Load(table,
+            AuthoritativeCatacombsNativeItemBindings.AppendElixirSemantics(semantics, native, effective, footprints));
+        return new(effective, sidecars);
     }
 
     private static IReadOnlyList<TsvTable> OpenTables() => Directory.GetFiles(

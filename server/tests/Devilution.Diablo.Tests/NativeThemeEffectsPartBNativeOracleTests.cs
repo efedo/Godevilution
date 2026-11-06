@@ -22,6 +22,9 @@ public sealed class NativeThemeEffectsPartBNativeOracleTests
         using var document = JsonDocument.Parse(File.ReadAllBytes(path));
         var root = document.RootElement;
         Assert.Equal("godevilution-native-theme-effects-part-b", root.GetProperty("format").GetString());
+        Assert.Equal(2, N(root, "version"));
+        Assert.Equal(2160, N(root, "caseCount"));
+        Assert.Equal(Enumerable.Range(1, 8), root.GetProperty("cases").EnumerateArray().Select(row => N(row, "depth")).Distinct().Order());
         var catalog = ReadCatalog(root.GetProperty("catalog"));
         var cases = root.GetProperty("cases").EnumerateArray().Where(row => N(row, "object") == type).ToArray();
         Assert.NotEmpty(cases);

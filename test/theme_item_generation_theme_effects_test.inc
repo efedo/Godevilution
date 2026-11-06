@@ -39,11 +39,11 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeThemeEffectsPartB)
     ASSERT_TRUE(stream.good());
     {
         JsonObject document(stream);
-        document.String("format", "godevilution-native-theme-effects-part-b"); document.Number("version", 1);
+        document.String("format", "godevilution-native-theme-effects-part-b"); document.Number("version", 2);
         document.Key("catalog"); WriteCatalog(stream);
         document.Key("cases"); stream << '[';
         int cases = 0;
-        for (int depth : { 1, 4, 5, 8 }) {
+        for (int depth = 1; depth <= 8; ++depth) {
             for (bool multiplayer : { false, true }) {
                 for (int type : { 66, 76, 79, 80, 81, 82, 26, 91 }) {
                     std::vector<uint32_t> seeds { 0, 2588, 0xFFFFFFFFU };
@@ -115,6 +115,18 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeThemeEffectsPartB)
                             row.Number("missiles", std::count_if(Missiles.begin(), Missiles.end(), [](const Missile &missile) { return !missile._miDelFlag; }));
                             row.Number("duration", liveMissile == Missiles.end() ? 0 : liveMissile->duration);
                             row.Number("groundCount", ActiveItemCount);
+                            row.Key("groundItems"); stream << '[';
+                            for (int i = 0; i < ActiveItemCount; ++i) {
+                                if (i) stream << ',';
+                                WriteItem(stream, Items[ActiveItems[i]]);
+                            }
+                            stream << ']';
+                            row.Key("inventoryItems"); stream << '[';
+                            for (int i = 0; i < MyPlayer->_pNumInv; ++i) {
+                                if (i) stream << ',';
+                                WriteItem(stream, MyPlayer->InvList[i]);
+                            }
+                            stream << ']';
                             if (type == 66 || type == 76 || type == 81 || type == 82) {
                                 OperateObject(Players[0], object);
                                 row.Key("repeat"); writePlayer(stream, *MyPlayer);
