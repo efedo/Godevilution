@@ -36,11 +36,11 @@ internal sealed class NativeShrineTestFixture
     internal AuthoritativeSpellBookCatalog SpellBooks { get; }
     internal AuthoritativeWorldObject Shrine => World.Objects[ShrineEntityId];
 
-    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0)
-        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount) { }
+    internal NativeShrineTestFixture(int depth, int shrineType, uint seed = 2588, DiabloGameMode mode = DiabloGameMode.SinglePlayer, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true)
+        : this(depth, shrineType, seed, Cathedral.Value.Items.Catalog, mode, restoredItems, chestItemCount, nativeObjectType, nativeObjectSelectable) { }
 
     internal NativeShrineTestFixture(int depth, int shrineType, uint seed,
-        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0)
+        AuthoritativeCathedralThemeItemCatalog nativeItems, DiabloGameMode mode, DiabloCathedralItemCheckpoint? restoredItems = null, int chestItemCount = 0, int nativeObjectType = 0, bool nativeObjectSelectable = true)
     {
         level = (uint)depth;
         Spells = AuthoritativeSpellCatalog.LoadTsv("spells.tsv", File.ReadAllText(Path.Combine(RepositoryRoot(), "server/content/base/spells.tsv")));
@@ -66,10 +66,13 @@ internal sealed class NativeShrineTestFixture
         var itemBindings = Items.Definitions.ToDictionary(item => item.NativeItemIndex, item =>
             new AuthoritativeCathedralItemContentBinding(item.NativeItemIndex, item.ItemId, item.StableSymbol,
                 1, 1, item.SpellSourceKind, item.ItemActionKind));
+        var objectType = nativeObjectType != 0 ? (uint)nativeObjectType : depth % 2 == 0 ? 60U : 59U;
+        var initialFrame = nativeObjectType is 61 or 63 ? 4 : nativeObjectType == 62 ? 3 : nativeObjectType == 67 ? 8 : 1;
+        if (!nativeObjectSelectable && nativeObjectType is 61 or 64) initialFrame += 2;
         var initial = new[] {
             new AuthoritativeWorldObject(0x09003000, 5, level, 55, 50, nativeObjectId: 5, hideWhenActivated: false, animationFrame: 1),
             new AuthoritativeWorldObject(0x09003001, 6, level, 56, 50, nativeObjectId: 6, hideWhenActivated: false, animationFrame: 1),
-            new AuthoritativeWorldObject(ShrineEntityId, depth % 2 == 0 ? 60U : 59U, level, 50, 50, nativeObjectId: depth % 2 == 0 ? 60U : 59U, hideWhenActivated: false, isShrine: false, animationFrame: 1),
+            new AuthoritativeWorldObject(ShrineEntityId, objectType, level, 50, 50, nativeObjectId: objectType, hideWhenActivated: false, isShrine: false, animationFrame: initialFrame, missilePassable: nativeObjectType is 61 or 64 or 67),
         };
         var slots = Enumerable.Range(0, 127).Select(slot => new AuthoritativeCathedralPopulationObjectState {
             Slot = slot, Type = -1, BookMessage = -1,
@@ -80,8 +83,9 @@ internal sealed class NativeShrineTestFixture
         foreach (var value in initial) {
             var slot = (int)(value.EntityId - 0x09003000);
             slots[slot] = slots[slot] with { Type = (int)value.NativeObjectId,
-                Position = new(value.PositionX, value.PositionY), SelectionRegion = 3,
-                AnimFrame = 1, AnimLength = 11, MissilePassable = value.MissilePassable,
+                Position = new(value.PositionX, value.PositionY), SelectionRegion = slot == 2 && !nativeObjectSelectable ? 0 : 3,
+                SolidFlag = slot == 2 && nativeObjectType != 0,
+                AnimFrame = (uint)value.AnimationFrame, AnimLength = nativeObjectType != 0 && slot == 2 ? 0U : 11U, MissilePassable = value.MissilePassable,
                 RndSeed = slot == 2 ? seed : (uint)(800 + slot), Var1 = slot == 2 ? shrineType : chestItemCount,
             };
             refs[value.PositionY * 112 + value.PositionX] = slot + 1;
@@ -138,7 +142,7 @@ internal sealed class NativeShrineTestFixture
             var raw = slots[slot];
             var value = initial.Single(value => value.PositionX == raw.Position.X && value.PositionY == raw.Position.Y);
             return new AuthoritativeCathedralItemObjectBinding(slot, value.EntityId, raw.Type,
-                raw.Position.X, raw.Position.Y, false, 3, MutationPolicy: raw.DoorFlag
+                raw.Position.X, raw.Position.Y, raw.SolidFlag, raw.SelectionRegion, MutationPolicy: raw.DoorFlag
                     ? depth <= 4 ? AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
                         : AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor
                     : raw.Type is 5 or 6 or 7 or 68 or 69 or 70

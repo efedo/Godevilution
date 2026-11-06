@@ -89,8 +89,25 @@ public static class NativeObjectArtCompiler
                 new(60, "OBJ_SHRINER", "rshrineg", 1, 11, 128, false),
                 new(68, "OBJ_TCHEST1", "chest1", 1, 0, 96, false),
                 new(69, "OBJ_TCHEST2", "chest2", 1, 0, 96, false),
-                new(70, "OBJ_TCHEST3", "chest3", 1, 0, 96, false)],
-            MinimumFrames = [.. family.MinimumFrames, 22, 22],
+                new(70, "OBJ_TCHEST3", "chest3", 1, 0, 96, false),
+                new(61, "OBJ_SKELBOOK", "book2", 4, 0, 96, false),
+                new(62, "OBJ_BOOKCASEL", "bcase", 3, 0, 96, false),
+                new(63, "OBJ_BOOKCASER", "bcase", 4, 0, 96, false),
+                new(64, "OBJ_BOOKSTAND", "book2", 1, 0, 96, false),
+                new(67, "OBJ_DECAP", "decap", 1, 0, 96, false),
+                new(77, "OBJ_ARMORSTAND", "armstand", 1, 0, 96, false),
+                new(89, "OBJ_WARARMOR", "armstand", 1, 0, 96, false),
+                new(90, "OBJ_WARWEAP", "weapstnd", 1, 0, 96, false),
+                new(92, "OBJ_WEAPONRACK", "weapstnd", 1, 0, 96, false),
+                new(66, "OBJ_BLOODFTN", "bloodfnt", 2, 10, 96, true),
+                new(76, "OBJ_PURIFYINGFTN", "pfountn", 2, 10, 128, true),
+                new(79, "OBJ_GOATSHRINE", "goatshrn", 2, 10, 96, true),
+                new(80, "OBJ_CAULDRON", "cauldren", 1, 0, 96, false),
+                new(81, "OBJ_MURKYFTN", "mfountn", 2, 10, 128, true),
+                new(82, "OBJ_TEARFTN", "tfountn", 2, 4, 128, true),
+                new(26, "OBJ_BCROSS", "burncros", 0, 10, 160, true),
+                new(91, "OBJ_TBCROSS", "burncros", 0, 10, 160, true)],
+            MinimumFrames = [.. family.MinimumFrames, 22, 22, 6, 4, 8, 2, 2, 10, 10, 10, 3, 10, 4, 10],
         };
 
     public static NativeObjectImportResult Import(NativeObjectImportOptions options)
@@ -325,9 +342,9 @@ public static class NativeObjectArtCompiler
             if (fields.Length != expectedHeader.Length
                 || fields[0] != expected.Symbol
                 || fields[1] != expected.Stem
-                || !TryParseInt(fields[8], 1, 120, out var animDelay)
+                || !TryParseInt(fields[8], 0, 120, out var animDelay)
                 || !TryParseInt(fields[9], 0, 64, out var animLen)
-                || !TryParseInt(fields[10], 1, 128, out var animWidth))
+                || !TryParseInt(fields[10], 1, 160, out var animWidth))
                 throw new InvalidDataException($"objdat.tsv row {rowIndex + 1} does not match canonical object {expected.Symbol}.");
             var flags = fields[7].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (flags.Distinct(StringComparer.Ordinal).Count() != flags.Length

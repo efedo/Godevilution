@@ -52,13 +52,17 @@ public sealed partial class DiabloSimulation
 
     private AuthoritativeItemState ResolveWorldItemState(AuthoritativeWorldItem item)
     {
-        return ResolveWorldItemState(item.State, item.Price, item.ItemSeed);
+        // Native fields are already complete; authored fallback would rewrite legal zero values.
+        return WorldState.IsNativeWorldItem(item.EntityId) ? item.State
+            : ResolveWorldItemState(item.State, item.Price, item.ItemSeed);
     }
 
     private DiabloWorldItemState ResolveWorldItemState(DiabloWorldItemState item)
     {
         if (item.State is null)
             return item;
+        if (WorldState.IsNativeWorldItem(item.EntityId))
+            return WorldState.RestoreNativeWorldItemProjection(item);
 
         return item with {
             State = ResolveWorldItemState(item.State, item.Price, item.ItemSeed),
@@ -101,11 +105,14 @@ public sealed partial class DiabloSimulation
         if (!DiabloGoldInventory.HasGoldIdentity(state, CombatRules, Items)) {
             return false;
         }
-        return state.Value <= 0
-            || state.Value > CombatRules.DeathGoldMaximumStack
-            || state.IdentifiedValue != state.Value
-            || item.Price != checked((uint)state.Value)
-            || !state.StatFlag;
+        if (state.Value <= 0 || state.Value > CombatRules.DeathGoldMaximumStack
+            || item.Price != checked((uint)state.Value))
+            return true;
+        // Native GetItemAttrs/SetupItem can leave ground Gold _iIvalue and _iStatFlag uncalculated.
+        // The backing pool checks every field; authored gold still requires canonical wallet values.
+        if (WorldState.IsNativeWorldItem(item.EntityId))
+            return !WorldState.MatchesNativeWorldItemProjection(item);
+        return state.IdentifiedValue != state.Value || !state.StatFlag;
     }
 
     private IReadOnlyList<DiabloSetLevelObjectOriginState> ValidateSavedSetLevelObjectOrigins(

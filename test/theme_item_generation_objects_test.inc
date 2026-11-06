@@ -1483,3 +1483,5 @@ void ThemeRoomGenerationTest::CaptureCatacombsThemePass(const char *directory, b
 
 // Extra public state borrowed only by the real-geometry opt-in. The underlying
 // guards already retain tables, pools, tiles, RNG, player and lighting state.
+
+#include "theme_item_generation_theme_items_a_test.inc"

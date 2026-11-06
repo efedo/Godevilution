@@ -261,6 +261,10 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             && current.AnimationFrame == raw.AnimLength
             && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected)
             return;
+        if (IsSupportedNativeThemeItem(raw) && current.Activated
+            && current.AnimationFrame == ThemeItemOpenedFrame(raw)
+            && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected)
+            return;
         if (IsSupportedNativeChest(raw)) {
             var opened = expected with {
                 Activated = true,
@@ -294,6 +298,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
                 && (Family == AuthoritativeNativePopulationFamily.Catacombs || value.CathedralDoor is not null)
             || CanOperateNativeChest(value)
             || CanOperateNativeSarcophagus(value)
+            || CanOperateNativeThemeItem(value)
             || IsSupportedNativeShrine(raw) && !value.Activated;
     }
 

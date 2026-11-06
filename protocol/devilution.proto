@@ -1065,6 +1065,8 @@ message ObjectSnapshot {
 	bool native_shrine_interactable = 46;
 	// Native vanilla shrine identity, immutable in its populated level owner.
 	uint32 native_shrine_type = 47;
+	// Native ordinary theme object capability; absent from older hosts and clients.
+	bool native_theme_object_interactable = 48;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

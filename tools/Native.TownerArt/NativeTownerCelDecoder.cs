@@ -27,7 +27,8 @@ public static class NativeTownerCelDecoder
     public const int MaximumInputBytes = 64 * 1024 * 1024;
     public const int MaximumGroupCount = 8;
     public const int MaximumFramesPerGroup = 64;
-    public const int MaximumFrameWidth = 128;
+    // The shared CEL decoder also reads the native 160px burning-cross object.
+    public const int MaximumFrameWidth = 160;
     public const int MaximumFrameHeight = 1024;
     public const int MaximumPixelsPerFrame = 128 * 1024;
     public const long MaximumPixelsPerSheet = 16L * 1024 * 1024;

@@ -1165,6 +1165,7 @@ public sealed partial class AuthoritativeClientModel
             || !producesProjectile && @object.ProjectileSourceKind != 0
             || @object.NativeObjectId > NativeMaximumObjectId
             || !AuthoritativeNativeShrineState.IsValidProjection(@object)
+            || !AuthoritativeNativeThemeObjectState.IsValidProjection(@object)
             || @object.NativeChestInteractable
                 && !AuthoritativeObjectSelector.IsValidNativeChestInteraction(@object)
             || @object.NativeSarcophagusInteractable

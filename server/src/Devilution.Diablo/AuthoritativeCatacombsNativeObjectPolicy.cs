@@ -173,7 +173,8 @@ public static class AuthoritativeCatacombsNativeObjectPolicy
             AuthoritativeCatacombsNativeObjectOperation.None => AuthoritativeCatacombsNativeObjectRole.Decorative,
             _ => AuthoritativeCatacombsNativeObjectRole.Interactive,
         };
-        var supported = nativeObjectId is 5 or 6 or 7 or 42 or 43 or 53 or 54 or 68 or 69 or 70;
+        var supported = nativeObjectId is 5 or 6 or 7 or 42 or 43 or 53 or 54 or 68 or 69 or 70
+            || AuthoritativeNativeThemeItemLootGenerator.Supports(nativeObjectId);
         return new(nativeObjectId, role, operation, supported);
     }
 

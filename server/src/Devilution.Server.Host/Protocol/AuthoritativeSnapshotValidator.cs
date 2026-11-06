@@ -808,6 +808,7 @@ public static class AuthoritativeSnapshotValidator
 
             if (@object.ObjectId == 0
                 || !AuthoritativeNativeShrineState.IsValidProjection(@object)
+                || !AuthoritativeNativeThemeObjectState.IsValidProjection(@object)
                 || @object.EffectAmount < 0
                 || effectKind < 0
                 || effectKind > MaximumObjectEffectKind

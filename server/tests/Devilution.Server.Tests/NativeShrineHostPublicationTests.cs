@@ -84,7 +84,7 @@ public sealed partial class NativeShrineHostPublicationTests
         }
     }
 
-    private static DiabloCohortState Checkpoint(NativeShrineTestFixture fixture,
+    internal static DiabloCohortState Checkpoint(NativeShrineTestFixture fixture,
         AuthoritativePlayerState hero, DiabloSimulationSnapshot snapshot, int depth)
     {
         // The synthetic outer Town/other-floor owners are unchanged. Every shrine-owned
@@ -111,7 +111,7 @@ public sealed partial class NativeShrineHostPublicationTests
         };
     }
 
-    private static AuthoritativePlayerState Player(NativeShrineTestFixture fixture, int depth)
+    internal static AuthoritativePlayerState Player(NativeShrineTestFixture fixture, int depth)
     {
         var weapon = fixture.Items.Definitions.First(item => item.ItemType == 1 && item.Durability > 0);
         var staff = fixture.Items.Definitions.First(item => item.ItemType == 10);

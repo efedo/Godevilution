@@ -35,6 +35,24 @@ public sealed class AuthoritativeCatacombsNativeObjectPolicyTests
     }
 
     [Theory]
+    [InlineData(61, AuthoritativeCatacombsNativeObjectOperation.Bookstand)]
+    [InlineData(62, AuthoritativeCatacombsNativeObjectOperation.Bookcase)]
+    [InlineData(63, AuthoritativeCatacombsNativeObjectOperation.Bookcase)]
+    [InlineData(64, AuthoritativeCatacombsNativeObjectOperation.Bookstand)]
+    [InlineData(67, AuthoritativeCatacombsNativeObjectOperation.Decapitated)]
+    [InlineData(77, AuthoritativeCatacombsNativeObjectOperation.ArmorStand)]
+    [InlineData(89, AuthoritativeCatacombsNativeObjectOperation.ArmorStand)]
+    [InlineData(90, AuthoritativeCatacombsNativeObjectOperation.WeaponRack)]
+    [InlineData(92, AuthoritativeCatacombsNativeObjectOperation.WeaponRack)]
+    public void OrdinaryItemObjectOperationsNowHaveHandlers(int type, AuthoritativeCatacombsNativeObjectOperation operation)
+    {
+        var value = AuthoritativeCatacombsNativeObjectPolicy.Classify(type);
+        Assert.True(value.SupportedInCatacombs);
+        Assert.Equal(operation, value.Operation);
+        Assert.Equal(AuthoritativeCatacombsNativeObjectRole.Interactive, value.Role);
+    }
+
+    [Theory]
     [InlineData(20, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(21, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]
     [InlineData(22, AuthoritativeCatacombsNativeObjectOperation.Crux, AuthoritativeCatacombsNativeObjectRole.Interactive)]

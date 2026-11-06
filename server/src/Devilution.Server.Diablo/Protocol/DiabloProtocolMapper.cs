@@ -366,6 +366,8 @@ internal static partial class DiabloProtocolMapper
                 NativeChestInteractable = source.NativeChestInteractableEntityIds.Contains(@object.EntityId),
                 NativeShrineInteractable = source.NativeShrineInteractableEntityIds.Contains(@object.EntityId),
                 NativeShrineType = (uint)nativeShrine.Type,
+                NativeThemeObjectInteractable = source.NativeThemeObjectInteractableEntityIds.Contains(@object.EntityId)
+                    || source.NativeThemeEffectInteractableEntityIds.Contains(@object.EntityId),
                 NativeSarcophagusInteractable = source.NativeSarcophagusInteractableEntityIds.Contains(@object.EntityId),
                 NativeBarrelMeleeBreakable = source.NativeBarrelMeleeBreakableEntityIds.Contains(@object.EntityId),
                 NativeTrapInteractable = revealTraps

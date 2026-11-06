@@ -149,6 +149,32 @@ public sealed class NativeObjectCatalog
                 (70, family.Location == CathedralLocation ? 3 : 2, 1, 0, 96, false)],
         };
 
+    /** Additive L1-L8 theme sprites; the two earlier exact catalog sets remain valid. */
+    private static FamilySpec WithThemeObjects(FamilySpec family)
+        => family with {
+            SpriteStems = [.. family.SpriteStems, "book2", "bcase", "decap", "armstand", "weapstnd", "bloodfnt", "pfountn", "goatshrn", "cauldren", "mfountn", "tfountn", "burncros"],
+            SpriteWidths = [.. family.SpriteWidths, 96, 96, 96, 96, 96, 96, 128, 96, 96, 128, 128, 160],
+            SpriteMinimumFrameCounts = [.. family.SpriteMinimumFrameCounts, 6, 4, 8, 2, 2, 10, 10, 10, 3, 10, 4, 10],
+            Objects = [.. family.Objects,
+                (61, family.SpriteStems.Length + 0, 4, 0, 96, false),
+                (62, family.SpriteStems.Length + 1, 3, 0, 96, false),
+                (63, family.SpriteStems.Length + 1, 4, 0, 96, false),
+                (64, family.SpriteStems.Length + 0, 1, 0, 96, false),
+                (67, family.SpriteStems.Length + 2, 1, 0, 96, false),
+                (77, family.SpriteStems.Length + 3, 1, 0, 96, false),
+                (89, family.SpriteStems.Length + 3, 1, 0, 96, false),
+                (90, family.SpriteStems.Length + 4, 1, 0, 96, false),
+                (92, family.SpriteStems.Length + 4, 1, 0, 96, false),
+                (66, family.SpriteStems.Length + 5, 2, 10, 96, true),
+                (76, family.SpriteStems.Length + 6, 2, 10, 128, true),
+                (79, family.SpriteStems.Length + 7, 2, 10, 96, true),
+                (80, family.SpriteStems.Length + 8, 1, 0, 96, false),
+                (81, family.SpriteStems.Length + 9, 2, 10, 128, true),
+                (82, family.SpriteStems.Length + 10, 2, 4, 128, true),
+                (26, family.SpriteStems.Length + 11, 0, 10, 160, true),
+                (91, family.SpriteStems.Length + 11, 0, 10, 160, true)],
+        };
+
     private readonly IReadOnlySet<(string Hash, uint LevelId)> bindings;
     private readonly IReadOnlyDictionary<uint, NativeObjectDefinition> objectsById;
     private readonly IReadOnlyDictionary<int, NativeObjectSprite> spritesById;
@@ -268,9 +294,12 @@ public sealed class NativeObjectCatalog
 
         var bindingEntries = RequiredArray(root, "profileBindings");
         var family = SelectFamily(bindingEntries);
-        // Both exact native sets are supported; arbitrary extra objects still fail ParseObjects.
-        if (RequiredArray(root, "objects").GetArrayLength() == family.Objects.Length + 5)
+        // Exact historical sets remain accepted; arbitrary extra objects still fail ParseObjects.
+        var objectCount = RequiredArray(root, "objects").GetArrayLength();
+        if (objectCount == family.Objects.Length + 5)
             family = WithNativeInteractions(family);
+        else if (objectCount == family.Objects.Length + 22)
+            family = WithThemeObjects(WithNativeInteractions(family));
         var profileBindings = ParseBindings(bindingEntries, family);
         var sourceHashes = ParseSourceHashes(RequiredArray(root, "sourceHashes"), family);
         var atlases = ParseAtlases(RequiredArray(root, "atlases"), family);

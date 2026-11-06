@@ -12,6 +12,16 @@ public sealed partial class DiabloWorldCommandProcessor
         if (!world.OwnsNativePopulationLevel(value.LevelId))
             return false;
         switch (value.NativeObjectId) {
+        case 61: case 62: case 63: case 64: case 67: case 77: case 89: case 90: case 92:
+            if (!world.CanOperateNativeThemeItem(value)) return true;
+            if (!applyEffects) { result = DiabloWorldIntentResult.Accepted; return true; }
+            var itemObject = world.TryOperateNativeThemeItem(value, player, participants,
+                () => AllocateWorldItemEntityId(participants));
+            if (itemObject is not null) {
+                random.Restore(itemObject.FinalRandomState);
+                result = DiabloWorldIntentResult.Accepted;
+            }
+            return true;
         case 59: case 60:
             result = applyEffects ? OperateShrine(player, value, participants) : DiabloWorldIntentResult.Accepted;
             return true;

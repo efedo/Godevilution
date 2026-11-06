@@ -90,6 +90,8 @@ public static class AuthoritativeObjectSelector
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
+        if (@object.NativeThemeObjectInteractable)
+            return AuthoritativeNativeThemeObjectState.IsValidInteraction(@object);
         if (@object.NativeShrineInteractable)
             return AuthoritativeNativeShrineState.IsValidInteraction(@object);
         if (@object.NativeTrapInteractable)

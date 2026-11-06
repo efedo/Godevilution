@@ -624,6 +624,14 @@ public sealed record DiabloSimulationSnapshot(
     [JsonIgnore]
     public IReadOnlySet<uint> NativeShrineInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
 
+    /** Transient item-object capability from the shared native population owner. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeThemeObjectInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
+    /** Transient fountain/goat-shrine/cauldron capability derived from the real population owner. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeThemeEffectInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
     /** Transient native trap capability, never imported as gameplay state. */
     [JsonIgnore]
     public IReadOnlySet<uint> NativeTrapInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
@@ -1068,6 +1076,7 @@ public sealed partial class DiabloSimulation
             NativeChestInteractableEntityIds = WorldState.CaptureNativeChestInteractableEntityIds(),
             NativeShrineInteractableEntityIds = WorldState.CaptureNativeShrineInteractableEntityIds(),
             NativeShrineTypes = WorldState.CaptureNativeShrineTypes(),
+            NativeThemeObjectInteractableEntityIds = WorldState.CaptureNativeThemeObjectInteractableEntityIds(),
             NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             NativeBarrelMeleeBreakableEntityIds = WorldState.CaptureNativeBarrelMeleeBreakableEntityIds(),
             NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),
