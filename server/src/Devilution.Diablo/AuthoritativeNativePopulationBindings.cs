@@ -257,6 +257,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         }
         if (current == expected)
             return;
+        if (IsNativeThemeEffectProjection(current, expected, raw))
+            return;
         if (IsSupportedNativeShrine(raw) && current.Activated
             && current.AnimationFrame == raw.AnimLength
             && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected)
@@ -294,7 +296,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
                 && (Family == AuthoritativeNativePopulationFamily.Catacombs || value.CathedralDoor is not null)
             || CanOperateNativeChest(value)
             || CanOperateNativeSarcophagus(value)
-            || IsSupportedNativeShrine(raw) && !value.Activated;
+            || IsSupportedNativeShrine(raw) && !value.Activated
+            || IsSupportedNativeThemeEffect(raw) && !value.Activated;
     }
 
     internal bool CanOperateNativeChest(AuthoritativeWorldObject value)

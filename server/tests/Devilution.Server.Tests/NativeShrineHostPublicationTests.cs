@@ -99,6 +99,7 @@ public sealed partial class NativeShrineHostPublicationTests
             },
             Participants = [template.Participants[0] with {
                 EntityId = hero.EntityId, Player = snapshot.Player, BaseArmorClass = hero.BaseArmorClass,
+                LastAppliedTick = hero.LastAppliedTick,
                 MaximumAttribute = hero.MaximumAttribute, EffectiveArmorClass = hero.ArmorClass,
                 AppliedEquipmentAttributeBonuses = hero.CaptureAppliedEquipmentAttributeBonuses(),
                 PlayerClassBound = true, PlayerClassDefinition = hero.PlayerClass, ItemCatalogBound = true,

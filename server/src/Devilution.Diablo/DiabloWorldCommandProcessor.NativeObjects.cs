@@ -12,6 +12,12 @@ public sealed partial class DiabloWorldCommandProcessor
         if (!world.OwnsNativePopulationLevel(value.LevelId))
             return false;
         switch (value.NativeObjectId) {
+        case 66: case 76: case 81: case 82:
+            result = applyEffects ? OperateFountains(player, value, participants) : DiabloWorldIntentResult.Accepted;
+            return true;
+        case 79: case 80:
+            result = applyEffects ? OperateRandomShrine(player, value, participants) : DiabloWorldIntentResult.Accepted;
+            return true;
         case 59: case 60:
             result = applyEffects ? OperateShrine(player, value, participants) : DiabloWorldIntentResult.Accepted;
             return true;
