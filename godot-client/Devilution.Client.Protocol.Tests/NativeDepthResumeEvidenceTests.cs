@@ -25,6 +25,15 @@ public sealed class NativeDepthResumeEvidenceTests
     }
 
     [Fact]
+    public void RequiredThemeObjectCannotResumeWithoutItsRecord()
+    {
+        var error = Assert.Throws<InvalidOperationException>(() => NativeDepthResumeEvidence.VerifyThemeObject(true, false));
+        Assert.Contains("required theme object", error.Message, StringComparison.OrdinalIgnoreCase);
+        NativeDepthResumeEvidence.VerifyThemeObject(true, true);
+        NativeDepthResumeEvidence.VerifyThemeObject(false, false);
+    }
+
+    [Fact]
     public void OptionalEvidenceKeepsOlderCheckpointsCompatible()
         => NativeDepthResumeEvidence.Verify(false, false, false, 0, 0, 0);
 

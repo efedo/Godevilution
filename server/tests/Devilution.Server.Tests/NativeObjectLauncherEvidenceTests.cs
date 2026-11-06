@@ -172,6 +172,52 @@ public sealed class NativeObjectLauncherEvidenceTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
+    [Fact(SkipUnless = nameof(IsWindows), Skip = "Uses the Windows PowerShell launcher runtime.")]
+    public void RequiredThemeObjectUsesTheManagedPolicyAndRefusesMissingOrIncompleteEvidence()
+    {
+        var root = FindRepositoryRoot();
+        var script = "$ErrorActionPreference = 'Stop'\r\n$repositoryRoot = " + QuotePowerShell(root) + "\r\n" + """
+            $path = Join-Path $repositoryRoot 'tools/test-godot-native-depth-progression.ps1'
+            $tokens = $null; $errors = $null
+            $ast = [Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { throw ($errors | Out-String) }
+            $guard = $ast.FindAll({ param($node)
+                $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Assert-NativeDepthObjectEvidence'
+            }, $true) | Select-Object -First 1
+            . ([scriptblock]::Create($guard.Extent.Text))
+            function Assert-Rejected([scriptblock]$Action) {
+                $rejected = $false
+                try { & $Action } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Expected missing or corrupt theme evidence to be refused.' }
+            }
+            $route = [pscustomobject]@{ Objects = $null; Shrine = $null; ThemeObject = $null }
+            $journey = [pscustomobject]@{ NativeDepthWarrior = $route; ThemeObjectOperated = $false }
+            Assert-NativeDepthObjectEvidence $journey 5 $true $false $false
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            $theme = [pscustomobject]@{ Level = 5; Entity = 10; Type = 62; Frame = 2; X = 12; Y = 13;
+                PlayerBeforeEffect = 'AQID'; PlayerAfterEffect = 'AQID'; Drops = @('AQID') }
+            $route.ThemeObject = $theme; $journey.ThemeObjectOperated = $true
+            Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true
+            $theme.Drops = @()
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            $theme.Type = 66
+            Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true
+            foreach ($type in @(59, 79, 80, 91)) {
+                $theme.Type = $type
+                Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            }
+            $theme.Type = 62; $theme.Drops = @('AQID')
+            $theme.PlayerAfterEffect = ''
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            $theme.PlayerAfterEffect = 'AQID'; $theme.Level = 6
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            $theme.Level = 5; $journey.ThemeObjectOperated = $false
+            Assert-Rejected { Assert-NativeDepthObjectEvidence $journey 5 $true $false $false $true }
+            Write-Output 'PASS'
+            """;
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
     private static string RunPowerShell(string script)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), $"godevilution-native-object-evidence-{Guid.NewGuid():N}.ps1");

@@ -1,3 +1,4 @@
+using Devilution.Client.Acceptance;
 using Devilution.Client.Protocol;
 using Devilution.Diablo;
 using Devilution.Protocol;
@@ -47,6 +48,9 @@ public sealed class NativeThemeItemObjectPublicationTests
             Assert.False(after.NativeThemeObjectInteractable);
             Assert.False(AuthoritativeObjectSelector.HasAuthoritativeInteraction(after));
             Assert.Single(wire.WorldItems);
+            NativeThemeObjectJourneyEvidence.VerifyRetained(after, (uint)depth, (uint)type,
+                NativeThemeObjectJourneyEvidence.UsedFrame(before));
+            NativeThemeObjectJourneyEvidence.VerifyDrop(wire.WorldItems.Single(), (uint)depth);
             Assert.False(fixture.Simulation.Execute(hero,
                 new DiabloOperateObjectIntent(fixture.Shrine.EntityId), 1, [hero]).Succeeded);
             if (multiplayer) {
@@ -74,7 +78,11 @@ public sealed class NativeThemeItemObjectPublicationTests
             Assert.Equal(pool.UniqueItemFlags, fresh.World.CaptureCathedralItems()!.UniqueItemFlags);
             Assert.False(fresh.Simulation.Execute(restored,
                 new DiabloOperateObjectIntent(fresh.Shrine.EntityId), 2, [restored]).Succeeded);
-            Admit(DiabloProtocolMapper.ToProtocolSnapshot(fresh.Simulation.CapturePresentationSnapshot(restored, 2), spells: fresh.Spells));
+            var restoredWire = DiabloProtocolMapper.ToProtocolSnapshot(fresh.Simulation.CapturePresentationSnapshot(restored, 2), spells: fresh.Spells);
+            Admit(restoredWire);
+            NativeThemeObjectJourneyEvidence.VerifyRetained(restoredWire.Objects.Single(value => value.EntityId == after.EntityId),
+                (uint)depth, (uint)type, after.AnimationFrame);
+            NativeThemeObjectJourneyEvidence.VerifyDrop(restoredWire.WorldItems.Single(), (uint)depth);
             Assert.Null(host.Server.LastClientFailure);
         }
     }

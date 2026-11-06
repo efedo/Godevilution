@@ -81,10 +81,10 @@ public partial class SessionAcceptance
     {
         var tick = main.ObservedSnapshot!.Tick;
         await Until(() => main.ObservedNativeObjectDrawing.Any(draw => draw.EntityId == value.EntityId
-                && draw.LevelId == value.LevelId && draw.SnapshotTick >= tick && draw.Activated
+                && draw.LevelId == value.LevelId && draw.SnapshotTick >= tick && draw.Activated == value.Activated
                 && draw.NativeArt && !draw.GenericFallback && draw.AnchorInsideViewport),
             $"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} did not draw with native art; "
-                + "regenerate the native object pack if it predates shrines.", 10);
+                + "regenerate the native object pack if it predates theme objects.", 10);
         if (value.LevelId is >= 5 and <= 8) nativeWarriorCatacombsOperatedObjectDraws++;
         var observed = main.ObservedNativeObjectDrawing.Last(draw => draw.EntityId == value.EntityId && draw.NativeArt);
         GD.Print($"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} drew natively: "

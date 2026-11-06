@@ -41,7 +41,7 @@ public sealed class NativeShrineAvailabilityTests
         Assert.Equal(400, rows.Count);
     }
 
-    private static (Snapshot Snapshot, LevelGeometrySnapshot Geometry) CreateApproachSnapshot(AuthoritativeCatacombsFreshLevelResult fresh)
+    internal static (Snapshot Snapshot, LevelGeometrySnapshot Geometry) CreateApproachSnapshot(AuthoritativeCatacombsFreshLevelResult fresh)
     {
         var state = fresh.Population.State;
         const int width = 112;
@@ -67,6 +67,9 @@ public sealed class NativeShrineAvailabilityTests
             snapshot.Objects.Add(new ObjectSnapshot {
                 EntityId = (uint)slot + 10, LevelId = geometry.LevelId, NativeObjectId = (uint)raw.Type,
                 PositionX = raw.Position.X, PositionY = raw.Position.Y, MissilePassable = raw.MissilePassable,
+                AnimationFrame = raw.AnimFrame,
+                NativeThemeObjectInteractable = AuthoritativeNativePopulationBindings.IsSupportedNativeThemeItem(raw, state.MonsterSlots)
+                    || AuthoritativeNativePopulationBindings.IsSupportedNativeThemeEffect(raw),
                 NativeShrineType = raw.Type is 59 or 60 ? (uint)raw.Var1 : 0,
                 NativeShrineInteractable = raw.Type is 59 or 60 && raw.Var1 is >= 0 and <= 25 && raw.SelectionRegion != 0,
             });

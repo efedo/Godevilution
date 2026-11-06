@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Devilution.Client.Acceptance;
 using Devilution.Client.Protocol;
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
@@ -89,6 +90,9 @@ public sealed class NativeThemeObjectCoexistenceTests
         Assert.Equal(effectType is not (66 or 76), retainedEffect.Activated);
         Assert.Equal(effectType is 66 or 76, retainedEffect.NativeThemeObjectInteractable);
         if (effectType == 80) Assert.Equal(3U, retainedEffect.AnimationFrame);
+        if (NativeDepthResumeEvidence.IsDemonstrableThemeObject((uint)effectType))
+            NativeThemeObjectJourneyEvidence.VerifyRetained(retainedEffect, (uint)depth, (uint)effectType,
+                initialWire.Objects.Single(value => value.EntityId == effectId).AnimationFrame);
         Assert.False(fresh.Simulation.Execute(restored, new DiabloOperateObjectIntent(itemId), 1, [restored]).Succeeded);
         Assert.Equal(effectType is 66 or 76,
             fresh.Simulation.Execute(restored, new DiabloOperateObjectIntent(effectId), 1, [restored]).Succeeded);

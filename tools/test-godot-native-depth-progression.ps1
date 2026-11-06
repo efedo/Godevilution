@@ -16,6 +16,7 @@ param(
     [Nullable[System.UInt32]]$CatacombsSeed,
     [switch]$RequireTrappedDoor,
     [switch]$RequireShrine,
+    [switch]$RequireThemeObject,
     # All-class profile only: run the Journey windowed and save a capture of each floor.
     [switch]$Visible,
     # Development runs: server simulation rate for both phases; acceptance evidence uses the default 20 Hz.
@@ -60,6 +61,9 @@ if (($RequireTrappedDoor -and $TargetDepth -lt 5) -or
 if ($RequireShrine -and (-not $allClass -or $TargetDepth -lt 5)) {
     throw '-RequireShrine needs an all-class journey through L5 or deeper.'
 }
+if ($RequireThemeObject -and (-not $allClass -or $TargetDepth -lt 5 -or -not $PSBoundParameters.ContainsKey('CatacombsSeed'))) {
+    throw '-RequireThemeObject needs an all-class journey with an explicit -CatacombsSeed through L5 or deeper.'
+}
 if ($RequireTrappedDoor -and (-not $PSBoundParameters.ContainsKey('CatacombsSeed') -or $CatacombsSeed -ne 0 -or $TargetDepth -lt 7)) {
     throw '-RequireTrappedDoor needs -CatacombsSeed 0 and -TargetDepth 7 or 8 for the known L7 door at (68,74).'
 }
@@ -73,12 +77,14 @@ if ($allClass) {
 $previousCatacombsSeed = $env:GODEVILUTION_NATIVE_CATACOMBS_SEED
 $previousRequiredDoor = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR
 $previousRequiredShrine = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE
+$previousRequiredThemeObject = $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT
 $previousDoorLevel = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL
 $previousDoorX = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X
 $previousDoorY = $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y
 $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = if ($PSBoundParameters.ContainsKey('CatacombsSeed')) { [string]$CatacombsSeed } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = if ($RequireTrappedDoor) { '1' } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = if ($RequireShrine) { '1' } else { $null }
+$env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT = if ($RequireThemeObject) { '1' } else { $null }
 # Acceptance-only destination, paired with the explicit seed; normal journeys have none.
 $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = if ($RequireTrappedDoor) { '7' } else { $null }
 $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = if ($RequireTrappedDoor) { '68' } else { $null }
@@ -116,7 +122,7 @@ function Invoke-TimedLauncher([string]$directory, [string]$phase, [hashtable]$la
 
 # Validate object evidence without launching a client; also exercised directly by focused tests.
 function Assert-NativeDepthObjectEvidence($journey, [int]$TargetDepth, [bool]$HasExplicitCatacombsSeed,
-    [bool]$RequireTrappedDoor, [bool]$RequireShrine) {
+    [bool]$RequireTrappedDoor, [bool]$RequireShrine, [bool]$RequireThemeObject = $false) {
     # Compile the same scalar policy used by the managed journey and resume.
     if (-not ('Devilution.Client.Acceptance.NativeDepthResumeEvidence' -as [type])) {
         Add-Type -Path (Join-Path $repositoryRoot 'godot-client/Devilution.Client/Acceptance/NativeDepthResumeEvidence.cs') -ErrorAction Stop
@@ -131,6 +137,18 @@ function Assert-NativeDepthObjectEvidence($journey, [int]$TargetDepth, [bool]$Ha
     }
     [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::Verify($RequireShrine, ($null -ne $route.Shrine),
         $RequireTrappedDoor, [uint32]$objects.DoorEntity, [uint32]$objects.DoorTrapSource, [uint64]$objects.DoorTrapTick)
+    [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::VerifyThemeObject($RequireThemeObject, ($null -ne $route.ThemeObject))
+    if ($RequireThemeObject) {
+        $theme = $route.ThemeObject
+        $type = [uint32]$theme.Type
+        if ($journey.ThemeObjectOperated -ne $true -or $theme.Entity -le 0 -or $theme.Level -lt 5 -or $theme.Level -gt $TargetDepth -or
+            -not [Devilution.Client.Acceptance.NativeDepthResumeEvidence]::IsDemonstrableThemeObject($type) -or $theme.Frame -le 0 -or
+            [string]$theme.PlayerBeforeEffect -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or
+            [string]$theme.PlayerAfterEffect -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or
+            ([Devilution.Client.Acceptance.NativeDepthResumeEvidence]::IsThemeItemObject($type) -and @($theme.Drops).Count -eq 0)) {
+            throw 'The journey lacks its required native theme object and effect evidence.'
+        }
+    }
     if ($RequireTrappedDoor -and ($journey.TrappedDoorOperated -ne $true -or $objects.DoorLevel -ne 7 -or
         $journey.RequiredDoorTarget.Level -ne 7 -or $journey.RequiredDoorTarget.X -ne 68 -or $journey.RequiredDoorTarget.Y -ne 74)) {
         throw 'The Catacombs journey lacks its required door-trap evidence.'
@@ -161,7 +179,7 @@ if ($allClass) {
             ($_.LevelId -lt $FirstFightDepth -and $_.MonsterEntityId -ne 0) }).Count -ne 0) {
         throw "The Warrior Journey lacks its Town checkpoint or a kill with XP on every floor through L$TargetDepth."
     }
-    Assert-NativeDepthObjectEvidence $journey $TargetDepth ($null -ne $env:GODEVILUTION_NATIVE_CATACOMBS_SEED) ([bool]$RequireTrappedDoor) ([bool]$RequireShrine)
+    Assert-NativeDepthObjectEvidence $journey $TargetDepth ($null -ne $env:GODEVILUTION_NATIVE_CATACOMBS_SEED) ([bool]$RequireTrappedDoor) ([bool]$RequireShrine) ([bool]$RequireThemeObject)
     # From L5 down, the Warrior returns by L5's warp-up, which opens the Town warp (batch 2.2c).
     if ($TargetDepth -ge 5 -and ($journey.TownWarp.Opened -ne $true -or $journey.TownWarp.ArrivalX -ne 49 -or $journey.TownWarp.ArrivalY -ne 22)) {
         throw 'The Warrior Journey did not open and take the single-player Town warp.'
@@ -276,6 +294,11 @@ if ($allClass) {
         $resume.ExactColdBaseline -ne $true -or $resume.AllFloorsRetained -ne $true) {
         throw 'The fresh-host Resume did not prove the exact cold baseline and four retained floors.'
     }
+    if ($RequireThemeObject -and ($resume.ThemeObjectRetained -ne $true -or
+        ([Devilution.Client.Acceptance.NativeDepthResumeEvidence]::IsReusableThemeObject([uint32]$route.ThemeObject.Type) -and
+            $resume.ThemeObjectReusableVerified -ne $true))) {
+        throw 'The fresh-host Resume did not prove the required theme object use state or fountain reuse.'
+    }
 } else {
     if ($resume.Passed -ne $true -or $resume.LevelId -ne 0 -or $resume.ExactColdBaseline -ne $true -or
         $resume.AllFloorsRetained -ne $true -or $null -eq $resume.Healer -or $null -eq $resume.HealerStockContinuation -or
@@ -341,6 +364,7 @@ Write-Output "Native Town/L1-L4 Journey and fresh-host retention passed: $summar
     $env:GODEVILUTION_NATIVE_CATACOMBS_SEED = $previousCatacombsSeed
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_TRAPPED_DOOR = $previousRequiredDoor
     $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_SHRINE = $previousRequiredShrine
+    $env:GODEVILUTION_NATIVE_DEPTH_REQUIRE_THEME_OBJECT = $previousRequiredThemeObject
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_LEVEL = $previousDoorLevel
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_X = $previousDoorX
     $env:GODEVILUTION_NATIVE_DEPTH_TRAPPED_DOOR_Y = $previousDoorY

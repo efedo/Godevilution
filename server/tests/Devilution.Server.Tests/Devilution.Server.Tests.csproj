@@ -433,5 +433,7 @@
   <ItemGroup>
     <Compile Include="../Shared/NativeShrineTestFixture.cs" Link="NativeShrineTestFixture.cs" />
     <Compile Include="../../../godot-client/Devilution.Client/Acceptance/NativeObjectApproachPath.cs" Link="NativeObjectApproachPath.cs" />
+    <Compile Include="../../../godot-client/Devilution.Client/Acceptance/NativeThemeObjectJourneyEvidence.cs" Link="NativeThemeObjectJourneyEvidence.cs" />
+    <Compile Include="../../../godot-client/Devilution.Client/Acceptance/NativeDepthResumeEvidence.cs" Link="NativeDepthResumeEvidence.cs" />
   </ItemGroup>
 </Project>

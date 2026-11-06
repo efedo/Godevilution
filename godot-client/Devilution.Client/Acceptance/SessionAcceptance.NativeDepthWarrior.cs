@@ -16,7 +16,8 @@ public partial class SessionAcceptance
         ulong ExperienceBefore, ulong ExperienceAfter, int Attacks);
 
     private sealed record NativeWarriorDepthCheckpoint(string PlayerPayload, uint RandomState, ulong Sequence,
-        string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null, NativeShrineCheckpoint? Shrine = null);
+        string WorldHash, NativeWarriorFloor[] Floors, NativeCatacombsObjectCheckpoint? Objects = null, NativeShrineCheckpoint? Shrine = null,
+        NativeThemeObjectCheckpoint? ThemeObject = null);
 
     private const int NativeWarriorAttacksPerFloor = 160;
     // L5-L8 melee families fight as native since batch 2.4a, so every floor records a kill.
@@ -109,6 +110,7 @@ public partial class SessionAcceptance
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
+                await TryNativeThemeObjectAsync(main);
                 await TryNativeShrineAsync(main);
                 if (depth > NativeWarriorFoughtFloor || depth < NativeWarriorFirstFightFloor) {
                     if (depth >= 5)
@@ -140,6 +142,8 @@ public partial class SessionAcceptance
                 System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED"), nativeCatacombsObjects?.ChestEntity > 0);
             Require(!NativeWarriorRequiresShrine || nativeShrine is not null,
                 "No visited floor offered a nearby reachable native shrine with a lasting effect. " + string.Join("; ", nativeShrineApproaches));
+            Require(!NativeWarriorRequiresThemeObject || nativeThemeObject is not null,
+                "No visited floor offered a nearby reachable native theme object with a demonstrable effect. " + string.Join("; ", nativeThemeObjectApproaches));
             // From L5 and below, the way home is L5's warp-up, which opens the Town warp (batch 2.2c).
             var stairsUpTo = target >= NativeWarriorTownWarpDepth ? (int)NativeWarriorTownWarpDepth : 0;
             for (var destination = (int)target - 1; destination >= stairsUpTo; destination--)
@@ -160,7 +164,7 @@ public partial class SessionAcceptance
             var checkpoint = new NativeWarriorDepthCheckpoint(Convert.ToBase64String(player.ToByteArray()),
                 snapshot.RandomState, main.ObservedLastQueuedSequence, HashNativeProgressionWorld(snapshot),
                 floors.Select(floor => floor with { GeometryHash = HashProto(DepthGeometry(main, floor.LevelId)) }).ToArray(),
-                nativeCatacombsObjects, nativeShrine);
+                nativeCatacombsObjects, nativeShrine, nativeThemeObject);
             VerifyNativeWarriorRetention(main, checkpoint);
             WriteEvidence(directory, "nativedepthjourney.json", new {
                 Passed = true, Mode = identity.GameMode.ToString(), ContentHash = identity.ContentManifestHash,
@@ -171,6 +175,8 @@ public partial class SessionAcceptance
                 ChestPickedUp = checkpoint.Objects?.ChestEntity > 0,
                 ShrineApproaches = nativeShrineApproaches, RequiredShrine = NativeWarriorRequiresShrine,
                 ShrineOperated = checkpoint.Shrine is not null,
+                RequiredThemeObject = NativeWarriorRequiresThemeObject, ThemeObjectOperated = checkpoint.ThemeObject is not null,
+                ThemeObjectApproaches = nativeThemeObjectApproaches,
                 RequiredTrappedDoor = NativeWarriorRequiresTrappedDoor, TrappedDoorOperated = checkpoint.Objects?.DoorEntity > 0,
                 RequiredDoorTarget = nativeCatacombsRequiredDoor,
                 UnreachableNativeObjects = nativeCatacombsUnreachableObjects,
@@ -201,6 +207,7 @@ public partial class SessionAcceptance
         for (uint depth = 1; depth <= target; depth++) {
             await TravelNativeWarriorAsync(main, directory, depth);
             VerifyNativeWarriorRetention(main, expected);
+            await VerifyNativeThemeObjectReuseAsync(main, expected.ThemeObject);
         }
         for (var destination = (int)target - 1; destination >= 0; destination--) {
             await TravelNativeWarriorAsync(main, directory, (uint)destination);
@@ -210,6 +217,8 @@ public partial class SessionAcceptance
             await TravelNativeWarriorAsync(main, directory, NativeWarriorTownWarpDepth);
             await TravelNativeWarriorAsync(main, directory, 0);
         }
+        Require(expected.ThemeObject is null || !NativeThemeObjectJourneyEvidence.IsReusable(expected.ThemeObject.Type)
+                || nativeThemeObjectReuseVerified, "The fresh host did not reoperate the required reusable theme fountain.");
         var final = main.ObservedSnapshot!.Players.Single();
         Require(final.LevelId == 0 && final.Life > 0, "The resumed four-floor journey did not return alive to Town.");
         WriteEvidence(directory, "nativedepthresume.json", new {
@@ -217,6 +226,7 @@ public partial class SessionAcceptance
             RulesetHash = identity.RulesetIdentityHash, EntityId = final.EntityId, ClassId = final.CharacterClassId,
             LevelId = final.LevelId, X = final.PositionX, Y = final.PositionY,
             Sequence = main.ObservedLastQueuedSequence, Visible = false, ExactColdBaseline = true, AllFloorsRetained = true,
+            ThemeObjectRetained = expected.ThemeObject is not null, ThemeObjectReusableVerified = nativeThemeObjectReuseVerified,
         });
         GD.Print("Native Warrior Town/L1-L4 fresh-host resume and retained revisit passed");
     }
@@ -872,6 +882,8 @@ public partial class SessionAcceptance
         NativeDepthResumeEvidence.Verify(NativeWarriorRequiresShrine, expected.Shrine is not null,
             NativeWarriorRequiresTrappedDoor, expected.Objects?.DoorEntity ?? 0,
             expected.Objects?.DoorTrapSource ?? 0, expected.Objects?.DoorTrapTick ?? 0);
+        NativeDepthResumeEvidence.VerifyThemeObject(NativeWarriorRequiresThemeObject, expected.ThemeObject is not null);
+        if (expected.ThemeObject is not null) VerifyNativeThemeObjectRetention(snapshot, expected.ThemeObject);
         if (expected.Objects is not null)
             VerifyNativeCatacombsObjects(snapshot, expected.Objects);
         if (expected.Shrine is not null) VerifyNativeShrineRetention(snapshot, expected.Shrine);

@@ -36,6 +36,8 @@
              Link="Acceptance/NativeDepthResumeEvidence.cs" />
     <Compile Include="../Devilution.Client/Acceptance/NativeObjectApproachPath.cs"
              Link="Acceptance/NativeObjectApproachPath.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/NativeThemeObjectJourneyEvidence.cs"
+             Link="Acceptance/NativeThemeObjectJourneyEvidence.cs" />
     <Compile Include="../Devilution.Client/Acceptance/NativeCatacombsDoorTrapObservation.cs"
              Link="Acceptance/NativeCatacombsDoorTrapObservation.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceStartupWatchdog.cs"
