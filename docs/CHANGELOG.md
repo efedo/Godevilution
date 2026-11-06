@@ -7,6 +7,11 @@ contracts stay in their existing guides.
 
 ## 2026-11-06
 
+- Theme room objects (2.5c): fountains, goat shrines, cauldrons, bookcases, book stands, decapitated
+  bodies, armor stands and weapon racks work natively on L1–L8 and burning crosses burn; tick-end Mana
+  Shield cleanup now follows missiles as native. Identify scrolls from theme objects publish instead of
+  fencing the cohort. Trap firing carries its tick in two additive wire fields so short trap missiles
+  are provable at 200 Hz. The journey gains `-RequireThemeObject`.
 - Fast test suites (T1): most live-host client tests run against an in-process host, in parallel at
   200 Hz; client timing tests use a fake clock through a new `TimeProvider` connection option; slow
   live-host, launcher and matrix tests carry `Category=Slow` and run in their own CI step. Default

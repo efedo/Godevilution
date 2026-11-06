@@ -9,6 +9,16 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-06 — Theme room objects (2.5c)
+
+200 Hz Debug journeys and resumes passed: normal L8, seed 0 trapped door L8 (L7 trap fired at tick
+16975), seed 98 shrine L5, and `-CatacombsSeed 8 -RequireThemeObject -TargetDepth 5` (L5 book stand
+at (61,57), one drop). 10 Hz and 20 Hz L1 micro journeys passed. Full suites: server 2229 (one
+load-only failure in `ClockGatedCohortSnapshotPollTests`, which passed three times alone), Diablo 3927,
+client 1430. Native comparisons passed locally (261 managed cases) except the CI-only MPQ capture. The
+journeys found an Identify publication fence and a missed 150 ms trap missile; both fixed with tests.
+Sol 6.1 review accepted every package.
+
 ### 2026-11-06 — Fast test suites (T1)
 
 Default tiers (`--filter-not-trait Category=Slow`), three runs each: client 14 s, server 37 s, Diablo
