@@ -281,7 +281,7 @@ public sealed class ResponsiveMovementPresentationTests
 
     [Theory]
     [InlineData(20U, 0d, 1)] [InlineData(20U, 2d, 1)] [InlineData(20U, 100d, 3)]
-    [InlineData(20U, 250d, 6)] [InlineData(10U, 2d, 1)] [InlineData(200U, 2d, 1)]
+    [InlineData(20U, 250d, 6)] [InlineData(10U, 2d, 1)] [InlineData(200U, 2d, 10)]
     [InlineData(200U, 100d, 21)]
     public void RealtimeLeadCoversFullMeasuredRttIndependentlyOfTheRetryFloor(uint rate, double rtt, int ticks)
     {

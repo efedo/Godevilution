@@ -6,14 +6,15 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class AdaptiveCommandLeadTests
 {
     [Theory]
-    [InlineData(10U)] [InlineData(20U)] [InlineData(200U)]
-    public void IdleLoopbackKeepsOneTickWithoutTheProbeOrRetryFloor(uint rate)
+    [InlineData(10U, 1)] [InlineData(20U, 1)] [InlineData(40U, 2)]
+    [InlineData(41U, 3)] [InlineData(200U, 10)]
+    public void IdleLoopbackKeepsFiftyMillisecondsWithoutTheProbeOrRetryFloor(uint rate, int ticks)
     {
         var lead = new AdaptiveCommandLead();
-        Assert.Equal(1, lead.Ticks(0, rate));
+        Assert.Equal(ticks, lead.Ticks(0, rate));
         lead.ObserveRoundTrip(0, 0);
         lead.ObserveRoundTrip(250, 2);
-        Assert.Equal(1, lead.Ticks(250, rate));
+        Assert.Equal(ticks, lead.Ticks(250, rate));
     }
 
     [Fact]
@@ -30,18 +31,18 @@ public sealed class AdaptiveCommandLeadTests
     {
         var lead = new AdaptiveCommandLead();
         for (var i = 0; i < 3; i++) lead.ObserveRoundTrip(0, 2);
-        lead.ObserveRoundTrip(0, 40);
+        lead.ObserveRoundTrip(0, 80);
         Assert.Equal(2, lead.RoundTripMilliseconds);
-        Assert.Equal(9, lead.Ticks(0, 200));
-        Assert.Equal(5, lead.Ticks(1000, 200));
-        Assert.Equal(1, lead.Ticks(10_000, 200));
+        Assert.Equal(17, lead.Ticks(0, 200));
+        Assert.Equal(12, lead.Ticks(500, 200));
+        Assert.Equal(10, lead.Ticks(10_000, 200));
     }
 
     public static TheoryData<double[], int[]> AlternatingRoundTrips => new() {
-        { [2, 40, 2], [1, 9, 8] },
-        { [2, 40, 2, 40, 2, 40, 2], [1, 9, 8, 9, 8, 9, 8] },
-        { [2, 15, 2, 30, 2, 60, 2], [1, 4, 3, 7, 6, 13, 11] },
-        { [1, 5, 1, 80, 1], [1, 2, 2, 17, 14] },
+        { [2, 40, 2], [10, 10, 10] },
+        { [2, 80, 2, 80, 2, 80, 2], [10, 17, 14, 17, 14, 17, 14] },
+        { [2, 15, 2, 30, 2, 60, 2], [10, 10, 10, 10, 10, 13, 11] },
+        { [1, 5, 1, 80, 1], [10, 10, 10, 17, 14] },
     };
 
     [Theory]
@@ -54,7 +55,7 @@ public sealed class AdaptiveCommandLeadTests
             Assert.Equal(ticks[i], lead.Ticks(i * 250, 200));
         }
         var lastSpikeAt = (samples.Length - 2) * 250;
-        Assert.Equal(1, lead.Ticks(lastSpikeAt + 10_000, 200));
+        Assert.Equal(10, lead.Ticks(lastSpikeAt + 10_000, 200));
     }
 
     [Fact]
@@ -74,12 +75,12 @@ public sealed class AdaptiveCommandLeadTests
     public void LateAdmissionAddsTheShortfallAndATickThenReturnsToIdle()
     {
         var lead = new AdaptiveCommandLead();
-        lead.ObserveLateAdmission(0, 200, sentLeadTicks: 1, lateTicks: 2);
-        Assert.Equal(4, lead.Ticks(0, 200));
-        Assert.Equal(2, lead.Ticks(1000, 200));
-        Assert.Equal(1, lead.Ticks(4000, 200));
-        lead.ObserveLateAdmission(4000, 200, 1, 0);
-        Assert.Equal(1, lead.Ticks(4000, 200));
+        lead.ObserveLateAdmission(0, 200, sentLeadTicks: 10, lateTicks: 2);
+        Assert.Equal(13, lead.Ticks(0, 200));
+        Assert.Equal(10, lead.Ticks(1000, 200));
+        Assert.Equal(10, lead.Ticks(4000, 200));
+        lead.ObserveLateAdmission(4000, 200, 10, 0);
+        Assert.Equal(10, lead.Ticks(4000, 200));
     }
 
     [Fact]
@@ -103,6 +104,20 @@ public sealed class AdaptiveCommandLeadTests
         lead.ObserveRoundTrip(0, 10_000);
         lead.ObserveLateAdmission(0, rate, int.MaxValue, ulong.MaxValue);
         Assert.Equal(maximumTicks, lead.Ticks(0, rate));
+    }
+
+    [Fact]
+    public void IdleMinimumSurvivesProbeJitterAndAdmissionFeedbackDecayingAway()
+    {
+        var lead = new AdaptiveCommandLead();
+        lead.ObserveRoundTrip(0, 80);
+        lead.ObserveRoundTrip(250, 2);
+        lead.ObserveRoundTrip(500, 2);
+        lead.ObserveLateAdmission(500, 200, 17, 7);
+        Assert.True(lead.Ticks(500, 200) > 10);
+        Assert.Equal(10, lead.Ticks(20_000, 200));
+        lead.ObserveRoundTrip(20_000, 0);
+        Assert.Equal(10, lead.Ticks(20_000, 200));
     }
 
     [Fact]

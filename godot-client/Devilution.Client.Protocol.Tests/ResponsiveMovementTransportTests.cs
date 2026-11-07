@@ -181,7 +181,7 @@ public sealed class ResponsiveMovementTransportTests
     }
 
     [Theory]
-    [InlineData(20U, 180, 4)] [InlineData(200U, 15, 4)]
+    [InlineData(20U, 180, 4)] [InlineData(200U, 15, 10)]
     public async Task ProbeSchedulingUsesFullRttWithoutChangingTheRetryFloor(uint rate, int rtt, int ticks)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
@@ -326,6 +326,36 @@ public sealed class ResponsiveMovementTransportTests
         Assert.Equal(applied, model.LastCommandWasApplied);
         // Generic gameplay success remains strict; only the matching UI identity grants this exception.
         Assert.False(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(model.LastCommandResult));
+    }
+
+    [Theory]
+    [InlineData(10U, 1)] [InlineData(20U, 1)] [InlineData(200U, 10)]
+    public async Task IdleUiDispatchCoversTheJourneyCloseStoresThirtyThreeMillisecondDelay(uint rate, int ticks)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token, rate: rate);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        client.QueueRealtime(new Command { CloseStoreRequested = new() }, 100);
+        await client.PollAsync(timeout.Token);
+        await Until(() => recorder.CaptureReport().ProbeOutcomes.Count != 0, timeout.Token);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(100UL + (ulong)ticks, sent.RequestedTick);
+        // The failing journey logged 33 ms from first send to the server's refusal.
+        // Even rounding that delay upward must leave this input on time at every rate.
+        time.AdvanceMilliseconds(33);
+        var arrivalTick = 100UL + (ulong)Math.Ceiling(33d * rate / 1000);
+        Assert.True(sent.RequestedTick >= arrivalTick);
+        var dispatch = Assert.Single(recorder.CaptureReport().Commands);
+        Assert.Equal(ticks, dispatch.SchedulingLeadTicks);
+        Assert.InRange(ticks * 1000d / rate, 50, 100);
+        Assert.Equal(0, dispatch.SchedulingRoundTripMilliseconds);
+        Assert.Equal(100, client.RoundTripMilliseconds);
+        Assert.Equal(400, client.RetryTimeout.TotalMilliseconds);
     }
 
     private static Envelope Receipt(Command command, CommandStatus status, ulong appliedTick)

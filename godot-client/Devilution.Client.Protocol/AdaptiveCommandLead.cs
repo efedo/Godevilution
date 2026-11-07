@@ -3,6 +3,9 @@ namespace Devilution.Client.Protocol;
 /** Scheduling evidence only: retry/probe timeout floors must never delay realtime input. */
 internal sealed class AdaptiveCommandLead
 {
+    // Keep one 20 Hz tick of wall-clock slack at faster rates too: a 5 ms tick
+    // is shorter than ordinary loopback delivery and OS scheduling jitter.
+    internal const double MinimumRealtimeLeadMilliseconds = 50;
     internal const double SafetyMarginMilliseconds = 2;
     internal const double DecayHalfLifeMilliseconds = 1000;
     private readonly ClockGatedRoundTripWindow roundTrips = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
@@ -25,8 +28,9 @@ internal sealed class AdaptiveCommandLead
     {
         if (rate == 0) throw new ArgumentOutOfRangeException(nameof(rate));
         // The clock stamp ages on the reply's inbound leg; the next command also needs its outbound leg.
-        var milliseconds = Math.Max(Math.Max(roundTrips.Estimate, Decay(roundTripPeak, roundTripPeakAt, now)) + SafetyMarginMilliseconds,
-            Decay(feedbackFloor, feedbackAt, now));
+        var networkMilliseconds = Math.Max(roundTrips.Estimate, Decay(roundTripPeak, roundTripPeakAt, now)) + SafetyMarginMilliseconds;
+        var milliseconds = Math.Max(MinimumRealtimeLeadMilliseconds,
+            Math.Max(networkMilliseconds, Decay(feedbackFloor, feedbackAt, now)));
         return Math.Max(1, (int)Math.Ceiling(Math.Min(milliseconds,
             AuthoritativeClient.MaximumClockGatedLeadMilliseconds) * rate / 1000));
     }
