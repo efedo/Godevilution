@@ -54,6 +54,7 @@ public partial class SessionAcceptance
                 await SettleInterruptedNativeDoorApproachAsync(main);
                 continue;
             }
+            await PrepareNativeObjectAsync(main, "Before operating a native shrine");
             var before = main.ObservedSnapshot!.Players.Single();
             var sequence = main.ObservedLastQueuedSequence;
             GetViewport().GuiReleaseFocus();

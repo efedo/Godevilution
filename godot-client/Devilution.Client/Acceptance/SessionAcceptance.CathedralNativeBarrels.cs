@@ -66,6 +66,7 @@ public partial class SessionAcceptance
                 Require(candidate is not null, "No public reachable barrel remains for the required input path.");
                 await MoveAdjacentToNativeBarrel(main, candidate!.EntityId);
                 await UnequipNativeBarrelWeapon(main);
+                await PrepareNativeObjectAsync(main, "Before breaking a native Cathedral barrel");
                 var before = main.ObservedSnapshot!;
                 var beforeIds = before.WorldItems.Select(value => value.EntityId).ToHashSet();
                 var actorIds = before.Monsters.Select(value => value.EntityId).ToHashSet();
@@ -231,8 +232,11 @@ public partial class SessionAcceptance
         await Frame();
         var repeatCommandQueued = main.ObservedLastQueuedSequence > repeatSequence;
         if (repeatCommandQueued) {
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > repeatSequence
-                && main.ObservedPendingCommandCount == 0 && Settled(main),
+            await Until(() => {
+                AcceptanceCommandBoundary.RequireAlive(ObserveNativeCommandBoundary(main), "The repeated broken-barrel click");
+                return main.ObservedCommandResult is { } result && result.ClientSequence > repeatSequence
+                    && main.ObservedPendingCommandCount == 0 && Settled(main);
+            },
                 "The repeated broken-barrel click did not settle.", 10);
             var receipt = main.ObservedCommandResult!;
             Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)
@@ -273,7 +277,7 @@ public partial class SessionAcceptance
     private async Task MoveAdjacentToNativeBarrel(Main main, uint entityId)
     {
         while (true) {
-            await WaitForNativeCommandBoundaryAsync(main, "Native barrel approach before planning a walk");
+            await PrepareNativeObjectAsync(main, "Native barrel approach before planning a walk");
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var chest = FindNativeChest(snapshot, entityId);
@@ -304,9 +308,8 @@ public partial class SessionAcceptance
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
             Input.FlushBufferedEvents();
             try {
-                await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == sequence
-                    && main.ObservedLastQueuedSequence == sequence && main.ObservedPendingCommandCount == 0
-                    && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
+                await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), sequence,
+                        "The cardinal native barrel approach command"),
                     "The cardinal native barrel approach command did not settle.", stageSeconds: 10);
             } catch (InvalidOperationException) {
                 var diagnostic = main.ObservedSnapshot!.Players.Single();

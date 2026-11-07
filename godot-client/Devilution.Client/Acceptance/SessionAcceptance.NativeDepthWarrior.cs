@@ -402,7 +402,7 @@ public partial class SessionAcceptance
             var position = main.ObservedSnapshot!.Players.Single();
             GD.Print($"Native Warrior route L{player.LevelId}->L{destination} attempt {attempt + 1} from ({position.PositionX},{position.PositionY}) "
                 + $"to ({route.TriggerX},{route.TriggerY})");
-            try {
+            if (await AcceptanceRouteRecovery.TryAsync(async () => {
                 // Walking continuity is the route tests' concern; the journey needs only the transition.
                 await TravelCathedralRoute(main, routeDirectory, route.WarpId, destination, stopEarly: false,
                     minimumDistinctPositions: 1, distanceBoundedApproachDeadline: true,
@@ -411,17 +411,16 @@ public partial class SessionAcceptance
                     $"The ordinary route did not reach level {destination}.");
                 // An interrupt can finish on the trigger; still perform the healing it requested.
                 await UseNativeHealingPotionIfNeeded(main);
-                return;
-            } catch (InvalidOperationException failure) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
-                && alive.LevelId == player.LevelId) {
-                GD.Print($"Native Warrior travel to L{destination} interrupted ({failure.Message}); clearing and retrying; "
+            }, () => ObserveNativeCommandBoundary(main), async failure => {
+                GD.Print($"Native Warrior travel to L{destination} interrupted on L{main.ObservedSnapshot!.Players.Single().LevelId} "
+                    + $"({failure.Message}); clearing and retrying; "
                     + DescribeNativeWarriorSurroundings(main));
                 await StopNativeTravelAsync(main);
                 // Repeated hits can hold the Warrior out of Stand; the retry's clearing fights them.
                 await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
                 // Give the interrupted walk's last queued command time to return its receipt.
                 await WaitTicksWhile(main, () => main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence, 2);
-            }
+            })) return;
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
     }
@@ -569,6 +568,7 @@ public partial class SessionAcceptance
 
     private async Task<NativeCatacombsDoorTrapObservation.Opened> OperateNativeWarriorCatacombsDoorAsync(Main main, ObjectSnapshot door)
     {
+        await PrepareNativeObjectAsync(main, "Before operating a native Catacombs door");
         var baseline = new NativeCatacombsDoorTrapObservation.Opening(main.ObservedSnapshot!, door.EntityId);
         if (nativeCatacombsRequiredDoor?.Matches(door) == true) {
             nativeCatacombsRequiredDoorEntity = door.EntityId;

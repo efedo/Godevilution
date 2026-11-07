@@ -704,6 +704,26 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
+    [Theory]
+    [Trait("Category", "Slow")]
+    [InlineData(45_000)]
+    [InlineData(120_000)]
+    public void PopulationHarnessReportsPhasesAndUsesItsBoundedDeadline(int timeoutMilliseconds)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-CathedralPopulationInteger"],
+            "Write-Output 'PASS'", reportProgress: true);
+        var output = RunPowerShell(script, timeoutMilliseconds: timeoutMilliseconds,
+            waitForExit: (process, deadline) => {
+                Assert.Equal(timeoutMilliseconds, deadline);
+                return process.WaitForExit(deadline);
+            });
+        Assert.Contains("[population] parse launcher", output);
+        Assert.Contains("[population] load Assert-CathedralPopulationInteger", output);
+        Assert.Contains("[population] run validator cases", output);
+        Assert.Contains("PASS", output);
+    }
+
     [Fact]
     [Trait("Category", "Slow")]
     public void CaseValidatorUsesExactNativePoolsAndRejectsCoercions()
@@ -738,8 +758,11 @@ public sealed class CathedralPopulationOracleLauncherTests
                 foreach ($id in 0..108) { $metadata.nativeObjectCatalog += [ordered]@{ nativeObjectId = $id } }
                 $tileRefs = @(1) + (@(0) * 111) + @(2) + (@(0) * 12431)
                 $case = [ordered]@{ format = 'godevilution-cathedral-l1-population-oracle'; version = 1; policy = 'no-quest-original-diablo-initgolems-initobjects'; depth = 1; inputSeed = 2588; geometrySeed = 2588; populationSeed = 2588; storySeed = 324508639; entry = 'main'; attemptSeed = 1; rngAfterCreateLevel = 1; rngAfterPopulationReset = 2; rngAfterGetLevelMTypes = 3; rngAfterInitThemes = 4; rngAfterInitGolems = 5; rngAfterInitObjects = 6; entryPosition = (Point 1 1); stairsUp = (Point 2 2); stairsDown = (Point 3 3); triggers = @([ordered]@{ position = (Point 4 4); message = 1; level = 1 }); populatedCellsBeforeHoldThemeRooms = @(0); populatedCellsAfterHoldThemeRooms = @(0,1); pieces = @(0) * 12544; transparency = @(0) * 12544; solProperties = @(0) * 1379; activeObjectCount = 2; activeObjectIds = @(0..126); availableObjectIds = @((2..126) + @(0,1)); tileObjectRefs = $tileRefs; objects = @($object,$secondObject); activeMonsterCount = 4; activeMonsterIds = @(0,1,2,3); monsters = $monsters; bestiary = @($bestiary); playerContext = $playerContext }
+                Write-Output '[population-case] fixtures ready'
                 $path = Write-Case $case
+                Write-Output '[population-case] validate baseline'
                 Assert-CathedralPopulationCase $path 'cathedral-population-depth-1-2588-main.json' $metadata
+                $mutationIndex = 0
                 foreach ($mutation in @(
                     { param($c) $c.version = '1' },
                     { param($c) $c.entryPosition.x = 0.5 },
@@ -759,11 +782,13 @@ public sealed class CathedralPopulationOracleLauncherTests
                     { param($c) $c.monsters[0].levelType = 1 },
                     { param($c) $c.bestiary[0].skeleton = 'false' },
                     { param($c) Add-Member -InputObject $c -MemberType NoteProperty -Name objectCatalog -Value @() })) {
+                    Write-Output ("[population-case] mutation {0}" -f (++$mutationIndex))
                     $copy = ($case | ConvertTo-Json -Depth 16) | ConvertFrom-Json
                     & $mutation $copy
                     $badPath = Write-Case $copy
                     Expect-Rejected { Assert-CathedralPopulationCase $badPath 'cathedral-population-depth-1-2588-main.json' $metadata }
                 }
+                Write-Output '[population-case] build reservation fixtures'
                 $reservationCase = ($case | ConvertTo-Json -Depth 16) | ConvertFrom-Json
                 $skeleton = ($monster | ConvertTo-Json -Depth 16) | ConvertFrom-Json
                 $skeleton.slot = 4; $skeleton.type = 2; $skeleton.levelType = 1
@@ -776,7 +801,9 @@ public sealed class CathedralPopulationOracleLauncherTests
                 $reservationCase.objects[0].type = 48; $reservationCase.objects[0].position = Point 5 5
                 $reservationCase.objects[0].var1 = 8; $reservationCase.objects[0].var2 = 4
                 $reservationCase.tileObjectRefs[0] = 0; $reservationCase.tileObjectRefs[565] = 1; $reservationCase.tileObjectRefs[453] = -1
+                Write-Output '[population-case] validate reservation baseline'
                 Assert-CathedralPopulationCase (Write-Case $reservationCase) 'cathedral-population-depth-1-2588-main.json' $metadata
+                $mutationIndex = 0
                 foreach ($mutation in @(
                     { param($c) $c.tileObjectRefs[453] = 1 },
                     { param($c) $c.objects[0].var2 = 0 },
@@ -784,18 +811,25 @@ public sealed class CathedralPopulationOracleLauncherTests
                     { param($c) $c.objects[1].var4 = -2 },
                     { param($c) $c.monsters[4].tile = Point 1 1 },
                     { param($c) $c.bestiary[1].skeleton = $false })) {
+                    Write-Output ("[population-case] reservation mutation {0}" -f (++$mutationIndex))
                     $copy = ($reservationCase | ConvertTo-Json -Depth 16) | ConvertFrom-Json
                     & $mutation $copy
                     Expect-Rejected { Assert-CathedralPopulationCase (Write-Case $copy) 'cathedral-population-depth-1-2588-main.json' $metadata }
                 }
                 $reservationCase.objects[0].var2 = -1; $reservationCase.objects[1].var4 = -1
+                Write-Output '[population-case] validate reservation sentinels'
                 Assert-CathedralPopulationCase (Write-Case $reservationCase) 'cathedral-population-depth-1-2588-main.json' $metadata
                 Write-Output 'PASS'
             } catch { $primaryFailure = $_; throw }
-            finally { Remove-PopulationTestDirectory $work $primaryFailure }
-            """);
+            finally { Write-Output '[population-case] cleanup'; Remove-PopulationTestDirectory $work $primaryFailure }
+            """, reportProgress: true);
 
-        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+        // This multi-mutation validator is Slow; startup and AST extraction share its bound.
+        var output = RunPowerShell(script, timeoutMilliseconds: 120_000);
+        Assert.Contains("[population-case] mutation 18", output);
+        Assert.Contains("[population-case] reservation mutation 6", output);
+        Assert.Contains("[population-case] cleanup", output);
+        Assert.Contains("PASS", output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -836,7 +870,8 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
-    private static string BuildPowerShellHarness(string[] functionNames, string body, string relativeLauncherPath = "tools/test-cathedral-geometry.ps1")
+    private static string BuildPowerShellHarness(string[] functionNames, string body,
+        string relativeLauncherPath = "tools/test-cathedral-geometry.ps1", bool reportProgress = false)
     {
         var launcherPath = Path.Combine(FindRepositoryRoot(), relativeLauncherPath);
         var lines = new List<string>
@@ -849,8 +884,10 @@ public sealed class CathedralPopulationOracleLauncherTests
             "$launcherAst = [System.Management.Automation.Language.Parser]::ParseInput($launcherText, [ref]$tokens, [ref]$parseErrors)",
             "if ($parseErrors.Count -ne 0) { throw ($parseErrors | Out-String) }",
         };
+        if (reportProgress) lines.Insert(0, "Write-Output '[population] parse launcher'");
         foreach (var functionName in functionNames)
         {
+            if (reportProgress) lines.Add($"Write-Output '[population] load {functionName}'");
             lines.Add($"$functionName = {QuotePowerShell(functionName)}");
             lines.Add("$functionAst = $launcherAst.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $functionName }, $true) | Select-Object -First 1");
             lines.Add("if ($null -eq $functionAst) { throw \"Could not extract function $functionName from launcher.\" }");
@@ -874,11 +911,13 @@ public sealed class CathedralPopulationOracleLauncherTests
                 } catch { Add-PopulationTestCleanupFailure $PrimaryFailure $_ }
             }
             """);
+        if (reportProgress) lines.Add("Write-Output '[population] run validator cases'");
         lines.Add(body.Trim());
         return string.Join("\r\n", lines) + "\r\n";
     }
 
-    private static string RunPowerShell(string script, string executable = "powershell.exe")
+    private static string RunPowerShell(string script, string executable = "powershell.exe",
+        int timeoutMilliseconds = 45_000, Func<Process, int, bool>? waitForExit = null)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), $"godevilution-population-test-{Guid.NewGuid():N}.ps1");
         File.WriteAllText(scriptPath, script, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
@@ -904,7 +943,9 @@ public sealed class CathedralPopulationOracleLauncherTests
             {
                 stdout = process.StandardOutput.ReadToEndAsync();
                 stderr = process.StandardError.ReadToEndAsync();
-                if (!process.WaitForExit(45_000))
+                var finished = waitForExit is null ? process.WaitForExit(timeoutMilliseconds)
+                    : waitForExit(process, timeoutMilliseconds);
+                if (!finished)
                 {
                     try { process.Kill(entireProcessTree: true); }
                     catch (Exception exception) { cleanupErrors.Add($"Could not terminate PowerShell harness: {exception.Message}"); }

@@ -48,7 +48,7 @@ public partial class SessionAcceptance
             }
             // As for chests and shrines, reaching operation range completes recovery.
             // The shared obstruction handler fights only when the approach needs it.
-            await Until(() => Settled(main), "The theme object approach did not settle.", 10);
+            await PrepareNativeObjectAsync(main, "Before operating a native theme object");
             var beforeSnapshot = main.ObservedSnapshot!;
             target = beforeSnapshot.Objects.Single(value => value.EntityId == target.EntityId);
             var before = beforeSnapshot.Players.Single();
@@ -112,7 +112,7 @@ public partial class SessionAcceptance
         // The first run opened any required route doors; preserve the checkpoint's door state on resume.
         await MoveAdjacentToNativePosition(main, current => current.Objects.Single(value => value.EntityId == expected.Entity),
             NativeObjectObstruction(main, target, allowClosedDoors: false));
-        await Until(() => Settled(main), "The resumed fountain approach did not settle.", 10);
+        await PrepareNativeObjectAsync(main, "Before reusing a native fountain");
         var before = main.ObservedSnapshot!.Players.Single();
         var sequence = main.ObservedLastQueuedSequence;
         GetViewport().GuiReleaseFocus();

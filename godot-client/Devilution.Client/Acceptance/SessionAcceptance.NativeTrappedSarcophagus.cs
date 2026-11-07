@@ -26,7 +26,7 @@ public partial class SessionAcceptance
         await UseNativeHealingPotionIfNeeded(main);
         await MoveAdjacentToNativePosition(main, current => current.Objects.Single(value => value.EntityId == target.EntityId),
             NativeObjectObstruction(main, target, allowClosedDoors: false));
-        await Until(() => Settled(main), "The trapped sarcophagus approach did not settle.", 10);
+        await PrepareNativeObjectAsync(main, "Before opening the native trapped sarcophagus");
         var before = main.ObservedSnapshot!.Clone();
         target = before.Objects.Single(value => value.EntityId == target.EntityId);
         Require(NativeTrappedSarcophagusJourneyEvidence.CanOpen(before, target.EntityId)

@@ -100,6 +100,7 @@ public partial class SessionAcceptance
                 if (candidate is null)
                     break;
                 await MoveAdjacentToNativeChest(main, candidate.EntityId);
+                await PrepareNativeObjectAsync(main, "Before opening a native Cathedral chest");
                 var chestBefore = FindNativeChest(main.ObservedSnapshot!, candidate.EntityId);
                 Require(chestBefore.NativeChestInteractable && !chestBefore.Activated
                     && !chestBefore.Destroyed && !chestBefore.TrapArmed,
@@ -244,9 +245,8 @@ public partial class SessionAcceptance
         var repeatRejectReason = CommandRejectReason.Unspecified.ToString();
         ulong repeatSequence = priorResultSequence;
         if (queuedAfterClick > priorQueued) {
-            await Until(() => main.ObservedCommandResult is { } result
-                && result.ClientSequence >= queuedAfterClick && main.ObservedPendingCommandCount == 0
-                && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
+            await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), queuedAfterClick,
+                    "The duplicate native chest request"),
                 "The duplicate native chest request did not settle.", stageSeconds: 12);
             var repeatResult = main.ObservedCommandResult!;
             Require(queuedAfterClick == checked(priorQueued + 1)
@@ -377,7 +377,7 @@ public partial class SessionAcceptance
     {
         var interruptions = 0;
         for (var attempt = 0; attempt < 256; attempt++) {
-            await WaitForNativeCommandBoundaryAsync(main, "Native object approach before planning a walk");
+            await PrepareNativeObjectAsync(main, "Native object approach before planning a walk");
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var chest = destination(snapshot);
@@ -428,9 +428,8 @@ public partial class SessionAcceptance
                 Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
                 Input.FlushBufferedEvents();
             }
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == sequence
-                && main.ObservedLastQueuedSequence == sequence && main.ObservedPendingCommandCount == 0
-                && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
+            await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), sequence,
+                    "The cardinal native chest approach command"),
                 "The cardinal native chest approach command did not settle.", stageSeconds: 10);
             var receipt = main.ObservedCommandResult!;
             // A wall trap can start Block/GetHit after the standing snapshot that
@@ -480,6 +479,10 @@ public partial class SessionAcceptance
 
     private static AcceptanceCommandBoundary.Observation ObserveNativeCommandBoundary(Main main)
         => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount);
+
+    private Task PrepareNativeObjectAsync(Main main, string context)
+        => AcceptanceCommandBoundary.PrepareObjectAsync(
+            () => WaitForNativeCommandBoundaryAsync(main, context), () => UseNativeHealingPotionIfNeeded(main));
 
     /** Wait before reading the next route snapshot; recovery or admission can change its starting cell. */
     private Task WaitForNativeCommandBoundaryAsync(Main main, string context, bool settlePlayer = true)

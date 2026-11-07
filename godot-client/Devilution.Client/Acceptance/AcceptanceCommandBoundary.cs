@@ -11,6 +11,27 @@ internal static class AcceptanceCommandBoundary
         => receipt is {ClientSequence: > 0} && receipt.ClientSequence == lastQueuedSequence
             && snapshotTick >= receipt.AppliedTick;
 
+    /** Real potion input can admit another command; plan or operate only from its settled snapshot. */
+    internal static async Task PrepareObjectAsync(Func<Task> waitForBoundary, Func<Task> heal)
+    {
+        await waitForBoundary();
+        await heal();
+        await waitForBoundary();
+    }
+
+    internal static void RequireAlive(Observation state, string context)
+    {
+        if (state.Player is { Life: <= 0 })
+            throw new InvalidOperationException($"{context}: the character died; {state.Describe()}.");
+    }
+
+    /** A rejected movement can precede death; it must not wait forever for Stand. */
+    internal static bool CommandSettled(Observation state, ulong sequence, string context)
+    {
+        RequireAlive(state, context);
+        return state.LastQueuedSequence == sequence && state.CommandsAdmitted && state.PlayerSettled;
+    }
+
     /** Keeps command admission separate from animation settlement: native quick-use can run during an action. */
     internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount)
     {
@@ -40,8 +61,9 @@ internal static class AcceptanceCommandBoundary
     {
         while (true) {
             var state = observe();
-            if (state.PendingCount < 0 || state.Player is { Life: <= 0 })
-                throw new InvalidOperationException($"{context} has an invalid or dead player boundary; {state.Describe()}.");
+            RequireAlive(state, context);
+            if (state.PendingCount < 0)
+                throw new InvalidOperationException($"{context} has an invalid player boundary; {state.Describe()}.");
             if (state.CommandsAdmitted && (!settlePlayer || state.PlayerSettled))
                 return;
             if (expired(state))

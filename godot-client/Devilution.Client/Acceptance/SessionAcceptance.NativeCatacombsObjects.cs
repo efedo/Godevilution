@@ -77,6 +77,7 @@ public partial class SessionAcceptance
                 await SettleInterruptedNativeDoorApproachAsync(main);
                 continue;
             }
+            await PrepareNativeObjectAsync(main, "Before opening a native Catacombs chest");
             var oldItems = main.ObservedSnapshot!.WorldItems.Select(value => value.EntityId).ToHashSet();
             var sequence = main.ObservedLastQueuedSequence;
             GetViewport().GuiReleaseFocus();
