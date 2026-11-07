@@ -77,10 +77,12 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         var drops = IsRequiredTarget(target) ? [] : after.WorldItems.Where(value => IsNewDrop(before, value, target))
             .Select(value => value.EntityId).ToArray();
         var skeletons = after.Monsters.Where(value => IsReleasedSkeleton(before, after, value, target))
-            .Select(value => value.EntityId).ToArray();
+            .Select(value => value.EntityId).Concat(after.Corpses.Where(value => IsReleasedCorpse(before, value, target))
+                .Select(value => value.EntityId)).Distinct().ToArray();
+        var hasFallbackDrop = after.WorldItems.Any(value => drops.Contains(value.EntityId) && !IsNear(value.PositionX, value.PositionY, target));
         var result = new NativeTrappedSarcophagusCheckpoint(target.LevelId, entity, target.PositionX, target.PositionY,
             firing.TrapSource, receipt.AppliedTick, firing.Tick, receipt.ClientSequence, deadlineTick, terminalFrame,
-            Encode(before, target.LevelId), Encode(after, target.LevelId), drops, skeletons);
+            Encode(before, target.LevelId, hasFallbackDrop), Encode(after, target.LevelId), drops, skeletons);
         VerifyRecorded(result);
         return result;
     }
@@ -109,8 +111,8 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             NativeThemeObjectJourneyEvidence.VerifyDrop(item, expected.Level);
         }
         foreach (var id in expected.Skeletons) {
-            var monster = after.Monsters.Single(value => value.EntityId == id);
-            if (!IsReleasedSkeleton(before, after, monster, target))
+            if (!after.Monsters.Any(value => value.EntityId == id && IsReleasedSkeleton(before, after, value, target))
+                && !after.Corpses.Any(value => value.EntityId == id && IsReleasedCorpse(before, value, target)))
                 throw new InvalidOperationException("The sarcophagus has no newly released native skeleton.");
         }
     }
@@ -143,9 +145,70 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             && !before.Monsters.Any(old => old.EntityId == value.EntityId && old.Alive)
             && !before.Corpses.Any(old => old.EntityId == value.EntityId);
 
+    // ReplaceDeadMonsterWithCorpse removes the combat target. Only this reserved ID
+    // still attributes a corpse-only publication to its sarcophagus without an AI row.
+    private static bool IsReleasedCorpse(Snapshot before, CorpseSnapshot value, ObjectSnapshot target)
+        => IsRequiredTarget(target) && value.EntityId == RequiredSkeletonEntity && value.LevelId == target.LevelId
+            && !before.Monsters.Any(old => old.EntityId == value.EntityId && old.Alive)
+            && !before.Corpses.Any(old => old.EntityId == value.EntityId);
+
     private static bool IsNewDrop(Snapshot before, WorldItemSnapshot value, ObjectSnapshot target)
-        => value.EntityId != 0 && value.LevelId == target.LevelId && IsNear(value.PositionX, value.PositionY, target)
-            && !before.WorldItems.Any(old => old.EntityId == value.EntityId);
+        => value.EntityId != 0 && value.LevelId == target.LevelId && !before.WorldItems.Any(old => old.EntityId == value.EntityId)
+            && (IsNear(value.PositionX, value.PositionY, target) || IsNativeFallbackDrop(before, value, target));
+
+    // items.cpp GetSuperItemSpace: when GetItemSpace exhausts the 3x3 area,
+    // take the first free cell in full-square scans k=2..49, y then x.
+    // Items publish no source object, so a distant drop needs this placement proof.
+    private static bool IsNativeFallbackDrop(Snapshot before, WorldItemSnapshot item, ObjectSnapshot target)
+    {
+        const int width = 112;
+        var geometry = before.LevelGeometry.SingleOrDefault(value => value.LevelId == target.LevelId);
+        if (geometry is null || geometry.Width != width || geometry.Height != width
+            || (uint)target.PositionX >= width || (uint)target.PositionY >= width
+            || (uint)item.PositionX >= width || (uint)item.PositionY >= width
+            || Math.Max(Math.Abs((long)item.PositionX - target.PositionX), Math.Abs((long)item.PositionY - target.PositionY)) >= 50)
+            return false;
+        var blocked = geometry.BlockedCells.Concat(geometry.StaticObjectBlockedCells).ToHashSet();
+        var occupied = before.WorldItems.Where(value => value.LevelId == target.LevelId)
+            .Select(value => (value.PositionX, value.PositionY)).ToHashSet();
+        occupied.UnionWith(before.Players.Where(value => value.LevelId == target.LevelId && value.Life > 0)
+            .Select(value => (value.PositionX, value.PositionY)));
+        foreach (var monster in before.Monsters.Where(value => value.LevelId == target.LevelId
+                && (value.Alive || value.DeathTicksRemaining > 0 || value.Petrified))) {
+            occupied.Add((monster.PositionX, monster.PositionY));
+            if (monster.Moving) occupied.Add((monster.FuturePositionX, monster.FuturePositionY));
+        }
+        // OperateSarcophagus clears its selection before item placement.
+        var interactive = before.Objects.Where(value => value.LevelId == target.LevelId && value.EntityId != target.EntityId
+                && !value.Destroyed && (AuthoritativeObjectSelector.HasAuthoritativeInteraction(value) || value.NativeBarrelMeleeBreakable))
+            .Select(value => (value.PositionX, value.PositionY)).ToHashSet();
+        var largeInteractive = interactive.ToHashSet();
+        foreach (var value in before.Objects.Where(value => value.LevelId == target.LevelId
+                && interactive.Contains((value.PositionX, value.PositionY)))) {
+            if (value.NativeObjectId is 48 or 76 or 81) // AddSarcophagus / AddLargeFountain negative references.
+                largeInteractive.Add((value.PositionX, value.PositionY - 1));
+            if (value.NativeObjectId is 76 or 81) {
+                largeInteractive.Add((value.PositionX - 1, value.PositionY));
+                largeInteractive.Add((value.PositionX - 1, value.PositionY - 1));
+            }
+        }
+        bool ItemSpaceOk(int x, int y)
+            => (uint)x < width && (uint)y < width && !blocked.Contains(y * width + x) && !occupied.Contains((x, y))
+                && !largeInteractive.Contains((x + 1, y + 1))
+                && !(interactive.Contains((x + 1, y)) && interactive.Contains((x, y + 1)));
+        for (var y = -1; y <= 1; y++)
+            for (var x = -1; x <= 1; x++)
+                if (ItemSpaceOk(target.PositionX + x, target.PositionY + y)) return false;
+        for (var radius = 2; radius < 50; radius++)
+            for (var y = -radius; y <= radius; y++)
+                for (var x = -radius; x <= radius; x++) {
+                    var candidateX = target.PositionX + x; var candidateY = target.PositionY + y;
+                    if (ItemSpaceOk(candidateX, candidateY))
+                        return item.PositionX == candidateX && item.PositionY == candidateY;
+                }
+        return false;
+    }
+
     private static bool IsNear(int x, int y, ObjectSnapshot target)
         => Math.Max(Math.Abs((long)x - target.PositionX), Math.Abs((long)y - target.PositionY)) <= 1;
     private static bool IsRequiredTarget(ObjectSnapshot target)
@@ -162,7 +225,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             && !value.Destroyed && !value.NativeSarcophagusInteractable && !value.TrapArmed
             && value.AnimationFrame >= original.AnimationFrame;
     private static Snapshot Decode(string value) => Snapshot.Parser.ParseFrom(Convert.FromBase64String(value));
-    private static string Encode(Snapshot value, uint level)
+    private static string Encode(Snapshot value, uint level, bool includePlacement = false)
     {
         var result = new Snapshot {Tick = value.Tick};
         result.Objects.Add(value.Objects.Where(item => item.LevelId == level));
@@ -170,6 +233,17 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         result.WorldItems.Add(value.WorldItems.Where(item => item.LevelId == level));
         result.Monsters.Add(value.Monsters.Where(item => item.LevelId == level));
         result.Corpses.Add(value.Corpses.Where(item => item.LevelId == level));
+        if (includePlacement) {
+            result.Players.Add(value.Players.Where(item => item.LevelId == level).Select(item => new PlayerSnapshot {
+                EntityId = item.EntityId, LevelId = level, PositionX = item.PositionX, PositionY = item.PositionY, Life = item.Life,
+            }));
+            foreach (var geometry in value.LevelGeometry.Where(item => item.LevelId == level)) {
+                var placement = new LevelGeometrySnapshot {LevelId = level, Width = geometry.Width, Height = geometry.Height};
+                placement.BlockedCells.Add(geometry.BlockedCells);
+                placement.StaticObjectBlockedCells.Add(geometry.StaticObjectBlockedCells);
+                result.LevelGeometry.Add(placement);
+            }
+        }
         return Convert.ToBase64String(result.ToByteArray());
     }
 }

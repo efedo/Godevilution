@@ -116,12 +116,34 @@ public sealed class NativeTrappedSarcophagusJourneyEvidenceTests
     public void ANewSkeletonKilledBeforeSparsePublicationStillProvesReleaseThroughItsNativeCorpse()
     {
         var before = Baseline(); var after = Fired(111); AddRelease(after, true);
-        after.Monsters[0].Alive = false; after.Corpses.Add(new CorpseSnapshot {EntityId = ReservedSkeletonEntity, LevelId = 4});
+        AddRelease(before, true); before.Monsters[0].Alive = false; // Dormant reservation in the baseline.
+        after.Monsters.Clear(); // Production has finished death conversion and removed the combat target.
+        after.Corpses.Add(new CorpseSnapshot {EntityId = ReservedSkeletonEntity, LevelId = 4, PositionX = 33, PositionY = 62});
         var checkpoint = NativeTrappedSarcophagusJourneyEvidence.Capture(before, Wire(after), SarcophagusEntity, Receipt(), 210, 8);
+        Assert.Empty(after.Monsters);
+        Assert.Equal(new[] {ReservedSkeletonEntity}, checkpoint.Skeletons);
+        var decoded = JsonSerializer.Deserialize<NativeTrappedSarcophagusCheckpoint>(JsonSerializer.Serialize(checkpoint))!;
         var resumed = Wire(after); resumed.Objects[0].AnimationFrame = 8;
-        NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(resumed, checkpoint);
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(resumed, decoded);
         before.Corpses.Add(after.Corpses[0].Clone());
         Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, SarcophagusEntity, Receipt(), 210, 8));
+    }
+
+    [Fact]
+    public void CorpseOnlyReleaseRejectsOtherIdsFloorsAndPreexistingLiveMonsters()
+    {
+        var before = Baseline(); var after = Fired(111);
+        after.Corpses.Add(new CorpseSnapshot {EntityId = ReservedSkeletonEntity, LevelId = 4});
+        foreach (var corrupt in new Action<Snapshot>[] {
+            value => value.Corpses[0].EntityId++, value => value.Corpses[0].LevelId = 3,
+        }) {
+            var broken = after.Clone(); corrupt(broken);
+            Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(before, broken,
+                SarcophagusEntity, Receipt(), 210, 8));
+        }
+        AddRelease(before, true);
+        Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(before, after,
+            SarcophagusEntity, Receipt(), 210, 8));
     }
 
     [Fact]
