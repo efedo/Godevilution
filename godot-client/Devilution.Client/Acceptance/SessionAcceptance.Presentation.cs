@@ -81,7 +81,9 @@ public partial class SessionAcceptance
             && result.ClientSequence > sequence, "Travel did not submit an accepted movement through the real button.");
         await Click(cancel.GetGlobalRect().GetCenter());
         await Until(() => main.ObservedPendingCommandCount == 0
-            && main.ObservedSnapshot!.Players.Single() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand },
+            && main.ObservedSnapshot!.Players.Single() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand }
+            && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot.Tick,
+                main.ObservedCommandResult, main.ObservedLastQueuedSequence),
             "The in-flight movement did not settle after cancel.");
         var cancelled = main.ObservedSnapshot!.Players.Single().Clone();
         var cancelledSequence = main.ObservedCommandResult!.ClientSequence;
@@ -96,7 +98,8 @@ public partial class SessionAcceptance
         await Until(() => !cancel.Disabled, "Travel did not restart through the real button after cancellation.");
         await Until(() => {
             if (main.ObservedSnapshot?.Players.Single().LevelId == route.TargetLevelId)
-                return true;
+                return main.ObservedPendingCommandCount == 0 && AcceptanceCommandBoundary.HasLatestAppliedReceipt(
+                    main.ObservedSnapshot.Tick, main.ObservedCommandResult, main.ObservedLastQueuedSequence);
             Require(!cancel.Disabled, $"Travel stopped before the transition: {((Label)main.FindChild("TravelStatus", true, false)).Text}; result={main.ObservedCommandResult}");
             return false;
         },

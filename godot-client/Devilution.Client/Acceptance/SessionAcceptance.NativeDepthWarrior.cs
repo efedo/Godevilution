@@ -371,8 +371,13 @@ public partial class SessionAcceptance
             // An interrupted walk can still finish on the trigger; let a pending transition land first.
             await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
             var player = main.ObservedSnapshot!.Players.Single();
-            if (player.LevelId == destination)
+            if (player.LevelId == destination) {
+                await Until(() => Settled(main) && (main.ObservedLastQueuedSequence == 0
+                    || AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                        main.ObservedCommandResult, main.ObservedLastQueuedSequence)),
+                    $"The final arrival command on L{destination} was not admitted.", 10);
                 return;
+            }
             if (player.LevelId != origin) {
                 // Fighting a pack stepped onto the floor's other stairs: walk back and go on.
                 GD.Print($"Native Warrior stepped from L{origin} to L{player.LevelId} while clearing; returning");

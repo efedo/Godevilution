@@ -5,6 +5,48 @@ namespace Devilution.Server.Tests;
 public sealed partial class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void HeadlessAcceptanceRestoresUncappedCadenceWhilePerformanceAndWindowDefaultsStayCapped()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Start-SceneClient"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-AcceptanceFps-' + [guid]::NewGuid().ToString('N'))
+            $SessionDirectory = Join-Path $work 'session'; $captureRoot = Join-Path $work 'logs'
+            $clientProject = Join-Path $work 'project'; $PersistenceMode = 'cohort'; $Multiplayer = $false
+            $savedEnvironment = @{}; $clientCount = 1
+            $clientRunPolicy = [pscustomobject]@{ SceneQuitAfterSeconds = $null; SuppressCrashDialog = $true }
+            function New-GodotProcess($Role, $Arguments, $Environment, $IsHeadless, $SuppressCrashDialog) {
+                $script:childArguments = $Arguments
+                return [pscustomobject]@{ Process = $null }
+            }
+            try {
+                foreach ($Headless in @($true, $false)) {
+                    foreach ($AcceptancePhase in @('', 'Create', 'NativeDepthJourney', 'NativeDepthResume', 'Performance', 'PerformanceCreate', 'PerformanceResume')) {
+                        $performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')
+                        $performanceResume = $AcceptancePhase -eq 'PerformanceResume'
+                        foreach ($TickRateHz in @(20, 200)) {
+                            Start-SceneClient 1 | Out-Null
+                            if ($AcceptancePhase -like 'Performance*') {
+                                if ($childArguments -notmatch '--max-fps 60(?:\s|$)') { throw "Performance cap changed: $AcceptancePhase" }
+                            } elseif ($Headless -and $AcceptancePhase) {
+                                if ($childArguments -notmatch '--max-fps 0(?:\s|$)') { throw "Headless acceptance acquired the normal cap: $AcceptancePhase / $TickRateHz" }
+                            } elseif ($childArguments -match '--max-fps') { throw 'A normal/windowed launch lost its project defaults.' }
+                        }
+                    }
+                }
+                'PASS'
+            } finally {
+                if (Test-Path -LiteralPath $work) {
+                    $resolvedWork = [IO.Path]::GetFullPath($work)
+                    if ([IO.Path]::GetDirectoryName($resolvedWork) -ne [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') -or
+                        [IO.Path]::GetFileName($resolvedWork) -notmatch '^Godevilution-AcceptanceFps-[a-f0-9]{32}$') { throw 'Unexpected test cleanup path.' }
+                    [IO.Directory]::Delete($resolvedWork, $true)
+                }
+            }
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NormalFrameCapturePassesItsSettingsAndStagedAssemblyPathWithoutChangingPerformanceFlags()
     {
         if (!OperatingSystem.IsWindows()) return;

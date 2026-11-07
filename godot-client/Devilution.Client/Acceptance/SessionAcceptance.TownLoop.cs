@@ -470,7 +470,9 @@ public partial class SessionAcceptance
                 && step.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(step),
                 "The destination control did not submit acknowledged movement.", 10);
             await ClickControl(main, sections, 4, "CancelTravel");
-            await Until(() => main.ObservedPendingCommandCount == 0 && Settled(main),
+            await Until(() => main.ObservedPendingCommandCount == 0 && Settled(main)
+                && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                    main.ObservedCommandResult, main.ObservedLastQueuedSequence),
                 "The in-flight destination step did not settle after cancellation.", 10);
             var cancelled = main.ObservedSnapshot!.Players.Single().Clone();
             var cancelledSequence = main.ObservedCommandResult!.ClientSequence;
@@ -484,13 +486,15 @@ public partial class SessionAcceptance
             await ClickControl(main, sections, 4, "ApproachDestination");
         }
         await Until(() => {
-            var player = main.ObservedSnapshot!.Players.Single();
+            var snapshot = main.ObservedSnapshot!;
+            var player = snapshot.Players.Single();
             var result = main.ObservedCommandResult;
             var arrived = target.IsPortal ? player.LevelId != target.LevelId
                 : player.LevelId == target.LevelId && AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y);
             return arrived && Settled(main) && main.ObservedPendingCommandCount == 0
                 && ((Button)main.FindChild("CancelTravel", true, false)).Disabled
-                && result is not null && result.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(result);
+                && result is not null && result.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(result)
+                && AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence);
         }, $"Server-controlled approach and interaction failed for {key}.", deadlineSeconds);
         var arrivedPlayer = main.ObservedSnapshot!.Players.Single();
         WriteEvidence(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")!,

@@ -257,6 +257,7 @@ public partial class SessionAcceptance
         var before = main.ObservedSnapshot!.Players.Single();
         var beforeItemIdentity = CaptureNativePlayerItemIdentity(before);
         var previousSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+        var expectedSequence = checked(previousSequence + 1);
         await ClickWorld(main, destination.X, destination.Y);
         await AcceptedAndSettled(main, previousSequence, "Receive ordinary healing from the Town Healer");
 
@@ -264,18 +265,24 @@ public partial class SessionAcceptance
         var after = main.ObservedSnapshot!.Players.Single();
         var afterItemIdentity = CaptureNativePlayerItemIdentity(after);
         Require(result is not null && IsAcceptedOrSuccessfulDuplicate(result)
-            && result.ClientSequence == checked(previousSequence + 1) && result.AppliedTick > 0
+            && result.ClientSequence == expectedSequence && result.AppliedTick > 0
             && before.LevelId == 0 && after.LevelId == 0
             && after.Life == after.LifeMaximum && after.LifeMaximum == before.LifeMaximum
             && after.Mana == before.Mana && after.Gold == before.Gold && after.StashGold == before.StashGold
             && after.Experience == before.Experience
             && beforeItemIdentity == afterItemIdentity,
-            $"The ordinary Town Healer interaction changed unsupported resources/items or did not restore life: "
-            + $"receipt={result?.ClientSequence}/{result?.AppliedTick}/{result?.Status}/{result?.RejectReason}, "
+            $"The ordinary Town Healer interaction did not match its receipt, resource, or item contract: "
+            + $"expectedSequence={expectedSequence}, receipt={result?.ClientSequence}/{result?.AppliedTick}/{result?.Status}/{result?.RejectReason}, "
+            + $"level={before.LevelId}->{after.LevelId}, "
             + $"life={before.Life}/{before.LifeMaximum}->{after.Life}/{after.LifeMaximum}, "
             + $"mana={before.Mana}->{after.Mana}, gold={before.Gold}->{after.Gold}, "
             + $"stashGold={before.StashGold}->{after.StashGold}, "
-            + $"experience={before.Experience}->{after.Experience}.");
+            + $"experience={before.Experience}->{after.Experience}, "
+            + $"inventoryMatch={beforeItemIdentity.InventorySha256 == afterItemIdentity.InventorySha256}, "
+            + $"beltMatch={beforeItemIdentity.BeltSha256 == afterItemIdentity.BeltSha256}, "
+            + $"equipmentMatch={beforeItemIdentity.EquipmentSha256 == afterItemIdentity.EquipmentSha256}, "
+            + $"stashMatch={beforeItemIdentity.StashSha256 == afterItemIdentity.StashSha256}, "
+            + $"heldMatch={beforeItemIdentity.HeldItemSha256 == afterItemIdentity.HeldItemSha256}.");
 
         return new NativeHealerEvidence(1, result!.ClientSequence, result.AppliedTick,
             result.Status.ToString(), result.RejectReason.ToString(), before.Life, after.Life,
