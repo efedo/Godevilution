@@ -318,6 +318,56 @@ public sealed class NativeTrappedSarcophagusJourneyEvidenceTests
     }
 
     [Fact]
+    public void DisappearingFloorItemsRemainCompetingProducersEvenWhenTheCandidateHasAnotherIdentity()
+    {
+        var before = Baseline(); var after = Fired(111);
+        foreach (var value in before.Objects.Concat(after.Objects)) value.LevelId = 2;
+        AddRelease(after, false);
+        var valid = NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, SarcophagusEntity, Receipt(), 210, 8);
+        before.WorldItems.Add(new WorldItemSnapshot {EntityId = 50, LevelId = 3, ItemSeed = 99,
+            State = new ItemStateSnapshot {StableItemId = 2, CreateInfo = 6}});
+        var captured = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(
+            Wire(before), Wire(after), SarcophagusEntity, Receipt(), 210, 8));
+        Assert.Contains("floor item 50", captured.Message);
+        var recorded = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(valid with {
+            Before = Convert.ToBase64String(Wire(before).ToByteArray()),
+        }));
+        Assert.Contains("floor item 50", recorded.Message);
+    }
+
+    [Theory]
+    [InlineData("floor")] [InlineData("inventory")] [InlineData("belt")] [InlineData("hand")]
+    public void NewEntityCannotReuseAnyItemIdentityVisibleBeforeOpening(string origin)
+    {
+        var before = Baseline(); var after = Fired(111);
+        foreach (var value in before.Objects.Concat(after.Objects)) value.LevelId = 2;
+        AddRelease(after, false);
+        var valid = NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, SarcophagusEntity, Receipt(), 210, 8);
+        var drop = Assert.Single(after.WorldItems);
+        var item = new ItemSnapshot {ItemSeed = drop.ItemSeed, State = drop.State.Clone()};
+        item.State.PositionX = 80; item.State.PositionY = 80; item.State.Identified = true; item.State.Durability = 7;
+        var player = new PlayerSnapshot {EntityId = 1, LevelId = 2};
+        switch (origin) {
+        case "floor":
+            var old = new WorldItemSnapshot {EntityId = 50, LevelId = 2, PositionX = 80, PositionY = 80,
+                ItemSeed = item.ItemSeed, State = item.State.Clone()};
+            before.WorldItems.Add(old); after.WorldItems.Add(old.Clone()); // No disappearance/loss; identity alone must reject it.
+            break;
+        case "inventory": player.Inventory.Add(item); break;
+        case "belt": player.Belt.Add(new BeltItemSnapshot {ItemSeed = item.ItemSeed, State = item.State}); break;
+        case "hand": player.HeldItem = item; break;
+        }
+        before.Players.Add(player.Clone()); after.Players.Add(player.Clone());
+        var captured = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(
+            Wire(before), Wire(after), SarcophagusEntity, Receipt(), 210, 8));
+        Assert.Contains("preexisting item identity", captured.Message);
+        var recorded = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(valid with {
+            Before = Convert.ToBase64String(Wire(before).ToByteArray()), After = Convert.ToBase64String(Wire(after).ToByteArray()),
+        }));
+        Assert.Contains("preexisting item identity", recorded.Message);
+    }
+
+    [Fact]
     public void MovingOwnedItemsBetweenInventoryHandBeltAndEquipmentDoesNotProduceADrop()
     {
         var before = Baseline(); var after = Fired(111);

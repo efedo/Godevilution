@@ -84,6 +84,28 @@ public sealed class NativeSarcophagusFallbackEvidenceTests
     }
 
     [Fact]
+    public void PickingUpAndRedroppingFloorLootCannotProveTheSarcophagusReleasedAnItem()
+    {
+        var (before, after) = Scenario(2);
+        var valid = NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, 20, Receipt(), 210, 8);
+        var drop = Assert.Single(after.WorldItems);
+        var old = drop.Clone(); old.EntityId = 30; old.PositionX = old.State.PositionX = 80;
+        old.PositionY = old.State.PositionY = 80;
+        before.WorldItems.Add(old); // Picked up and re-dropped between publications, now entity 40 at the fallback cell.
+        var player = new PlayerSnapshot {EntityId = 1, LevelId = 2, Life = 64,
+            Inventory = {new ItemSnapshot {ItemSeed = drop.ItemSeed ^ 1, State = new ItemStateSnapshot {StableItemId = 2}}}};
+        before.Players.Add(player.Clone()); after.Players.Add(player.Clone());
+        Assert.Equal(before.Players, after.Players); // No net carried-item loss reveals this producer.
+        var captured = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(
+            Wire(before), Wire(after), 20, Receipt(), 210, 8));
+        Assert.Contains("floor item 30", captured.Message);
+        var forged = valid with {Before = Convert.ToBase64String(Wire(before).ToByteArray()), After = Convert.ToBase64String(Wire(after).ToByteArray())};
+        var decoded = JsonSerializer.Deserialize<NativeTrappedSarcophagusCheckpoint>(JsonSerializer.Serialize(forged))!;
+        var recorded = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(decoded));
+        Assert.Contains("floor item 30", recorded.Message);
+    }
+
+    [Fact]
     public void OnlyTheSarcophagusProducerRetainsItsNativeDropAndCarriedItemProof()
     {
         var (before, after) = Scenario(2);

@@ -77,7 +77,10 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         // The required L4 owner is a skeleton case, so even nearby combat loot is not its outcome.
         var drops = IsRequiredTarget(target) ? [] : after.WorldItems.Where(value => IsNewDrop(before, value, target))
             .Select(value => value.EntityId).ToArray();
-        if (drops.Length != 0) VerifySoleLootProducer(before, after, entity);
+        if (drops.Length != 0) {
+            VerifySoleLootProducer(before, after, entity);
+            foreach (var id in drops) VerifyNewLootIdentity(before, after.WorldItems.Single(value => value.EntityId == id));
+        }
         var skeletons = after.Monsters.Where(value => IsReleasedSkeleton(before, after, value, target))
             .Select(value => value.EntityId).Concat(after.Corpses.Where(value => IsReleasedCorpse(before, value, target))
                 .Select(value => value.EntityId)).Distinct().ToArray();
@@ -112,6 +115,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             var item = after.WorldItems.Single(value => value.EntityId == id);
             if (!IsNewDrop(before, item, target))
                 throw new InvalidOperationException("The sarcophagus loot is preexisting or outside its native drop placement.");
+            VerifyNewLootIdentity(before, item);
             NativeThemeObjectJourneyEvidence.VerifyDrop(item, expected.Level);
         }
         foreach (var id in expected.Skeletons) {
@@ -163,6 +167,11 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
 
     private static void VerifySoleLootProducer(Snapshot before, Snapshot after, uint sarcophagus)
     {
+        foreach (var item in before.WorldItems) {
+            var identity = ItemIdentity(item.ItemSeed, item.State);
+            if (!after.WorldItems.Any(value => value.EntityId == item.EntityId && ItemIdentity(value.ItemSeed, value.State) == identity))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: existing floor item {item.EntityId} disappeared or changed identity.");
+        }
         foreach (var corpse in after.Corpses)
             if (!before.Corpses.Any(value => value.EntityId == corpse.EntityId && value.LevelId == corpse.LevelId))
                 throw new InvalidOperationException($"Ambiguous sarcophagus loot: new corpse {corpse.EntityId} is another visible drop producer.");
@@ -192,6 +201,18 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         }
     }
 
+    private static void VerifyNewLootIdentity(Snapshot before, WorldItemSnapshot candidate)
+    {
+        var identity = ItemIdentity(candidate.ItemSeed, candidate.State);
+        if (before.WorldItems.Any(value => ItemIdentity(value.ItemSeed, value.State) == identity)
+            || before.Players.Any(value => CarriedItems(value).ContainsKey(identity)))
+            throw new InvalidOperationException($"Ambiguous sarcophagus loot: floor item {candidate.EntityId} has a preexisting item identity (seed {candidate.ItemSeed}).");
+    }
+
+    // Ground entity IDs and mutable item state change on pickup/drop; the native identity does not.
+    private static (uint Seed, uint StableId, uint CreateInfo, int Index, int UniqueId) ItemIdentity(uint seed, ItemStateSnapshot? state)
+        => (seed, state?.StableItemId ?? 0, state?.CreateInfo ?? 0, state?.ItemIndex ?? 0, state?.UniqueId ?? 0);
+
     private static Dictionary<(uint Seed, uint StableId, uint CreateInfo, int Index, int UniqueId), long> CarriedItems(PlayerSnapshot player)
     {
         var items = player.Inventory.Select(value => (value.ItemSeed, value.State))
@@ -201,7 +222,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         if (player.HeldItem is { } held) items = items.Append((held.ItemSeed, held.State));
         var result = new Dictionary<(uint, uint, uint, int, int), long>();
         foreach (var (seed, state) in items) {
-            var key = (seed, state?.StableItemId ?? 0, state?.CreateInfo ?? 0, state?.ItemIndex ?? 0, state?.UniqueId ?? 0);
+            var key = ItemIdentity(seed, state);
             var amount = state?.PresentationKind == Devilution.Protocol.V1.ItemPresentationKind.Gold ? Math.Max(1L, state.Value) : 1;
             result[key] = result.GetValueOrDefault(key) + amount;
         }
