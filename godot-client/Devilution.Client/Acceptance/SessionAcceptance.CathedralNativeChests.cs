@@ -377,6 +377,7 @@ public partial class SessionAcceptance
     {
         var interruptions = 0;
         for (var attempt = 0; attempt < 256; attempt++) {
+            await WaitForNativeCommandBoundaryAsync(main, "Native object approach before planning a walk");
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var chest = destination(snapshot);
@@ -386,8 +387,21 @@ public partial class SessionAcceptance
                 return;
             var geometry = DepthGeometryFromSnapshot(snapshot, chest.LevelId);
             var path = NativeObjectApproachPath.Find(snapshot, geometry, chest, pickup);
-            if (resolveObstruction is not null && await resolveObstruction(path is null))
-                continue;
+            if (resolveObstruction is not null) {
+                if (await resolveObstruction(path is null))
+                    continue;
+                // A resolver can await combat and still return false (for example, no actor remains).
+                await WaitForNativeCommandBoundaryAsync(main, "Native object approach after resolving an obstruction");
+                snapshot = main.ObservedSnapshot!;
+                player = snapshot.Players.Single();
+                chest = destination(snapshot);
+                if (player.LevelId == chest.LevelId
+                    && NativeObjectApproachPath.IsInRange(player.PositionX, player.PositionY,
+                        chest.PositionX, chest.PositionY, pickup))
+                    return;
+                geometry = DepthGeometryFromSnapshot(snapshot, chest.LevelId);
+                path = NativeObjectApproachPath.Find(snapshot, geometry, chest, pickup);
+            }
             if (path is not { Count: > 0 })
                 throw new NativeObjectApproachUnavailableException($"No ordinary walk path reaches native target {chest.PositionX},{chest.PositionY}.");
             var step = path![0];
@@ -401,8 +415,6 @@ public partial class SessionAcceptance
                 _ => dy > 0 ? Key.Down : Key.Up,
             };
             var previousSequence = main.ObservedLastQueuedSequence;
-            Require(NativeWalkBoundarySettled(main),
-                "Native chest approach requires a settled client command boundary before walking.");
             GetViewport().GuiReleaseFocus();
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
             Input.FlushBufferedEvents();
@@ -432,7 +444,7 @@ public partial class SessionAcceptance
                 if (++interruptions > 8)
                     throw new NativeObjectApproachUnavailableException($"Native target {chest.EntityId} approach stayed interrupted by combat after 8 retries.");
                 GD.Print($"Native target {chest.EntityId} approach interrupted by {receipt.RejectReason} at ({step.X},{step.Y}), tick {receipt.AppliedTick}; retry {interruptions}.");
-                await Until(() => NativeWalkBoundarySettled(main), "The interrupted native target approach did not settle.", 10);
+                await WaitForNativeCommandBoundaryAsync(main, "Interrupted native target approach");
                 if (resolveObstruction is not null) await resolveObstruction(true);
                 continue; // Replan from the fresh snapshot, including the blocking actor's future cell.
             }
@@ -461,9 +473,23 @@ public partial class SessionAcceptance
 
     /** Whether the client can queue a fresh walk: no command is pending and the last queued one has its receipt. */
     private static bool NativeWalkBoundarySettled(Main main)
-        => main.ObservedPendingCommandCount == 0 && Settled(main)
-            && (main.ObservedCommandResult is null
-                || main.ObservedCommandResult.ClientSequence == main.ObservedLastQueuedSequence);
+    {
+        var state = ObserveNativeCommandBoundary(main);
+        return state.CommandsAdmitted && state.PlayerSettled;
+    }
+
+    private static AcceptanceCommandBoundary.Observation ObserveNativeCommandBoundary(Main main)
+        => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount);
+
+    /** Wait before reading the next route snapshot; recovery or admission can change its starting cell. */
+    private Task WaitForNativeCommandBoundaryAsync(Main main, string context, bool settlePlayer = true)
+    {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var startTick = main.ObservedSnapshot?.Tick;
+        return AcceptanceCommandBoundary.WaitAsync(() => ObserveNativeCommandBoundary(main), Frame,
+            state => AcceptanceTickBudget.StageExpired(10, clock.Elapsed.TotalSeconds,
+                main.ObservedIdentity?.TickRateHz, startTick, state.Snapshot?.Tick), context, settlePlayer);
+    }
 
     private static ObjectSnapshot FindNativeChest(Snapshot snapshot, uint entityId)
         => snapshot.Objects.Single(value => value.EntityId == entityId && value.LevelId == 1);

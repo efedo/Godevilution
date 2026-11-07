@@ -1884,6 +1884,8 @@ public partial class SessionAcceptance
         }
         Require(useButton.Visible && !useButton.Disabled,
             $"The ordinary consumable control was unavailable; life={player.Life}/{player.LifeMaximum}.");
+        await WaitForNativeCommandBoundaryAsync(main, "Native healing quick-use before clicking", settlePlayer: false);
+        player = main.ObservedSnapshot!.Players.Single();
         var beforeLife = player.Life;
         var beforeTick = main.ObservedSnapshot!.Tick;
         var beforeAction = player.CurrentAction?.Kind;
@@ -1894,10 +1896,6 @@ public partial class SessionAcceptance
         var preserveActiveNativeWalk = SupportsNativeQueuedRangedAttacks(main)
             && IsNativeWalkAction(player);
         var sequence = NativeProgressionCommandCursor(main);
-        Require((main.ObservedLastQueuedSequence == sequence || IsNativeProgressionColdCommandBoundary(main))
-            && main.ObservedPendingCommandCount == 0,
-            $"Quick-use began before the previous command settled; result={sequence}, "
-            + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}.");
         var expectedSequence = checked(sequence + 1);
         await Click(useButton.GetGlobalRect().GetCenter());
         // A press can be lost while the HUD rebuilds under heavy combat; press again only if nothing queued.

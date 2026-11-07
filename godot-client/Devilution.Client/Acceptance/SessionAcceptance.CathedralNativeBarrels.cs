@@ -273,6 +273,7 @@ public partial class SessionAcceptance
     private async Task MoveAdjacentToNativeBarrel(Main main, uint entityId)
     {
         while (true) {
+            await WaitForNativeCommandBoundaryAsync(main, "Native barrel approach before planning a walk");
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             var chest = FindNativeChest(snapshot, entityId);
@@ -293,10 +294,6 @@ public partial class SessionAcceptance
                 _ => dy > 0 ? Key.Down : Key.Up,
             };
             var previousSequence = main.ObservedLastQueuedSequence;
-            Require(main.ObservedPendingCommandCount == 0 && Settled(main)
-                && (main.ObservedCommandResult is null
-                    || main.ObservedCommandResult.ClientSequence == previousSequence),
-                "Native chest approach requires a settled client command boundary before walking.");
             GetViewport().GuiReleaseFocus();
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
             Input.FlushBufferedEvents();

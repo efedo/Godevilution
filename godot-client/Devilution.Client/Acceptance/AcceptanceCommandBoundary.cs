@@ -1,3 +1,4 @@
+using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Acceptance;
@@ -9,4 +10,34 @@ internal static class AcceptanceCommandBoundary
     internal static bool HasLatestAppliedReceipt(ulong snapshotTick, CommandResult? receipt, ulong lastQueuedSequence)
         => receipt is {ClientSequence: > 0} && receipt.ClientSequence == lastQueuedSequence
             && snapshotTick >= receipt.AppliedTick;
+
+    /** Keeps command admission separate from animation settlement: native quick-use can run during an action. */
+    internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount)
+    {
+        internal PlayerSnapshot? Player => Snapshot?.Players.Count == 1 ? Snapshot.Players[0] : null;
+        internal bool CommandsAdmitted => Snapshot is not null && PendingCount == 0
+            && (LastQueuedSequence == 0 ? Receipt is null : HasLatestAppliedReceipt(Snapshot.Tick, Receipt, LastQueuedSequence));
+        internal bool PlayerSettled => Player is { } player && AuthoritativePlayerSettlement.IsSettled(player, PendingCount);
+        internal string Describe()
+            => $"queued={LastQueuedSequence}, receipt={Receipt?.ClientSequence}/{Receipt?.AppliedTick}/{Receipt?.Status}/{Receipt?.RejectReason}, "
+                + $"snapshotTick={Snapshot?.Tick}, pending={PendingCount}, level={Player?.LevelId}, "
+                + $"position=({Player?.PositionX},{Player?.PositionY}), life={Player?.Life}, mode={Player?.CombatMode}, "
+                + $"action={Player?.CurrentAction?.Kind}, walkPending={Player?.NativeWalkPathPending}";
+    }
+
+    /** Polls the live boundary; the caller supplies the existing tick/wall budget and real frame pump. */
+    internal static async Task WaitAsync(Func<Observation> observe, Func<Task> nextFrame,
+        Func<Observation, bool> expired, string context, bool settlePlayer = true)
+    {
+        while (true) {
+            var state = observe();
+            if (state.PendingCount < 0 || state.Player is { Life: <= 0 })
+                throw new InvalidOperationException($"{context} has an invalid or dead player boundary; {state.Describe()}.");
+            if (state.CommandsAdmitted && (!settlePlayer || state.PlayerSettled))
+                return;
+            if (expired(state))
+                throw new InvalidOperationException($"{context} timed out waiting for the client command boundary to settle; {state.Describe()}.");
+            await nextFrame();
+        }
+    }
 }
