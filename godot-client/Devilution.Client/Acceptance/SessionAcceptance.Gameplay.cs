@@ -231,7 +231,8 @@ public partial class SessionAcceptance
             observe?.Invoke(snapshot);
             Require(snapshot.Players.Single().Life > 0, $"{action}: the character died at tick {snapshot.Tick}.");
             var result = main.ObservedCommandResult;
-            if (result is null || result.ClientSequence <= previousSequence)
+            if (result is null || result.ClientSequence <= previousSequence
+                || !AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence))
                 return false;
             Require(main.ObservedCommandWasApplied, $"{action}: {result.Status}/{result.RejectReason}.");
             return main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main);

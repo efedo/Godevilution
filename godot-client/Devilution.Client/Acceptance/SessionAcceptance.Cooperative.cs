@@ -404,7 +404,9 @@ public partial class SessionAcceptance
             return;
         }
         await Until(() => FindCooperativePlayer(main.ObservedSnapshot!, ParseLocalSlot()).LevelId == 1
-            && main.ObservedPendingCommandCount == 0,
+            && main.ObservedPendingCommandCount == 0
+            && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                main.ObservedCommandResult, main.ObservedLastQueuedSequence),
             "The cooperative pair did not reach the authored dungeon.", 60);
     }
 

@@ -2292,6 +2292,11 @@ try {
         $godotArguments = '--path "{0}" --log-file "{1}"' -f $clientProject, $clientLog
         if ($Headless) { $godotArguments += ' --headless' }
         if ($performance) { $godotArguments += ' --max-fps 60' }
+        elseif ($performanceResume) { $godotArguments += ' --max-fps 60' }
+        elseif ($Headless -and $AcceptancePhase) {
+            # Frame-paced journeys retain their pre-cap cadence, including accelerated server clocks.
+            $godotArguments += ' --max-fps 0'
+        }
         $clientEvidence = $null
         if ($AcceptancePhase) {
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase

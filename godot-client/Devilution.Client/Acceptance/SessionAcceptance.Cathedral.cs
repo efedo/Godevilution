@@ -122,7 +122,8 @@ public partial class SessionAcceptance
                 Require(player.Life > 0, "The character died during generated-route traversal.");
                 if (player.LevelId != origin.LevelId) {
                     Require(!stopEarly && player.LevelId == destinationLevel, "Traversal left the generated level before the checkpoint.");
-                    return Settled(main);
+                    return Settled(main) && AcceptanceCommandBoundary.HasLatestAppliedReceipt(
+                        snapshot.Tick, main.ObservedCommandResult, main.ObservedLastQueuedSequence);
                 }
                 var geometry = snapshot.LevelGeometry.Single(level => level.LevelId == origin.LevelId);
                 Require(!geometry.BlockedCells.Contains(player.PositionY * geometry.Width + player.PositionX),

@@ -187,16 +187,23 @@ public partial class SessionAcceptance
             await Until(() => {
                 var player = NativeMultiplayerLocal(main, name);
                 Require(player.Life > 0, $"The participant died walking to L{target}.");
-                return player.LevelId == target && main.ObservedPendingCommandCount == 0 || cancel.Disabled;
+                return (player.LevelId == target || cancel.Disabled) && main.ObservedPendingCommandCount == 0
+                    && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                        main.ObservedCommandResult, main.ObservedLastQueuedSequence);
             }, $"The participant's travel neither stopped nor reached L{target}.", 120);
             if (NativeMultiplayerLocal(main, name).LevelId == target) {
-                await Until(() => main.ObservedPendingCommandCount == 0, $"Travel commands did not drain on L{target}.", 15);
+                await Until(() => main.ObservedPendingCommandCount == 0
+                    && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                        main.ObservedCommandResult, main.ObservedLastQueuedSequence),
+                    $"Travel commands did not drain on L{target}.", 15);
                 return;
             }
             var stopped = NativeMultiplayerLocal(main, name);
             GD.Print($"Native multiplayer travel stopped at {stopped.PositionX},{stopped.PositionY}: "
                 + $"{((Label)main.FindChild("TravelStatus", true, false)).Text}; {main.ObservedCommandResult}");
-            await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount),
+            await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount)
+                && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                    main.ObservedCommandResult, main.ObservedLastQueuedSequence),
                 "The stopped travel did not settle.", 15);
         }
         throw new InvalidOperationException($"The participant did not reach native multiplayer L{target} after six travel attempts.");
