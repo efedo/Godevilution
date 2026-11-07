@@ -8,11 +8,16 @@ public sealed partial class AuthoritativeClient
     /** A transport handshake alone cannot release a failed model-admission boundary. */
     public bool RequiresCompleteSnapshotAdmission => Volatile.Read(ref snapshotAdmissionRejected) != 0;
 
+    public bool IsCurrentSnapshotMessage(AuthoritativeClientMessage message)
+        => message.Snapshot is null || message.ConnectionAttemptEpoch == 0
+            || message.ConnectionAttemptEpoch == Interlocked.Read(ref initialConnectionAttemptEpoch);
+
     /** Fences gameplay immediately on admission failure, until a new connection's complete baseline is admitted. */
     public void ApplyMessageToModel(AuthoritativeClientModel model, AuthoritativeClientMessage message)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(message);
+        if (!IsCurrentSnapshotMessage(message)) return;
         var recovering = RequiresCompleteSnapshotAdmission;
         var admittedRevision = model.AcceptedSnapshotRevision;
         try {

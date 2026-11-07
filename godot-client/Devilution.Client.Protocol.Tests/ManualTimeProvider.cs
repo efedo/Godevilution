@@ -12,6 +12,16 @@ internal sealed class ManualTimeProvider : TimeProvider
     public override long GetTimestamp() { lock (synchronization) return timestamp; }
     public override DateTimeOffset GetUtcNow() => DateTimeOffset.UnixEpoch.AddTicks(GetTimestamp());
 
+    public TimeSpan? NextTimerDelay
+    {
+        get {
+            lock (synchronization) {
+                var next = timers.Where(timer => timer.DueAt.HasValue).Select(timer => timer.DueAt).Min();
+                return next.HasValue ? TimeSpan.FromTicks(next.Value - timestamp) : null;
+            }
+        }
+    }
+
     public void Advance(TimeSpan duration)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(duration, TimeSpan.Zero);

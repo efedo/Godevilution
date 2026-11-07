@@ -464,30 +464,11 @@ public partial class Main : Node2D
                     Detail = connectionError.Detail,
                 }));
 
-            foreach (var message in activeClient.DrainMessages()) {
-                try {
-                    var admissionStarted = FrameCostTimestamp();
-                    var admissionAllocationStart = FrameCostAllocation();
-                    try { ApplyAuthoritativeMessage(activeClient, message); }
-                    finally {
-                        admissionMilliseconds += FrameCostElapsed(admissionStarted);
-                        admissionAllocated += FrameCostAllocationSince(admissionAllocationStart);
-                    }
-                    if (message.Events is not null)
-                        observedEventBatchCount = checked(observedEventBatchCount + 1);
-                    if (message.Acknowledgement is { } acknowledgement) {
-                        foreach (var result in acknowledgement.Results)
-                            heldEntityAttack.ObserveResult(result);
-                        AcceptanceAcknowledgementObserver?.Invoke(acknowledgement.Clone());
-                    }
-                    if (message.Snapshot is not null) {
-                        snapshotRevision++;
-                        AcceptanceSnapshotObserver?.Invoke(model.CompleteSnapshotObservation(message.Snapshot));
-                    }
-                } catch (Exception exception) {
-                    hud?.SetStatus(sessionStatusOverride ?? $"Invalid authoritative state: {exception.Message}");
-                    return; // Never dispatch input or drain the rejected connection further in this frame.
-                }
+            var admittedBatch = ApplyAuthoritativeBatch(activeClient, activeClient.DrainMessages());
+            if (CompleteFailedAdmissionRecovery()) return;
+            if (!admittedBatch) {
+                if (activeClient.RequiresCompleteSnapshotAdmission) StartReconnect(force: true);
+                return;
             }
 
             if (activeClient.PendingCommandCount == 0
@@ -505,7 +486,8 @@ public partial class Main : Node2D
                     StartReconnect(force: true);
             }
 
-            if (NeedsTransportReconnect(activeClient, connectionTask, reconnectTask))
+            if (NeedsTransportReconnect(activeClient, connectionTask, reconnectTask)
+                || activeClient.RequiresCompleteSnapshotAdmission && (reconnectTask?.IsCompleted ?? true))
                 StartReconnect(force: false);
         }
 
@@ -1208,22 +1190,6 @@ public partial class Main : Node2D
         }
     }
 
-    private void StartReconnect(bool force)
-    {
-        routeTravel.Cancel("Travel stopped: connection lost.");
-        interactionTravel.Cancel();
-        model.ResetTransientPresentation();
-        world?.MarkPresentationEpochPending(model.AcceptedSnapshotRevision);
-        if (client is { } activeClient
-            && !sessionTransition
-            && (reconnectTask is null || reconnectTask.IsCompleted))
-            reconnectTask = ReconnectLoopAsync(
-                activeClient,
-                sessionGeneration,
-                connectionLifetime?.Token ?? lifetime.Token,
-                force);
-    }
-
     private void PersistLocalBookmark(AuthoritativeClient activeClient, long generation)
     {
         if (!persistLocalSession || !IsCurrentSession(activeClient, generation))
@@ -1240,42 +1206,6 @@ public partial class Main : Node2D
                 sessionStatusOverride = null;
         } catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException) {
             localSessionWarning = $"Resume bookmark could not be saved. Keep this session open and fix access to {resumeTokenPath}. Retrying every 5 seconds. {exception.Message}";
-        }
-    }
-
-    private async Task ReconnectLoopAsync(
-        AuthoritativeClient reconnectClient,
-        long generation,
-        CancellationToken cancellationToken,
-        bool force)
-    {
-        var firstAttempt = true;
-        var delay = TimeSpan.Zero;
-        while (!cancellationToken.IsCancellationRequested
-            && IsCurrentSession(reconnectClient, generation)) {
-            if (!force && !firstAttempt && reconnectClient.IsConnected)
-                return;
-            if (delay > TimeSpan.Zero) {
-                try {
-                    await Task.Delay(delay, cancellationToken);
-                } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-                    return;
-                }
-            }
-
-            try {
-                await reconnectClient.ReconnectAsync(cancellationToken);
-                return;
-            } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-                return;
-            } catch (Exception exception) {
-                SetSessionError(reconnectClient, generation, exception.Message);
-                delay = delay == TimeSpan.Zero
-                    ? TimeSpan.FromMilliseconds(250)
-                    : TimeSpan.FromMilliseconds(Math.Min(delay.TotalMilliseconds * 2, 5000));
-                force = false;
-            }
-            firstAttempt = false;
         }
     }
 

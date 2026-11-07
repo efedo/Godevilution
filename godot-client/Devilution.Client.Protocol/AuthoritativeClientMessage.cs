@@ -9,6 +9,9 @@ public sealed record AuthoritativeClientMessage(
     CommandAck? Acknowledgement = null,
     ProtocolError? Error = null)
 {
+    /** Local receiving attempt; zero for offline messages. Never serialized on the product wire. */
+    public long ConnectionAttemptEpoch { get; init; }
+
     /** Frozen local send identities for rescheduled receipts; never added to the wire. */
     public IReadOnlyList<AuthoritativeCommandReceiptContext>? AcknowledgedCommands { get; init; }
 

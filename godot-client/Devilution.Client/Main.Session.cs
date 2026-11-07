@@ -78,25 +78,25 @@ public partial class Main
         returnCleanupTask = ReturnToSessionMenuAsync();
     }
 
-    private async Task ReturnToSessionMenuAsync()
+    private async Task ReturnToSessionMenuAsync(string? admissionFailure = null)
     {
         if (sessionTransition)
             return;
 
         var activeClient = cleanupClient ?? client;
         var pendingCount = activeClient?.PendingCommandCount ?? 0;
-        if (!SessionLifecyclePolicy.CanBeginReturn(sessionTransition, pendingCount)
+        if (admissionFailure is null && !SessionLifecyclePolicy.CanBeginReturn(sessionTransition, pendingCount)
             && cleanupClient is null) {
             sessionStatusOverride = SessionLifecyclePolicy.ReturnMessage(pendingCount);
             hud?.SetStatus(sessionStatusOverride);
             return;
         }
-        if (!SessionLifecyclePolicy.CanReturnToSessionMenu(pendingCount)) {
+        if (admissionFailure is null && !SessionLifecyclePolicy.CanReturnToSessionMenu(pendingCount)) {
             sessionStatusOverride = SessionLifecyclePolicy.ReturnMessage(pendingCount);
             hud?.SetStatus(sessionStatusOverride);
             return;
         }
-        if (localSessionWarning is not null) {
+        if (admissionFailure is null && localSessionWarning is not null) {
             sessionStatusOverride = $"{localSessionWarning} Return is disabled until the bookmark is saved.";
             hud?.SetStatus(sessionStatusOverride);
             return;
@@ -105,7 +105,8 @@ public partial class Main
         var selectedConnectionOptions = activeConnectionOptions;
         var selectedUsesLocalBookmark = persistLocalSession;
         sessionTransition = true;
-        sessionStatusOverride = SessionLifecyclePolicy.ReturnMessage(0);
+        // Invalid authority must close even with unacknowledged intents or a failed bookmark write.
+        sessionStatusOverride = admissionFailure ?? SessionLifecyclePolicy.ReturnMessage(0);
         hud?.SetSessionMenuTransition(true);
         hud?.SetStatus(sessionStatusOverride);
         ResetPresentationForNewSession();
@@ -164,7 +165,7 @@ public partial class Main
         cleanupClient = null;
         sessionTransition = false;
         hud?.SetSessionMenuTransition(false);
-        ShowSessionMenu(cleanupResult.WorkFailure);
+        ShowSessionMenu(cleanupResult.WorkFailure, admissionFailure);
     }
 
     private async Task<Exception?> JoinSessionWorkAsync(
@@ -216,6 +217,9 @@ public partial class Main
     {
         routeTravel.Cancel();
         interactionTravel.Cancel();
+        Volatile.Write(ref recoveryAdmission, null);
+        Interlocked.Exchange(ref failedAdmissionRecovery, null);
+        Volatile.Write(ref admissionRecoveryAttempts, 0);
         model = new AuthoritativeClientModel();
         modelGeneration = checked(modelGeneration + 1);
         observedEventBatchCount = 0;
@@ -234,7 +238,7 @@ public partial class Main
         hud?.SetStatus("Choose a character to connect to the authoritative server.");
     }
 
-    private void ShowSessionMenu(Exception? cleanupWorkFailure = null)
+    private void ShowSessionMenu(Exception? cleanupWorkFailure = null, string? admissionFailure = null)
     {
         if (lifetime.IsCancellationRequested) {
             Interlocked.Increment(ref postExitMenuPublicationCount);
@@ -292,7 +296,9 @@ public partial class Main
         characterSetup!.ShowSetup(defaults);
         var warning = SessionLifecyclePolicy.MenuWarningMessage(
             menuResumeInMemoryOnly, bookmarkError, cleanupWorkFailure);
-        if (warning is not null)
+        if (admissionFailure is not null)
+            characterSetup.ShowError(warning is null ? admissionFailure : $"{admissionFailure} {warning}");
+        else if (warning is not null)
             characterSetup.ShowError(warning);
         sessionStatusOverride = null;
     }

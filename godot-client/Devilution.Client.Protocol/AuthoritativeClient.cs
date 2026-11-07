@@ -968,6 +968,9 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         return messages;
     }
 
+    /** Closes the transport while retaining the client for the normal session cleanup owner. */
+    public Task DisconnectAsync() => CloseTransportAsync();
+
     public async ValueTask DisposeAsync()
     {
         lifetime.Cancel();
@@ -1106,13 +1109,14 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         }
         if (snapshotTiming is not null)
             TryRecordSnapshot(CommandTimingRecorder, snapshotTiming);
+        var attemptEpoch = Interlocked.Read(ref initialConnectionAttemptEpoch);
         incoming.Enqueue(envelope.PayloadCase switch {
-            Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot),
-            Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch),
+            Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot) { ConnectionAttemptEpoch = attemptEpoch },
+            Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch) { ConnectionAttemptEpoch = attemptEpoch },
             Envelope.PayloadOneofCase.CommandAck => new AuthoritativeClientMessage(Acknowledgement: envelope.CommandAck) {
-                AcknowledgedCommands = acknowledgedCommands,
+                AcknowledgedCommands = acknowledgedCommands, ConnectionAttemptEpoch = attemptEpoch,
             },
-            Envelope.PayloadOneofCase.Error => new AuthoritativeClientMessage(Error: envelope.Error),
+            Envelope.PayloadOneofCase.Error => new AuthoritativeClientMessage(Error: envelope.Error) { ConnectionAttemptEpoch = attemptEpoch },
             _ => new AuthoritativeClientMessage(Error: new ProtocolError {
                 Code = ProtocolErrorCode.InvalidMessage,
                 Detail = $"Unexpected server payload: {envelope.PayloadCase}",
