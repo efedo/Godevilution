@@ -479,9 +479,7 @@ public partial class HudPresentation : CanvasLayer
         if (commandChanges.ShouldUpdate(commandFeedback.IsVisibleInTree(), model.LastCommandResult))
             commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
         if (diagnostics.IsVisibleInTree()) diagnostics.Text = FormatDiagnostics(model, client);
-        if (inventoryCaptionChanges.ShouldUpdate(inventory.IsVisibleInTree(),
-                (player?.Inventory.Count ?? 0, player?.Belt.Count ?? 0, player?.Equipment.Count ?? 0, player?.HeldItem)))
-            inventory.Text = FormatInventory(player);
+        ApplyInventoryCaption(player);
         ApplyInventoryGrid(player);
         ApplyBeltItems(player);
         ApplyEquipmentItems(player);

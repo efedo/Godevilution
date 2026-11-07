@@ -15,7 +15,7 @@ public partial class HudPresentation
     private readonly PresentationChangeGate<(uint, RepeatedField<StoreItemSnapshot>?, uint?)> storeChanges = new();
     private readonly PresentationChangeGate<(RepeatedField<StashItemSnapshot>?, bool, uint, uint, int)> stashChanges = new();
     private readonly PresentationChangeGate<(IReadOnlyList<AuthoritativeSpellSource>, string?, bool)> spellChanges = new();
-    private readonly PresentationChangeGate<(int, int, int, ItemSnapshot?)> inventoryCaptionChanges = new();
+    private readonly PresentationChangeGate<(bool, int, int, int, ItemSnapshot?)> inventoryCaptionChanges = new();
     private readonly PresentationChangeGate<(bool, uint, PlayerAttributesSnapshot?)> attributeChanges = new();
     private readonly PresentationChangeGate<(bool, bool, uint, RepeatedField<StatusEffectSnapshot>?)> statusChanges = new();
     private readonly PresentationChangeGate<(RepeatedField<BeltItemSnapshot>?, bool, bool, bool, bool, PlayerCombatMode)> quickBeltChanges = new();
@@ -30,13 +30,15 @@ public partial class HudPresentation
     private bool layoutDirty = true;
     private Vector2 lastLayoutSize;
 
+    /** Widget selections can change while the admitted snapshot stays unchanged. */
     private bool NeedsHudApply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connection)
         => hudChanges.ShouldUpdate(true, new(model, client, connection, model.AcceptedSnapshotRevision, model.LastCommandResult,
             model.RecentEventsStartSequence, model.RecentEventsEndSequence, model.LastError,
             client?.IsConnected == true, client?.PendingCommandCount ?? 0, client?.RetryTimeout.Ticks ?? 0,
             connection?.Status, model.IsCorrectingPosition, sections.CurrentTab, diagnosticsToggle.ButtonPressed,
             selectedInventoryIndex, selectedBeltSlot, selectedEquipmentSlot, selectedStoreSlot,
-            selectedStashItemIndex, stashPage, selectedOilTarget, selectedSpellText, sessionMenuTransition));
+            selectedStashItemIndex, stashPage, selectedOilTarget, selectedSpellText, sessionMenuTransition,
+            routes.Selected, destinations.Selected));
 
     private void UpdateHudClock()
     {
@@ -48,6 +50,14 @@ public partial class HudPresentation
         if (text == lastClockText) return;
         lastClockText = text;
         clock.Text = text;
+    }
+
+    private void ApplyInventoryCaption(PlayerSnapshot? player)
+    {
+        // An empty character replaces the waiting caption even when every carried-item count is zero.
+        if (inventoryCaptionChanges.ShouldUpdate(inventory.IsVisibleInTree(),
+                (player is not null, player?.Inventory.Count ?? 0, player?.Belt.Count ?? 0, player?.Equipment.Count ?? 0, player?.HeldItem)))
+            inventory.Text = FormatInventory(player);
     }
 
     private void ApplyPlayerLabels(PlayerSnapshot? player)
@@ -76,5 +86,5 @@ public partial class HudPresentation
         ulong EventStart, ulong EventEnd, string? Error, bool Connected, int Pending, long Retry,
         TaskStatus? Connection, bool Correcting, int Tab, bool Diagnostics, int Inventory, uint? Belt,
         uint? Equipment, uint? Store, int Stash, uint StashPage, PlayerItemReference? Oil, string Spell,
-        bool SessionTransition);
+        bool SessionTransition, int Route, int Destination);
 }

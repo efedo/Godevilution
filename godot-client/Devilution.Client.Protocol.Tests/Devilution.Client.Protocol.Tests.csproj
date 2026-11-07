@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Devilution.Client/HudPresentation.Changes.cs"
+             Link="Presentation/HudPresentation.Changes.cs" />
     <Compile Include="../Devilution.Client/ClientRuntimeAssemblyProvenance.cs"
              Link="Diagnostics/ClientRuntimeAssemblyProvenance.cs" />
     <Compile Include="../Devilution.Client/Diagnostics/ClientFrameEvidenceRecorder.FrameCost.cs" Link="Diagnostics/ClientFrameEvidenceRecorder.FrameCost.cs" />
