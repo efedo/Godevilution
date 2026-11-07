@@ -112,15 +112,14 @@ public partial class Main : Node2D
     internal string? ClientFrameEvidencePath => frameEvidence?.EvidenceFilePath;
 
     /** Starts an explicitly requested bounded capture; participant count is caller-supplied. */
-    internal bool StartPerformanceRecording(int participantCount, double warmupSeconds)
+    internal bool StartPerformanceRecording(int participantCount, double warmupSeconds, bool environmentWarmup = false)
     {
         if (frameEvidence is not null
             || participantCount is < 1 or > 64
             || !double.IsFinite(warmupSeconds)
             || warmupSeconds < 0)
             return false;
-        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(
-                "GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT")))
+        if (!ClientFrameEvidenceRecorder.IsRequested)
             return false;
 
         var imageDirectory = Environment.GetEnvironmentVariable(
@@ -177,7 +176,7 @@ public partial class Main : Node2D
             ]));
         frameEvidence = ClientFrameEvidenceRecorder.TryStartFromEnvironment(
             metadata,
-            warmupSeconds);
+            environmentWarmup ? null : warmupSeconds);
         if (frameEvidence is { } recorder) {
             recorder.ObserveServerIdentity(serverIdentity);
             recorder.ObserveParticipantCount(snapshot.Players.Count);
@@ -439,6 +438,7 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        BeginFrameCostFrame();
         var evidenceFrameTimestamp = frameEvidence is null
             ? 0
             : ClientFrameEvidenceRecorder.GetTimestamp();
@@ -464,7 +464,9 @@ public partial class Main : Node2D
 
             foreach (var message in activeClient.DrainMessages()) {
                 try {
-                    model.Apply(message);
+                    var admissionStarted = FrameCostTimestamp();
+                    try { model.Apply(message); }
+                    finally { admissionMilliseconds += FrameCostElapsed(admissionStarted); }
                     if (message.Events is not null)
                         observedEventBatchCount = checked(observedEventBatchCount + 1);
                     if (message.Acknowledgement is { } acknowledgement) {
@@ -507,11 +509,14 @@ public partial class Main : Node2D
                 StartReconnect(force: false);
         }
 
+        var layoutStarted = FrameCostTimestamp();
         hud?.UpdateLayout();
+        hudMilliseconds += FrameCostElapsed(layoutStarted);
         if (hud is not null) {
             worldFrame.Position = hud.PlayArea.Position;
             worldFrame.Size = hud.PlayArea.Size;
         }
+        var worldStarted = FrameCostTimestamp();
         world?.SetNativePlayerContentIdentity(ObservedInitialConnection is { AdmissionCompleted: true }
             ? client?.ServerIdentity?.ContentManifestHash : null);
         world?.ApplyAccepted(
@@ -521,6 +526,7 @@ public partial class Main : Node2D
             model.PredictedPlayerPosition,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
             client?.IsConnected == true);
+        worldMilliseconds += FrameCostElapsed(worldStarted);
         DriveHeldEntityAttack();
         TrySubmitPendingWorldInteraction();
         UpdateHeldWalk(delta);
@@ -529,11 +535,12 @@ public partial class Main : Node2D
             var sequence = Queue(routeStep, automaticInput: true);
             routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
         }
+        var hudStarted = FrameCostTimestamp();
         hud?.SetTravelStatus(routeTravel.Active || interactionTravel.Active,
             interactionTravel.Active
                 ? $"Approaching ({interactionTravel.Target.X}, {interactionTravel.Target.Y}) — server-controlled"
                 : routeTravel.Status);
-        var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
+        var spellSources = frameSpellSources.GetSources(model.Snapshot);
         var selectedSpell = AuthoritativeSpellSourceSelector.Select(
             spellSources,
             selectedSpellSourceKey);
@@ -543,6 +550,7 @@ public partial class Main : Node2D
         hud?.SetSessionWarning(localSessionWarning);
         if (sessionStatusOverride is not null)
             hud?.SetStatus(sessionStatusOverride);
+        hudMilliseconds += FrameCostElapsed(hudStarted);
         feedback?.Apply(model, world);
         var evidenceSceneEndTimestamp = frameEvidence is null
             ? 0
@@ -552,6 +560,7 @@ public partial class Main : Node2D
                 evidence.ObserveServerIdentity(identity);
             if (model.Snapshot is { } snapshot)
                 evidence.ObserveParticipantCount(snapshot.Players.Count);
+            RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
             evidence.RecordFrame(
                 evidenceFrameTimestamp,
                 evidenceSceneStartTimestamp,

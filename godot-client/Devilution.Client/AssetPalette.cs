@@ -39,6 +39,7 @@ public sealed class AssetPalette
     private readonly Dictionary<string, string?> lastDrawnTexturePaths = new(StringComparer.Ordinal);
     private readonly Dictionary<string, NativePlayerTextureCacheEntry> nativePlayerTextureCache = new(StringComparer.Ordinal);
     private readonly LinkedList<string> nativePlayerTextureLru = [];
+    private readonly Dictionary<string, (string? Path, string? Error)> nativePlayerAtlasPaths = new(StringComparer.Ordinal);
     private readonly HashSet<string> loadedNativePlayerAtlasPaths = new(StringComparer.Ordinal);
     private readonly HashSet<string> missingNativePlayerAtlasPaths = new(StringComparer.Ordinal);
     private readonly PresentationFrameClock frameClock = new();
@@ -177,11 +178,11 @@ public sealed class AssetPalette
                 selection.Diagnostic ?? "The native player frame or direction is unresolved.");
             return true;
         }
-        if (!PresentationAssetPath.TryCombineResourcePath(
-                nativePlayerManifestPath!,
-                clip.Path,
-                out var resourcePath,
-                out var pathError)) {
+        if (!nativePlayerAtlasPaths.TryGetValue(clip.Path, out var pathBinding)) {
+            var resolved = PresentationAssetPath.TryCombineResourcePath(nativePlayerManifestPath!, clip.Path, out var path, out var error);
+            nativePlayerAtlasPaths.Add(clip.Path, pathBinding = (resolved ? path : null, error));
+        }
+        if (pathBinding.Path is not { } resourcePath) {
             binding = new NativePlayerTextureBinding(
                 nativePlayerCatalog,
                 nativePlayerContentManifestHash,
@@ -190,7 +191,7 @@ public sealed class AssetPalette
                 null,
                 null,
                 null,
-                $"Native player atlas path was refused: {pathError}.");
+                $"Native player atlas path was refused: {pathBinding.Error}.");
             return true;
         }
 

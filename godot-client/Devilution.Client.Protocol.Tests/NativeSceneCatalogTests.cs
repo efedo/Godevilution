@@ -215,7 +215,7 @@ public sealed class NativeSceneCatalogTests
         Assert.Equal("content", catalog.Families[NativeSceneLocation.Cathedral].DPieces[0].FloorClass);
     }
 
-    private static string CreateCatalogJson(byte solFlags = 1, bool catacombs = false)
+    internal static string CreateCatalogJson(byte solFlags = 1, bool catacombs = false)
     {
         var levelBindings = new[] {
             new { contentManifestHash = ContentHash, levelId = 7, location = "town" },

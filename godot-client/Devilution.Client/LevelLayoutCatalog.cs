@@ -11,6 +11,7 @@ public sealed class LevelLayoutCatalog
     private readonly Dictionary<uint, LevelLayout> authoritativeLayouts = [];
     private readonly Dictionary<uint, IReadOnlyList<WarpTriggerSnapshot>> warpTriggers = [];
     private readonly AuthoritativeLevelGeometryState authoritativeGeometry = new();
+    private readonly Dictionary<uint, LevelGeometrySnapshot> installedDefinitions = [];
 
     public LevelLayoutCatalog()
     {
@@ -31,12 +32,25 @@ public sealed class LevelLayoutCatalog
 
     /** Replaces presentation geometry with the active server's validated projection. */
     public void ApplyAuthoritative(IEnumerable<LevelGeometrySnapshot> definitions)
+        => ApplyAuthoritativeCore(definitions, reuseImmutable: false);
+
+    /** The admitted model owns these immutable rows; unchanged layouts keep their retained canvas commands. */
+    internal void ApplyAdmittedAuthoritative(IEnumerable<LevelGeometrySnapshot> definitions)
+        => ApplyAuthoritativeCore(definitions, reuseImmutable: true);
+
+    private void ApplyAuthoritativeCore(IEnumerable<LevelGeometrySnapshot> definitions, bool reuseImmutable)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         authoritativeGeometry.Replace(definitions);
-        authoritativeLayouts.Clear();
-        warpTriggers.Clear();
+        if (!reuseImmutable) {
+            authoritativeLayouts.Clear(); warpTriggers.Clear(); installedDefinitions.Clear();
+        }
+        foreach (var id in authoritativeLayouts.Keys.Where(id => !authoritativeGeometry.Definitions.ContainsKey(id)).ToArray()) {
+            authoritativeLayouts.Remove(id); warpTriggers.Remove(id); installedDefinitions.Remove(id);
+        }
         foreach (var definition in authoritativeGeometry.Definitions.Values) {
+            if (reuseImmutable && installedDefinitions.TryGetValue(definition.LevelId, out var previous) && previous.Equals(definition)) continue;
+            if (reuseImmutable) installedDefinitions[definition.LevelId] = definition;
             var cells = definition.BlockedCells
                 .Where(cell => cell >= 0 && cell < definition.Width * definition.Height)
                 .ToHashSet();
@@ -49,11 +63,11 @@ public sealed class LevelLayoutCatalog
                 definition.Height,
                 cells,
                 missileBlocked,
-                definition.NativeTransparency.ToArray()) {
-                NativeObjectLayer = definition.NativeObjectLayer.ToArray(),
-                NativePieceLayer = definition.NativePieceLayer.ToArray(),
-                NativeMegaTileLayer = definition.NativeMegaTileLayer.ToArray(),
-                NativeSpecialLayer = definition.NativeSpecialLayer.ToArray(),
+                reuseImmutable ? definition.NativeTransparency : definition.NativeTransparency.ToArray()) {
+                NativeObjectLayer = reuseImmutable ? definition.NativeObjectLayer : definition.NativeObjectLayer.ToArray(),
+                NativePieceLayer = reuseImmutable ? definition.NativePieceLayer : definition.NativePieceLayer.ToArray(),
+                NativeMegaTileLayer = reuseImmutable ? definition.NativeMegaTileLayer : definition.NativeMegaTileLayer.ToArray(),
+                NativeSpecialLayer = reuseImmutable ? definition.NativeSpecialLayer : definition.NativeSpecialLayer.ToArray(),
             };
             warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
         }
