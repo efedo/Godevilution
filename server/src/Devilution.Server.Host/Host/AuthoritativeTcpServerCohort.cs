@@ -17,6 +17,8 @@ public sealed partial class AuthoritativeTcpServer
     private Exception? cohortFailure;
     // At most one timed write; its result is adopted under the authoritative lock.
     private Task<AuthoritativeCohortDocument?>? cohortWrite;
+    // Retry a due checkpoint skipped by that writer even if the simulation clock stops.
+    private bool cohortCheckpointRetryPending;
 
     /** Refuses implicit migration before seed or legacy save-root writes. */
     public static void ValidateCohortRootForStartup(AuthoritativeCohortStore store)
@@ -215,8 +217,11 @@ public sealed partial class AuthoritativeTcpServer
         var timed = !force && cohortCheckpointInterval is not null && committedCohort is not null;
         if (timed && CheckpointTimeProvider.GetElapsedTime(lastCohortCheckpointTimestamp) < cohortCheckpointInterval)
             return;
-        if (!SettleCohortWriteCore(wait: !timed))
+        if (!SettleCohortWriteCore(wait: !timed)) {
+            cohortCheckpointRetryPending = true;
             return;
+        }
+        cohortCheckpointRetryPending = false;
         var capture = PerformanceRecorder?.Begin() ?? 0;
         var timedPublished = false;
         try {

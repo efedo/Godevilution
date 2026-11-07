@@ -25,6 +25,15 @@ internal static class AcceptanceCommandBoundary
                 + $"action={Player?.CurrentAction?.Kind}, walkPending={Player?.NativeWalkPathPending}";
     }
 
+    /** Cancellation can finish on the route trigger while its real UI input is being revealed. */
+    internal static async Task<bool> ArrivedAfterTravelCancellationAsync(Func<Task> cancelTravel,
+        Func<Task> waitForBoundary, Func<Observation> observe, uint destinationLevel)
+    {
+        await cancelTravel();
+        await waitForBoundary();
+        return observe().Player?.LevelId == destinationLevel;
+    }
+
     /** Polls the live boundary; the caller supplies the existing tick/wall budget and real frame pump. */
     internal static async Task WaitAsync(Func<Observation> observe, Func<Task> nextFrame,
         Func<Observation, bool> expired, string context, bool settlePlayer = true)

@@ -376,6 +376,7 @@ public partial class SessionAcceptance
                     || AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
                         main.ObservedCommandResult, main.ObservedLastQueuedSequence)),
                     $"The final arrival command on L{destination} was not admitted.", 10);
+                await UseNativeHealingPotionIfNeeded(main);
                 return;
             }
             if (player.LevelId != origin) {
@@ -408,6 +409,8 @@ public partial class SessionAcceptance
                     interrupt: () => NativeHealingThresholdReached(main) && NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > 0);
                 Require(main.ObservedSnapshot!.Players.Single().LevelId == destination,
                     $"The ordinary route did not reach level {destination}.");
+                // An interrupt can finish on the trigger; still perform the healing it requested.
+                await UseNativeHealingPotionIfNeeded(main);
                 return;
             } catch (InvalidOperationException failure) when (main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive
                 && alive.LevelId == player.LevelId) {

@@ -238,6 +238,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     /** Internal synchronization seam for deterministic authority-turn host tests. */
     internal CohortAuthorityTurnGate AuthorityTurnGateForTests => cohortAuthorityTurnGate;
 
+    /** Reads a completed periodic turn, including its checkpoint attempt, for deterministic tests. */
+    internal ulong LastSimulationTickForTests => commandServer.WithSynchronizedState(() => lastSimulationTick);
+
     /** Internal readiness signal for deterministic commit-boundary response tests. */
     internal Action<string, ulong>? CommitBoundaryResponseReadyObserverForTests { get; init; }
 
@@ -579,8 +582,12 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 advanced = commandServer.WithSynchronizedState(() => {
                     RequireCohortHealthy();
                     var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-                    if (tick == lastSimulationTick)
+                    if (tick == lastSimulationTick) {
+                        // Only a previously skipped, now-unblocked checkpoint needs a same-tick turn.
+                        if (cohortCheckpointRetryPending && cohortWrite is { IsCompleted: true })
+                            PublishCohortCore();
                         return false;
+                    }
                     AdvanceCurrentTickCore();
                     lastSimulationTick = commandServer.CurrentTick;
                     PublishCohortCore();

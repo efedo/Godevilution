@@ -145,9 +145,12 @@ public partial class SessionAcceptance
                 return boundary is not null;
             }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds);
             if (interrupted) {
-                // The caller stops travel (for example to heal) and owns the retry.
-                await StopNativeTravelAsync(main);
-                throw new InvalidOperationException("Generated-route traversal was interrupted by its caller.");
+                var arrived = await AcceptanceCommandBoundary.ArrivedAfterTravelCancellationAsync(
+                    () => StopNativeTravelAsync(main),
+                    () => WaitForNativeCommandBoundaryAsync(main, "Interrupted generated-route traversal"),
+                    () => ObserveNativeCommandBoundary(main), destinationLevel);
+                if (stopEarly || !arrived)
+                    throw new InvalidOperationException("Generated-route traversal was interrupted by its caller.");
             }
             if (stopEarly) {
                 await StopNativeTravelAsync(main);
