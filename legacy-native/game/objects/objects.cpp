@@ -19,7 +19,7 @@
 #endif
 
 #include <expected.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "engine/cursor.h"
 #include "ui/automap.h"
