@@ -139,10 +139,11 @@ Passing a scoped test or adding a schema version does not close a milestone.
   Since 2.5b every non-Hellfire shrine runs its native effect and message on L1–L8 and stays
   used across resume. Since 2.5c fountains, goat shrines, cauldrons, bookcases, book stands,
   decapitated bodies, armor stands and weapon racks work natively and burning crosses burn.
+  Since 2.5d trapped L1–L4 sarcophagi fire their linked wall trap after opening.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 24 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;
-  2.4a the ten-lane melee AI trace; 2.4b the seven-lane ranged AI trace; 2.5a door and chest traps; 2.5b vanilla shrines; 2.5c theme item objects and theme effects). Retail-archive corpora stay local by design (public
+  2.4a the ten-lane melee AI trace; 2.4b the seven-lane ranged AI trace; 2.5a door and chest traps; 2.5b vanilla shrines; 2.5c theme item objects and theme effects; 2.5d trapped sarcophagi). Retail-archive corpora stay local by design (public
   repository), so those comparisons still skip in CI.
 - Since T1 the default client, server and Diablo suites run in about 14, 37 and 30 s;
   149 `Category=Slow` live-host, launcher and matrix tests run in a separate CI step.

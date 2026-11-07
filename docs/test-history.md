@@ -9,6 +9,16 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-06 — Trapped sarcophagi (2.5d)
+
+`-RequireTrappedSarcophagus -TargetDepth 4` at 200 Hz passed twice: the L4 sarcophagus at (33,62)
+opened at tick 6592 and its Firebolt trap fired at 6593, releasing one skeleton, retained after
+fresh-host resume. Door, shrine, theme and 10/20 Hz micro journeys passed. The normal L8 journey
+passed 1 of 4; the failures were L6 potion exhaustion (two deaths, one stalled climb). Replaying both
+failed command logs against 2.5c and 2.5d gave identical outcomes, so this is existing bot
+instability, not a regression. Suites: server 2278 (one load-only PowerShell harness timeout, 16 of
+16 alone), Diablo 3927, client 1505. Native comparisons: 5 Domain and 261 Diablo cases.
+
 ### 2026-11-06 — Theme room objects (2.5c)
 
 200 Hz Debug journeys and resumes passed: normal L8, seed 0 trapped door L8 (L7 trap fired at tick

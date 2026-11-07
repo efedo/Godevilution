@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-11-06
 
+- Trapped sarcophagi (2.5d): opening a trapped L1–L4 sarcophagus keeps its native loot or skeleton
+  release and fires the linked wall trap on the next object update, one-shot across resume. Clients
+  accept armed sarcophagi and type-48 trap triggers; older clients refuse them. The journey gains
+  `-RequireTrappedSarcophagus`.
 - Theme room objects (2.5c): fountains, goat shrines, cauldrons, bookcases, book stands, decapitated
   bodies, armor stands and weapon racks work natively on L1–L8 and burning crosses burn; tick-end Mana
   Shield cleanup now follows missiles as native. Identify scrolls from theme objects publish instead of
