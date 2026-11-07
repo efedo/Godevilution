@@ -5,6 +5,18 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-07
+
+- Responsive, smooth play (2.6a): the local player and both cameras share one fractional
+  position with bounded click and keyboard prediction; walking actors keep native cell
+  occlusion; known actions render through their interval; snapshots poll every 100 ms while
+  moving; the command lead adapts to measured round trip and jitter with a 50 ms floor; held
+  walking no longer waits on unrelated commands. Atlas paths are cached, terrain drawing is
+  retained, HUD panels update on change, per-frame cloning moved to snapshot time and the
+  client runs at 60 FPS with VSync (headless acceptance stays uncapped). An opt-in frame
+  capture (`GODEVILUTION_CLIENT_FRAME_CAPTURE`) records per-second costs. Wire and saves are
+  unchanged.
+
 ## 2026-11-06
 
 - Trapped sarcophagi (2.5d): opening a trapped L1–L4 sarcophagus keeps its native loot or skeleton

@@ -140,6 +140,11 @@ Passing a scoped test or adding a schema version does not close a milestone.
   used across resume. Since 2.5c fountains, goat shrines, cauldrons, bookcases, book stands,
   decapitated bodies, armor stands and weapon racks work natively and burning crosses burn.
   Since 2.5d trapped L1–L4 sarcophagi fire their linked wall trap after opening.
+- Since 2.6a the local player and camera move smoothly between tiles with bounded
+  prediction, known actions render through their interval, the command lead adapts
+  to measured latency (minimum 50 ms), terrain drawing is retained per level and the
+  client is capped at 60 FPS with VSync. `GODEVILUTION_CLIENT_FRAME_CAPTURE` records
+  per-second frame costs. Windowed CPU measurement and the user re-playtest are pending.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 24 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;
@@ -153,6 +158,8 @@ Passing a scoped test or adding a schema version does not close a milestone.
   bug. Do not change native rules merely to make a bot pass.
 - A per-cell Town roaming trial reached `TooLate` after about 640 ms waiting for
   the authority lock. Host admission latency remains unresolved.
+- A command the host refuses as `TooLate` is dropped, not retried (pre-existing); a
+  bounded retry with a fresh sequence is proposed.
 - Optional original player, Town, resident and Cathedral object art pass scoped
   native comparisons; see [test history](test-history.md). Live animation phase,
   lighting, palette cycling, transparency and rendered comparisons remain open.

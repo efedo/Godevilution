@@ -9,6 +9,19 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-07 — Responsive, smooth play (2.6a)
+
+Suites on `d739bbfc6`: server 2289, Diablo 3927, client 1779, all passing; native comparisons 5
+Domain and 261 Diablo cases. Later fixes kept the client suite green (1802). Under six CPU-load
+workers a fixed 50 ms command lead failed 2 of 4 cohort-portal runs with `Rescheduled`; the
+adaptive lead failed 0 of 4 with all 624 receipts accepted. A one-tick lead (5 ms at 200 Hz)
+made a store close `TooLate` by 15 ms; the 50 ms floor fixed it. Headless journeys on
+`252a53b13`: normal L8, shrine, theme, sarcophagus (twice), 10 Hz and 20 Hz micro passed; door
+passed 3 of 4 (plus 2 of 2 on `e02c8e501`). The door failure was a death at an L7 door: an
+in-memory replay matched every receipt, and the bot's object approach never heals (unchanged
+since before 2.6a). Offline: 20,000 atlas lookups 1.9 ms/0 bytes versus 32.7 ms/34 MB; Town
+culling visits 662 of 12,544 cells. Windowed CPU measurement is pending.
+
 ### 2026-11-06 — Trapped sarcophagi (2.5d)
 
 `-RequireTrappedSarcophagus -TargetDepth 4` at 200 Hz passed twice: the L4 sarcophagus at (33,62)
