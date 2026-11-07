@@ -50,8 +50,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long? negotiatedPostAckSnapshotObservedMs;
     private double roundTripMilliseconds = ClockGatedRoundTripWindow.DefaultFloorMilliseconds;
     private readonly ClockGatedRoundTripWindow clockGatedRoundTrip = new();
-    private ClockGatedRoundTripWindow localSchedulingRoundTrip = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
-    private double localSchedulingRoundTripMilliseconds;
+    private AdaptiveCommandLead schedulingLead = new();
+    private double schedulingRoundTripMilliseconds;
     private bool isLocalConnection;
     private bool snapshotHasActiveActions;
     // Retransmission stays on the largest round trip seen, so an ack slowed by a
@@ -148,18 +148,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private int SchedulingLeadTicks()
     {
-        if (IsClockGatedCommandScheduling && isLocalConnection)
-            return LocalRealtimeLeadTicks(ServerTickRateHz, Volatile.Read(ref localSchedulingRoundTripMilliseconds));
-        var leadMilliseconds = IsClockGatedCommandScheduling
-            ? Math.Min(Volatile.Read(ref roundTripMilliseconds), MaximumClockGatedLeadMilliseconds)
-            : RetryTimeout.TotalMilliseconds;
+        if (IsClockGatedCommandScheduling) {
+            lock (pendingLock)
+                return schedulingLead.Ticks(ElapsedMilliseconds, ServerTickRateHz);
+        }
+        var leadMilliseconds = RetryTimeout.TotalMilliseconds;
         return Math.Max(1, (int)Math.Ceiling(leadMilliseconds / 1000 * ServerTickRateHz) + 1);
     }
-
-    /** A measured one-way loopback margin; probe/retry floors never schedule local input into the future. */
-    internal static int LocalRealtimeLeadTicks(uint tickRateHz, double measuredRoundTripMilliseconds)
-        => Math.Max(1, (int)Math.Ceiling(Math.Clamp(measuredRoundTripMilliseconds, 0,
-            MaximumClockGatedLeadMilliseconds) * 0.5 / 1000 * tickRateHz));
 
     public AuthoritativeClient(ClientConnectionOptions options)
     {
@@ -185,7 +180,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
-    /** The measured command round trip that sets the clock-gated command lead. */
+    /** The round-trip estimate with the retry/probe floor; realtime scheduling uses raw samples. */
     public double RoundTripMilliseconds => Volatile.Read(ref roundTripMilliseconds);
 
     public TimeSpan RetryTimeout => TimeSpan.FromMilliseconds(Math.Clamp(
@@ -224,8 +219,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 negotiatedPostAckSnapshotAppliedTick = null;
                 negotiatedPostAckSnapshotObservedMs = null;
                 timingCalibrationReady = false;
-                localSchedulingRoundTrip = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
-                localSchedulingRoundTripMilliseconds = 0;
+                schedulingLead = new();
+                schedulingRoundTripMilliseconds = 0;
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
                 supportsTargetCellPathing = false;
@@ -234,8 +229,17 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
+            var connectStartedAt = ElapsedMilliseconds;
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
             isLocalConnection = tcpClient.Client.RemoteEndPoint is IPEndPoint endpoint && IPAddress.IsLoopback(endpoint.Address);
+            if (!isLocalConnection) {
+                // Before the first probe, a remote TCP handshake supplies a measured RTT,
+                // without including content loading or the initial snapshot's build time.
+                lock (pendingLock) {
+                    schedulingLead.ObserveRoundTrip(ElapsedMilliseconds, ElapsedMilliseconds - connectStartedAt);
+                    schedulingRoundTripMilliseconds = schedulingLead.RoundTripMilliseconds;
+                }
+            }
             snapshotHasActiveActions = false;
             // Set TCP_NODELAY before the first framed protocol write, matching the native client.
             try {
@@ -589,6 +593,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                 // serializes command admission and publishes ordered durable responses.
                                 if (entry.ObservedTick is { } observedTick)
                                     entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
+                                entry.FirstDispatchLeadTicks = SchedulingLeadTicks();
+                                entry.FirstDispatchGeneration = Volatile.Read(ref transportGeneration);
                             }
                             entry.Retransmitted |= entry.TransmissionStarted;
                             // Freeze before any write: cancellation/partial writes may
@@ -623,7 +629,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                     CaptureCommandIntent(entry.Command),
                                     entry.QueuedElapsedMilliseconds, entry.QueuedStopwatchTimestamp,
                                     SchedulingLeadTicks(),
-                                    IsClockGatedCommandScheduling && isLocalConnection ? localSchedulingRoundTripMilliseconds : roundTripMilliseconds,
+                                    IsClockGatedCommandScheduling ? schedulingRoundTripMilliseconds : roundTripMilliseconds,
                                     IsClockGatedCommandScheduling && isLocalConnection);
                             CommandLog?.Append(new CommandLogRecord {
                                 ClientSent = new ClientSentRecord { Command = entry.Command.Clone() },
@@ -1272,10 +1278,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             timingCalibrationProbeAttempts = 0;
             lastTimingProbeRequestMs = null;
             var sample = Math.Max(0, now - probe.SentAtMs);
-            // Retry/non-loopback estimates keep their floor. Local input uses the raw
-            // median separately, so neither that floor nor one stall delays every key.
+            // Retry/probe estimates keep their floor. Scheduling covers the full raw RTT,
+            // recent jitter and measured admission error, independently of that floor.
             Volatile.Write(ref roundTripMilliseconds, clockGatedRoundTrip.Observe(now, sample));
-            Volatile.Write(ref localSchedulingRoundTripMilliseconds, localSchedulingRoundTrip.Observe(now, sample));
+            schedulingLead.ObserveRoundTrip(now, sample);
+            Volatile.Write(ref schedulingRoundTripMilliseconds, schedulingLead.RoundTripMilliseconds);
             Volatile.Write(ref retryRoundTripMilliseconds, Math.Max(Volatile.Read(ref retryRoundTripMilliseconds), sample));
             if (recorder is not null)
                 outcome = new AuthoritativeClientProbeOutcomeTiming(
@@ -1363,6 +1370,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     && removedCommand is not null) {
                     trackedPendingCommand = true;
                     wasRetransmitted = removedCommand.Retransmitted;
+                    if (IsClockGatedCommandScheduling && !wasRetransmitted
+                        && removedCommand.TransmissionStarted
+                        && removedCommand.FirstDispatchGeneration == transportGenerationForRecord
+                        && transportGenerationForRecord == Volatile.Read(ref transportGeneration)
+                        && result.AppliedTick > removedCommand.Command.RequestedTick
+                        && (result.Status is CommandStatus.Accepted or CommandStatus.Rescheduled
+                            || (result.Status == CommandStatus.Rejected && result.RejectReason == CommandRejectReason.TooLate))) {
+                        schedulingLead.ObserveLateAdmission(now, ServerTickRateHz,
+                            removedCommand.FirstDispatchLeadTicks, result.AppliedTick - removedCommand.Command.RequestedTick);
+                    }
                     if (!wasRetransmitted && removedCommand.LastSentMs is { } lastSentMs)
                         commandRoundTripMilliseconds = now - lastSentMs;
                 }
@@ -1557,6 +1574,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         public bool EverTransmitted { get; set; }
         public bool Retransmitted { get; set; }
         public int DispatchAttempt { get; set; }
+        public int FirstDispatchLeadTicks { get; set; }
+        public long FirstDispatchGeneration { get; set; }
         public long? LastSentMs { get; set; }
         public long? RetryNotBeforeMs { get; set; }
     }

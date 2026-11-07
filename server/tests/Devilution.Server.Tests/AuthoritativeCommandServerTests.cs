@@ -129,6 +129,46 @@ public sealed class AuthoritativeCommandServerTests
         Assert.Equal(10UL, executor.AppliedTicks.Single());
     }
 
+    [Theory]
+    [InlineData(0, 1UL)] [InlineData(0, 2UL)]
+    [InlineData(1, 1UL)] [InlineData(1, 2UL)]
+    [InlineData(2, 1UL)] [InlineData(2, 2UL)]
+    [InlineData(3, 1UL)] [InlineData(3, 2UL)]
+    public void RescheduledInterfaceCommandExecutesOnceAndRetainsItsReceiptAcrossRestore(int intent, ulong lateness)
+    {
+        var executor = new RecordingExecutor();
+        var server = new AuthoritativeCommandServer(executor);
+        var command = intent switch {
+            0 => new Command { OpenStoreRequested = new() { StoreId = 1 } },
+            1 => new Command { CloseStoreRequested = new() },
+            2 => new Command { OpenStashRequested = new() },
+            _ => new Command { CloseStashRequested = new() },
+        };
+        command.ClientSequence = 1;
+        command.RequestedTick = 10 - lateness;
+        var result = server.Process("player-a", command, currentTick: 10);
+        Assert.Equal(CommandStatus.Rescheduled, result.Status);
+        Assert.Equal(CommandRejectReason.Unspecified, result.RejectReason);
+        Assert.Equal(10UL, result.AppliedTick);
+        Assert.Equal(1, executor.CallCount);
+        Assert.Equal(10UL, Assert.Single(executor.AppliedTicks));
+        Assert.Equal(result, Assert.Single(server.ExportCompletedCommands("player-a").Values));
+
+        var retry = server.Process("player-a", command, currentTick: 20);
+        Assert.Equal(CommandStatus.Duplicate, retry.Status);
+        Assert.Equal(result.AppliedTick, retry.AppliedTick);
+        Assert.Equal(result.ServerReceiptSequence, retry.ServerReceiptSequence);
+        Assert.Equal(CommandRejectReason.Unspecified, retry.RejectReason);
+        Assert.Equal(1, executor.CallCount);
+
+        var restoredExecutor = new RecordingExecutor();
+        var restored = new AuthoritativeCommandServer(restoredExecutor);
+        restored.ImportCompletedCommands("player-a", server.ExportCompletedCommands("player-a").Values);
+        Assert.Equal(result, Assert.Single(restored.ExportCompletedCommands("player-a").Values));
+        Assert.Equal(retry, restored.Process("player-a", command, currentTick: 30));
+        Assert.Equal(0, restoredExecutor.CallCount);
+    }
+
     [Fact]
     public void NonCriticalCommandOutsideItsToleranceIsRejected()
     {

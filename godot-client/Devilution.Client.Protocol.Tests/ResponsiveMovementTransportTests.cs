@@ -180,6 +180,114 @@ public sealed class ResponsiveMovementTransportTests
         Assert.Equal(2, peer.SnapshotRequests);
     }
 
+    [Theory]
+    [InlineData(20U, 180, 4)] [InlineData(200U, 15, 4)]
+    public async Task ProbeSchedulingUsesFullRttWithoutChangingTheRetryFloor(uint rate, int rtt, int ticks)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token, rate: rate, probeRoundTripMilliseconds: rtt);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        client.QueueRealtimeMovement(Move(55), 100);
+        await client.PollAsync(timeout.Token);
+        await Until(() => recorder.CaptureReport().ProbeOutcomes.Count != 0, timeout.Token);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(100UL + (ulong)ticks, sent.RequestedTick);
+        Assert.Equal(ticks, Assert.Single(recorder.CaptureReport().Commands).SchedulingLeadTicks);
+        Assert.Equal(Math.Max(100, rtt), client.RoundTripMilliseconds);
+        Assert.True(client.RetryTimeout.TotalMilliseconds >= 400);
+    }
+
+    [Theory]
+    [InlineData(CommandStatus.Rescheduled)] [InlineData(CommandStatus.Accepted)] [InlineData(CommandStatus.Rejected)]
+    public async Task MatchedLateReceiptRaisesTheNextInputLeadAndItDecays(CommandStatus status)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        client.QueueRealtime(new Command { CloseStoreRequested = new() }, 100);
+        await client.PollAsync(timeout.Token);
+        await Until(() => recorder.CaptureReport().ProbeOutcomes.Count != 0, timeout.Token);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(101UL, sent.RequestedTick);
+        await peer.Send(Receipt(sent, status, sent.RequestedTick + 2));
+        await Until(() => client.PendingCommandCount == 0, timeout.Token);
+        Assert.Equal(104UL, client.SuggestedCommandTick(100)); // Original lead + actual shortfall + one tick.
+        var next = client.QueueRealtimeMovement(Move(49), 100);
+        await client.PollAsync(timeout.Token);
+        var nextSent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(next, nextSent.ClientSequence);
+        Assert.Equal(104UL, nextSent.RequestedTick);
+        // The old receipt is unmatched now; it must not continually inflate the lead.
+        await peer.Send(Receipt(sent, status, 2000));
+        await Until(() => recorder.CaptureReport().Acknowledgements.Count == 2, timeout.Token);
+        Assert.Equal(104UL, client.SuggestedCommandTick(100));
+        time.AdvanceMilliseconds(4000);
+        Assert.Equal(121UL, client.SuggestedCommandTick(100)); // Clock projection is bounded to one second; the lead is one tick again.
+    }
+
+    [Fact]
+    public async Task RetransmittedReceiptsDoNotMisattributeLatenessOrChangeTheFrozenCommand()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        client.QueueRealtimeMovement(Move(55), 100);
+        await client.PollAsync(timeout.Token);
+        await Until(() => recorder.CaptureReport().ProbeOutcomes.Count != 0, timeout.Token);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        time.AdvanceMilliseconds(500);
+        await client.PollAsync(timeout.Token);
+        var retry = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(sent, retry);
+        var hint = client.SuggestedCommandTick(100);
+        await peer.Send(Receipt(sent, CommandStatus.Accepted, sent.RequestedTick + 20));
+        await Until(() => client.PendingCommandCount == 0, timeout.Token);
+        Assert.Equal(hint, client.SuggestedCommandTick(100));
+        await Until(() => recorder.CaptureReport().Acknowledgements.Count == 1, timeout.Token);
+        Assert.True(Assert.Single(recorder.CaptureReport().Acknowledgements).WasRetransmitted);
+    }
+
+    [Fact]
+    public async Task WaitingForAFutureTickDoesNotBecomeMeasuredNetworkLatency()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        client.Queue(Move(55), 150);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        time.AdvanceMilliseconds(2500);
+        var hint = client.SuggestedCommandTick(100);
+        await peer.Send(Receipt(sent, CommandStatus.Accepted, 150));
+        await Until(() => client.PendingCommandCount == 0, timeout.Token);
+        Assert.Equal(hint, client.SuggestedCommandTick(100));
+        Assert.Equal(100, client.RoundTripMilliseconds);
+    }
+
+    private static Envelope Receipt(Command command, CommandStatus status, ulong appliedTick)
+        => new() { CommandAck = new() { Results = { new CommandResult {
+            ClientSequence = command.ClientSequence, AppliedTick = appliedTick, Status = status,
+            RejectReason = status == CommandStatus.Rejected ? CommandRejectReason.TooLate : CommandRejectReason.Unspecified } } } };
+
     private static Command Move(int x) => new() { MoveRequested = new() { TargetCell = true, TargetX = x, TargetY = 50 } };
 
     private static async Task Until(Func<bool> ready, CancellationToken token)
@@ -193,23 +301,31 @@ public sealed class ResponsiveMovementTransportTests
         private readonly CancellationTokenSource lifetime;
         private readonly Channel<Envelope> messages = Channel.CreateUnbounded<Envelope>();
         private readonly bool moving;
+        private readonly uint rate;
+        private readonly int probeRoundTripMilliseconds;
+        private ManualTimeProvider? time;
         private readonly Task run;
         private readonly SemaphoreSlim write = new(1);
         private NetworkStream? stream;
         private int snapshotRequests;
         public int SnapshotRequests => Volatile.Read(ref snapshotRequests);
 
-        public Peer(CancellationToken token, bool moving = false)
+        public Peer(CancellationToken token, bool moving = false, uint rate = 20, int probeRoundTripMilliseconds = 0)
         {
             this.moving = moving;
+            this.rate = rate;
+            this.probeRoundTripMilliseconds = probeRoundTripMilliseconds;
             lifetime = CancellationTokenSource.CreateLinkedTokenSource(token);
             listener.Start();
             run = Run();
         }
 
         public AuthoritativeClient Client(ManualTimeProvider time, AuthoritativeClientCommandTimingRecorder recorder)
-            => new(new ClientConnectionOptions("127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port,
+        {
+            this.time = time;
+            return new(new ClientConnectionOptions("127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port,
                 "responsive-movement-test", "0.1.0", "content-hash") { TimeProvider = time }) { CommandTimingRecorder = recorder };
+        }
 
         public Snapshot Snapshot(ulong tick) => new() { Tick = tick, Players = { new PlayerSnapshot {
             EntityId = 1, PositionX = 50, PositionY = 50, Life = 64, LifeMaximum = 64,
@@ -228,11 +344,12 @@ public sealed class ResponsiveMovementTransportTests
                     var envelope = Envelope.Parser.ParseFrom(bytes);
                     if (envelope.ClientHello is not null) {
                         await Send(new Envelope { ServerHello = new() { ProtocolSchemaVersion = "0.1.0", ContentManifestHash = "content-hash",
-                            SessionToken = "responsive-test", TickRateHz = 20, GameMode = GameMode.SinglePlayer,
+                            SessionToken = "responsive-test", TickRateHz = rate, GameMode = GameMode.SinglePlayer,
                             CommandSchedulingMode = CommandSchedulingMode.ClockGated, SupportsClockOnlyProbes = true,
                             SupportsTargetCellPathing = true } });
                         await Send(new Envelope { Snapshot = Snapshot(100) });
                     } else if (envelope.ClockProbeRequest is { } probe) {
+                        time!.AdvanceMilliseconds(probeRoundTripMilliseconds);
                         await Send(new Envelope { TimingReply = new() { RequestId = probe.RequestId, ServerSchedulingClockTick = 100 } });
                     } else if (envelope.SnapshotRequest is not null) {
                         Interlocked.Increment(ref snapshotRequests);

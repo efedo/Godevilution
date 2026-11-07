@@ -280,9 +280,13 @@ public sealed class ResponsiveMovementPresentationTests
     }
 
     [Theory]
-    [InlineData(20U, 0d, 1)] [InlineData(20U, 2d, 1)] [InlineData(20U, 100d, 1)]
-    [InlineData(20U, 250d, 3)] [InlineData(10U, 2d, 1)] [InlineData(200U, 2d, 1)]
-    [InlineData(200U, 100d, 10)]
-    public void LoopbackLeadUsesMeasuredOneWayTimeIndependentlyOfTheRetryFloor(uint rate, double rtt, int ticks)
-        => Assert.Equal(ticks, AuthoritativeClient.LocalRealtimeLeadTicks(rate, rtt));
+    [InlineData(20U, 0d, 1)] [InlineData(20U, 2d, 1)] [InlineData(20U, 100d, 3)]
+    [InlineData(20U, 250d, 6)] [InlineData(10U, 2d, 1)] [InlineData(200U, 2d, 1)]
+    [InlineData(200U, 100d, 21)]
+    public void RealtimeLeadCoversFullMeasuredRttIndependentlyOfTheRetryFloor(uint rate, double rtt, int ticks)
+    {
+        var lead = new AdaptiveCommandLead();
+        lead.ObserveRoundTrip(0, rtt);
+        Assert.Equal(ticks, lead.Ticks(0, rate));
+    }
 }

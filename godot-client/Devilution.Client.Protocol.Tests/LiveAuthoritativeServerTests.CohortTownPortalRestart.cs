@@ -815,7 +815,7 @@ public sealed class LiveAuthoritativeCohortPortalRestartTests : LiveAuthoritativ
             throw new InvalidOperationException(
                 $"Cohort command rejected: status={(int)acknowledgement.Status},reason={(int)acknowledgement.RejectReason},clientSequence={acknowledgement.ClientSequence},serverReceiptSequence={acknowledgement.ServerReceiptSequence},appliedTick={acknowledgement.AppliedTick},requestedTick={command.RequestedTick},{actorDiagnostic}.");
         }
-        AssertTownPortalAcceptedReceipt(acknowledgement, sequence);
+        AssertTownPortalAppliedReceipt(acknowledgement, command);
         if (participantReceipts.Count > 0)
             Assert.True(acknowledgement.ServerReceiptSequence > participantReceipts[^1].ServerReceiptSequence);
         if (globalReceipts.Count > 0) {
