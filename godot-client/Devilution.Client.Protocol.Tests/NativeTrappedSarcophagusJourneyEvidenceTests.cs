@@ -267,6 +267,75 @@ public sealed class NativeTrappedSarcophagusJourneyEvidenceTests
     }
 
     [Fact]
+    public void VisibleDropProducersRejectLootWithTheirNamedReasonInCaptureAndRecordedProof()
+    {
+        foreach (var (kind, reason) in new[] {("death", "monster"), ("corpse", "corpse"), ("vanished", "monster"),
+                ("newDeath", "monster"), ("object", "object"), ("destroyed", "object"), ("door", "object"),
+                ("newObject", "object"), ("missingObject", "object"),
+                ("catacombsDoor", "object"), ("inventory", "inventory"), ("hand", "inventory"),
+                ("duplicates", "inventory"), ("gold", "inventory"), ("handGold", "inventory")}) {
+            var before = Baseline(); var after = Fired(111);
+            foreach (var value in before.Objects.Concat(after.Objects)) value.LevelId = 2;
+            AddRelease(after, false);
+            before.Players.Add(new PlayerSnapshot {EntityId = 1, LevelId = 2, Gold = 100,
+                Inventory = {new ItemSnapshot {ItemSeed = 10, State = new ItemStateSnapshot {StableItemId = 1}}},
+                HeldItem = new ItemSnapshot {ItemSeed = 20, State = new ItemStateSnapshot {StableItemId = 2, Value = 500,
+                    PresentationKind = Devilution.Protocol.V1.ItemPresentationKind.Gold}}});
+            before.Monsters.Add(new MonsterSnapshot {EntityId = 30, LevelId = 3, Alive = true});
+            before.Objects.Add(new ObjectSnapshot {EntityId = 31, NativeObjectId = 5, LevelId = 3});
+            if (kind == "duplicates") before.Players[0].Inventory.Add(before.Players[0].Inventory[0].Clone());
+            if (kind == "door") {
+                before.Objects[2].NativeObjectId = 1;
+                before.Objects[2].CathedralDoor = new CathedralDoorSnapshot {EntityId = 31, LevelId = 3, NativeObjectId = 1};
+            }
+            if (kind == "catacombsDoor") { before.Objects[2].NativeObjectId = 42; before.Objects[2].AnimationFrame = 4; }
+            after.Players.Add(before.Players[0].Clone()); after.Monsters.Add(before.Monsters[0].Clone());
+            after.Objects.Add(before.Objects[2].Clone());
+            var valid = NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, SarcophagusEntity, Receipt(), 210, 8);
+            switch (kind) {
+            case "death": after.Monsters[0].Alive = false; after.Monsters[0].DeathTicksRemaining = 7; break;
+            case "corpse": after.Corpses.Add(new CorpseSnapshot {EntityId = 32, LevelId = 3}); break;
+            case "vanished": after.Monsters.Clear(); break;
+            case "newDeath": after.Monsters.Add(new MonsterSnapshot {EntityId = 32, LevelId = 3, DeathTicksRemaining = 7}); break;
+            case "object": after.Objects[2].Activated = true; break;
+            case "destroyed": after.Objects[2].Destroyed = true; break;
+            case "newObject": after.Objects.Add(new ObjectSnapshot {EntityId = 32, LevelId = 3, Activated = true}); break;
+            case "missingObject": after.Objects.RemoveAt(2); break;
+            case "door": after.Objects[2].CathedralDoor.DoorState = 1; break;
+            case "catacombsDoor": after.Objects[2].AnimationFrame = 5; break;
+            case "inventory": case "duplicates": after.Players[0].Inventory.RemoveAt(0); break;
+            case "hand": after.Players[0].HeldItem = null; break;
+            case "gold": after.Players[0].Gold--; break;
+            case "handGold": after.Players[0].HeldItem.State.Value--; break;
+            }
+            var error = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(
+                Wire(before), Wire(after), SarcophagusEntity, Receipt(), 210, 8));
+            Assert.Contains(reason, error.Message);
+            var forged = valid with {After = Convert.ToBase64String(Wire(after).ToByteArray())};
+            var recorded = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(forged));
+            Assert.Contains(reason, recorded.Message);
+        }
+    }
+
+    [Fact]
+    public void MovingOwnedItemsBetweenInventoryHandBeltAndEquipmentDoesNotProduceADrop()
+    {
+        var before = Baseline(); var after = Fired(111);
+        foreach (var value in before.Objects.Concat(after.Objects)) value.LevelId = 2;
+        AddRelease(after, false);
+        var item = new ItemSnapshot {ItemSeed = 10, State = new ItemStateSnapshot {StableItemId = 1}};
+        before.Players.Add(new PlayerSnapshot {EntityId = 1, LevelId = 2, Inventory = {item.Clone()}, HeldItem = item.Clone(),
+            Belt = {new BeltItemSnapshot {ItemSeed = 20, State = new ItemStateSnapshot {StableItemId = 2}}}});
+        var player = before.Players[0].Clone(); player.Inventory.Clear(); player.HeldItem = null; player.Belt.Clear();
+        player.Equipment.Add(new EquippedItemSnapshot {ItemSeed = item.ItemSeed, State = item.State.Clone()});
+        player.Belt.Add(new BeltItemSnapshot {ItemSeed = item.ItemSeed, State = item.State.Clone()});
+        player.Inventory.Add(new ItemSnapshot {ItemSeed = 20, State = before.Players[0].Belt[0].State.Clone()});
+        after.Players.Add(player);
+        var record = NativeTrappedSarcophagusJourneyEvidence.Capture(Wire(before), Wire(after), SarcophagusEntity, Receipt(), 210, 8);
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(record);
+    }
+
+    [Fact]
     public void OldCheckpointsRemainCompatibleUnlessTheNewStageIsRequired()
     {
         NativeDepthResumeEvidence.VerifyTrappedSarcophagus(false, false, 0, 0, 0, 0, 0, false);

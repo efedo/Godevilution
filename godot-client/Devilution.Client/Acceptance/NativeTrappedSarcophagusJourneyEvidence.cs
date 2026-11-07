@@ -8,7 +8,8 @@ internal sealed record NativeTrappedSarcophagusCheckpoint(uint Level, uint Entit
     uint TrapSource, ulong OpeningTick, ulong FiringTick, ulong Sequence, ulong DeadlineTick,
     uint TerminalFrame, string Before, string After, uint[] Drops, uint[] Skeletons);
 
-/** Opening provenance survives sparse snapshots through the wall trap's retained firing tick. */
+/** Opening provenance survives sparse snapshots through the wall trap's retained firing tick.
+ * Loot exclusion cannot distinguish another producer whose activity leaves no difference between published snapshots. */
 internal static class NativeTrappedSarcophagusJourneyEvidence
 {
     // The default L4 generator reserves monster slot 6 for object slot 113 at (33,62).
@@ -76,13 +77,15 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         // The required L4 owner is a skeleton case, so even nearby combat loot is not its outcome.
         var drops = IsRequiredTarget(target) ? [] : after.WorldItems.Where(value => IsNewDrop(before, value, target))
             .Select(value => value.EntityId).ToArray();
+        if (drops.Length != 0) VerifySoleLootProducer(before, after, entity);
         var skeletons = after.Monsters.Where(value => IsReleasedSkeleton(before, after, value, target))
             .Select(value => value.EntityId).Concat(after.Corpses.Where(value => IsReleasedCorpse(before, value, target))
                 .Select(value => value.EntityId)).Distinct().ToArray();
         var hasFallbackDrop = after.WorldItems.Any(value => drops.Contains(value.EntityId) && !IsNear(value.PositionX, value.PositionY, target));
         var result = new NativeTrappedSarcophagusCheckpoint(target.LevelId, entity, target.PositionX, target.PositionY,
             firing.TrapSource, receipt.AppliedTick, firing.Tick, receipt.ClientSequence, deadlineTick, terminalFrame,
-            Encode(before, target.LevelId, hasFallbackDrop), Encode(after, target.LevelId), drops, skeletons);
+            Encode(before, target.LevelId, hasFallbackDrop, drops.Length != 0),
+            Encode(after, target.LevelId, includeLootProof: drops.Length != 0), drops, skeletons);
         VerifyRecorded(result);
         return result;
     }
@@ -104,6 +107,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
         if (IsRequiredTarget(target) && (expected.Drops.Length != 0 || expected.Skeletons.Length != 1
                 || expected.Skeletons[0] != RequiredSkeletonEntity))
             throw new InvalidOperationException("The required L4 sarcophagus did not release its own reserved skeleton.");
+        if (expected.Drops.Length != 0) VerifySoleLootProducer(before, after, expected.Entity);
         foreach (var id in expected.Drops) {
             var item = after.WorldItems.Single(value => value.EntityId == id);
             if (!IsNewDrop(before, item, target))
@@ -156,6 +160,53 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
     private static bool IsNewDrop(Snapshot before, WorldItemSnapshot value, ObjectSnapshot target)
         => value.EntityId != 0 && value.LevelId == target.LevelId && !before.WorldItems.Any(old => old.EntityId == value.EntityId)
             && (IsNear(value.PositionX, value.PositionY, target) || IsNativeFallbackDrop(before, value, target));
+
+    private static void VerifySoleLootProducer(Snapshot before, Snapshot after, uint sarcophagus)
+    {
+        foreach (var corpse in after.Corpses)
+            if (!before.Corpses.Any(value => value.EntityId == corpse.EntityId && value.LevelId == corpse.LevelId))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: new corpse {corpse.EntityId} is another visible drop producer.");
+        foreach (var monster in before.Monsters.Where(value => value.Alive))
+            if (!after.Monsters.Any(value => value.EntityId == monster.EntityId && value.Alive))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: monster {monster.EntityId} died or disappeared.");
+        foreach (var monster in after.Monsters.Where(value => !value.Alive))
+            if (!before.Monsters.Any(value => value.EntityId == monster.EntityId && !value.Alive))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: monster {monster.EntityId} entered its death state.");
+        foreach (var original in before.Objects.Where(value => value.EntityId != sarcophagus)) {
+            var current = after.Objects.SingleOrDefault(value => value.EntityId == original.EntityId);
+            if (current is null || current.Activated != original.Activated || current.Destroyed != original.Destroyed
+                || current.CathedralDoor?.DoorState != original.CathedralDoor?.DoorState
+                || current.NativeObjectId is 42 or 43 && current.AnimationFrame != original.AnimationFrame)
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: other object {original.EntityId} changed operated/opened state or disappeared.");
+        }
+        foreach (var current in after.Objects.Where(value => value.EntityId != sarcophagus && (value.Activated || value.Destroyed
+                || value.CathedralDoor is { DoorState: not 0 })))
+            if (!before.Objects.Any(value => value.EntityId == current.EntityId))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: other object {current.EntityId} appeared in an operated/opened state.");
+        foreach (var original in before.Players) {
+            var current = after.Players.SingleOrDefault(value => value.EntityId == original.EntityId);
+            var owned = current is null ? [] : CarriedItems(current);
+            if (original.Gold > (current?.Gold ?? 0)
+                || CarriedItems(original).Any(value => !owned.TryGetValue(value.Key, out var count) || count < value.Value))
+                throw new InvalidOperationException($"Ambiguous sarcophagus loot: player {original.EntityId} lost an inventory/hand item or Gold.");
+        }
+    }
+
+    private static Dictionary<(uint Seed, uint StableId, uint CreateInfo, int Index, int UniqueId), long> CarriedItems(PlayerSnapshot player)
+    {
+        var items = player.Inventory.Select(value => (value.ItemSeed, value.State))
+            .Concat(player.Equipment.Select(value => (value.ItemSeed, value.State)))
+            .Concat(player.Belt.Select(value => (value.ItemSeed, value.State)))
+            .Concat(player.Stash.Select(value => (value.Item.ItemSeed, value.Item.State)));
+        if (player.HeldItem is { } held) items = items.Append((held.ItemSeed, held.State));
+        var result = new Dictionary<(uint, uint, uint, int, int), long>();
+        foreach (var (seed, state) in items) {
+            var key = (seed, state?.StableItemId ?? 0, state?.CreateInfo ?? 0, state?.ItemIndex ?? 0, state?.UniqueId ?? 0);
+            var amount = state?.PresentationKind == Devilution.Protocol.V1.ItemPresentationKind.Gold ? Math.Max(1L, state.Value) : 1;
+            result[key] = result.GetValueOrDefault(key) + amount;
+        }
+        return result;
+    }
 
     // items.cpp GetSuperItemSpace: when GetItemSpace exhausts the 3x3 area,
     // take the first free cell in full-square scans k=2..49, y then x.
@@ -226,18 +277,24 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             && !value.Destroyed && !value.NativeSarcophagusInteractable && !value.TrapArmed
             && value.AnimationFrame >= original.AnimationFrame;
     private static Snapshot Decode(string value) => Snapshot.Parser.ParseFrom(Convert.FromBase64String(value));
-    private static string Encode(Snapshot value, uint level, bool includePlacement = false)
+    private static string Encode(Snapshot value, uint level, bool includePlacement = false, bool includeLootProof = false)
     {
         var result = new Snapshot {Tick = value.Tick};
-        result.Objects.Add(value.Objects.Where(item => item.LevelId == level));
-        result.Projectiles.Add(value.Projectiles.Where(item => item.LevelId == level));
-        result.WorldItems.Add(value.WorldItems.Where(item => item.LevelId == level));
-        result.Monsters.Add(value.Monsters.Where(item => item.LevelId == level));
-        result.Corpses.Add(value.Corpses.Where(item => item.LevelId == level));
+        result.Objects.Add(value.Objects.Where(item => includeLootProof || item.LevelId == level));
+        result.Projectiles.Add(value.Projectiles.Where(item => includeLootProof || item.LevelId == level));
+        result.WorldItems.Add(value.WorldItems.Where(item => includeLootProof || item.LevelId == level));
+        result.Monsters.Add(value.Monsters.Where(item => includeLootProof || item.LevelId == level));
+        result.Corpses.Add(value.Corpses.Where(item => includeLootProof || item.LevelId == level));
+        if (includeLootProof) {
+            foreach (var item in value.Players) {
+                var player = new PlayerSnapshot {EntityId = item.EntityId, LevelId = item.LevelId,
+                    PositionX = item.PositionX, PositionY = item.PositionY, Life = item.Life, Gold = item.Gold, HeldItem = item.HeldItem};
+                player.Inventory.Add(item.Inventory); player.Equipment.Add(item.Equipment);
+                player.Belt.Add(item.Belt); player.Stash.Add(item.Stash);
+                result.Players.Add(player);
+            }
+        }
         if (includePlacement) {
-            result.Players.Add(value.Players.Where(item => item.LevelId == level).Select(item => new PlayerSnapshot {
-                EntityId = item.EntityId, LevelId = level, PositionX = item.PositionX, PositionY = item.PositionY, Life = item.Life,
-            }));
             foreach (var geometry in value.LevelGeometry.Where(item => item.LevelId == level)) {
                 var placement = new LevelGeometrySnapshot {LevelId = level, Width = geometry.Width, Height = geometry.Height};
                 placement.BlockedCells.Add(geometry.BlockedCells);

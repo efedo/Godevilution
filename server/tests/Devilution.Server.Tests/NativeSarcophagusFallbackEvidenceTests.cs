@@ -53,6 +53,62 @@ public sealed class NativeSarcophagusFallbackEvidenceTests
     }
 
     [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void UnrelatedNativeDropAtTheExactFallbackCellCannotProveThisOpening(bool recorded)
+    {
+        var (before, expected) = Scenario(2);
+        var (_, unrelated) = Scenario(2, randomState: 1);
+        var intendedDrop = Assert.Single(expected.WorldItems);
+        var otherDrop = Assert.Single(unrelated.WorldItems);
+        Assert.Equal((intendedDrop.LevelId, intendedDrop.PositionX, intendedDrop.PositionY),
+            (otherDrop.LevelId, otherDrop.PositionX, otherDrop.PositionY));
+        Assert.NotEqual(intendedDrop.ItemSeed, otherDrop.ItemSeed);
+        var monster = new MonsterSnapshot {EntityId = 30, LevelId = 2, Alive = true, PositionX = 80, PositionY = 80};
+        before.Monsters.Add(monster.Clone()); expected.Monsters.Add(monster.Clone());
+        monster.Alive = false; monster.DeathTicksRemaining = 7;
+        unrelated.Monsters.Add(monster);
+        if (!recorded) {
+            var error = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(
+                before, Wire(unrelated), 20, Receipt(), 210, 8));
+            Assert.Contains("monster", error.Message);
+            return;
+        }
+        var record = NativeTrappedSarcophagusJourneyEvidence.Capture(before, expected, 20, Receipt(), 210, 8);
+        var forged = Snapshot.Parser.ParseFrom(Convert.FromBase64String(record.After));
+        forged.WorldItems[0] = otherDrop.Clone(); // Valid native item, same floor/cell, different generation seed.
+        forged.Monsters[0] = monster.Clone();
+        var failure = Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(record with {
+            After = Convert.ToBase64String(forged.ToByteArray()),
+        }));
+        Assert.Contains("monster", failure.Message);
+    }
+
+    [Fact]
+    public void OnlyTheSarcophagusProducerRetainsItsNativeDropAndCarriedItemProof()
+    {
+        var (before, after) = Scenario(2);
+        var player = new PlayerSnapshot {EntityId = 1, LevelId = 2, Life = 64, PositionX = 51, PositionY = 50,
+            HeldItem = new ItemSnapshot {ItemSeed = 20, State = new ItemStateSnapshot {StableItemId = 2}},
+            Inventory = {new ItemSnapshot {ItemSeed = 10, State = new ItemStateSnapshot {StableItemId = 1}}}};
+        before.Players.Add(player.Clone()); after.Players.Add(player.Clone());
+        before.Monsters.Add(new MonsterSnapshot {EntityId = 30, LevelId = 2, Alive = true, HitPoints = 10});
+        after.Monsters.Add(before.Monsters[0].Clone()); after.Monsters[0].HitPoints = 9; // A wound produces no loot.
+        before.Corpses.Add(new CorpseSnapshot {EntityId = 31, LevelId = 2}); after.Corpses.Add(before.Corpses[0].Clone());
+        before.Objects.Add(new ObjectSnapshot {EntityId = 32, NativeObjectId = 8, LevelId = 2, AnimationFrame = 1});
+        after.Objects.Add(before.Objects[2].Clone()); after.Objects[2].AnimationFrame = 2; // An idle candle is not operated.
+        var record = NativeTrappedSarcophagusJourneyEvidence.Capture(Wire(before), Wire(after), 20, Receipt(), 210, 8);
+        Assert.Equal(new uint[] {40}, record.Drops);
+        foreach (var proof in new[] {record.Before, record.After}) {
+            var snapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(proof));
+            Assert.Equal(10U, Assert.Single(Assert.Single(snapshot.Players).Inventory).ItemSeed);
+            Assert.Equal(20U, Assert.Single(snapshot.Players).HeldItem.ItemSeed);
+        }
+        var decoded = JsonSerializer.Deserialize<NativeTrappedSarcophagusCheckpoint>(JsonSerializer.Serialize(record))!;
+        after.Objects[0].AnimationFrame = 8;
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(Wire(after), decoded);
+    }
+
+    [Theory]
     [InlineData("item")] [InlineData("player")] [InlineData("monster")]
     [InlineData("dying")] [InlineData("moving")] [InlineData("solid")]
     [InlineData("south")] [InlineData("large")] [InlineData("sides")]
@@ -84,7 +140,7 @@ public sealed class NativeSarcophagusFallbackEvidenceTests
         }
     }
 
-    private static (Snapshot Before, Snapshot After) Scenario(int radius, string blocker = "")
+    private static (Snapshot Before, Snapshot After) Scenario(int radius, string blocker = "", uint randomState = 2588)
     {
         var fixture = new NativeShrineTestFixture(2, 0);
         const int width = 112;
@@ -141,7 +197,7 @@ public sealed class NativeSarcophagusFallbackEvidenceTests
             Enumerable.Repeat(new AuthoritativeCathedralInitialItemState(), 128).ToArray(), Enumerable.Range(0, 127).ToArray(), 0,
             itemRefs, playerRefs, monsterRefs, objectRefs, solid, new bool[width * width], objectSolid, interactive);
         var generated = AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(new(state,
-            fixture.ItemProfile.ItemCatalog, new(2), 2588, 50, 50, false));
+            fixture.ItemProfile.ItemCatalog, new(2), randomState, 50, 50, false));
         Assert.True(generated.PlacementSucceeded);
         Assert.True(generated.UsedSuperItemSpaceFallback);
         var raw = generated.Item!;
