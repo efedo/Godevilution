@@ -100,13 +100,8 @@ public partial class WorldPresentation
         var viewportHeight = GetParent() is Control parentFrame
             ? Math.Max(1, Mathf.RoundToInt(parentFrame.Size.Y))
             : Math.Max(1, Mathf.RoundToInt(GetViewportRect().Size.Y));
-        nativeSceneViewport = NativeSceneViewport.Create(
-            viewportWidth,
-            viewportHeight,
-            currentLevel.Width,
-            currentLevel.Height,
-            localPlayer.PositionX,
-            localPlayer.PositionY);
+        nativeSceneViewport = localMovement.NativeViewport(
+            viewportWidth, viewportHeight, currentLevel.Width, currentLevel.Height);
     }
 
     private bool DrawNativeSceneWorld()
@@ -299,10 +294,8 @@ public partial class WorldPresentation
                          viewerY,
                          lightRadius))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
-            var projected = AuthoritativePlayerPositionProjection.ResolvePresentation(
-                player,
-                nativePlayerPresentationTick ?? snapshot.Tick,
-                isLocal ? predictedPlayerPosition : null);
+            var projected = isLocal && localVisualPosition is { } visual ? visual
+                : AuthoritativePlayerPositionProjection.ResolvePresentation(player, nativePlayerPresentationTick ?? snapshot.Tick);
             var anchor = sceneViewport.CellBottomAnchor(projected.X, projected.Y);
             AddNativeSceneActorCommand(
                 commands,

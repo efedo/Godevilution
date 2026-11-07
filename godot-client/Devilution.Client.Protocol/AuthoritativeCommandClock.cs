@@ -109,23 +109,26 @@ public sealed class AuthoritativeCommandClock(TimeProvider? timeProvider = null)
         }
     }
 
-    public ulong Estimate(ulong observedTick, uint tickRateHz)
+    public ulong Estimate(ulong observedTick, uint tickRateHz) => Estimate(observedTick, tickRateHz, roundUp: true);
+
+    /** Loopback realtime input uses floor projection plus its separate next-tick margin. */
+    public ulong Estimate(ulong observedTick, uint tickRateHz, bool roundUp)
     {
         if (tickRateHz == 0)
             throw new ArgumentOutOfRangeException(nameof(tickRateHz));
         lock (synchronization) {
             if (snapshotTick is not { } tick)
                 return observedTick;
-            var elapsedTicks = ProjectedTicks(receivedAt, time.GetTimestamp(), tickRateHz);
+            var elapsedTicks = ProjectedTicks(receivedAt, time.GetTimestamp(), tickRateHz, roundUp);
             return Math.Max(observedTick, checked(tick + elapsedTicks));
         }
     }
 
-    private ulong ProjectedTicks(long from, long to, uint tickRateHz)
+    private ulong ProjectedTicks(long from, long to, uint tickRateHz, bool roundUp = true)
     {
         var elapsedSeconds = Math.Max(0, time.GetElapsedTime(from, to).TotalSeconds);
         if (boundedProjection)
             elapsedSeconds = Math.Min(elapsedSeconds, MaximumProjectionSeconds);
-        return checked((ulong)Math.Ceiling(elapsedSeconds * tickRateHz));
+        return checked((ulong)(roundUp ? Math.Ceiling(elapsedSeconds * tickRateHz) : Math.Floor(elapsedSeconds * tickRateHz)));
     }
 }

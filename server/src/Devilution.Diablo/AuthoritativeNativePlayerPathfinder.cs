@@ -1,7 +1,15 @@
+#if DEVILUTION_CLIENT_PRESENTATION
+namespace Devilution.Client.Protocol;
+#else
 namespace Devilution.Diablo;
+#endif
 
 /** Native engine/path.cpp A* ordering and storage bounds for captured player walk paths. */
+#if DEVILUTION_CLIENT_PRESENTATION
+internal static class NativeWalkPredictionPathfinder
+#else
 public static class AuthoritativeNativePlayerPathfinder
+#endif
 {
     public const int MaximumPathLength = 100;
     private const int MaximumFrontierNodes = 1024;

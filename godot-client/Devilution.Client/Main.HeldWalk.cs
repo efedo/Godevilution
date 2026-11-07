@@ -9,10 +9,9 @@ namespace Devilution.Client;
 public partial class Main
 {
     private const string SettingsPath = "user://settings.cfg";
-    private const double HeldWalkInterval = 0.1;
     private bool heldMouseWalk;
     private Vector2I? lastHeldWalkTarget;
-    private double heldWalkCooldown;
+    private readonly HeldWalkCadence heldWalkCadence = new();
 
     /** The screen-relative step for the WASD keys currently held, including the one just pressed. */
     private static Vector2I HeldScreenWalkDirection(Key pressed = Key.None)
@@ -26,7 +25,8 @@ public partial class Main
     {
         heldMouseWalk = true;
         lastHeldWalkTarget = target;
-        heldWalkCooldown = HeldWalkInterval;
+        if (model.Snapshot?.Players.FirstOrDefault() is { } player)
+            heldWalkCadence.Submitted(AuthoritativePlayerPositionProjection.Resolve(player));
     }
 
     /**
@@ -36,23 +36,25 @@ public partial class Main
      */
     private void UpdateHeldWalk(double delta)
     {
-        heldWalkCooldown = Math.Max(0, heldWalkCooldown - delta);
+        heldWalkCadence.Advance(delta);
         if (!Input.IsMouseButtonPressed(MouseButton.Left))
             heldMouseWalk = false;
-        if (client?.IsConnected != true || client.PendingCommandCount > 0 || heldWalkCooldown > 0
+        if (client?.IsConnected != true
             || model.Snapshot?.Players.FirstOrDefault() is not { Life: > 0, ActiveStoreId: 0 } player
             || GetViewport().GuiGetFocusOwner() is LineEdit or TextEdit)
             return;
+        var reserved = AuthoritativePlayerPositionProjection.Resolve(player);
+        if (!heldWalkCadence.Due(reserved)) return;
         var settled = AuthoritativePlayerSettlement.IsSettled(player, 0);
         var direction = HeldScreenWalkDirection();
         if (direction != Vector2I.Zero) {
-            heldWalkCooldown = HeldWalkInterval;
-            if (settled) {
+            heldWalkCadence.Submitted(reserved);
+            if (settled && !client.SupportsTargetCellPathing) {
                 Queue(new Command { MoveRequested = new MoveRequested { DirectionX = direction.X, DirectionY = direction.Y } }, direction);
                 return;
             }
-            var ahead = new Vector2I(player.PositionX + 2 * direction.X, player.PositionY + 2 * direction.Y);
-            if (ahead != lastHeldWalkTarget) {
+            var ahead = new Vector2I(reserved.X + direction.X, reserved.Y + direction.Y);
+            if (settled || ahead != lastHeldWalkTarget) {
                 lastHeldWalkTarget = ahead;
                 QueueMoveTo(ahead);
             }
@@ -67,7 +69,7 @@ public partial class Main
         if (target == lastHeldWalkTarget || (target.X == player.PositionX && target.Y == player.PositionY))
             return;
         lastHeldWalkTarget = target;
-        heldWalkCooldown = HeldWalkInterval;
+        heldWalkCadence.Submitted(reserved);
         QueueMoveTo(target);
     }
 

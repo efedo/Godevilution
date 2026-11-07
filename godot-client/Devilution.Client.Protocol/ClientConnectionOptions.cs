@@ -26,6 +26,9 @@ public sealed record ClientConnectionOptions(
 
     public TimeSpan MaximumRetryTimeout { get; init; } = TimeSpan.FromSeconds(2);
 
+    /** Two reference ticks while movement/actions are visible; requests remain single-flight. */
+    public TimeSpan MovingSnapshotPollInterval { get; init; } = TimeSpan.FromMilliseconds(100);
+
     public TimeSpan SnapshotPollInterval { get; init; } = TimeSpan.FromMilliseconds(250);
 
     public static ClientConnectionOptions FromEnvironment()

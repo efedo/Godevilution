@@ -3,12 +3,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);DEVILUTION_CLIENT_PRESENTATION</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Share native path ordering for visual prediction without a simulation dependency. -->
+    <Compile Include="../../server/src/Devilution.Diablo/AuthoritativeNativePlayerPathfinder.cs"
+             Link="NativeWalkPredictionPathfinder.cs" />
     <Compile Include="../../server/src/Devilution.Domain/Protocol/AuthoritativePlayerActionTimingRules.cs"
              Link="Protocol/AuthoritativePlayerActionTimingRules.cs" />
   </ItemGroup>

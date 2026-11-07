@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Net.Sockets;
+using System.Net;
 using Devilution.Protocol;
 using Devilution.Protocol.CommandLog;
 using Devilution.Protocol.V1;
@@ -49,6 +50,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long? negotiatedPostAckSnapshotObservedMs;
     private double roundTripMilliseconds = ClockGatedRoundTripWindow.DefaultFloorMilliseconds;
     private readonly ClockGatedRoundTripWindow clockGatedRoundTrip = new();
+    private ClockGatedRoundTripWindow localSchedulingRoundTrip = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
+    private double localSchedulingRoundTripMilliseconds;
+    private bool isLocalConnection;
+    private bool snapshotHasActiveActions;
     // Retransmission stays on the largest round trip seen, so an ack slowed by a
     // checkpoint is waited for rather than answered with a duplicate send.
     private double retryRoundTripMilliseconds = ClockGatedRoundTripWindow.DefaultFloorMilliseconds;
@@ -73,8 +78,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     // interval may intentionally be much longer than startup calibration.
     private static readonly TimeSpan TimingCalibrationRetryInterval = TimeSpan.FromMilliseconds(250);
     private const int MaximumCalibrationProbeAttempts = 3;
-    // Ticks ahead wait longer on a slowed server, and the client polls nothing while a command
-    // is pending, so the lead stays short; a live host accepts a command that arrives later.
+    // Keep future work bounded on a slowed server; live admission tolerates late input.
+    // Loopback scheduling uses an independent measured margin, not this retry/probe floor.
     public const double MaximumClockGatedLeadMilliseconds = 500;
 
     public string SessionToken { get; private set; } = string.Empty;
@@ -131,17 +136,30 @@ public sealed class AuthoritativeClient : IAsyncDisposable
      * so a poll spans the same game time and commands decide on equally fresh state.
      */
     private double SnapshotPollIntervalMilliseconds
-        => options.SnapshotPollInterval.TotalMilliseconds * Math.Min(1d, 20d / ServerTickRateHz);
+        => (supportsClockOnlyProbes && IsClockGatedCommandScheduling && snapshotHasActiveActions
+                ? Math.Min(options.SnapshotPollInterval.TotalMilliseconds, options.MovingSnapshotPollInterval.TotalMilliseconds)
+                : options.SnapshotPollInterval.TotalMilliseconds) * Math.Min(1d, 20d / ServerTickRateHz);
 
     public ulong SuggestedCommandTick(ulong observedTick)
     {
+        return checked(commandClock.Estimate(observedTick, ServerTickRateHz,
+            roundUp: !(IsClockGatedCommandScheduling && isLocalConnection)) + (ulong)SchedulingLeadTicks());
+    }
+
+    private int SchedulingLeadTicks()
+    {
+        if (IsClockGatedCommandScheduling && isLocalConnection)
+            return LocalRealtimeLeadTicks(ServerTickRateHz, Volatile.Read(ref localSchedulingRoundTripMilliseconds));
         var leadMilliseconds = IsClockGatedCommandScheduling
             ? Math.Min(Volatile.Read(ref roundTripMilliseconds), MaximumClockGatedLeadMilliseconds)
             : RetryTimeout.TotalMilliseconds;
-        var leadTicks = Math.Max(1, (int)Math.Ceiling(
-            leadMilliseconds / 1000 * ServerTickRateHz) + 1);
-        return checked(commandClock.Estimate(observedTick, ServerTickRateHz) + (ulong)leadTicks);
+        return Math.Max(1, (int)Math.Ceiling(leadMilliseconds / 1000 * ServerTickRateHz) + 1);
     }
+
+    /** A measured one-way loopback margin; probe/retry floors never schedule local input into the future. */
+    internal static int LocalRealtimeLeadTicks(uint tickRateHz, double measuredRoundTripMilliseconds)
+        => Math.Max(1, (int)Math.Ceiling(Math.Clamp(measuredRoundTripMilliseconds, 0,
+            MaximumClockGatedLeadMilliseconds) * 0.5 / 1000 * tickRateHz));
 
     public AuthoritativeClient(ClientConnectionOptions options)
     {
@@ -206,6 +224,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 negotiatedPostAckSnapshotAppliedTick = null;
                 negotiatedPostAckSnapshotObservedMs = null;
                 timingCalibrationReady = false;
+                localSchedulingRoundTrip = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
+                localSchedulingRoundTripMilliseconds = 0;
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
                 supportsTargetCellPathing = false;
@@ -215,6 +235,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
+            isLocalConnection = tcpClient.Client.RemoteEndPoint is IPEndPoint endpoint && IPAddress.IsLoopback(endpoint.Address);
+            snapshotHasActiveActions = false;
             // Set TCP_NODELAY before the first framed protocol write, matching the native client.
             try {
                 tcpClient.NoDelay = true;
@@ -424,11 +446,22 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public ulong QueueRealtime(Command command, ulong observedTick)
         => Queue(command, requestedTick: 0, observedTick);
 
-    private ulong Queue(Command command, ulong requestedTick, ulong? observedTick)
+    /** Only unsent manual movement may be superseded; transmitted command identities never change. */
+    public ulong QueueRealtimeMovement(Command command, ulong observedTick)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (command.IntentCase != Command.IntentOneofCase.MoveRequested)
+            throw new ArgumentException("Movement coalescing requires a move intent.", nameof(command));
+        return Queue(command, 0, observedTick, coalesceMovement: true);
+    }
+
+    private ulong Queue(Command command, ulong requestedTick, ulong? observedTick, bool coalesceMovement = false)
     {
         ArgumentNullException.ThrowIfNull(command);
         lock (pendingLock) {
-            var sequence = checked(++nextClientSequence);
+            var tail = coalesceMovement ? pending.Values.MaxBy(entry => entry.Command.ClientSequence) : null;
+            var replacement = tail is { CoalescedMovement: true, TransmissionStarted: false, EverTransmitted: false } ? tail : null;
+            var sequence = replacement?.Command.ClientSequence ?? checked(++nextClientSequence);
             command.ClientSequence = sequence;
             command.RequestedTick = requestedTick;
             var queuedCommand = command.Clone();
@@ -441,7 +474,20 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 && supportsQueuedRangedAttacks
                 && queuedCommand.IntentCase == Command.IntentOneofCase.AttackRequested)
                 queuedCommand.AttackRequested.QueueDuringMove = true;
-            pending.Add(sequence, new PendingCommand(queuedCommand, observedTick));
+            var queuedAt = ElapsedMilliseconds;
+            var queuedTimestamp = CommandTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
+            if (replacement is not null) {
+                replacement.Command = queuedCommand;
+                replacement.ObservedTick = observedTick;
+                replacement.QueuedElapsedMilliseconds = queuedAt;
+                replacement.QueuedStopwatchTimestamp = queuedTimestamp;
+            } else {
+                pending.Add(sequence, new PendingCommand(queuedCommand, observedTick) {
+                    CoalescedMovement = coalesceMovement,
+                    QueuedElapsedMilliseconds = queuedAt,
+                    QueuedStopwatchTimestamp = queuedTimestamp,
+                });
+            }
             CommandLog?.Append(new CommandLogRecord {
                 ClientQueued = new ClientQueuedRecord { Command = queuedCommand.Clone() },
             });
@@ -477,6 +523,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         && (!needsTimingCalibration
                             || command.TransmissionStarted
                             || !command.ObservedTick.HasValue))
+                    .OrderBy(command => command.Command.ClientSequence)
                     .ToArray();
             }
             if (expiredTimingProbe is not null)
@@ -523,6 +570,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             MoveDirectionX = dispatch.Intent.MoveDirectionX,
                             MoveDirectionY = dispatch.Intent.MoveDirectionY,
                             AttackQueueDuringMove = dispatch.Intent.AttackQueueDuringMove,
+                            InputElapsedMilliseconds = dispatch.QueuedElapsedMilliseconds,
+                            InputStopwatchTimestamp = dispatch.QueuedStopwatchTimestamp,
+                            InputToDispatchMilliseconds = dispatch.FreezeElapsedMilliseconds - dispatch.QueuedElapsedMilliseconds,
+                            SchedulingLeadTicks = dispatch.SchedulingLeadTicks,
+                            SchedulingRoundTripMilliseconds = dispatch.SchedulingRoundTripMilliseconds,
+                            LocalScheduling = dispatch.LocalScheduling,
                         });
                     };
                 }
@@ -532,32 +585,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             if (!pending.ContainsKey(entry.Command.ClientSequence))
                                 return null;
                             if (!entry.TransmissionStarted) {
-                                if (entry.ObservedTick.HasValue
-                                    && supportsClockOnlyProbes
-                                    && IsClockGatedCommandScheduling) {
-                                    var dispatchNow = ElapsedMilliseconds;
-                                    var currentGeneration = Volatile.Read(ref transportGeneration);
-                                    var snapshotRequestBlocksDispatch
-                                        = negotiatedSnapshotRequestSentMs is { } snapshotSentAt
-                                            && negotiatedSnapshotRequestGeneration == currentGeneration
-                                            && dispatchNow - snapshotSentAt
-                                                < TimingProbeTimeout.TotalMilliseconds;
-                                    var acknowledgementSnapshotBlocksDispatch
-                                        = negotiatedPostAckSnapshotAppliedTick.HasValue
-                                            && negotiatedPostAckSnapshotGeneration == currentGeneration
-                                            && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
-                                            && dispatchNow - acknowledgementObservedAt
-                                                < TimingProbeTimeout.TotalMilliseconds;
-                                    if (snapshotRequestBlocksDispatch
-                                        || acknowledgementSnapshotBlocksDispatch)
-                                        return null;
-                                }
+                                // A snapshot in flight must not block new input. The host still
+                                // serializes command admission and publishes ordered durable responses.
                                 if (entry.ObservedTick is { } observedTick)
                                     entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
                             }
                             entry.Retransmitted |= entry.TransmissionStarted;
                             // Freeze before any write: cancellation/partial writes may
                             // leave the server with this exact command identity.
+                            entry.EverTransmitted = true;
                             entry.TransmissionStarted = true;
                             if (commandTimingRecorder is not null)
                                 entry.DispatchAttempt++;
@@ -584,7 +620,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                     freezeStopwatchTimestamp,
                                     Volatile.Read(ref roundTripMilliseconds),
                                     timingCalibrationReady,
-                                    CaptureCommandIntent(entry.Command));
+                                    CaptureCommandIntent(entry.Command),
+                                    entry.QueuedElapsedMilliseconds, entry.QueuedStopwatchTimestamp,
+                                    SchedulingLeadTicks(),
+                                    IsClockGatedCommandScheduling && isLocalConnection ? localSchedulingRoundTripMilliseconds : roundTripMilliseconds,
+                                    IsClockGatedCommandScheduling && isLocalConnection);
                             CommandLog?.Append(new CommandLogRecord {
                                 ClientSent = new ClientSentRecord { Command = entry.Command.Clone() },
                             });
@@ -816,6 +856,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private bool IsNegotiatedSnapshotPollDueLocked(long now, long generation)
     {
+        // A pending command already publishes a fresh snapshot: do not queue redundant poll work behind it.
         if (generation != Volatile.Read(ref transportGeneration) || pending.Count > 0)
             return false;
         if (negotiatedPostAckSnapshotGeneration == generation
@@ -1003,6 +1044,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot) {
+            lock (pendingLock) {
+                var level = envelope.Snapshot.Players.FirstOrDefault()?.LevelId;
+                snapshotHasActiveActions = level.HasValue && (
+                    envelope.Snapshot.Players.Any(player => player.LevelId == level && (player.CurrentAction is not null || player.NativeWalkPathPending))
+                    || envelope.Snapshot.Monsters.Any(monster => monster.LevelId == level && monster.Moving)
+                    || envelope.Snapshot.Projectiles.Any(projectile => projectile.LevelId == level));
+            }
             if (connectionGeneration is { } snapshotGeneration) {
                 RecordNegotiatedSnapshotReceipt(snapshotGeneration);
                 CompleteNegotiatedSnapshotRequest(snapshotGeneration);
@@ -1224,9 +1272,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             timingCalibrationProbeAttempts = 0;
             lastTimingProbeRequestMs = null;
             var sample = Math.Max(0, now - probe.SentAtMs);
-            // Gated admission waits on the full measured round trip. The lead uses
-            // the median recent sample, so one server stall does not raise it.
+            // Retry/non-loopback estimates keep their floor. Local input uses the raw
+            // median separately, so neither that floor nor one stall delays every key.
             Volatile.Write(ref roundTripMilliseconds, clockGatedRoundTrip.Observe(now, sample));
+            Volatile.Write(ref localSchedulingRoundTripMilliseconds, localSchedulingRoundTrip.Observe(now, sample));
             Volatile.Write(ref retryRoundTripMilliseconds, Math.Max(Volatile.Read(ref retryRoundTripMilliseconds), sample));
             if (recorder is not null)
                 outcome = new AuthoritativeClientProbeOutcomeTiming(
@@ -1499,9 +1548,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private sealed class PendingCommand(Command command, ulong? observedTick)
     {
-        public Command Command { get; } = command;
+        public Command Command { get; set; } = command;
+        public bool CoalescedMovement { get; init; }
+        public long QueuedElapsedMilliseconds { get; set; }
+        public long QueuedStopwatchTimestamp { get; set; }
         public ulong? ObservedTick { get; set; } = observedTick;
         public bool TransmissionStarted { get; set; }
+        public bool EverTransmitted { get; set; }
         public bool Retransmitted { get; set; }
         public int DispatchAttempt { get; set; }
         public long? LastSentMs { get; set; }
@@ -1553,7 +1606,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         long FreezeStopwatchTimestamp,
         double MeasuredRoundTripMilliseconds,
         bool TimingCalibrationReady,
-        CommandIntentCapture Intent);
+        CommandIntentCapture Intent,
+        long QueuedElapsedMilliseconds,
+        long QueuedStopwatchTimestamp,
+        int SchedulingLeadTicks,
+        double SchedulingRoundTripMilliseconds,
+        bool LocalScheduling);
 
     private readonly record struct ProbeSentCapture(
         ulong TimingRequestId,

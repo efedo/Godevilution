@@ -184,6 +184,14 @@ public sealed record AuthoritativeClientCommandTiming(
     double ObservedRoundTripEstimateMilliseconds,
     bool TimingCalibrationReady)
 {
+    /** Main input queue to first dispatch, on the same monotonic client clock. */
+    public long InputElapsedMilliseconds { get; init; }
+    public long InputStopwatchTimestamp { get; init; }
+    public long InputToDispatchMilliseconds { get; init; }
+    public int SchedulingLeadTicks { get; init; }
+    public double SchedulingRoundTripMilliseconds { get; init; }
+    public bool LocalScheduling { get; init; }
+
     /** Sanitized command oneof; no command payload is retained. */
     public Command.IntentOneofCase IntentKind { get; init; }
 

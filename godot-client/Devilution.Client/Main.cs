@@ -496,16 +496,24 @@ public partial class Main : Node2D
                     StartReconnect(force: true);
             }
 
-            if (activeClient.IsConnected
-                && pollTask is null
-                && (reconnectTask is null || reconnectTask.IsCompleted))
-                pollTask = activeClient.PollAsync(connectionLifetime?.Token ?? lifetime.Token);
-
             if (!activeClient.IsConnected
                 && (connectionTask?.IsCompleted ?? true)
                 && (reconnectTask is null || reconnectTask.IsCompleted))
                 StartReconnect(force: false);
         }
+
+        DriveHeldEntityAttack();
+        TrySubmitPendingWorldInteraction();
+        UpdateHeldWalk(delta);
+        if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
+                client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
+            var sequence = Queue(routeStep, automaticInput: true);
+            routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
+        }
+        // Collect held/click input before dispatch and before this frame's visual prediction.
+        if (client is { IsConnected: true } dispatchClient && pollTask is null
+            && (reconnectTask is null || reconnectTask.IsCompleted))
+            pollTask = dispatchClient.PollAsync(connectionLifetime?.Token ?? lifetime.Token);
 
         hud?.UpdateLayout();
         if (hud is not null) {
@@ -518,17 +526,9 @@ public partial class Main : Node2D
             model.Snapshot,
             model.AcceptedSnapshotRevision,
             delta,
-            model.PredictedPlayerPosition,
+            model.LocalMovementTarget,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
             client?.IsConnected == true);
-        DriveHeldEntityAttack();
-        TrySubmitPendingWorldInteraction();
-        UpdateHeldWalk(delta);
-        if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
-                client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
-            var sequence = Queue(routeStep, automaticInput: true);
-            routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
-        }
         hud?.SetTravelStatus(routeTravel.Active || interactionTravel.Active,
             interactionTravel.Active
                 ? $"Approaching ({interactionTravel.Target.X}, {interactionTravel.Target.Y}) — server-controlled"
@@ -616,8 +616,18 @@ public partial class Main : Node2D
                 Key.W or Key.A or Key.S or Key.D => HeldScreenWalkDirection(key.Keycode),
                 _ => Vector2I.Zero,
             };
-            if (direction != Vector2I.Zero)
-                Queue(new Command { MoveRequested = new MoveRequested { DirectionX = direction.X, DirectionY = direction.Y } }, direction);
+            if (direction != Vector2I.Zero) {
+                if (key.Keycode is Key.W or Key.A or Key.S or Key.D && client?.SupportsTargetCellPathing == true
+                    && model.Snapshot?.Players.FirstOrDefault() is { } walker) {
+                    var reserved = AuthoritativePlayerPositionProjection.Resolve(walker);
+                    var target = new Vector2I(reserved.X + direction.X, reserved.Y + direction.Y);
+                    lastHeldWalkTarget = target;
+                    heldWalkCadence.Submitted(reserved);
+                    QueueMoveTo(target);
+                } else {
+                    Queue(new Command { MoveRequested = new MoveRequested { DirectionX = direction.X, DirectionY = direction.Y } }, direction);
+                }
+            }
 
             if (key.Keycode == Key.O)
                 Queue(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = 1 } });
@@ -1256,10 +1266,14 @@ public partial class Main : Node2D
             routeTravel.Cancel("Travel cancelled by another action.");
             interactionTravel.Cancel();
         }
-        var sequence = client!.QueueRealtime(command, model.CurrentTick);
+        var sequence = !automaticInput && command.IntentCase == Command.IntentOneofCase.MoveRequested
+            ? client!.QueueRealtimeMovement(command, model.CurrentTick)
+            : client!.QueueRealtime(command, model.CurrentTick);
         ObservedLastQueuedSequence = sequence;
-        if (predictedDirection is { } direction)
-            model.TrackPredictedMove(sequence, direction.X, direction.Y);
+        if (command.MoveRequested is { } move) {
+            if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
+            else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);
+        }
         return sequence;
     }
 

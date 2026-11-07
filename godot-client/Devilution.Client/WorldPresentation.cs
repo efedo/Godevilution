@@ -36,6 +36,9 @@ public partial class WorldPresentation : Node2D
     private readonly AuthoritativeGeometryInstallationGate geometryInstallation = new();
     private readonly AuthoritativePresentationClock presentationClock = new();
     private double? nativePlayerPresentationTick;
+    private readonly AuthoritativeLocalPlayerPresentation localMovement = new();
+    private ClientPresentationPosition? localVisualPosition;
+    private Vector2 cameraDisplacement;
     private ulong lastAcceptedSnapshotRevision;
     private ulong pendingPresentationEpochRevision;
     private bool presentationEpochPending;
@@ -137,6 +140,8 @@ public partial class WorldPresentation : Node2D
             && acceptedSnapshotRevision is { } epochRevision
             && epochRevision != pendingPresentationEpochRevision) {
             presentationEpochPending = false;
+            presentationClock.Reset();
+            localMovement.Reset();
             nativePlayerPresentationTick = null;
             assets.ResetAnimation();
             nativeTownerClock.Reset();
@@ -152,6 +157,8 @@ public partial class WorldPresentation : Node2D
             nativeObjectDraws.Clear();
             nativeObjectAssets.Bind(null, 0);
             nativeTownerAssets.Bind(null, string.Empty, Array.Empty<NativeTownResidentSnapshot>());
+            localMovement.Reset();
+            localVisualPosition = null;
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
@@ -164,6 +171,7 @@ public partial class WorldPresentation : Node2D
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
+            localMovement.Reset();
             nativePlayerPresentationTick = null;
             assets.ResetAnimation();
             presentationLevelId = null;
@@ -183,10 +191,15 @@ public partial class WorldPresentation : Node2D
             presentationLevelId = localPlayer?.LevelId;
         }
         var presentationTick = presentationClock.Advance(
-            snapshot.Tick,
-            delta,
+            snapshot,
+            transportConnected && !presentationEpochPending ? delta : 0,
             serverTickRateHz);
         var snapshotRewound = presentationClock.LastAdvanceRewound;
+        if (snapshotRewound) localMovement.Reset();
+        localVisualPosition = localPlayer is null ? null : localMovement.Advance(localPlayer, presentationTick,
+            transportConnected && !presentationEpochPending ? predicted : null,
+            transportConnected && !presentationEpochPending ? delta : 0, serverTickRateHz);
+        var previousCameraAnchor = ToScreen(0, 0);
         if (nativePlayerPresentationTick is null || snapshotRewound)
             nativePlayerPresentationTick = snapshot.Tick;
         else if (transportConnected && !presentationEpochPending)
@@ -216,6 +229,7 @@ public partial class WorldPresentation : Node2D
             displayedPositionLevels.Clear();
         }
         viewport = nextViewport;
+        cameraDisplacement = ToScreen(0, 0) - previousCameraAnchor;
         var localGeometry = localPlayer is null
             ? null
             : snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
@@ -237,10 +251,8 @@ public partial class WorldPresentation : Node2D
                         localLightRadius)))
                 continue;
             activeEntityIds.Add(player.EntityId);
-            var projected = AuthoritativePlayerPositionProjection.ResolvePresentation(
-                player,
-                presentationTick,
-                player.EntityId == localPlayer?.EntityId ? predicted : null);
+            var projected = player.EntityId == localPlayer?.EntityId && localVisualPosition is { } visual
+                ? visual : AuthoritativePlayerPositionProjection.ResolvePresentation(player, presentationTick);
             var reset = displayedPlayerSnapshots.TryGetValue(player.EntityId, out var previous)
                 && AuthoritativePlayerPositionProjection.RequiresPresentationReset(previous, player)
                 || snapshotRewound;
@@ -251,7 +263,7 @@ public partial class WorldPresentation : Node2D
                     projected.Y),
                 delta,
                 player.LevelId,
-                reset);
+                reset || player.EntityId == localPlayer?.EntityId);
             displayedPlayerSnapshots[player.EntityId] = player.Clone();
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
@@ -369,13 +381,16 @@ public partial class WorldPresentation : Node2D
         PlayerSnapshot? localPlayer)
     {
         var size = GetParent() is Control frame ? frame.Size : GetViewportRect().Size;
+        if (localPlayer is not null && localVisualPosition.HasValue)
+            return localMovement.FallbackViewport(Math.Max(1, Mathf.RoundToInt(size.X)),
+                Math.Max(1, Mathf.RoundToInt(size.Y)), level.Width, level.Height, TileSize);
         return AuthoritativeWorldViewport.Create(
             Math.Max(1, Mathf.RoundToInt(size.X)),
             Math.Max(1, Mathf.RoundToInt(size.Y)),
             level.Width,
             level.Height,
-            localPlayer?.PositionX ?? level.Width / 2d,
-            localPlayer?.PositionY ?? level.Height / 2d,
+            localVisualPosition?.X ?? localPlayer?.PositionX ?? level.Width / 2d,
+            localVisualPosition?.Y ?? localPlayer?.PositionY ?? level.Height / 2d,
             TileSize);
     }
 
@@ -717,8 +732,8 @@ public partial class WorldPresentation : Node2D
         int localViewerY,
         int localLightRadius)
     {
-        var center = predicted is { } position
-            ? ToScreen(position.X, position.Y)
+        var center = isLocal && localVisualPosition is { } visual
+            ? ToScreen(visual.X, visual.Y)
             : PositionFor(player.EntityId, player.PositionX, player.PositionY);
         var statusPresentation = StatusPresentationStyle.ResolvePlayer(player);
         var statusKinds = statusPresentation.Badges
@@ -1289,7 +1304,7 @@ public partial class WorldPresentation : Node2D
         if (forceReset || levelChanged || !displayedPositions.TryGetValue(entityId, out var current))
             displayedPositions[entityId] = target;
         else
-            displayedPositions[entityId] = current.Lerp(target, 1.0f - Mathf.Exp((float)(-delta * 16)));
+            displayedPositions[entityId] = (current + cameraDisplacement).Lerp(target, 1.0f - Mathf.Exp((float)(-delta * 16)));
         displayedPositionLevels[entityId] = levelId;
     }
 

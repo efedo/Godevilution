@@ -359,8 +359,10 @@ public sealed partial class AuthoritativeClientModel
                     || latestResult.ClientSequence >= LastCommandResult.ClientSequence)
                     LastCommandResult = latestResult.Clone();
             }
-            foreach (var result in message.Acknowledgement.Results)
+            foreach (var result in message.Acknowledgement.Results) {
                 predictedMoves.Remove(result.ClientSequence);
+                ObserveMovementResult(result);
+            }
             RebuildPredictedPosition();
         }
     }
@@ -377,6 +379,7 @@ public sealed partial class AuthoritativeClientModel
     public void ResetPrediction()
     {
         predictedMoves.Clear();
+        movementIntent = null;
         RebuildPredictedPosition();
     }
 
@@ -398,11 +401,13 @@ public sealed partial class AuthoritativeClientModel
         if (!predictedMoves.ContainsKey(sequence) && predictedMoves.Count >= MaxPredictedMoves)
             return;
         predictedMoves[sequence] = new PredictedMove(directionX, directionY);
+        RememberMovement(sequence, directionX, directionY);
         RebuildPredictedPosition();
     }
 
     private void RebuildPredictedPosition()
     {
+        RebuildMovementTarget();
         if (Snapshot?.Players.FirstOrDefault() is not { } player) {
             PredictedPlayerPosition = null;
             IsCorrectingPosition = false;
@@ -416,6 +421,7 @@ public sealed partial class AuthoritativeClientModel
             ? action
             : null;
         var skippedAuthoritativeMove = false;
+        var hasPendingPrediction = false;
         foreach (var move in predictedMoves.OrderBy(pair => pair.Key).Select(pair => pair.Value)) {
             if (!skippedAuthoritativeMove
                 && authoritativeMove is not null
@@ -433,9 +439,10 @@ public sealed partial class AuthoritativeClientModel
                 || !IsProjectedMoveAvailable(Snapshot, player, (int)nextX, (int)nextY))
                 break;
             (x, y) = ((int)nextX, (int)nextY);
+            hasPendingPrediction = true;
         }
 
-        IsCorrectingPosition = x != player.PositionX || y != player.PositionY;
+        IsCorrectingPosition = hasPendingPrediction && (x != player.PositionX || y != player.PositionY);
         PredictedPlayerPosition = IsCorrectingPosition ? new ClientPosition(x, y) : null;
     }
 

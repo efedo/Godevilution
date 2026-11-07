@@ -105,7 +105,7 @@ public sealed class InitialTimingCalibrationTests
 
             var realtimeCommand = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             Assert.Equal(1UL, realtimeCommand.ClientSequence);
-            Assert.True(realtimeCommand.RequestedTick >= 103);
+            Assert.Equal(101UL, realtimeCommand.RequestedTick);
             await WriteEnvelopeAsync(stream, new Envelope {
                 CommandAck = Accepted(realtimeCommand.ClientSequence),
             });
@@ -312,7 +312,7 @@ public sealed class InitialTimingCalibrationTests
             for (var index = 0; index < 3; index++)
                 commands.Add(Assert.Single((await ReadEnvelopeAsync(resumedStream)).CommandBatch.Commands));
             Assert.Equal(new[] { 1UL, 2UL, 3UL }, commands.Select(command => command.ClientSequence));
-            Assert.All(commands, command => Assert.True(command.RequestedTick >= 203));
+            Assert.All(commands, command => Assert.Equal(201UL, command.RequestedTick));
             var acknowledgement = new CommandAck();
             acknowledgement.Results.Add(commands.Select(command => new CommandResult {
                 ClientSequence = command.ClientSequence,

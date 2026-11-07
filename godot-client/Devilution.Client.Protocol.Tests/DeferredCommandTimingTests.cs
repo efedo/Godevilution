@@ -174,8 +174,8 @@ public sealed class DeferredCommandTimingTests
         var sent = await serverTask;
         Assert.True(client.RoundTripMilliseconds >= 1000,
             $"Slow readiness sample was {client.RoundTripMilliseconds:F3} ms; dispatch tick {sent.RequestedTick}.");
-        // At 20 Hz: one second of projection (20 ticks) and the 500 ms lead limit (10) plus one.
-        Assert.InRange(sent.RequestedTick, 101UL, 131UL);
+        // One second of projection plus the capped 250 ms one-way loopback margin.
+        Assert.Equal(125UL, sent.RequestedTick);
     }
 
     [Fact]
@@ -193,12 +193,15 @@ public sealed class DeferredCommandTimingTests
             await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100);
             var readinessProbe = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
             Assert.True(readinessProbe.TimingRequestId > 0);
+            // Keep this a future-ACK test under the measured loopback policy:
+            // 250 ms RTT schedules three ticks ahead, beyond the unchanged 120 ms retry check.
+            time.AdvanceMilliseconds(250);
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
             });
             var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             Interlocked.Increment(ref received);
-            Assert.True(command.RequestedTick >= 103);
+            Assert.Equal(108UL, command.RequestedTick);
             using var duplicateCancellation = new CancellationTokenSource();
             var duplicateRead = ReadEnvelopeAsync(stream, duplicateCancellation.Token);
             var ackDelay = Task.Delay(TimeSpan.FromMilliseconds(120), time, TestContext.Current.CancellationToken);

@@ -19,7 +19,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
     private ClientConnectionOptions WithTime(ClientConnectionOptions options) => options with { TimeProvider = time };
 
     [Fact]
-    public async Task FirstRealtimeDispatchWaitsForOutstandingSnapshotAndRecomputesItsTick()
+    public async Task FirstRealtimeDispatchPassesOutstandingSnapshotAndUsesItsCurrentClock()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
             TestContext.Current.CancellationToken);
@@ -93,23 +93,20 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             var sample = recorder.CaptureReport().ProbeOutcomes.Last(outcome =>
                 outcome.Outcome == AuthoritativeClientProbeOutcome.Reply);
 
-            var sequence = client.QueueRealtime(
-                new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
-                model.CurrentTick);
-            await client.PollAsync(timeout.Token);
-
-            // The full-snapshot gate is independent of clock calibration: the
-            // command remains pending and unfrozen while the snapshot reply is
-            // outstanding, even though a clock probe has already replied.
-            Assert.Equal(1, client.PendingCommandCount);
-            Assert.Empty(recorder.CaptureReport().Commands);
-            Assert.Equal(0, adapter.ExecutedCommandCount);
-
             var staleSuggestion = client.SuggestedCommandTick(model.CurrentTick);
             time.AdvanceMilliseconds(750);
             clock.Set(EstimatePhysicalTick(1000, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             Assert.True(clock.CurrentTick >= heldSnapshot.Tick + 10);
             Assert.True(staleSuggestion < clock.CurrentTick);
+
+            var sequence = client.QueueRealtime(
+                new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, model.CurrentTick);
+            await client.PollAsync(timeout.Token);
+            Assert.Equal(1, client.PendingCommandCount);
+            var earlyDispatch = Assert.Single(recorder.CaptureReport().Commands);
+            Assert.Equal(sequence, earlyDispatch.ClientSequence);
+            Assert.True(earlyDispatch.RequestedTick >= clock.CurrentTick);
+            Assert.Equal(0, adapter.ExecutedCommandCount); // The parked provider still owns host authority.
 
             adapter.ReleaseSecondSnapshot();
             var refreshedSnapshot = await WaitForSnapshotAsync(client, model, timeout.Token);
@@ -126,7 +123,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
                     return dispatch is not null;
                 },
                 timeout.Token,
-                "the recomputed first command dispatch after the full snapshot boundary");
+                "the command already dispatched before the full snapshot boundary");
             Assert.NotNull(dispatch);
             Assert.True(
                 dispatch.RequestedTick >= clock.CurrentTick,
@@ -317,7 +314,7 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
     }
 
     [Fact]
-    public async Task FirstRealtimeDispatchUsesBoundedFallbackWhenFullSnapshotNeverArrives()
+    public async Task DispatchedCommandRetriesKeepTheirIdentityWhileSnapshotIsWithheld()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
             TestContext.Current.CancellationToken);
@@ -390,18 +387,17 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
             var gateStartedAt = time.GetElapsedTime(0).TotalMilliseconds;
             await client.PollAsync(timeout.Token);
             Assert.Equal(1, client.PendingCommandCount);
-            Assert.Empty(recorder.CaptureReport().Commands);
+            Assert.Single(recorder.CaptureReport().Commands);
             Assert.Equal(0, adapter.ExecutedCommandCount);
             time.AdvanceMilliseconds(750);
             clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             await client.PollAsync(timeout.Token);
-            Assert.Empty(recorder.CaptureReport().Commands);
+            Assert.Single(recorder.CaptureReport().Commands);
             Assert.Equal(1, client.PendingCommandCount);
 
-            // A response arriving within the two-second bound releases the
-            // gate; if it never arrives, the existing bounded fallback must
-            // still permit a first send without changing the command identity.
-            time.AdvanceMilliseconds(1400);
+            // A parked snapshot never blocks first dispatch. A later retry keeps
+            // the already-written sequence and tick even as the scheduling clock advances.
+            time.AdvanceMilliseconds(1100);
             clock.Set(EstimatePhysicalTick(100, identity.TickRateHz, sample.OutcomeElapsedMilliseconds));
             await client.PollAsync(timeout.Token);
             AuthoritativeClientCommandTiming? dispatch = null;
@@ -413,16 +409,19 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
                     return dispatch is not null;
                 },
                 timeout.Token,
-                "the first dispatch after the bounded full-snapshot fallback");
+                "the original first dispatch");
             Assert.NotNull(dispatch);
-            Assert.True(TimeSpan.FromMilliseconds(dispatch.FreezeElapsedMilliseconds - gateStartedAt)
-                >= TimeSpan.FromSeconds(2));
+            Assert.Equal(gateStartedAt, dispatch.FreezeElapsedMilliseconds);
+            var retry = Assert.Single(recorder.CaptureReport().Commands,
+                command => command.DispatchKind == AuthoritativeClientCommandDispatchKind.Retransmission);
+            Assert.Equal(dispatch.RequestedTick, retry.RequestedTick);
+            Assert.Equal(dispatch.ClientSequence, retry.ClientSequence);
             Assert.Equal(1, client.PendingCommandCount);
             Assert.Equal(0, adapter.ExecutedCommandCount);
 
             adapter.ReleaseSecondSnapshot();
-            // After two silent seconds the projection stops at one second past the sample, so the
-            // command runs late on the host's current tick instead of waiting for a far-future one.
+            // Admission is delayed by the parked provider; the live late-command tolerance
+            // executes this exact original identity once when authority becomes available.
             Assert.InRange(dispatch.RequestedTick, 101UL, 131UL);
             var execution = await adapter.CommandExecuted.Task.WaitAsync(timeout.Token);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence, timeout.Token);
