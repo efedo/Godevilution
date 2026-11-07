@@ -147,15 +147,27 @@ public partial class WorldPresentation : Node2D
             nativeTownerClock.Reset();
             PresentationEpochResetCount++;
         }
+        snapshotDataChanged = acceptedSnapshotRevision is null || appliedPresentationRevision != acceptedSnapshotRevision
+            || !ReferenceEquals(appliedPresentationSnapshot, next);
+        appliedPresentationSnapshot = next;
+        appliedPresentationRevision = acceptedSnapshotRevision;
+        if (acceptedSnapshotRevision is null) {
+            objectBindingChanges.Invalidate(); townerBindingChanges.Invalidate();
+        }
         snapshot = next;
         predictedPlayerPosition = predicted;
         if (snapshot is null) {
+            if (!snapshotDataChanged) return;
+            if (retainedRoot is not null) retainedRoot.Visible = false;
+            retainedInvalidation.Invalidate();
             nativeTownerClock.Reset();
             nativeTownerDraws.Clear();
             nativeTownerArtReady = false;
             nativeObjectArtReady = false;
             nativeObjectDraws.Clear();
             nativeObjectAssets.Bind(null, 0);
+            objectBindingChanges.Invalidate();
+            townerBindingChanges.Invalidate();
             nativeTownerAssets.Bind(null, string.Empty, Array.Empty<NativeTownResidentSnapshot>());
             localMovement.Reset();
             localVisualPosition = null;
@@ -209,10 +221,11 @@ public partial class WorldPresentation : Node2D
         else if (transportConnected && !presentationEpochPending)
             assets.AdvanceAnimation(delta);
 
-        var activeEntityIds = new HashSet<uint>();
+        var activeEntityIds = activePresentationEntities;
+        activeEntityIds.Clear();
         if (acceptedSnapshotRevision is { } geometryRevision) {
             if (geometryInstallation.NeedsInstallation(geometryRevision)) {
-                levels.ApplyAuthoritative(snapshot.LevelGeometry);
+                levels.ApplyAdmittedAuthoritative(snapshot.LevelGeometry);
                 geometryInstallation.MarkInstalled(geometryRevision);
             }
         } else {
@@ -221,7 +234,10 @@ public partial class WorldPresentation : Node2D
         }
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
         ResolveNativeScene(localPlayer);
-        nativeObjectArtReady = nativeObjectAssets.Bind(nativeObjectContentIdentity, localPlayer?.LevelId ?? 0);
+        if (objectBindingChanges.ShouldUpdate(true, (nativeObjectContentIdentity, localPlayer?.LevelId ?? 0))) {
+            cachedObjectPack = null;
+            nativeObjectArtReady = nativeObjectAssets.Bind(nativeObjectContentIdentity, localPlayer?.LevelId ?? 0);
+        }
         AdvanceNativeTowners(delta, serverTickRateHz, transportConnected, snapshotRewound);
         var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
         if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {
@@ -236,20 +252,9 @@ public partial class WorldPresentation : Node2D
         var localLightRadius = localPlayer?.LightRadius is >= 2 and <= 15
             ? localPlayer.LightRadius
             : 10;
+        RefreshPresentationMembers(localPlayer, localGeometry, localLightRadius);
 
-        foreach (var player in snapshot.Players) {
-            if (player.EntityId != localPlayer?.EntityId
-                && (localPlayer is null
-                    || !AuthoritativeNativeVisionVisibility.IsVisible(
-                        player.LevelId,
-                        player.PositionX,
-                        player.PositionY,
-                        localPlayer.LevelId,
-                        localGeometry,
-                        localPlayer.PositionX,
-                        localPlayer.PositionY,
-                        localLightRadius)))
-                continue;
+        foreach (var player in visiblePlayers) {
             activeEntityIds.Add(player.EntityId);
             var projected = player.EntityId == localPlayer?.EntityId && localVisualPosition is { } visual
                 ? visual : AuthoritativePlayerPositionProjection.ResolvePresentation(player, presentationTick);
@@ -264,17 +269,9 @@ public partial class WorldPresentation : Node2D
                 delta,
                 player.LevelId,
                 reset || player.EntityId == localPlayer?.EntityId);
-            displayedPlayerSnapshots[player.EntityId] = player.Clone();
+            if (snapshotDataChanged) displayedPlayerSnapshots[player.EntityId] = acceptedSnapshotRevision is null ? player.Clone() : player;
         }
-        foreach (var monster in snapshot.Monsters.Where(monster =>
-                     localPlayer is not null
-                     && AuthoritativeMonsterPresentationVisibility.IsVisible(
-                         monster,
-                         localPlayer.LevelId,
-                         localGeometry,
-                         localPlayer.PositionX,
-                         localPlayer.PositionY,
-                         localLightRadius))) {
+        foreach (var monster in visibleMonsters) {
             activeEntityIds.Add(monster.EntityId);
             var reset = displayedMonsterSnapshots.TryGetValue(monster.EntityId, out var previous)
                 && AuthoritativeMonsterPositionProjection.RequiresPresentationReset(previous, monster)
@@ -288,45 +285,21 @@ public partial class WorldPresentation : Node2D
                 delta,
                 monster.LevelId,
                 reset);
-            displayedMonsterSnapshots[monster.EntityId] = monster.Clone();
+            if (snapshotDataChanged) displayedMonsterSnapshots[monster.EntityId] = acceptedSnapshotRevision is null ? monster.Clone() : monster;
         }
-        foreach (var item in snapshot.WorldItems.Where(item =>
-                     localPlayer is not null
-                     && AuthoritativeWorldItemPresentationVisibility.IsVisible(
-                         item,
-                         localPlayer.LevelId,
-                         localGeometry,
-                         localPlayer.PositionX,
-                         localPlayer.PositionY,
-                         localLightRadius))) {
+        foreach (var item in visibleItems) {
             activeEntityIds.Add(item.EntityId);
             UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta, item.LevelId);
         }
-        foreach (var @object in snapshot.Objects.Where(@object =>
-                     localPlayer is not null
-                     && AuthoritativeObjectPresentationVisibility.IsVisible(
-                         @object,
-                         localPlayer.LevelId,
-                         localGeometry,
-                         localPlayer.PositionX,
-                         localPlayer.PositionY,
-                         localLightRadius))) {
+        foreach (var @object in visibleObjects) {
             activeEntityIds.Add(@object.EntityId);
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
-        foreach (var corpse in snapshot.Corpses.Where(corpse =>
-                     localPlayer is not null
-                     && AuthoritativeCorpsePresentationVisibility.IsVisible(
-                         corpse,
-                         localPlayer.LevelId,
-                         localGeometry,
-                         localPlayer.PositionX,
-                         localPlayer.PositionY,
-                         localLightRadius))) {
+        foreach (var corpse in visibleCorpses) {
             activeEntityIds.Add(corpse.EntityId);
             UpdatePosition(corpse.EntityId, ToScreen(corpse.PositionX, corpse.PositionY), delta, corpse.LevelId);
         }
-        foreach (var portal in snapshot.Portals) {
+        foreach (var portal in visiblePortals) {
             if (localPlayer is not null
                 && AuthoritativePortalPresentation.Resolve(
                     portal,
@@ -339,10 +312,7 @@ public partial class WorldPresentation : Node2D
                 UpdatePosition(portal.PortalId, ToScreen(endpoint.X, endpoint.Y), delta, localPlayer.LevelId);
             }
         }
-        foreach (var projectile in snapshot.Projectiles.Where(projectile =>
-                     AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
-                         projectile.LevelId,
-                         localPlayer?.LevelId ?? 0))) {
+        foreach (var projectile in visibleProjectiles) {
             activeEntityIds.Add(projectile.EntityId);
             var reset = displayedProjectileSnapshots.TryGetValue(projectile.EntityId, out var previous)
                 && AuthoritativeProjectilePositionProjection.RequiresPresentationReset(previous, projectile)
@@ -353,27 +323,29 @@ public partial class WorldPresentation : Node2D
                 delta,
                 projectile.LevelId,
                 reset);
-            displayedProjectileSnapshots[projectile.EntityId] = projectile.Clone();
+            if (snapshotDataChanged) displayedProjectileSnapshots[projectile.EntityId] = acceptedSnapshotRevision is null ? projectile.Clone() : projectile;
         }
-        foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray()) {
-            displayedPositions.Remove(entityId);
-            displayedPositionLevels.Remove(entityId);
+        if (snapshotDataChanged) {
+            foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray()) {
+                displayedPositions.Remove(entityId);
+                displayedPositionLevels.Remove(entityId);
+            }
+            foreach (var entityId in displayedPlayerSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                displayedPlayerSnapshots.Remove(entityId);
+            foreach (var entityId in playerTextureBindings.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                playerTextureBindings.Remove(entityId);
+            foreach (var entityId in playerTextureBindingHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                playerTextureBindingHistory.Remove(entityId);
+            foreach (var entityId in nativePlayerDrawObservations.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                nativePlayerDrawObservations.Remove(entityId);
+            foreach (var entityId in nativePlayerDrawHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                nativePlayerDrawHistory.Remove(entityId);
+            foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                displayedMonsterSnapshots.Remove(entityId);
+            foreach (var entityId in displayedProjectileSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+                displayedProjectileSnapshots.Remove(entityId);
         }
-        foreach (var entityId in displayedPlayerSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            displayedPlayerSnapshots.Remove(entityId);
-        foreach (var entityId in playerTextureBindings.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            playerTextureBindings.Remove(entityId);
-        foreach (var entityId in playerTextureBindingHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            playerTextureBindingHistory.Remove(entityId);
-        foreach (var entityId in nativePlayerDrawObservations.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            nativePlayerDrawObservations.Remove(entityId);
-        foreach (var entityId in nativePlayerDrawHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            nativePlayerDrawHistory.Remove(entityId);
-        foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            displayedMonsterSnapshots.Remove(entityId);
-        foreach (var entityId in displayedProjectileSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
-            displayedProjectileSnapshots.Remove(entityId);
-        QueueRedraw();
+        if (!PrepareRetainedNativeScene()) QueueRedraw();
     }
 
     private AuthoritativeWorldViewport CreateViewportTransform(
@@ -431,8 +403,10 @@ public partial class WorldPresentation : Node2D
 
     public void SetTargetPreview(Vector2I? target)
     {
+        if (targetPreview == target) return;
         targetPreview = target;
-        QueueRedraw();
+        if (retainedPreview is not null && retainedRoot?.Visible == true) retainedPreview.QueueRedraw();
+        else QueueRedraw();
     }
 
     public uint? WorldItemEntityIdAt(Vector2I target)
@@ -499,11 +473,16 @@ public partial class WorldPresentation : Node2D
 
     public override void _Draw()
     {
-        doorDrawObservations.Clear();
-        nativeTownerDraws.Clear();
-        nativeObjectDraws.Clear();
+        var started = CaptureFrameCost ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        try { DrawWorldFrame(); }
+        finally { if (started != 0) nativeDrawTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started; }
+    }
+
+    private void DrawWorldFrame()
+    {
         if (DrawNativeSceneWorld())
             return;
+        doorDrawObservations.Clear(); nativeTownerDraws.Clear(); nativeObjectDraws.Clear();
         DrawGrid();
         if (snapshot is null || snapshot.Players.Count == 0)
             return;
@@ -752,24 +731,27 @@ public partial class WorldPresentation : Node2D
             DrawNativePlayer(player, center, color, nativeBinding);
         } else {
             var actorFrame = assets.GetPlayerTextureFrame(player, out var actorSelection, out var actorAssetId);
-            var actorObservation = new PresentationPlayerTextureBindingObservation(
-                player.EntityId,
-                actorSelection is not null,
-                actorSelection?.RuleId,
-                actorAssetId,
-                assets.ObserveTexture(actorAssetId));
-            playerTextureBindings[player.EntityId] = actorObservation;
-            if (!playerTextureBindingHistory.TryGetValue(player.EntityId, out var history))
-                playerTextureBindingHistory[player.EntityId] = history = [];
-            var last = history.LastOrDefault();
-            if (last is null
-                || last.RuleId != actorObservation.RuleId
-                || last.AssetId != actorObservation.AssetId
-                || last.Binding?.IsLoaded != actorObservation.Binding?.IsLoaded
-                || last.Binding?.UsedFallback != actorObservation.Binding?.UsedFallback) {
-                history.Add(actorObservation);
-                if (history.Count > 32)
-                    history.RemoveAt(0);
+            PresentationPlayerTextureBindingObservation? actorObservation = null;
+            if (recordDrawDiagnostics) {
+                actorObservation = new PresentationPlayerTextureBindingObservation(
+                    player.EntityId,
+                    actorSelection is not null,
+                    actorSelection?.RuleId,
+                    actorAssetId,
+                    assets.ObserveTexture(actorAssetId));
+                playerTextureBindings[player.EntityId] = actorObservation;
+                if (!playerTextureBindingHistory.TryGetValue(player.EntityId, out var history))
+                    playerTextureBindingHistory[player.EntityId] = history = [];
+                var last = history.LastOrDefault();
+                if (last is null
+                    || last.RuleId != actorObservation.RuleId
+                    || last.AssetId != actorObservation.AssetId
+                    || last.Binding?.IsLoaded != actorObservation.Binding?.IsLoaded
+                    || last.Binding?.UsedFallback != actorObservation.Binding?.UsedFallback) {
+                    history.Add(actorObservation);
+                    if (history.Count > 32)
+                        history.RemoveAt(0);
+                }
             }
             if (actorFrame is { } semanticFrame)
                 DrawTextureFrame(semanticFrame, new Rect2(center - new Vector2(13, 13), new Vector2(26, 26)), color);
@@ -779,7 +761,7 @@ public partial class WorldPresentation : Node2D
                 DrawCircle(center, 11, color);
             else
                 DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
-            if (nativePackConfigured)
+            if (nativePackConfigured && actorObservation is not null)
                 RecordNativePlayerFallback(player, center, nativeBinding, actorObservation);
         }
         var resources = PlayerResourceBarProjection.Resolve(player);
@@ -863,6 +845,7 @@ public partial class WorldPresentation : Node2D
             destination = fallbackDestination;
         }
 
+        if (!recordDrawDiagnostics) return;
         var clipText = selection?.ClipKey is { } selectedKey
             ? NativePlayerCatalog.FormatKey(selectedKey)
             : null;
@@ -898,6 +881,7 @@ public partial class WorldPresentation : Node2D
         NativePlayerTextureBinding binding,
         PresentationPlayerTextureBindingObservation actorObservation)
     {
+        if (!recordDrawDiagnostics) return;
         var frameRegion = actorObservation.Binding?.FrameRegion;
         var destinationSize = actorObservation.Binding?.IsLoaded == true ? 26 : 22;
         var destination = new NativePlayerDestinationRect(

@@ -31,6 +31,9 @@ internal sealed class NativeSceneAssets
     private readonly NativeSceneCatalog? catalog;
     private readonly string? loadDiagnostic;
     private string? contentManifestHash;
+    private NativeSceneAtlasPathCache? atlasPaths;
+    private NativeSceneFamily? boundFamily;
+    private readonly Dictionary<int, ResolvedAtlas> boundAtlases = [];
 
     public NativeSceneAssets()
     {
@@ -146,6 +149,22 @@ internal sealed class NativeSceneAssets
         out string? resourcePath,
         out string? diagnostic)
     {
+        if (!ReferenceEquals(boundFamily, family)) {
+            boundFamily = family;
+            boundAtlases.Clear();
+        }
+        if (boundAtlases.TryGetValue(raster.AtlasId, out var binding)) {
+            texture = binding.Texture; resourcePath = binding.Path; diagnostic = binding.Diagnostic;
+            return texture is not null;
+        }
+        var succeeded = LoadTexture(family, raster, out texture, out resourcePath, out diagnostic);
+        boundAtlases.Add(raster.AtlasId, new(texture, resourcePath, diagnostic));
+        return succeeded;
+    }
+
+    private bool LoadTexture(NativeSceneFamily family, NativeSceneRasterReference raster,
+        out Texture2D? texture, out string? resourcePath, out string? diagnostic)
+    {
         texture = null;
         resourcePath = null;
         diagnostic = null;
@@ -153,12 +172,9 @@ internal sealed class NativeSceneAssets
             diagnostic = $"Native scene atlas {raster.AtlasId} is not declared.";
             return false;
         }
-        if (!PresentationAssetPath.TryCombineResourcePath(
-                manifestPath!,
-                atlas.Path,
-                out var normalizedPath,
-                out var pathError)) {
-            diagnostic = $"Native scene atlas path was refused: {pathError}.";
+        var pathBinding = (atlasPaths ??= new(manifestPath!)).Resolve(family, raster.AtlasId);
+        if (pathBinding.ResourcePath is not { } normalizedPath) {
+            diagnostic = pathBinding.Diagnostic;
             return false;
         }
         resourcePath = normalizedPath;
@@ -257,4 +273,5 @@ internal sealed class NativeSceneAssets
         LinkedListNode<string> Node);
 
     private sealed record FamilyPreflightResult(bool Succeeded, string? Diagnostic);
+    private sealed record ResolvedAtlas(Texture2D? Texture, string? Path, string? Diagnostic);
 }

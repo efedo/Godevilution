@@ -53,6 +53,7 @@ public partial class HudPresentation
         foreach (var button in combatBeltQuickUseButtons)
             combatBeltQuickUseRow.AddChild(button);
         statusBox.AddChild(combatBeltQuickUseRow);
+        statusPanel.MinimumSizeChanged += () => layoutDirty = true;
         AddChild(statusPanel);
 
         victory.HorizontalAlignment = HorizontalAlignment.Center;
@@ -186,7 +187,7 @@ public partial class HudPresentation
     /** Called before world rendering/input; container minimums include wrapped text. */
     public void UpdateLayout()
     {
-        if (sidePanel is null)
+        if (sidePanel is null || !NeedsLayout())
             return;
         var size = GetViewport().GetVisibleRect().Size;
         var sideWidth = Mathf.Clamp(size.X * 0.34f, 400, 480);
@@ -222,6 +223,8 @@ public partial class HudPresentation
 
     public void SetTravelStatus(bool active, string message)
     {
+        if (lastTravelStatus == (active, message)) return;
+        lastTravelStatus = (active, message);
         cancelTravel.Disabled = !active;
         travelStatus.Text = message;
     }

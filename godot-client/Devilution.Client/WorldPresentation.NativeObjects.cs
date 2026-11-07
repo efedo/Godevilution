@@ -17,6 +17,7 @@ public partial class WorldPresentation
     private readonly List<NativeObjectDrawObservation> nativeObjectDraws = [];
     private string? nativeObjectContentIdentity;
     private bool nativeObjectArtReady;
+    private NativeObjectPackObservation? cachedObjectPack;
 
     internal NativeObjectPackObservation ObserveNativeObjectPack() => nativeObjectAssets.ObservePack();
     internal IReadOnlyList<NativeObjectDrawObservation> ObserveNativeObjectDrawing() => nativeObjectDraws.ToArray();
@@ -26,6 +27,7 @@ public partial class WorldPresentation
         if (nativeObjectContentIdentity == hash)
             return;
         nativeObjectContentIdentity = hash;
+        cachedObjectPack = null;
         nativeObjectArtReady = false;
         nativeObjectDraws.Clear();
     }
@@ -36,7 +38,7 @@ public partial class WorldPresentation
         var anchor = ToScreen(state.PositionX, state.PositionY);
         var size = nativeSceneViewport is { } viewport
             ? new Vector2(viewport.ViewportWidth, viewport.ViewportHeight) : GetViewportRect().Size;
-        var pack = nativeObjectAssets.ObservePack();
+        var pack = cachedObjectPack ??= nativeObjectAssets.ObservePack();
         var diagnostic = pack.Diagnostic ?? "Native object art requires an active native dungeon scene.";
         NativeObjectFrame? frame = null;
         if (nativeSceneViewport is not null && nativeObjectArtReady
@@ -51,7 +53,7 @@ public partial class WorldPresentation
             nativeObjectAssets.Catalog!.TryGetAtlas(frame.AtlasId, out var atlas);
             RecordNativeObjectDraw(state, anchor, destination, size, true, pack.PackId, atlas.Path, frame.NativeWidth, null);
             // Preserve existing semantic door observations when native art replaces the marker.
-            if (state.CathedralDoor is { } door)
+            if (recordDrawDiagnostics && state.CathedralDoor is { } door)
                 doorDrawObservations[state.EntityId] = new CathedralDoorDrawObservation(state.EntityId,
                     door.NativeObjectId, door.DoorState, state.AnimationFrame, ObjectPresentationStyle.ResolveFrame(state));
             return true;
@@ -64,9 +66,12 @@ public partial class WorldPresentation
 
     private void RecordNativeObjectDraw(ObjectSnapshot state, Vector2 anchor, Rect2 bounds, Vector2 size,
         bool native, string? packId, string? atlasPath, int nativeWidth, string? diagnostic)
-        => nativeObjectDraws.Add(new NativeObjectDrawObservation(snapshot!.Tick, state.EntityId, state.NativeObjectId,
+    {
+        if (!recordDrawDiagnostics) return;
+        nativeObjectDraws.Add(new NativeObjectDrawObservation(snapshot!.Tick, state.EntityId, state.NativeObjectId,
             state.LevelId, state.PositionX, state.PositionY, state.AnimationFrame, state.Activated, state.Destroyed, state.TrapArmed,
             native, !native, packId, atlasPath, nativeWidth, anchor.X, anchor.Y, bounds.Position.X, bounds.Position.Y,
             (int)bounds.Size.X, (int)bounds.Size.Y, anchor.X >= 0 && anchor.Y >= 0 && anchor.X < size.X && anchor.Y < size.Y,
             diagnostic));
+    }
 }

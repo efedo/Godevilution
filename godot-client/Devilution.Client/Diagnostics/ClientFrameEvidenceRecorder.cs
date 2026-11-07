@@ -7,9 +7,9 @@ namespace Devilution.Client.Diagnostics;
 /**
  * Opt-in, bounded frame evidence that never stores gameplay or credentials.
  * The destination must be fresh and the capture is unsuccessful unless an
- * explicit caller outcome is supplied before the window is stopped.
+ * explicit caller outcome is supplied (normal frame-cost captures finish at their time limit).
  */
-public sealed class ClientFrameEvidenceRecorder
+public sealed partial class ClientFrameEvidenceRecorder
 {
     private const string EvidenceFileName = "client-frame-evidence.json";
     private readonly ClientFrameEvidenceConfiguration configuration;
@@ -96,6 +96,9 @@ public sealed class ClientFrameEvidenceRecorder
     {
         var outputDirectory = Environment.GetEnvironmentVariable(
             "GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT");
+        var normalOutput = Environment.GetEnvironmentVariable(FrameCaptureEnvironmentVariable);
+        var frameCostOnly = UsesNormalFrameCapture(outputDirectory, normalOutput);
+        if (frameCostOnly) outputDirectory = normalOutput;
         if (string.IsNullOrWhiteSpace(outputDirectory))
             return null;
         var configuredWarmupSeconds = 0d;
@@ -124,7 +127,7 @@ public sealed class ClientFrameEvidenceRecorder
                     outputDirectory,
                     TimeSpan.FromSeconds(warmupSeconds),
                     TimeSpan.FromSeconds(durationSeconds),
-                    maximumSamples),
+                    maximumSamples, frameCostOnly),
                 metadata);
         } catch (Exception exception) when (exception is
             ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException or OverflowException) {
@@ -189,7 +192,7 @@ public sealed class ClientFrameEvidenceRecorder
         if (frameTimestamp < activeAtTimestamp)
             return;
         if (frameTimestamp >= stopAtTimestamp) {
-            Stop("measurement-window-ended", succeeded: false);
+            Stop("measurement-window-ended", succeeded: configuration.FrameCostOnly);
             return;
         }
 
@@ -218,6 +221,7 @@ public sealed class ClientFrameEvidenceRecorder
                 sceneEndTimestamp - sceneStartTimestamp);
         }
         previousFrameTimestamp = frameTimestamp;
+        if (configuration.FrameCostOnly) return;
         if (sampleCount >= samples.Length) {
             droppedSampleCount++;
             return;
@@ -236,6 +240,7 @@ public sealed class ClientFrameEvidenceRecorder
         stopped = true;
         stoppedAtUtc = DateTimeOffset.UtcNow;
         measurementStopTimestamp = Stopwatch.GetTimestamp();
+        FlushFrameCosts(measurementStopTimestamp);
         var capturedQuality = EvaluateQuality(measurementStopTimestamp);
         quality = capturedQuality;
         outcomeKind = reason;
@@ -252,7 +257,7 @@ public sealed class ClientFrameEvidenceRecorder
             ? 0
             : ToMilliseconds(
                 Math.Max(0, stopTimestamp - firstMeasurementTimestamp));
-        var hasSamples = sampleCount > 0;
+        var hasSamples = sampleCount > 0 || frameCostSamples.Count > 0;
         var identityObserved = observedServerIdentity is not null;
         var participantCountMatches = metadata.ParticipantCount is { } expected
             && observedParticipantCount is { } actual
@@ -319,7 +324,7 @@ public sealed class ClientFrameEvidenceRecorder
             NonMonotonicTimestampCount: nonMonotonicTimestampCount,
             InvalidTimestampCount: invalidTimestampCount,
             Quality: quality ?? EvaluateQuality(measurementStopTimestamp),
-            Samples: samples[..sampleCount]);
+            Samples: samples[..sampleCount], FrameCosts: frameCostSamples);
         var options = new JsonSerializerOptions { WriteIndented = true };
         using var stream = new FileStream(
             EvidenceFilePath,
@@ -391,7 +396,8 @@ public sealed record ClientFrameEvidenceConfiguration(
     string OutputDirectory,
     TimeSpan Warmup,
     TimeSpan MeasurementWindow,
-    int MaximumSamples)
+    int MaximumSamples,
+    bool FrameCostOnly = false)
 {
     public void Validate()
     {
@@ -495,4 +501,5 @@ public sealed record ClientFrameEvidenceDocument(
     int NonMonotonicTimestampCount,
     int InvalidTimestampCount,
     ClientFrameEvidenceQuality Quality,
-    IReadOnlyList<ClientFrameEvidenceSample> Samples);
+    IReadOnlyList<ClientFrameEvidenceSample> Samples,
+    IReadOnlyList<ClientSecondFrameCostSample>? FrameCosts = null);

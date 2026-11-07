@@ -330,6 +330,9 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyCombatBeltQuickUse(PlayerSnapshot? player, bool connected)
     {
+        if (!quickBeltChanges.ShouldUpdate(combatBeltQuickUseRow.IsVisibleInTree(), (player?.Belt, connected,
+                sessionMenuTransition, UseConsumableRequested is not null, player?.Life > 0,
+                player?.CombatMode ?? PlayerCombatMode.Stand))) return;
         for (var index = 0; index < combatBeltQuickUseButtons.Count; index++) {
             var button = combatBeltQuickUseButtons[index];
             var reference = AuthoritativeBeltConsumableSelector.Select(player, index);
@@ -345,6 +348,9 @@ public partial class HudPresentation : CanvasLayer
 
     public void SetStatus(string value)
     {
+        if (lastStatusText == value) return;
+        lastStatusText = value;
+        layoutDirty = true;
         status.Text = value;
     }
 
@@ -363,6 +369,9 @@ public partial class HudPresentation : CanvasLayer
         IReadOnlyList<AuthoritativeSpellSource> sources,
         string? selectedSourceKey)
     {
+        if (!spellChanges.ShouldUpdate(true, (sources, selectedSourceKey, spellSources.IsVisibleInTree()))) return;
+        selectedSpellText = sources.FirstOrDefault(value => value.Key == selectedSourceKey)?.DisplayName ?? "none";
+        if (!spellSources.IsVisibleInTree()) return;
         var rebuild = spellSourceKeys.Count != sources.Count;
         if (!rebuild) {
             for (var index = 0; index < sources.Count; index++) {
@@ -396,6 +405,9 @@ public partial class HudPresentation : CanvasLayer
 
     public void SetSessionWarning(string? message)
     {
+        if (lastSessionWarningText == (message ?? string.Empty)) return;
+        lastSessionWarningText = message ?? string.Empty;
+        layoutDirty = true;
         sessionWarning.Text = message ?? string.Empty;
         sessionWarning.Visible = !string.IsNullOrEmpty(message);
     }
@@ -404,17 +416,18 @@ public partial class HudPresentation : CanvasLayer
 
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
+        UpdateHudClock();
+        if (!NeedsHudApply(model, client, connectionTask)) return;
         currentClientConnected = client?.IsConnected == true;
         currentClient = client;
-        clock.Text = ClockPresentation.Format(DateTimeOffset.Now);
         if (client is { IsConnected: false } && model.Snapshot is not null)
-            status.Text = "Connection lost - reconnecting. Gameplay input disabled.";
+            SetStatus("Connection lost - reconnecting. Gameplay input disabled.");
         else if (!string.IsNullOrWhiteSpace(model.LastError))
-            status.Text = model.LastError;
+            SetStatus(model.LastError);
         else if (client?.IsConnected == true)
-            status.Text = $"Connected - retry {client.RetryTimeout.TotalMilliseconds:0} ms";
+            SetStatus($"Connected - retry {client.RetryTimeout.TotalMilliseconds:0} ms");
         else if (connectionTask is { IsFaulted: true })
-            status.Text = connectionTask.Exception?.GetBaseException().Message ?? "Connection failed";
+            SetStatus(connectionTask.Exception?.GetBaseException().Message ?? "Connection failed");
 
         var player = model.Snapshot?.Players.FirstOrDefault();
         if (player is null || selectedInventoryIndex >= player.Inventory.Count)
@@ -447,16 +460,10 @@ public partial class HudPresentation : CanvasLayer
         currentPlayer = player;
         selectedItemReference = ResolveSelectedItemReference(player);
         RefreshSelectedConsumableAvailability();
-        var statusPresentation = player is null
-            ? null
-            : StatusPresentationStyle.ResolvePlayer(player);
-        statusEffects.Text = statusPresentation is null
-            ? "Statuses: waiting for authoritative snapshot"
-            : $"Statuses: {StatusPresentationStyle.FormatDetailed(statusPresentation.Badges)}";
+        ApplyPlayerLabels(player);
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
             : $"Tick {model.CurrentTick}   Difficulty {AuthoritativeDifficultyPresentation.Format(model.Snapshot?.Difficulty ?? GameDifficulty.Normal)}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
-        attributes.Text = FormatAttributes(player);
 
         var victoryEvent = model.RecentEvents.LastOrDefault(
             @event => @event.EventCase == GameEvent.EventOneofCase.Victory);
@@ -469,16 +476,19 @@ public partial class HudPresentation : CanvasLayer
             victory.Visible = false;
         }
 
-        commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
-        diagnostics.Text = FormatDiagnostics(model, client);
-        inventory.Text = FormatInventory(player);
+        if (commandChanges.ShouldUpdate(commandFeedback.IsVisibleInTree(), model.LastCommandResult))
+            commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
+        if (diagnostics.IsVisibleInTree()) diagnostics.Text = FormatDiagnostics(model, client);
+        ApplyInventoryCaption(player);
         ApplyInventoryGrid(player);
         ApplyBeltItems(player);
         ApplyEquipmentItems(player);
         ApplyOilTargets(player);
         ApplyStore(model.Snapshot?.ActiveStore);
         ApplyStash(player);
-        dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
+        if (dialogChanges.ShouldUpdate(dialog.IsVisibleInTree(),
+                (model.Snapshot?.Objects, model.Snapshot?.Quests, model.RecentEventsStartSequence, model.RecentEventsEndSequence)))
+            dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
         availableObjectEntityId = AuthoritativeObjectSelector.SelectFirst(model.Snapshot)?.EntityId;
         availableTrapEntityId = model.ArmedTrapObjects
             .Where(@object => player is not null
@@ -609,6 +619,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyStore(StoreSnapshot? activeStore)
     {
+        if (!storeChanges.ShouldUpdate(storeItems.IsVisibleInTree(), (activeStore?.StoreId ?? 0, activeStore?.Items, selectedStoreSlot))) return;
         var nextStoreId = activeStore?.StoreId ?? 0;
         if (nextStoreId != activeStoreId)
             selectedStoreSlot = null;
@@ -636,6 +647,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyStash(PlayerSnapshot? player)
     {
+        if (!stashChanges.ShouldUpdate(stashGrid.IsVisibleInTree(), (player?.Stash, player?.StashOpen ?? false, player?.StashGold ?? 0, stashPage, selectedStashItemIndex))) return;
         var layout = StashLayout.Build(player?.Stash, stashPage);
         for (var cellIndex = 0; cellIndex < stashCells.Count; cellIndex++) {
             var occupant = layout.Occupants[cellIndex];
@@ -683,6 +695,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyInventoryGrid(PlayerSnapshot? player)
     {
+        if (!inventoryChanges.ShouldUpdate(inventoryGrid.IsVisibleInTree(), (player?.Inventory, player?.InventoryGrid, selectedInventoryIndex))) return;
         inventoryLayout = InventoryLayout.Build(player?.Inventory, player?.InventoryGrid, InventoryColumns, VisibleInventoryRows);
 
         for (var cellIndex = 0; cellIndex < inventoryCells.Count; cellIndex++) {
@@ -701,6 +714,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyBeltItems(PlayerSnapshot? player)
     {
+        if (!beltChanges.ShouldUpdate(beltItems.IsVisibleInTree(), (player?.Belt, selectedBeltSlot))) return;
         beltItems.Clear();
         beltSlots.Clear();
         if (player is null)
@@ -726,6 +740,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyEquipmentItems(PlayerSnapshot? player)
     {
+        if (!equipmentChanges.ShouldUpdate(equipmentItems.IsVisibleInTree(), (player?.Equipment, selectedEquipmentSlot))) return;
         equipmentItems.Clear();
         equipmentSlots.Clear();
         if (player is null) {
@@ -752,6 +767,7 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyOilTargets(PlayerSnapshot? player)
     {
+        if (!oilChanges.ShouldUpdate(oilTargets.IsVisibleInTree(), (player?.Inventory, player?.Equipment, selectedOilTarget))) return;
         var previousTarget = selectedOilTarget;
         oilTargetReferences.Clear();
         oilTargets.Clear();
@@ -1096,6 +1112,8 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyAccessibility()
     {
+        if (appliedHighContrast == highContrastToggle.ButtonPressed) return;
+        appliedHighContrast = highContrastToggle.ButtonPressed;
         var color = highContrastToggle.ButtonPressed ? Colors.White : new Color("d5d5e5");
         var muted = highContrastToggle.ButtonPressed ? Colors.White : new Color("b2b2c5");
         foreach (var control in new Control[] { status, state, statusEffects, victory, inventory, store, dialog, commandFeedback, diagnostics }) {
