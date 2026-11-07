@@ -14,6 +14,16 @@ public static class AuthoritativeCommandAckValidator
         => result is { Status: CommandStatus.Accepted or CommandStatus.Duplicate,
             RejectReason: CommandRejectReason.Unspecified };
 
+    /** The host executes only these UI intents when one or two ticks late. */
+    public static bool IsSuccessfulRescheduledInterfaceCommand(CommandResult? result,
+        Command.IntentOneofCase intent, ulong clientSequence, ulong requestedTick)
+        => result is { Status: CommandStatus.Rescheduled, RejectReason: CommandRejectReason.Unspecified,
+                ServerReceiptSequence: > 0 }
+            && clientSequence > 0 && result.ClientSequence == clientSequence
+            && intent is (Command.IntentOneofCase.OpenStoreRequested or Command.IntentOneofCase.CloseStoreRequested
+                or Command.IntentOneofCase.OpenStashRequested or Command.IntentOneofCase.CloseStashRequested)
+            && result.AppliedTick > requestedTick && result.AppliedTick - requestedTick <= 2;
+
     public static void Validate(CommandAck acknowledgement)
     {
         ArgumentNullException.ThrowIfNull(acknowledgement);

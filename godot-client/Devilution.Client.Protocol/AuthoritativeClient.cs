@@ -1071,6 +1071,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         } else if (IsClockGatedCommandScheduling) {
             commandClock.ObserveServerMessage();
         }
+        IReadOnlyList<AuthoritativeCommandReceiptContext>? acknowledgedCommands = null;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
             try {
                 AuthoritativeCommandAckValidator.Validate(envelope.CommandAck);
@@ -1081,14 +1082,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 }));
                 return;
             }
-            Acknowledge(envelope.CommandAck, connectionGeneration);
+            acknowledgedCommands = Acknowledge(envelope.CommandAck, connectionGeneration);
         }
         if (snapshotTiming is not null)
             TryRecordSnapshot(CommandTimingRecorder, snapshotTiming);
         incoming.Enqueue(envelope.PayloadCase switch {
             Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot),
             Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch),
-            Envelope.PayloadOneofCase.CommandAck => new AuthoritativeClientMessage(Acknowledgement: envelope.CommandAck),
+            Envelope.PayloadOneofCase.CommandAck => new AuthoritativeClientMessage(Acknowledgement: envelope.CommandAck) {
+                AcknowledgedCommands = acknowledgedCommands,
+            },
             Envelope.PayloadOneofCase.Error => new AuthoritativeClientMessage(Error: envelope.Error),
             _ => new AuthoritativeClientMessage(Error: new ProtocolError {
                 Code = ProtocolErrorCode.InvalidMessage,
@@ -1339,8 +1342,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         return origin + (long)Math.Ceiling(milliseconds);
     }
 
-    private void Acknowledge(CommandAck acknowledgement, long? connectionGeneration)
+    private IReadOnlyList<AuthoritativeCommandReceiptContext>? Acknowledge(CommandAck acknowledgement, long? connectionGeneration)
     {
+        List<AuthoritativeCommandReceiptContext>? acknowledgedCommands = null;
         var now = ElapsedMilliseconds;
         var recorder = CommandTimingRecorder;
         var receivedStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
@@ -1370,6 +1374,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     && removedCommand is not null) {
                     trackedPendingCommand = true;
                     wasRetransmitted = removedCommand.Retransmitted;
+                    if (result.Status == CommandStatus.Rescheduled && removedCommand.TransmissionStarted
+                        && transportGenerationForRecord == Volatile.Read(ref transportGeneration)) {
+                        (acknowledgedCommands ??= []).Add(new(removedCommand.Command.ClientSequence,
+                            removedCommand.Command.RequestedTick, removedCommand.Command.IntentCase));
+                    }
                     if (IsClockGatedCommandScheduling && !wasRetransmitted
                         && removedCommand.TransmissionStarted
                         && removedCommand.FirstDispatchGeneration == transportGenerationForRecord
@@ -1404,6 +1413,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     commandRoundTripMilliseconds,
                     receivedStopwatchTimestamp));
         }
+        return acknowledgedCommands?.AsReadOnly();
     }
 
     private Task WriteEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken)

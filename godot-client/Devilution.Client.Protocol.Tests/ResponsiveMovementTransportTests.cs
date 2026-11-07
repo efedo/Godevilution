@@ -283,6 +283,51 @@ public sealed class ResponsiveMovementTransportTests
         Assert.Equal(100, client.RoundTripMilliseconds);
     }
 
+    [Theory]
+    [InlineData(0, 1UL, true)] [InlineData(0, 2UL, true)]
+    [InlineData(1, 1UL, true)] [InlineData(1, 2UL, true)]
+    [InlineData(2, 1UL, true)] [InlineData(2, 2UL, true)]
+    [InlineData(3, 1UL, true)] [InlineData(3, 2UL, true)]
+    [InlineData(4, 1UL, false)] [InlineData(0, 0UL, false)] [InlineData(0, 3UL, false)]
+    public async Task RescheduledUiReceiptReachesAcceptanceWithItsActualFrozenCommand(int intent, ulong lateness, bool applied)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        await using var peer = new Peer(timeout.Token);
+        var time = new ManualTimeProvider();
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = peer.Client(time, recorder);
+        await client.ConnectAsync(timeout.Token);
+        var model = new AuthoritativeClientModel();
+        foreach (var message in client.DrainMessages()) model.Apply(message);
+        var command = intent switch {
+            0 => new Command { OpenStoreRequested = new() { StoreId = 1 } },
+            1 => new Command { CloseStoreRequested = new() },
+            2 => new Command { OpenStashRequested = new() },
+            3 => new Command { CloseStashRequested = new() },
+            _ => Move(55),
+        };
+        var sequence = client.QueueRealtime(command, 100);
+        Assert.Equal(0UL, command.RequestedTick); // The queued intent is not its frozen first-send identity.
+        await client.PollAsync(timeout.Token);
+        await Until(() => recorder.CaptureReport().ProbeOutcomes.Count != 0, timeout.Token);
+        await client.PollAsync(timeout.Token);
+        var sent = Assert.Single((await peer.Next(Envelope.PayloadOneofCase.CommandBatch)).CommandBatch.Commands);
+        Assert.Equal(101UL, sent.RequestedTick);
+        var receipt = Receipt(sent, CommandStatus.Rescheduled, sent.RequestedTick + lateness);
+        receipt.CommandAck.Results[0].ServerReceiptSequence = 1;
+        await peer.Send(receipt);
+        while (model.LastCommandResult?.ClientSequence != sequence) {
+            timeout.Token.ThrowIfCancellationRequested();
+            foreach (var message in client.DrainMessages()) model.Apply(message);
+            await Task.Yield();
+        }
+        Assert.Equal(receipt.CommandAck.Results[0], model.LastCommandResult);
+        Assert.Equal(applied, model.LastCommandWasApplied);
+        // Generic gameplay success remains strict; only the matching UI identity grants this exception.
+        Assert.False(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(model.LastCommandResult));
+    }
+
     private static Envelope Receipt(Command command, CommandStatus status, ulong appliedTick)
         => new() { CommandAck = new() { Results = { new CommandResult {
             ClientSequence = command.ClientSequence, AppliedTick = appliedTick, Status = status,

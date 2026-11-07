@@ -42,6 +42,7 @@ public partial class Main : Node2D
     // Read-only copies for the scene acceptance harness; never a gameplay owner.
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
+    internal bool ObservedCommandWasApplied => model.LastCommandWasApplied;
     internal long ObservedModelGeneration => modelGeneration;
     internal int ObservedRecentEventCount => model.RecentEvents.Count;
     internal ulong ObservedRecentEventSequenceStart => model.RecentEventsStartSequence;

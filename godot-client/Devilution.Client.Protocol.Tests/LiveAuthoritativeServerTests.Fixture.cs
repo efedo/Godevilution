@@ -726,17 +726,8 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
             AssertTownPortalAcceptedReceipt(acknowledgement, command.ClientSequence);
             return;
         }
-        // The host executes these UI commands at the admission tick when at most
-        // two ticks late. Rescheduled is their final successful receipt, not a retry.
-        Assert.True(command.IntentCase is Command.IntentOneofCase.OpenStoreRequested
-            or Command.IntentOneofCase.CloseStoreRequested
-            or Command.IntentOneofCase.OpenStashRequested
-            or Command.IntentOneofCase.CloseStashRequested);
-        Assert.Equal(command.ClientSequence, acknowledgement.ClientSequence);
-        Assert.Equal(CommandRejectReason.Unspecified, acknowledgement.RejectReason);
-        Assert.True(acknowledgement.ServerReceiptSequence > 0);
-        Assert.True(acknowledgement.AppliedTick > command.RequestedTick);
-        Assert.InRange(acknowledgement.AppliedTick - command.RequestedTick, 1UL, 2UL);
+        Assert.True(AuthoritativeCommandAckValidator.IsSuccessfulRescheduledInterfaceCommand(acknowledgement,
+            command.IntentCase, command.ClientSequence, command.RequestedTick));
     }
 
     private protected static PortalSnapshot AssertTownPortalAtTick(

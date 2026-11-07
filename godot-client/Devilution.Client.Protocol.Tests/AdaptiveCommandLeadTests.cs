@@ -37,6 +37,26 @@ public sealed class AdaptiveCommandLeadTests
         Assert.Equal(1, lead.Ticks(10_000, 200));
     }
 
+    public static TheoryData<double[], int[]> AlternatingRoundTrips => new() {
+        { [2, 40, 2], [1, 9, 8] },
+        { [2, 40, 2, 40, 2, 40, 2], [1, 9, 8, 9, 8, 9, 8] },
+        { [2, 15, 2, 30, 2, 60, 2], [1, 4, 3, 7, 6, 13, 11] },
+        { [1, 5, 1, 80, 1], [1, 2, 2, 17, 14] },
+    };
+
+    [Theory]
+    [MemberData(nameof(AlternatingRoundTrips))]
+    public void AlternatingLatencyRetainsTheSpikeUntilItsMarginDecays(double[] samples, int[] ticks)
+    {
+        var lead = new AdaptiveCommandLead();
+        for (var i = 0; i < samples.Length; i++) {
+            lead.ObserveRoundTrip(i * 250, samples[i]);
+            Assert.Equal(ticks[i], lead.Ticks(i * 250, 200));
+        }
+        var lastSpikeAt = (samples.Length - 2) * 250;
+        Assert.Equal(1, lead.Ticks(lastSpikeAt + 10_000, 200));
+    }
+
     [Fact]
     public void SustainedRttChangesFollowTheMeasuredWindowInBothDirections()
     {

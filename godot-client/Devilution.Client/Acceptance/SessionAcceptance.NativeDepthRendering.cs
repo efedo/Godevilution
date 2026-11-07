@@ -319,7 +319,7 @@ public partial class SessionAcceptance
             var receipt = main.ObservedCommandResult!;
             if (receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.TooLate })
                 continue;
-            Require(Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt),
+            Require(main.ObservedCommandWasApplied,
                 $"{action}: {receipt.Status}/{receipt.RejectReason}.");
             return;
         }

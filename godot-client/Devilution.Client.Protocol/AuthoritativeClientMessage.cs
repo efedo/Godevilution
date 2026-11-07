@@ -9,6 +9,9 @@ public sealed record AuthoritativeClientMessage(
     CommandAck? Acknowledgement = null,
     ProtocolError? Error = null)
 {
+    /** Frozen local send identities for rescheduled receipts; never added to the wire. */
+    public IReadOnlyList<AuthoritativeCommandReceiptContext>? AcknowledgedCommands { get; init; }
+
     public static AuthoritativeClientMessage FromEnvelope(Envelope envelope)
     {
         ArgumentNullException.ThrowIfNull(envelope);
@@ -21,3 +24,7 @@ public sealed record AuthoritativeClientMessage(
         };
     }
 }
+
+/** Transport-owned identity, without retaining command payloads or a receipt registry. */
+public readonly record struct AuthoritativeCommandReceiptContext(
+    ulong ClientSequence, ulong RequestedTick, Command.IntentOneofCase Intent);

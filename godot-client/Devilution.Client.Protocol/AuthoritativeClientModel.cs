@@ -111,6 +111,9 @@ public sealed partial class AuthoritativeClientModel
 
     public CommandResult? LastCommandResult { get; private set; }
 
+    /** Successful receipt, including a late UI command matched to its frozen local send. */
+    public bool LastCommandWasApplied { get; private set; }
+
     public IReadOnlyList<GameEvent> RecentEvents => recentEvents;
 
     /** Sequence number of the first event retained in the bounded history. */
@@ -356,8 +359,13 @@ public sealed partial class AuthoritativeClientModel
                     .OrderBy(result => result.ClientSequence)
                     .Last();
                 if (LastCommandResult is null
-                    || latestResult.ClientSequence >= LastCommandResult.ClientSequence)
+                    || latestResult.ClientSequence >= LastCommandResult.ClientSequence) {
                     LastCommandResult = latestResult.Clone();
+                    LastCommandWasApplied = AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(latestResult)
+                        || message.AcknowledgedCommands?.Any(command =>
+                            AuthoritativeCommandAckValidator.IsSuccessfulRescheduledInterfaceCommand(latestResult,
+                                command.Intent, command.ClientSequence, command.RequestedTick)) == true;
+                }
             }
             foreach (var result in message.Acknowledgement.Results) {
                 predictedMoves.Remove(result.ClientSequence);

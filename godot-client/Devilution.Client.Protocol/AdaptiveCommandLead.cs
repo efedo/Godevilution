@@ -6,24 +6,26 @@ internal sealed class AdaptiveCommandLead
     internal const double SafetyMarginMilliseconds = 2;
     internal const double DecayHalfLifeMilliseconds = 1000;
     private readonly ClockGatedRoundTripWindow roundTrips = new(0, ClockGatedRoundTripWindow.DefaultWindowMilliseconds);
-    private double jitterPeak, feedbackFloor;
-    private long jitterAt, feedbackAt;
+    private double roundTripPeak, feedbackFloor;
+    private long roundTripPeakAt, feedbackAt;
 
     public double RoundTripMilliseconds => roundTrips.Estimate;
 
     public void ObserveRoundTrip(long now, double milliseconds)
     {
         var sample = Normalize(milliseconds);
-        var median = roundTrips.Observe(now, sample);
-        jitterPeak = Math.Max(Decay(jitterPeak, jitterAt, now), Math.Max(0, sample - median));
-        jitterAt = now;
+        // Retain the RTT spike independently of the median, which can rise on this
+        // sample and fall on the next one. A quick reply cannot erase recent jitter.
+        roundTripPeak = Math.Max(Decay(roundTripPeak, roundTripPeakAt, now), sample);
+        roundTrips.Observe(now, sample);
+        roundTripPeakAt = now;
     }
 
     public int Ticks(long now, uint rate)
     {
         if (rate == 0) throw new ArgumentOutOfRangeException(nameof(rate));
         // The clock stamp ages on the reply's inbound leg; the next command also needs its outbound leg.
-        var milliseconds = Math.Max(roundTrips.Estimate + Decay(jitterPeak, jitterAt, now) + SafetyMarginMilliseconds,
+        var milliseconds = Math.Max(Math.Max(roundTrips.Estimate, Decay(roundTripPeak, roundTripPeakAt, now)) + SafetyMarginMilliseconds,
             Decay(feedbackFloor, feedbackAt, now));
         return Math.Max(1, (int)Math.Ceiling(Math.Min(milliseconds,
             AuthoritativeClient.MaximumClockGatedLeadMilliseconds) * rate / 1000));

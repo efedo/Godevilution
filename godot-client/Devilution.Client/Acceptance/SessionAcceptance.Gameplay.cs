@@ -233,7 +233,7 @@ public partial class SessionAcceptance
             var result = main.ObservedCommandResult;
             if (result is null || result.ClientSequence <= previousSequence)
                 return false;
-            Require(IsAcceptedOrSuccessfulDuplicate(result), $"{action}: {result.Status}/{result.RejectReason}.");
+            Require(main.ObservedCommandWasApplied, $"{action}: {result.Status}/{result.RejectReason}.");
             return main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main);
         }, $"{action} did not finish.", stageSeconds: stageSeconds);
     }
