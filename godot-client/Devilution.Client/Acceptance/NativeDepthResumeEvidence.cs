@@ -13,9 +13,16 @@ namespace Devilution.Client.Acceptance
             uint source, ulong openingTick, ulong firingTick, bool hasOutcome)
         {
             if (!required && !hasRecord) return;
-            if (!hasRecord || level < 1 || level > 4 || entity == 0 || source == 0 || entity == source
-                || openingTick == 0 || firingTick <= openingTick || !hasOutcome)
-                throw new InvalidOperationException("The resume checkpoint has no complete required trapped sarcophagus opening, fresh firing and release evidence.");
+            var failure = string.Empty;
+            if (!hasRecord) failure = "hasRecord=false";
+            else if (level < 1 || level > 4) failure = "level=" + level + " (expected 1..4)";
+            else if (entity == 0) failure = "entity=0";
+            else if (source == 0 || entity == source) failure = "source=" + source + " (expected a nonzero wall trap distinct from entity=" + entity + ")";
+            else if (openingTick == 0) failure = "openingTick=0";
+            else if (firingTick <= openingTick) failure = "firingTick=" + firingTick + " (must be newer than openingTick=" + openingTick + ")";
+            else if (!hasOutcome) failure = "hasOutcome=false (no attributed loot, released skeleton or corpse)";
+            if (failure.Length != 0)
+                throw new InvalidOperationException("The trapped sarcophagus resume checkpoint is invalid: " + failure + ".");
         }
 
         public static bool RequiresChestEvidence(bool hasExplicitCatacombsSeed)

@@ -205,6 +205,68 @@ public sealed class NativeTrappedSarcophagusJourneyEvidenceTests
     }
 
     [Fact]
+    public void SparseL4WarriorPublicationRetainsItsReservedRangedSkeletonAfterItMoves()
+    {
+        // Failed 200 Hz journey: open 9342, firing 9343; by tick 9414 the reserved
+        // archer has walked from its (34,63) release tile to (32,65).
+        var before = Baseline(); before.Tick = 9341;
+        var after = Fired(9343); after.Tick = 9414; after.Objects[0].AnimationFrame = 5;
+        AddRelease(after, true);
+        var skeleton = after.Monsters[0]; skeleton.NativeAi = "SkeletonRanged";
+        skeleton.PositionX = skeleton.FuturePositionX = 32; skeleton.PositionY = skeleton.FuturePositionY = 65;
+        skeleton.HitPoints = 12; skeleton.HitPointsQ6 = 768;
+        var receipt = Receipt(); receipt.ClientSequence = 128; receipt.AppliedTick = 9342;
+        var record = NativeTrappedSarcophagusJourneyEvidence.Capture(Wire(before), Wire(after), SarcophagusEntity, receipt, 11342, 5);
+        Assert.Equal(new[] {ReservedSkeletonEntity}, record.Skeletons);
+        Assert.Empty(record.Drops);
+        var decoded = JsonSerializer.Deserialize<NativeTrappedSarcophagusCheckpoint>(JsonSerializer.Serialize(record))!;
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(Wire(after), decoded);
+        foreach (var corrupt in new Action<MonsterSnapshot>[] {
+            value => value.EntityId++, value => value.LevelId = 3,
+            value => value.NativeAi = "Zombie", value => value.IsPlayerMinion = true,
+        }) {
+            var broken = after.Clone(); corrupt(broken.Monsters[0]);
+            Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(before, broken,
+                SarcophagusEntity, receipt, 11342, 5));
+        }
+    }
+
+    [Fact]
+    public void ReservedSkeletonInItsPublishedDeathAnimationStillProvesRelease()
+    {
+        var before = Baseline(); var after = Fired(111); AddRelease(after, true);
+        after.Monsters[0].Alive = false; after.Monsters[0].DeathTicksRemaining = 7;
+        after.Objects[0].AnimationFrame = 8;
+        Assert.Empty(after.Corpses); // Corpse conversion has not occurred yet.
+        var record = NativeTrappedSarcophagusJourneyEvidence.Capture(before, Wire(after), SarcophagusEntity, Receipt(), 210, 8);
+        Assert.Equal(new[] {ReservedSkeletonEntity}, record.Skeletons);
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRecorded(record);
+        NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(Wire(after), record);
+        after.Monsters[0].DeathTicksRemaining = 0;
+        Assert.Throws<InvalidOperationException>(() => NativeTrappedSarcophagusJourneyEvidence.Capture(before, after,
+            SarcophagusEntity, Receipt(), 210, 8));
+    }
+
+    [Theory]
+    [InlineData(false, 4U, 1U, 2U, 110UL, 111UL, true, "hasRecord")]
+    [InlineData(true, 0U, 1U, 2U, 110UL, 111UL, true, "level")]
+    [InlineData(true, 5U, 1U, 2U, 110UL, 111UL, true, "level")]
+    [InlineData(true, 4U, 0U, 2U, 110UL, 111UL, true, "entity")]
+    [InlineData(true, 4U, 1U, 0U, 110UL, 111UL, true, "source")]
+    [InlineData(true, 4U, 1U, 1U, 110UL, 111UL, true, "source")]
+    [InlineData(true, 4U, 1U, 2U, 0UL, 111UL, true, "openingTick")]
+    [InlineData(true, 4U, 1U, 2U, 110UL, 110UL, true, "firingTick")]
+    [InlineData(true, 4U, 1U, 2U, 110UL, 109UL, true, "firingTick")]
+    [InlineData(true, 4U, 1U, 2U, 110UL, 111UL, false, "hasOutcome")]
+    public void IncompleteResumeEvidenceNamesTheFailingField(bool hasRecord, uint level, uint entity, uint source,
+        ulong openingTick, ulong firingTick, bool hasOutcome, string field)
+    {
+        var error = Assert.Throws<InvalidOperationException>(() => NativeDepthResumeEvidence.VerifyTrappedSarcophagus(
+            true, hasRecord, level, entity, source, openingTick, firingTick, hasOutcome));
+        Assert.Contains(field, error.Message);
+    }
+
+    [Fact]
     public void OldCheckpointsRemainCompatibleUnlessTheNewStageIsRequired()
     {
         NativeDepthResumeEvidence.VerifyTrappedSarcophagus(false, false, 0, 0, 0, 0, 0, false);

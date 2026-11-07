@@ -130,7 +130,7 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
             || source.NativeTrapFiredTick != expected.FiringTick)
             throw new InvalidOperationException("The trapped sarcophagus reopened, rearmed or lost its fired link on retention/resume.");
         foreach (var id in expected.Skeletons)
-            if (!snapshot.Monsters.Any(value => value.EntityId == id && value.LevelId == expected.Level && value.Alive)
+            if (!snapshot.Monsters.Any(value => value.EntityId == id && value.LevelId == expected.Level && (value.Alive || value.DeathTicksRemaining > 0))
                 && !snapshot.Corpses.Any(value => value.EntityId == id && value.LevelId == expected.Level))
                 throw new InvalidOperationException("The released sarcophagus skeleton or its combat corpse did not survive resume.");
     }
@@ -138,10 +138,11 @@ internal static class NativeTrappedSarcophagusJourneyEvidence
     // A sparse publication may show a newly released skeleton already killed by its wall trap.
     private static bool IsReleasedSkeleton(Snapshot before, Snapshot after, MonsterSnapshot value, ObjectSnapshot target)
         => value.EntityId != 0 && value.LevelId == target.LevelId && !value.IsPlayerMinion
-            && (!IsRequiredTarget(target) || value.EntityId == RequiredSkeletonEntity)
-            && IsNear(value.PositionX, value.PositionY, target)
+            // The reserved actor remains this object's outcome after native AI walks it away.
+            && (IsRequiredTarget(target) ? value.EntityId == RequiredSkeletonEntity : IsNear(value.PositionX, value.PositionY, target))
             && value.NativeAi is "SkeletonMelee" or "SkeletonRanged"
-            && (value.Alive || after.Corpses.Any(corpse => corpse.EntityId == value.EntityId && corpse.LevelId == target.LevelId))
+            && (value.Alive || value.DeathTicksRemaining > 0
+                || after.Corpses.Any(corpse => corpse.EntityId == value.EntityId && corpse.LevelId == target.LevelId))
             && !before.Monsters.Any(old => old.EntityId == value.EntityId && old.Alive)
             && !before.Corpses.Any(old => old.EntityId == value.EntityId);
 
