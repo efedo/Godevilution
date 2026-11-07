@@ -194,16 +194,9 @@ public partial class WorldPresentation
             .Contains(StatusPresentationKind.Search);
         foreach (var player in visiblePlayers) {
             var isLocal = player.EntityId == localPlayer.EntityId;
-            var projected = ResolveNativePlayerPosition(player);
-            var anchor = sceneViewport.CellBottomAnchor(projected.X, projected.Y);
-            AddNativeSceneActorCommand(
+            AddNativePlayerActor(
                 commands,
-                player.PositionX,
-                player.PositionY,
-                0,
-                player.EntityId,
-                (float)anchor.X,
-                (float)anchor.Y,
+                player,
                 () => DrawPlayer(
                     player,
                     isLocal ? predictedPlayerPosition : null,
@@ -212,20 +205,10 @@ public partial class WorldPresentation
                     geometry,
                     viewerX,
                     viewerY,
-                    lightRadius), position: () => ResolveNativePlayerPosition(player));
+                    lightRadius));
         }
         foreach (var monster in visibleMonsters) {
-            var projected = ResolveNativeMonsterPosition(monster);
-            var anchor = sceneViewport.CellBottomAnchor(projected.X, projected.Y);
-            AddNativeSceneActorCommand(
-                commands,
-                monster.PositionX,
-                monster.PositionY,
-                1,
-                monster.EntityId,
-                (float)anchor.X,
-                (float)anchor.Y,
-                () => DrawMonster(monster), position: () => ResolveNativeMonsterPosition(monster));
+            AddNativeMonsterActor(commands, monster, () => DrawMonster(monster));
         }
         foreach (var item in visibleItems) {
             AddNativeSceneActorCommand(

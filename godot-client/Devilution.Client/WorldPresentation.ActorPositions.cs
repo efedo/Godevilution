@@ -17,20 +17,32 @@ public partial class WorldPresentation
             AuthoritativeMonsterPositionProjection.ResolvePresentation(monster, nativePlayerPresentationTick ?? snapshot!.Tick));
 
     private ClientPresentationPosition ResolveRenderedActorPosition(uint entityId, ClientPresentationPosition fallback)
-        => nativeSceneViewport is { } view && displayedPositions.TryGetValue(entityId, out var center)
-            ? NativeSceneActorPlacement.FromScreen(view, center.X, center.Y) : fallback;
+        => nativeSceneViewport is { } view && displayedPositions.TryGetValue(entityId, out var anchor)
+            ? NativeSceneActorPlacement.FromScreen(view, anchor.X, anchor.Y) : fallback;
+
+    private void AddNativePlayerActor(Dictionary<(int X, int Y), List<NativeSceneActorCommand>> commands,
+        PlayerSnapshot player, Action draw)
+        => AddNativeSceneActorCommand(commands, player.PositionX, player.PositionY, 0, player.EntityId, 0, 0, draw,
+            position: () => ResolveNativePlayerPosition(player), cell: () => NativeSceneActorPlacement.PlayerCell(player));
+
+    private void AddNativeMonsterActor(Dictionary<(int X, int Y), List<NativeSceneActorCommand>> commands,
+        MonsterSnapshot monster, Action draw)
+        => AddNativeSceneActorCommand(commands, monster.PositionX, monster.PositionY, 1, monster.EntityId, 0, 0, draw,
+            position: () => ResolveNativeMonsterPosition(monster), cell: () => NativeSceneActorPlacement.MonsterCell(monster));
 
     private void AddNativeSceneActorCommand(
         Dictionary<(int X, int Y), List<NativeSceneActorCommand>> commands,
         int x, int y, int priority, uint entityId, float anchorX, float anchorY, Action draw,
-        Func<bool>? visible = null, Func<ClientPresentationPosition>? position = null)
+        Func<bool>? visible = null, Func<ClientPresentationPosition>? position = null, Func<(int X, int Y)>? cell = null)
     {
         if (nativeSceneViewport is not { } view || x < 0 || y < 0 || x >= view.LevelWidth || y >= view.LevelHeight)
             return;
         var point = position?.Invoke() ?? new ClientPresentationPosition(x, y);
-        var cell = NativeSceneActorPlacement.OcclusionCell(point, view.LevelWidth, view.LevelHeight);
-        if (!commands.TryGetValue(cell, out var actors)) commands.Add(cell, actors = []);
-        actors.Add(new(priority, entityId, draw, visible) { Position = point, Cell = cell, PositionProvider = position });
+        var marker = cell?.Invoke() ?? (x, y);
+        if (!commands.TryGetValue(marker, out var actors)) commands.Add(marker, actors = []);
+        actors.Add(new(priority, entityId, draw, visible) {
+            Position = point, Cell = marker, PositionProvider = position, CellProvider = cell,
+        });
     }
 
     private void BindRetainedActorPositions()
@@ -41,13 +53,13 @@ public partial class WorldPresentation
                 if (actor.PositionProvider is not null) retainedMovingActors.Add(actor);
     }
 
-    /** Only actor membership/order changes between snapshots; terrain geometry and raster plans stay retained. */
+    /** Refresh pixel offsets; only a native occupancy-marker change can move an actor between retained cells. */
     private bool RefreshRetainedActorPositions(NativeSceneViewport view)
     {
         var changedCells = false;
         foreach (var actor in retainedMovingActors) {
             actor.Position = actor.PositionProvider!();
-            var cell = NativeSceneActorPlacement.OcclusionCell(actor.Position, view.LevelWidth, view.LevelHeight);
+            var cell = actor.CellProvider?.Invoke() ?? actor.Cell;
             if (cell != actor.Cell) {
                 var previous = retainedActors[actor.Cell];
                 previous.Remove(actor);
@@ -77,12 +89,11 @@ public partial class WorldPresentation
         public ClientPresentationPosition Position { get; set; }
         public (int X, int Y) Cell { get; set; }
         public Func<ClientPresentationPosition>? PositionProvider { get; init; }
+        public Func<(int X, int Y)>? CellProvider { get; init; }
 
         public static int Compare(NativeSceneActorCommand left, NativeSceneActorCommand right)
         {
-            var comparison = NativeSceneActorPlacement.CompareDepth(left.Position, right.Position);
-            if (comparison != 0) return comparison;
-            comparison = left.Priority.CompareTo(right.Priority);
+            var comparison = left.Priority.CompareTo(right.Priority);
             return comparison != 0 ? comparison : left.EntityId.CompareTo(right.EntityId);
         }
     }

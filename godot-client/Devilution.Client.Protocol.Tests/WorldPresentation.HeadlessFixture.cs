@@ -19,25 +19,33 @@ public partial class WorldPresentation
         localVisualPosition = visual;
         nativePlayerPresentationTick = 10;
         nativeSceneViewport = view;
-        AddNativeSceneActorCommand(retainedActors, player.PositionX, player.PositionY, 0, player.EntityId, 0, 0,
-            () => { }, position: () => ResolveNativePlayerPosition(player));
+        AddNativePlayerActor(retainedActors, player, () => { });
+        BindRetainedActorPositions();
+    }
+
+    internal void BeginRetainedMonsterTest(MonsterSnapshot monster, ClientPresentationPosition visual, NativeSceneViewport view)
+    {
+        snapshot = new() { Tick = 10, Players = { new PlayerSnapshot { EntityId = 1 } } };
+        nativePlayerPresentationTick = 10;
+        nativeSceneViewport = view;
+        var anchor = view.CellBottomAnchor(visual.X, visual.Y);
+        displayedPositions[monster.EntityId] = new((float)anchor.X, (float)anchor.Y);
+        AddNativeMonsterActor(retainedActors, monster, () => { });
         BindRetainedActorPositions();
     }
 
     internal void AddRetainedStaticTestActor(uint id, int x, int y)
         => AddNativeSceneActorCommand(retainedActors, x, y, 2, id, 0, 0, () => { });
 
-    internal void AddRetainedRemoteTestActor(uint id, bool monster, Godot.Vector2 renderedCenter)
+    internal void AddRetainedRemoteTestActor(uint id, bool monster, Godot.Vector2 renderedAnchor)
     {
-        displayedPositions[id] = renderedCenter;
+        displayedPositions[id] = renderedAnchor;
         if (monster) {
             var actor = new MonsterSnapshot { EntityId = id, PositionX = 52, PositionY = 50 };
-            AddNativeSceneActorCommand(retainedActors, 52, 50, 1, id, 0, 0, () => { },
-                position: () => ResolveNativeMonsterPosition(actor));
+            AddNativeMonsterActor(retainedActors, actor, () => { });
         } else {
             var actor = new PlayerSnapshot { EntityId = id, PositionX = 52, PositionY = 50 };
-            AddNativeSceneActorCommand(retainedActors, 52, 50, 0, id, 0, 0, () => { },
-                position: () => ResolveNativePlayerPosition(actor));
+            AddNativePlayerActor(retainedActors, actor, () => { });
         }
         BindRetainedActorPositions();
     }

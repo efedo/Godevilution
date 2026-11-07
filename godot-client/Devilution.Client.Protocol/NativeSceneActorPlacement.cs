@@ -1,37 +1,38 @@
+using Devilution.Protocol.V1;
+
 namespace Devilution.Client.Protocol;
 
-/** Extends the existing (x+y,x,y) cell order to fractional actor feet without changing terrain commands. */
+/** Native render-cell selection is independent of animation progress and pixel offsets. */
 public static class NativeSceneActorPlacement
 {
-    public static (int X, int Y) OcclusionCell(ClientPresentationPosition position, int width, int height)
+    /** world_renderer.cpp DrawDungeon: select the negative destination marker for southwards walks and East. */
+    public static (int X, int Y) PlayerCell(PlayerSnapshot player)
     {
-        if (width <= 0 || height <= 0 || !double.IsFinite(position.X) || !double.IsFinite(position.Y))
-            throw new ArgumentOutOfRangeException(nameof(position));
-        var x = Math.Clamp(position.X, 0, width - 1d);
-        var y = Math.Clamp(position.Y, 0, height - 1d);
-        var depth = x + y;
-        var row = (int)Math.Floor(depth);
-        var first = Math.Max(0, row - height + 1);
-        var last = Math.Min(width - 1, row);
-        // Between diagonals, every wall on the preceding diagonal is behind the actor.
-        // On a diagonal, retain its x tie-break, including actors between two cells.
-        var column = depth == row ? Math.Clamp((int)Math.Floor(x), first, last) : last;
-        return (column, row - column);
+        ArgumentNullException.ThrowIfNull(player);
+        if (player.CurrentAction is { Kind: PlayerActionKind.Move, EffectApplied: false } move
+            && (player.CombatMode == PlayerCombatMode.WalkSouthwards
+                || player.CombatMode == PlayerCombatMode.WalkSideways && move.DirectionX == 1 && move.DirectionY == -1))
+            return (player.PositionX + move.DirectionX, player.PositionY + move.DirectionY);
+        return (player.PositionX, player.PositionY);
     }
 
-    public static int CompareDepth(ClientPresentationPosition left, ClientPresentationPosition right)
+    /** world_renderer.cpp DrawDungeon / monsters.cpp GetMonsterMovementMode: all other walks draw at the positive origin marker. */
+    public static (int X, int Y) MonsterCell(MonsterSnapshot monster)
     {
-        var order = (left.X + left.Y).CompareTo(right.X + right.Y);
-        if (order != 0) return order;
-        order = left.X.CompareTo(right.X);
-        return order != 0 ? order : left.Y.CompareTo(right.Y);
+        ArgumentNullException.ThrowIfNull(monster);
+        // DrawDungeon checks the actual mode, so Petrified uses the origin despite its saved walking visual mode.
+        if (monster.Moving && !monster.Petrified
+            && (monster.FuturePositionX - monster.PositionX, monster.FuturePositionY - monster.PositionY)
+                is (1, 1) or (0, 1) or (1, 0) or (1, -1))
+            return (monster.FuturePositionX, monster.FuturePositionY);
+        return (monster.PositionX, monster.PositionY);
     }
 
-    /** Invert the rendered center, including the smoothing already applied to remote actors. */
+    /** Invert WorldPresentation.ToScreen's CellBottomAnchor, including remote-actor smoothing. */
     public static ClientPresentationPosition FromScreen(NativeSceneViewport view, double screenX, double screenY)
     {
         var horizontal = (screenX - view.OriginX) / NativeSceneViewport.HalfTileWidth;
-        var vertical = (screenY - view.OriginY) / NativeSceneViewport.HalfTileHeight;
+        var vertical = (screenY - view.OriginY - NativeSceneViewport.BottomInclusiveOffset) / NativeSceneViewport.HalfTileHeight;
         return new(Snap((horizontal + vertical) / 2), Snap((vertical - horizontal) / 2));
     }
 
