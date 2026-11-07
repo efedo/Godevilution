@@ -20,7 +20,7 @@ public partial class PresentationFeedback : Node
     private readonly List<FloatingNumber> floatingNumbers = [];
     private readonly AssetPalette assets = new();
     private ulong appliedEventSequence;
-    private string? appliedCommandResult;
+    private (ulong Sequence, CommandStatus Status, ulong Tick)? appliedCommandResult;
 
     public override void _Ready()
     {
@@ -74,7 +74,7 @@ public partial class PresentationFeedback : Node
         var result = model.LastCommandResult;
         if (result is null)
             return;
-        var resultKey = $"{result.ClientSequence}:{result.Status}:{result.AppliedTick}";
+        var resultKey = (result.ClientSequence, result.Status, result.AppliedTick);
         if (resultKey == appliedCommandResult)
             return;
         appliedCommandResult = resultKey;

@@ -5,7 +5,8 @@ param(
     # Skip native setup and start the authored content.
     [switch]$AuthoredContent,
     # Build or reuse the native setup and print the launch configuration without starting the game.
-    [switch]$SetupOnly
+    [switch]$SetupOnly,
+    [ValidateSet('Debug', 'Release')] [string]$ClientBuildConfiguration = 'Debug'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +67,7 @@ $previous = @{}
 foreach ($variable in $packVariables.Values) { $previous[$variable] = [Environment]::GetEnvironmentVariable($variable) }
 try {
     foreach ($variable in $packs.Keys) { [Environment]::SetEnvironmentVariable($variable, $packs[$variable]) }
+    $launchArguments.ClientBuildConfiguration = $ClientBuildConfiguration
     & $godotLauncher @launchArguments
     $exitCode = $LASTEXITCODE
 } finally {

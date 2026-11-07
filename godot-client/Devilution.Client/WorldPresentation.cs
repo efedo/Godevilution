@@ -147,8 +147,7 @@ public partial class WorldPresentation : Node2D
             nativeTownerClock.Reset();
             PresentationEpochResetCount++;
         }
-        snapshotDataChanged = acceptedSnapshotRevision is null || appliedPresentationRevision != acceptedSnapshotRevision
-            || !ReferenceEquals(appliedPresentationSnapshot, next);
+        snapshotDataChanged = acceptedSnapshotRevision is null || appliedPresentationRevision != acceptedSnapshotRevision;
         appliedPresentationSnapshot = next;
         appliedPresentationRevision = acceptedSnapshotRevision;
         if (acceptedSnapshotRevision is null) {
@@ -474,8 +473,14 @@ public partial class WorldPresentation : Node2D
     public override void _Draw()
     {
         var started = CaptureFrameCost ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        var allocated = started == 0 ? 0 : GC.GetAllocatedBytesForCurrentThread();
         try { DrawWorldFrame(); }
-        finally { if (started != 0) nativeDrawTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started; }
+        finally {
+            if (started != 0) {
+                nativeDrawTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                nativeDrawAllocated += GC.GetAllocatedBytesForCurrentThread() - allocated;
+            }
+        }
     }
 
     private void DrawWorldFrame()

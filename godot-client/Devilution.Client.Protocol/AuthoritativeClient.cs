@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Buffers.Binary;
+using System.Buffers;
 using System.Net.Sockets;
 using System.Net;
 using Devilution.Protocol;
@@ -67,6 +68,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private bool supportsClockOnlyProbes;
     private bool supportsTargetCellPathing;
     private bool supportsQueuedRangedAttacks;
+    private bool supportsSnapshotReferences;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -99,6 +101,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     /** Debug diagnostics: every queued and sent command and every receipt. The owner disposes it. */
     public CommandLogAppender? CommandLog { get; init; }
+
+    public ClientTransportAllocationMetrics? AllocationMetrics { get; init; }
 
     public uint ServerTickRateHz { get; private set; } = 20;
 
@@ -226,6 +230,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 supportsTargetCellPathing = false;
                 supportsQueuedRangedAttacks = false;
             }
+            supportsSnapshotReferences = false;
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
@@ -258,6 +263,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 RulesetIdentityHash = effectiveRulesetIdentityHash,
                 ResumeToken = requestedResumeToken,
                 SupportsClockGatedCommands = true,
+                SupportsSnapshotReferences = options.UseSnapshotReferences,
             };
             if (options.RequestedCharacterClassId.HasValue) {
                 clientHello.RequestedCharacterClassId
@@ -291,6 +297,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     or CommandSchedulingMode.ClockGated))
                 throw new InvalidDataException("The server returned an unknown command scheduling mode.");
 
+            supportsSnapshotReferences = options.UseSnapshotReferences && hello.ServerHello.SupportsSnapshotReferences;
             var peerSupportsTargetCellPathing = hello.ServerHello.SupportsTargetCellPathing;
             var peerSupportsQueuedRangedAttacks = hello.ServerHello.SupportsQueuedRangedAttacks;
             lock (pendingLock) {
@@ -333,6 +340,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (initialSnapshot.PayloadCase != Envelope.PayloadOneofCase.Snapshot)
                 throw new InvalidDataException("The second server response must be an authoritative snapshot.");
             CaptureFirstWireSnapshot(observationEpoch, initialSnapshot.Snapshot);
+            if (initialSnapshot.Snapshot.GeometryUnchanged || initialSnapshot.Snapshot.StateUnchanged)
+                throw new InvalidDataException("The first snapshot must contain complete state and geometry.");
             ValidateInitialSnapshotIdentity(initialSnapshot.Snapshot);
             // Do not renumber pending retries. Only new intents advance beyond
             // the authoritative ledger restored by a fresh host/client process.
@@ -427,11 +436,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
-    /** Removes the previous transport's transient close marker before a new epoch. */
+    /** Removes close markers and connection-local snapshot references before a new transport epoch. */
     private void DiscardClosedTransportNotifications()
     {
         var retained = new List<AuthoritativeClientMessage>();
         while (incoming.TryDequeue(out var message)) {
+            if (options.UseSnapshotReferences && message.Snapshot is not null)
+                continue; // The new connection establishes its own complete baseline. Preserve receipts/events.
             if (message.Error?.Code == ProtocolErrorCode.NotAuthenticated
                 && message.Error.Detail.StartsWith(
                     "Authoritative connection closed:",
@@ -996,7 +1007,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     terminalKind = AuthoritativeClientReceiveTerminalKind.EndOfStream;
                     break;
                 }
+                var allocationStart = AllocationMetrics is null ? 0 : GC.GetAllocatedBytesForCurrentThread();
                 Enqueue(envelope, connectionGeneration);
+                if (envelope.Snapshot is not null)
+                    AllocationMetrics?.ProcessedSnapshot(GC.GetAllocatedBytesForCurrentThread() - allocationStart);
             }
         } catch (Exception exception) when (!cancellationToken.IsCancellationRequested
             && (exception is IOException or SocketException or EndOfStreamException or ObjectDisposedException)) {
@@ -1043,6 +1057,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 ObserveTimingReply(envelope.TimingReply, epoch);
             return;
         }
+        if (envelope.Snapshot is { } referenced && (referenced.GeometryUnchanged || referenced.StateUnchanged) && !supportsSnapshotReferences)
+            throw new InvalidDataException("The server omitted snapshot state without negotiation.");
         var snapshotTiming = envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
             ? CaptureSnapshotTiming(envelope.Snapshot, connectionGeneration)
             : null;
@@ -1470,7 +1486,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
-    private static async Task<Envelope?> ReadEnvelopeAsync(NetworkStream networkStream, CancellationToken cancellationToken)
+    private async Task<Envelope?> ReadEnvelopeAsync(NetworkStream networkStream, CancellationToken cancellationToken)
     {
         var header = new byte[sizeof(int)];
         if (!await ReadExactlyAsync(networkStream, header, cancellationToken))
@@ -1478,17 +1494,26 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         var length = BinaryPrimitives.ReadInt32LittleEndian(header);
         if (length <= 0 || length > AuthoritativeProtocolLimits.MaximumEnvelopeBytes)
             throw new InvalidDataException("The authoritative envelope length is outside the allowed range.");
-        var payload = new byte[length];
-        if (!await ReadExactlyAsync(networkStream, payload, cancellationToken))
-            throw new EndOfStreamException("The authoritative envelope payload was truncated.");
-        return Envelope.Parser.ParseFrom(payload);
+        var payload = ArrayPool<byte>.Shared.Rent(length);
+        try {
+            if (!await ReadExactlyAsync(networkStream, payload.AsMemory(0, length), cancellationToken))
+                throw new EndOfStreamException("The authoritative envelope payload was truncated.");
+            var metrics = AllocationMetrics;
+            var allocated = metrics is null ? 0 : GC.GetAllocatedBytesForCurrentThread();
+            var started = metrics is null ? 0 : Stopwatch.GetTimestamp();
+            var envelope = Envelope.Parser.ParseFrom(payload, 0, length);
+            if (envelope.Snapshot is not null)
+                metrics?.DecodedSnapshot(length + sizeof(int), GC.GetAllocatedBytesForCurrentThread() - allocated,
+                    Stopwatch.GetTimestamp() - started);
+            return envelope;
+        } finally { ArrayPool<byte>.Shared.Return(payload); }
     }
 
-    private static async Task<bool> ReadExactlyAsync(Stream stream, byte[] buffer, CancellationToken cancellationToken)
+    private static async Task<bool> ReadExactlyAsync(Stream stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
         var offset = 0;
         while (offset < buffer.Length) {
-            var read = await stream.ReadAsync(buffer.AsMemory(offset), cancellationToken);
+            var read = await stream.ReadAsync(buffer[offset..], cancellationToken);
             if (read == 0)
                 return false;
             offset += read;

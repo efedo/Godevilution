@@ -656,6 +656,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 return;
             }
 
+            if (helloEnvelope.ClientHello.SupportsSnapshotReferences)
+                snapshotGeometryCaches.Add(stream, new Devilution.Protocol.AuthoritativeSnapshotGeometryCache());
             SessionState session;
             ulong currentTick;
             if (CohortStore is not null) {
@@ -697,6 +699,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     }
                     session = admission.Session!;
                     currentTick = admission.Tick;
+                    admission.Hello!.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
                     await EnvelopeCodec.WriteAsync(
                         stream,
                         new Envelope { ServerHello = admission.Hello! },
@@ -729,6 +732,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
                     serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
                     serverHello.HostInstanceId = HostInstanceId;
+                    serverHello.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
@@ -749,6 +753,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             if (commandScheduler is not null) {
                 clockGatedPipelineOwnsWrites = true;
                 await using var decoratedStream = ClockGatedTransportDecorator?.Invoke(stream);
+                if (decoratedStream is not null && !ReferenceEquals(decoratedStream, stream)
+                    && snapshotGeometryCaches.TryGetValue(stream, out var snapshotCache))
+                    snapshotGeometryCaches.Add(decoratedStream, snapshotCache);
                 await HandleClockGatedConnectionAsync(
                     decoratedStream ?? stream,
                     sessionId,
@@ -1825,7 +1832,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             authorityTurn?.Dispose();
         }
 
-        await EnvelopeCodec.WriteAsync(stream, envelope, cancellationToken);
+        await EnvelopeCodec.WriteAsync(stream, ProjectSnapshotGeometry(stream, envelope), cancellationToken);
     }
 
     /** Timed cohort hosts checkpoint when the last connection closes outside shutdown. */

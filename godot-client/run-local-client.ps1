@@ -32,10 +32,18 @@ param(
     [string]$TestParticipantPath,
     # Automated acceptance only: server simulation rate. Above 20 Hz runs the game faster than real time
     # to shorten clock-bound journeys; the cohort identity records it, so a resume must use the same rate.
-    [ValidateRange(1, 200)] [int]$TickRateHz = 20
+    [ValidateRange(1, 200)] [int]$TickRateHz = 20,
+    [ValidateSet('Debug', 'Release')] [string]$ClientBuildConfiguration = 'Debug'
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Get-GodotClientBuildArguments([string]$ProjectDirectory, [ValidateSet('Debug', 'Release')] [string]$Configuration = 'Debug') {
+    # Project launches load this runtime slot. Release compilation still emits optimized Release images here.
+    @('build', (Join-Path $ProjectDirectory 'Devilution.Client.csproj'), '--configuration', $Configuration,
+        '--output', (Join-Path $ProjectDirectory '.godot/mono/temp/bin/Debug'),
+        '--nologo', '-m:1', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+}
 if ($SessionMenuAcceptance -and ([string]::IsNullOrWhiteSpace($SessionDirectory) -or
     $AcceptancePhase -notin @('Create', 'Resume') -or
     $PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or
@@ -2094,7 +2102,8 @@ try {
     Assert-GodotImportLog $importTracked $importLogPath
     $staging = Complete-IsolatedGodotProject $staging $engineVersion
     Write-ProjectStageEvidence $staging $engineVersion $projectStageEvidencePath $null
-    & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo -m:1 -nodeReuse:false -p:UseSharedCompilation=false
+    $clientBuildArguments = Get-GodotClientBuildArguments $clientProject $ClientBuildConfiguration
+    & dotnet @clientBuildArguments
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the staged Godot client.' }
     $runtimeAssemblyManifest = if ($performance) { Get-GodotRuntimeAssemblyManifest $clientProject } else { $null }
 

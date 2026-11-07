@@ -132,9 +132,9 @@ public partial class Main : Node2D
 
         var snapshot = model.Snapshot;
         var serverIdentity = client?.ServerIdentity;
-        if (snapshot is null
-            || serverIdentity is null
-            || snapshot.Players.Count != participantCount)
+        // Normal captures include the menu. Authority evidence remains incomplete until a real admission.
+        if (!(environmentWarmup && normalFrameCaptureRequested)
+            && (snapshot is null || serverIdentity is null || snapshot.Players.Count != participantCount))
             return false;
 
         var options = connectionOptions ?? ClientConnectionOptions.FromEnvironment();
@@ -179,8 +179,8 @@ public partial class Main : Node2D
             metadata,
             environmentWarmup ? null : warmupSeconds);
         if (frameEvidence is { } recorder) {
-            recorder.ObserveServerIdentity(serverIdentity);
-            recorder.ObserveParticipantCount(snapshot.Players.Count);
+            if (serverIdentity is not null) recorder.ObserveServerIdentity(serverIdentity);
+            if (snapshot is not null) recorder.ObserveParticipantCount(snapshot.Players.Count);
         }
         return frameEvidence is not null;
     }
@@ -408,7 +408,8 @@ public partial class Main : Node2D
         persistLocalSession = connectionOptions is not null
             && SessionLifecyclePolicy.ShouldPersistLocalBookmark(
                 connectionOptions, options, resumeTokenPath);
-        var newClient = new AuthoritativeClient(options) {
+        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true }) {
+            AllocationMetrics = ClientFrameEvidenceRecorder.IsRequested ? new ClientTransportAllocationMetrics() : null,
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()
                 : null,
@@ -466,8 +467,12 @@ public partial class Main : Node2D
             foreach (var message in activeClient.DrainMessages()) {
                 try {
                     var admissionStarted = FrameCostTimestamp();
+                    var admissionAllocationStart = FrameCostAllocation();
                     try { model.Apply(message); }
-                    finally { admissionMilliseconds += FrameCostElapsed(admissionStarted); }
+                    finally {
+                        admissionMilliseconds += FrameCostElapsed(admissionStarted);
+                        admissionAllocated += FrameCostAllocationSince(admissionAllocationStart);
+                    }
                     if (message.Events is not null)
                         observedEventBatchCount = checked(observedEventBatchCount + 1);
                     if (message.Acknowledgement is { } acknowledgement) {
@@ -477,7 +482,7 @@ public partial class Main : Node2D
                     }
                     if (message.Snapshot is not null) {
                         snapshotRevision++;
-                        AcceptanceSnapshotObserver?.Invoke(message.Snapshot);
+                        AcceptanceSnapshotObserver?.Invoke(model.CompleteSnapshotObservation(message.Snapshot));
                     }
                 } catch (Exception exception) {
                     hud?.SetStatus($"Invalid authoritative state: {exception.Message}");
@@ -519,24 +524,29 @@ public partial class Main : Node2D
             pollTask = dispatchClient.PollAsync(connectionLifetime?.Token ?? lifetime.Token);
 
         var layoutStarted = FrameCostTimestamp();
+        var layoutAllocationStart = FrameCostAllocation();
         hud?.UpdateLayout();
         hudMilliseconds += FrameCostElapsed(layoutStarted);
+        hudAllocated += FrameCostAllocationSince(layoutAllocationStart);
         if (hud is not null) {
             worldFrame.Position = hud.PlayArea.Position;
             worldFrame.Size = hud.PlayArea.Size;
         }
         var worldStarted = FrameCostTimestamp();
+        var worldAllocationStart = FrameCostAllocation();
         world?.SetNativePlayerContentIdentity(ObservedInitialConnection is { AdmissionCompleted: true }
             ? client?.ServerIdentity?.ContentManifestHash : null);
         world?.ApplyAccepted(
             model.Snapshot,
-            model.AcceptedSnapshotRevision,
+            model.AcceptedSnapshotContentRevision,
             delta,
             model.LocalMovementTarget,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
             client?.IsConnected == true);
         worldMilliseconds += FrameCostElapsed(worldStarted);
+        worldAllocated += FrameCostAllocationSince(worldAllocationStart);
         var hudStarted = FrameCostTimestamp();
+        var hudAllocationStart = FrameCostAllocation();
         hud?.SetTravelStatus(routeTravel.Active || interactionTravel.Active,
             interactionTravel.Active
                 ? $"Approaching ({interactionTravel.Target.X}, {interactionTravel.Target.Y}) — server-controlled"
@@ -552,6 +562,7 @@ public partial class Main : Node2D
         if (sessionStatusOverride is not null)
             hud?.SetStatus(sessionStatusOverride);
         hudMilliseconds += FrameCostElapsed(hudStarted);
+        hudAllocated += FrameCostAllocationSince(hudAllocationStart);
         feedback?.Apply(model, world);
         var evidenceSceneEndTimestamp = frameEvidence is null
             ? 0

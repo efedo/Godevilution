@@ -107,6 +107,9 @@ public sealed partial class AuthoritativeClientModel
     /** Monotonic generation of the most recently admitted owned snapshot. */
     public ulong AcceptedSnapshotRevision { get; private set; }
 
+    /** Changes to the projection body; clock-only publications still advance AcceptedSnapshotRevision. */
+    public ulong AcceptedSnapshotContentRevision { get; private set; }
+
     public string? LastError { get; private set; }
 
     public CommandResult? LastCommandResult { get; private set; }
@@ -195,6 +198,14 @@ public sealed partial class AuthoritativeClientModel
 
     public void Apply(AuthoritativeClientMessage message)
     {
+        var wireSnapshot = message.Snapshot;
+        if (wireSnapshot is { StateUnchanged: true }) {
+            ApplyIdleSnapshotReference(wireSnapshot);
+            message = message with { Snapshot = null };
+            wireSnapshot = null;
+        }
+        if (wireSnapshot is not null && wireSnapshot.GeometryUnchanged)
+            message = message with { Snapshot = ExpandSnapshotGeometry(wireSnapshot) };
         var discardSnapshot = message.Snapshot is { } incomingSnapshot
             && Snapshot is { } currentSnapshot
             && incomingSnapshot.Tick < currentSnapshot.Tick
@@ -293,7 +304,7 @@ public sealed partial class AuthoritativeClientModel
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
             ValidateScavengerCorpseReferences(message.Snapshot);
-            ValidateWarpTriggers(message.Snapshot);
+            ValidateWarpTriggers(message.Snapshot, wireSnapshot!.GeometryUnchanged);
             ValidateSetLevelObjectOrigins(message.Snapshot);
             ValidateProceduralQuestPieceOrigins(message.Snapshot);
             ValidateMaterializedProceduralLevels(message.Snapshot);
@@ -312,6 +323,7 @@ public sealed partial class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid portal.");
                 }
             }
+            var ownedSnapshot = OwnSnapshotProjection(wireSnapshot!, discardSnapshot);
             if (!discardSnapshot) {
                 var previousPlayer = Snapshot?.Players.FirstOrDefault();
                 var nextPlayer = message.Snapshot.Players[0];
@@ -323,8 +335,9 @@ public sealed partial class AuthoritativeClientModel
                     predictedMoves.Clear();
                 // Keep an owned copy so callers cannot mutate validated state
                 // through a reused transport buffer after admission.
-                Snapshot = message.Snapshot.Clone();
+                Snapshot = ownedSnapshot!;
                 AcceptedSnapshotRevision = checked(AcceptedSnapshotRevision + 1);
+                AcceptedSnapshotContentRevision = checked(AcceptedSnapshotContentRevision + 1);
                 acceptNextSnapshotAsNewEpoch = false;
                 LastError = null;
                 RebuildPredictedPosition();
@@ -1471,10 +1484,14 @@ public sealed partial class AuthoritativeClientModel
         }
     }
 
-    private static void ValidateWarpTriggers(Snapshot snapshot)
+    private static void ValidateWarpTriggers(Snapshot snapshot, bool validatedGeometryReference = false)
     {
         var levels = new Dictionary<uint, LevelGeometrySnapshot>();
         foreach (var level in snapshot.LevelGeometry) {
+            if (validatedGeometryReference) {
+                levels.Add(level.LevelId, level);
+                continue;
+            }
             if (level.WarpTriggers.Count > NativeMaximumWarpTriggerCount)
                 throw new InvalidDataException(
                     $"The authoritative snapshot contains more than {NativeMaximumWarpTriggerCount} "

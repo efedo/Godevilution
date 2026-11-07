@@ -27,10 +27,10 @@ public sealed class AuthoritativePresentationClock
     {
         // Idle animations may loop between polls; a silent connection still stops after one second.
         var horizon = (double)snapshot.Tick + (tickRateHz == 0 ? DefaultTickRateHz : tickRateHz);
-        foreach (var player in snapshot.Players)
-            if (player.CurrentAction is { } action) horizon = Math.Max(horizon, action.EndTick);
-        foreach (var monster in snapshot.Monsters)
-            if (monster.Moving) horizon = Math.Max(horizon, monster.MovementEffectTick);
+        for (var i = 0; i < snapshot.Players.Count; i++)
+            if (snapshot.Players[i].CurrentAction is { } action) horizon = Math.Max(horizon, action.EndTick);
+        for (var i = 0; i < snapshot.Monsters.Count; i++)
+            if (snapshot.Monsters[i].Moving) horizon = Math.Max(horizon, snapshot.Monsters[i].MovementEffectTick);
         return AdvanceCore(snapshot.Tick, deltaSeconds, tickRateHz, horizon);
     }
 

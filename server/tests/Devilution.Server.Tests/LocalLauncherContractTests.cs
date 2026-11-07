@@ -282,7 +282,7 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("Unexpected command scheduling:", launcher, StringComparison.Ordinal);
         var launch = launcher.IndexOf("$serverProcess = Start-Process", StringComparison.Ordinal);
         var serverBuild = launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal);
-        var clientBuild = launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal);
+        var clientBuild = launcher.IndexOf("& dotnet @clientBuildArguments", StringComparison.Ordinal);
         var imported = launcher.IndexOf("Assert-GodotImportLog $importTracked $importLogPath", StringComparison.Ordinal);
         Assert.True(serverBuild >= 0 && launch > serverBuild);
         Assert.True(imported >= 0 && clientBuild > imported && launch > clientBuild,

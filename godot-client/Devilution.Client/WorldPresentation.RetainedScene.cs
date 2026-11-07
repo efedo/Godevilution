@@ -27,8 +27,9 @@ public partial class WorldPresentation
     private int[] retainedRanks = [];
     private ulong retainedGeneration;
     private long terrainSubmissions;
-    private long nativeDrawTicks;
+    private long nativeDrawTicks, nativeDrawAllocated;
     internal bool CaptureFrameCost { get; set; }
+    internal long ConsumeDrawAllocatedBytes() { var value = nativeDrawAllocated; nativeDrawAllocated = 0; return value; }
     internal long ConsumeTerrainSubmissions() { var value = terrainSubmissions; terrainSubmissions = 0; return value; }
     internal double ConsumeDrawMilliseconds() { var value = nativeDrawTicks; nativeDrawTicks = 0; return value * 1000d / System.Diagnostics.Stopwatch.Frequency; }
 
@@ -255,11 +256,15 @@ public partial class WorldPresentation
         public override void _Draw()
         {
             var started = OwnerView.CaptureFrameCost ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            var allocated = started == 0 ? 0 : GC.GetAllocatedBytesForCurrentThread();
             OwnerView.drawingCanvas = this;
             try { DrawAction(); }
             finally {
                 OwnerView.drawingCanvas = null;
-                if (started != 0) OwnerView.nativeDrawTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                if (started != 0) {
+                    OwnerView.nativeDrawTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                    OwnerView.nativeDrawAllocated += GC.GetAllocatedBytesForCurrentThread() - allocated;
+                }
             }
         }
     }

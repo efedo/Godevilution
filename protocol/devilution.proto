@@ -59,6 +59,8 @@ message ClientHello {
 	optional string requested_character_name = 7;
 	// Explicit support for deferred future-command acknowledgements and timing probes.
 	bool supports_clock_gated_commands = 8;
+	// Negotiates references to unchanged geometry and idle bodies on this connection.
+	bool supports_snapshot_references = 9;
 }
 
 message ServerHello {
@@ -85,6 +87,7 @@ message ServerHello {
 	// restarted from its last checkpoint and may have rolled back; empty from
 	// hosts that predate it.
 	string host_instance_id = 13;
+	bool supports_snapshot_references = 14;
 }
 
 enum CommandSchedulingMode {
@@ -523,6 +526,14 @@ message Snapshot {
 	repeated NativeTownResidentSnapshot native_town_residents = 24;
 	// Fingerprint of the semantic Town catalog that owns the resident projection.
 	string native_town_catalog_fingerprint = 25;
+	// Connection-local transport metadata; excluded from gameplay state and saves.
+	uint64 geometry_revision = 26;
+	// True only after negotiation: use the validated geometry from geometry_revision.
+	// Unless state_unchanged, only level_geometry is omitted; the body remains complete.
+	bool geometry_unchanged = 27;
+	// Idle body references retain tick, hash, identities and both revision tokens only.
+	uint64 state_revision = 28;
+	bool state_unchanged = 29;
 }
 
 message SetLevelObjectOriginSnapshot {

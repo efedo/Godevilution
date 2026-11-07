@@ -31,6 +31,9 @@ public sealed record ClientConnectionOptions(
 
     public TimeSpan SnapshotPollInterval { get; init; } = TimeSpan.FromMilliseconds(250);
 
+    /** Opt in only with a reference-aware consumer; existing transport callers retain complete snapshots. */
+    public bool UseSnapshotReferences { get; init; }
+
     public static ClientConnectionOptions FromEnvironment()
     {
         return new ClientConnectionOptions(

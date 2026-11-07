@@ -66,8 +66,9 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         }
     }
 
-    [Fact]
-    public async Task StrictPolicyRestoresOnlyMatchingCombinedCheckpointAndItsLedger()
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public async Task StrictPolicyRestoresOnlyMatchingCombinedCheckpointAndItsLedger(bool snapshotReferences)
     {
         var root = CreateOwnedRoot();
         try {
@@ -106,8 +107,13 @@ public sealed class AuthoritativeSessionRestorePolicyTests
                 timeout.Token,
                 token,
                 contentHash: "content-from-old-client",
-                rulesetHash: "ruleset-from-old-client");
+                rulesetHash: "ruleset-from-old-client",
+                supportsSnapshotReferences: snapshotReferences);
             var (hello, snapshot) = await ReadHandshakeSnapshotAsync(stream, timeout.Token);
+            Assert.Equal(snapshotReferences, hello.SupportsSnapshotReferences);
+            Assert.Equal(snapshotReferences, snapshot.GeometryRevision != 0);
+            Assert.False(snapshot.GeometryUnchanged);
+            Assert.False(snapshot.StateUnchanged);
 
             Assert.Equal(ActiveContentHash, hello.ContentManifestHash);
             Assert.Equal(ActiveRulesetHash, hello.RulesetIdentityHash);
@@ -743,7 +749,8 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         string resumeToken,
         string? contentHash = null,
         string? rulesetHash = null,
-        bool supportsClockGated = false)
+        bool supportsClockGated = false,
+        bool supportsSnapshotReferences = false)
     {
         var hello = new ClientHello {
             ClientBuildId = "client-build",
@@ -752,6 +759,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
             RulesetIdentityHash = rulesetHash ?? ActiveRulesetHash,
             ResumeToken = resumeToken,
             SupportsClockGatedCommands = supportsClockGated,
+            SupportsSnapshotReferences = supportsSnapshotReferences,
         };
         await EnvelopeCodec.WriteAsync(
             stream,
