@@ -468,7 +468,7 @@ public partial class Main : Node2D
                 try {
                     var admissionStarted = FrameCostTimestamp();
                     var admissionAllocationStart = FrameCostAllocation();
-                    try { model.Apply(message); }
+                    try { ApplyAuthoritativeMessage(activeClient, message); }
                     finally {
                         admissionMilliseconds += FrameCostElapsed(admissionStarted);
                         admissionAllocated += FrameCostAllocationSince(admissionAllocationStart);
@@ -485,7 +485,8 @@ public partial class Main : Node2D
                         AcceptanceSnapshotObserver?.Invoke(model.CompleteSnapshotObservation(message.Snapshot));
                     }
                 } catch (Exception exception) {
-                    hud?.SetStatus($"Invalid authoritative state: {exception.Message}");
+                    hud?.SetStatus(sessionStatusOverride ?? $"Invalid authoritative state: {exception.Message}");
+                    return; // Never dispatch input or drain the rejected connection further in this frame.
                 }
             }
 
@@ -504,9 +505,7 @@ public partial class Main : Node2D
                     StartReconnect(force: true);
             }
 
-            if (!activeClient.IsConnected
-                && (connectionTask?.IsCompleted ?? true)
-                && (reconnectTask is null || reconnectTask.IsCompleted))
+            if (NeedsTransportReconnect(activeClient, connectionTask, reconnectTask))
                 StartReconnect(force: false);
         }
 
@@ -538,11 +537,12 @@ public partial class Main : Node2D
             ? client?.ServerIdentity?.ContentManifestHash : null);
         world?.ApplyAccepted(
             model.Snapshot,
-            model.AcceptedSnapshotContentRevision,
-            delta,
-            model.LocalMovementTarget,
-            client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
-            client?.IsConnected == true);
+            acceptedSnapshotContentRevision: model.AcceptedSnapshotContentRevision,
+            acceptedSnapshotRevision: model.AcceptedSnapshotRevision,
+            delta: delta,
+            predicted: model.LocalMovementTarget,
+            serverTickRateHz: client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
+            transportConnected: client?.IsConnected == true);
         worldMilliseconds += FrameCostElapsed(worldStarted);
         worldAllocated += FrameCostAllocationSince(worldAllocationStart);
         var hudStarted = FrameCostTimestamp();
@@ -1213,7 +1213,7 @@ public partial class Main : Node2D
         routeTravel.Cancel("Travel stopped: connection lost.");
         interactionTravel.Cancel();
         model.ResetTransientPresentation();
-        world?.MarkPresentationEpochPending();
+        world?.MarkPresentationEpochPending(model.AcceptedSnapshotRevision);
         if (client is { } activeClient
             && !sessionTransition
             && (reconnectTask is null || reconnectTask.IsCompleted))

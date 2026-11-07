@@ -15,7 +15,7 @@ namespace Devilution.Client.Protocol;
  * TCP client for the frozen authoritative protocol. Gameplay commands are
  * retained until acknowledged and resent using an adaptive latency timeout.
  */
-public sealed class AuthoritativeClient : IAsyncDisposable
+public sealed partial class AuthoritativeClient : IAsyncDisposable
 {
     private readonly ClientConnectionOptions options;
     private readonly ConcurrentQueue<AuthoritativeClientMessage> incoming = new();
@@ -170,7 +170,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         effectiveRulesetIdentityHash = options.RulesetIdentityHash;
     }
 
-    public bool IsConnected => Volatile.Read(ref transportConnected) == 1;
+    /** Protocol transport readiness, independently of main-thread model admission. */
+    public bool IsTransportConnected => Volatile.Read(ref transportConnected) == 1;
+
+    /** Gameplay remains fenced until a rejected model has admitted its recovery baseline. */
+    public bool IsConnected => IsTransportConnected && !RequiresCompleteSnapshotAdmission;
 
     /** The connected host process's instance ID; empty from hosts that predate it. */
     public string HostInstanceId { get; private set; } = string.Empty;
@@ -194,7 +198,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        if (IsConnected)
+        if (IsTransportConnected)
             throw new InvalidOperationException("The authoritative client is already connected.");
         var observationEpoch = BeginInitialConnectionObservation();
         if (!ClientConnectionOptions.TryValidateEndpoint(options.Host, options.Port, out var endpointError))
@@ -441,7 +445,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     {
         var retained = new List<AuthoritativeClientMessage>();
         while (incoming.TryDequeue(out var message)) {
-            if (options.UseSnapshotReferences && message.Snapshot is not null)
+            if ((options.UseSnapshotReferences || RequiresCompleteSnapshotAdmission) && message.Snapshot is not null)
                 continue; // The new connection establishes its own complete baseline. Preserve receipts/events.
             if (message.Error?.Code == ProtocolErrorCode.NotAuthenticated
                 && message.Error.Detail.StartsWith(

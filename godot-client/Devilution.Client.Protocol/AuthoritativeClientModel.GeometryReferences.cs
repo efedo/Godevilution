@@ -23,6 +23,8 @@ public sealed partial class AuthoritativeClientModel
 
     private Snapshot? OwnSnapshotProjection(Snapshot wire, bool discarded)
     {
+        // Stale publications are validated, but cannot change an admitted reference baseline.
+        if (discarded) return null;
         Snapshot? owned = null;
         if (wire.GeometryUnchanged) {
             if (!discarded) {

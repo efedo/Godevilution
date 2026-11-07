@@ -200,6 +200,59 @@ public sealed class SnapshotReferenceTests(ITestOutputHelper output)
         Assert.Throws<InvalidDataException>(() => model.Apply(new(Snapshot: stale)));
     }
 
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void DiscardedSnapshotsCannotInstallGeometryOrBodyReferences(bool geometryChanged)
+    {
+        var source = TownSnapshot();
+        source.Tick = 10;
+        var cache = new AuthoritativeSnapshotGeometryCache();
+        var model = new AuthoritativeClientModel();
+        model.Apply(new(Snapshot: RoundTrip(cache.Project(source))));
+        var admitted = model.Snapshot!;
+        var knownReference = RoundTrip(cache.Project(source));
+        knownReference.Tick = 12;
+
+        source.Tick = 9;
+        source.Players[0].Life = 63;
+        if (geometryChanged) source.LevelGeometry[0].NativePieceLayer[0] = 1;
+        model.Apply(new(Snapshot: RoundTrip(cache.Project(source))));
+        Assert.Same(admitted, model.Snapshot);
+        Assert.Equal(1UL, model.AcceptedSnapshotRevision);
+        Assert.Equal(1UL, model.AcceptedSnapshotContentRevision);
+
+        source.Tick = 11;
+        var unadmittedReference = RoundTrip(cache.Project(source));
+        Assert.True(unadmittedReference.StateUnchanged);
+        Assert.Throws<InvalidDataException>(() => model.Apply(new(Snapshot: unadmittedReference)));
+        Assert.Same(admitted, model.Snapshot);
+        model.Apply(new(Snapshot: knownReference));
+        Assert.Equal(12UL, model.CurrentTick);
+        Assert.Equal(64, model.Snapshot!.Players[0].Life);
+        Assert.Equal(0U, model.Snapshot.LevelGeometry[0].NativePieceLayer[0]);
+        Assert.Equal(2UL, model.AcceptedSnapshotRevision);
+        Assert.Equal(1UL, model.AcceptedSnapshotContentRevision);
+    }
+
+    [Fact]
+    public void DiscardedLegacySnapshotsCannotClearAnAdmittedReferenceBaseline()
+    {
+        var source = TownSnapshot();
+        source.Tick = 10;
+        var cache = new AuthoritativeSnapshotGeometryCache();
+        var model = new AuthoritativeClientModel();
+        model.Apply(new(Snapshot: RoundTrip(cache.Project(source))));
+        var reference = RoundTrip(cache.Project(source));
+        source.Tick = 9;
+        source.Players[0].Life = 63;
+        model.Apply(new(Snapshot: source));
+        reference.Tick = 11;
+        model.Apply(new(Snapshot: reference));
+        Assert.Equal(11UL, model.CurrentTick);
+        Assert.Equal(64, model.Snapshot!.Players[0].Life);
+        Assert.Equal(1UL, model.AcceptedSnapshotContentRevision);
+    }
+
     [Fact]
     public void NativeSizedIdleDecodeAndAdmissionStayBelowEightKiBPerPoll()
     {

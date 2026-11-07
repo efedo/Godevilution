@@ -40,8 +40,8 @@ public partial class WorldPresentation : Node2D
     private ClientPresentationPosition? localVisualPosition;
     private Vector2 cameraDisplacement;
     private ulong lastAcceptedSnapshotRevision;
-    private ulong pendingPresentationEpochRevision;
-    private bool presentationEpochPending;
+    private readonly AuthoritativePresentationEpochGate presentationEpoch = new();
+    private bool presentationEpochPending => presentationEpoch.IsPending;
     internal ulong PresentationEpochResetCount { get; private set; }
     private Snapshot? snapshot;
     private uint? presentationLevelId;
@@ -60,22 +60,20 @@ public partial class WorldPresentation : Node2D
         uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
         => ApplyCore(next, delta, predicted, serverTickRateHz, null, true);
 
-    /** Applies an admitted model snapshot while reusing its installed geometry generation. */
+    /** Content revisions cache geometry; admission revisions release the animation epoch gate. */
     internal void ApplyAccepted(
         Snapshot? next,
+        ulong acceptedSnapshotContentRevision,
         ulong acceptedSnapshotRevision,
         double delta,
         ClientPosition? predicted = null,
         uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz,
         bool transportConnected = true)
-        => ApplyCore(next, delta, predicted, serverTickRateHz, acceptedSnapshotRevision, transportConnected);
+        => ApplyCore(next, delta, predicted, serverTickRateHz, acceptedSnapshotContentRevision, transportConnected, acceptedSnapshotRevision);
 
     /** Freezes presentation animation until a newer admitted model epoch arrives. */
-    internal void MarkPresentationEpochPending()
-    {
-        pendingPresentationEpochRevision = lastAcceptedSnapshotRevision;
-        presentationEpochPending = true;
-    }
+    internal void MarkPresentationEpochPending(ulong admittedRevision)
+        => presentationEpoch.WaitForAdmission(admittedRevision);
 
     internal PresentationPackObservation ObservePresentationPack()
         => assets.ObservePack();
@@ -131,15 +129,12 @@ public partial class WorldPresentation : Node2D
         ClientPosition? predicted,
         uint serverTickRateHz,
         ulong? acceptedSnapshotRevision,
-        bool transportConnected)
+        bool transportConnected,
+        ulong? admittedSnapshotRevision = null)
     {
         if (acceptedSnapshotRevision is { } acceptedRevision)
             lastAcceptedSnapshotRevision = acceptedRevision;
-        if (transportConnected
-            && presentationEpochPending
-            && acceptedSnapshotRevision is { } epochRevision
-            && epochRevision != pendingPresentationEpochRevision) {
-            presentationEpochPending = false;
+        if (presentationEpoch.Observe(next is not null, transportConnected, admittedSnapshotRevision)) {
             presentationClock.Reset();
             localMovement.Reset();
             nativePlayerPresentationTick = null;
