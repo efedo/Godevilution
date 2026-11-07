@@ -17,7 +17,7 @@ public sealed class LiveAuthoritativeStoreAdmissionTests : LiveAuthoritativeTest
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            randomSeed: 0x12345678);
+            randomSeed: 0x12345678, controlledClock: true);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-live-cast-source", requestedClassId: 2));
 
@@ -46,17 +46,15 @@ public sealed class LiveAuthoritativeStoreAdmissionTests : LiveAuthoritativeTest
                     StableItemId = staff.State.StableItemId,
                 },
             },
-        }, client.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await client.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
 
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
             $"Charged cast was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; staff spell was {staff.State.SpellId} with {initialCharges} charges and target was ({target.PositionX},{target.PositionY}).");
-        var consumed = await WaitForMessageAsync(
-            client,
-            message => message.Snapshot?.Players.Single().Equipment
-                .Single(item => item.Slot == 4).State.Charges == initialCharges - 1);
+        var consumed = await WaitForCastEffectAsync(server, client, player.EntityId, (uint)staff.State.SpellId,
+            acknowledgement.AppliedTick);
         var updatedPlayer = Assert.Single(consumed.Snapshot!.Players);
         Assert.Equal(player.Mana, updatedPlayer.Mana);
         var updatedStaff = Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4);
@@ -69,7 +67,6 @@ public sealed class LiveAuthoritativeStoreAdmissionTests : LiveAuthoritativeTest
             Assert.Equal((int)AuthoritativeProjectileBehavior.ChargedBolt, projectile.Behavior);
             Assert.True(projectile.Damage > 0);
         });
-        // Autonomous AI and projectile ticks make the live RNG sample variable.
         // Exact vectors/RNG remain pinned by ChargedBoltFixtureMatchesNativeSpawnVectorAndRngState.
     }
 

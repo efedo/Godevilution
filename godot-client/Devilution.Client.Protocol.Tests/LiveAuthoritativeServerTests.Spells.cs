@@ -54,7 +54,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 overlayRoot,
-                startingManaOverride: 10000);
+                startingManaOverride: 10000, controlledClock: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-etherealize-overlay", requestedClassId: 2));
 
@@ -79,18 +79,15 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                     SpellId = 53,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
             Assert.True(
                 acknowledgement.Status == CommandStatus.Accepted,
                 $"Etherealize was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; memorized spell was {spell.SpellId} level {spell.Level}.");
 
-            var etherealized = await WaitForMessageAsync(
-                client,
-                message => message.Snapshot?.Players.Single().StatusEffects
-                    .Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize
-                        && effect.RemainingTicks > 0) == true);
+            var etherealized = await WaitForCastEffectAsync(server, client, player.EntityId, 53,
+                acknowledgement.AppliedTick);
             var effect = Assert.Single(
                 Assert.Single(etherealized.Snapshot!.Players).StatusEffects,
                 candidate => candidate.Behavior == StatusEffectBehavior.Etherealize);
@@ -229,7 +226,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                 TestContext.Current.CancellationToken,
                 overlayRoot,
                 startingManaOverride: 10000,
-                randomSeed: 1);
+                randomSeed: 1, controlledClock: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-golem-overlay", requestedClassId: 2));
 
@@ -252,16 +249,13 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                     SpellId = 52,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
             Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            var summoned = await WaitForMessageAsync(
-                client,
-                message => message.Snapshot?.Monsters.Any(monster =>
-                    monster.IsPlayerMinion
-                    && monster.OwnerPlayerId == player.EntityId) == true);
+            var summoned = await WaitForCastEffectAsync(server, client, player.EntityId, 52,
+                acknowledgement.AppliedTick);
             var golem = Assert.Single(
                 summoned.Snapshot!.Monsters,
                 monster => monster.IsPlayerMinion
@@ -687,7 +681,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                 overlayRoot,
                 startingManaOverride: 10000,
                 gameMode: "single-player",
-                randomSeed: 0);
+                randomSeed: 0, controlledClock: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-mana-shield-overlay", requestedClassId: 2));
             var model = new AuthoritativeClientModel();
@@ -712,17 +706,13 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                     TargetY = player.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(
-                CommandStatus.Accepted,
-                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            var active = await WaitForMessageAsync(
-                client,
-                message => message.Snapshot?.Players.Single() is { } candidate
-                    && candidate.ManaShieldActive
-                    && candidate.Mana < initialMana);
+            var active = await WaitForCastEffectAsync(server, client, player.EntityId, 11,
+                acknowledgement.AppliedTick);
             var activePlayer = Assert.Single(active.Snapshot!.Players);
             Assert.True(activePlayer.ManaShieldActive);
             Assert.True(activePlayer.Mana < initialMana);
@@ -897,7 +887,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                 overlayRoot,
                 startingManaOverride: 10000,
                 gameMode: "single-player",
-                randomSeed: 0);
+                randomSeed: 0, controlledClock: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-berserk-overlay", requestedClassId: 2));
             var model = new AuthoritativeClientModel();
@@ -927,17 +917,13 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                     TargetY = target.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(
-                CommandStatus.Accepted,
-                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            var berserked = await WaitForMessageAsync(
-                client,
-                message => message.Snapshot?.Monsters.Any(
-                    monster => monster.EntityId == target.EntityId
-                        && monster.IsBerserked) == true);
+            var berserked = await WaitForCastEffectAsync(server, client, player.EntityId, 48,
+                acknowledgement.AppliedTick);
             var berserkedTarget = Assert.Single(
                 berserked.Snapshot!.Monsters,
                 monster => monster.EntityId == target.EntityId);
@@ -1187,7 +1173,7 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                 TestContext.Current.CancellationToken,
                 overlayRoot,
                 startingManaOverride: 10000,
-                randomSeed: 0);
+                randomSeed: 0, controlledClock: true);
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-stone-curse-overlay", requestedClassId: 2));
             var model = new AuthoritativeClientModel();
@@ -1215,16 +1201,13 @@ public sealed class LiveAuthoritativeSpellTests : LiveAuthoritativeTestBase
                     TargetY = target.PositionY,
                     Source = CastSourceKind.MemorizedSpell,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, server.CurrentTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(
-                CommandStatus.Accepted,
-                (await WaitForAcknowledgementAsync(client, sequence)).Status);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
 
-            var petrified = await WaitForMessageAsync(
-                client,
-                message => message.Snapshot?.Monsters.Any(
-                    monster => monster.EntityId == target.EntityId && monster.Petrified) == true);
+            var petrified = await WaitForCastEffectAsync(server, client, player.EntityId, 8,
+                acknowledgement.AppliedTick);
             var petrifiedTarget = Assert.Single(
                 petrified.Snapshot!.Monsters,
                 monster => monster.EntityId == target.EntityId);

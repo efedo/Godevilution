@@ -425,6 +425,27 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
         StartedServer server, AuthoritativeClient client, Func<AuthoritativeClientMessage, bool> predicate)
         => WaitForMessageAsync(client, predicate, server);
 
+    /** Publish at the advertised cast effect boundary before transient missiles/statuses can expire. */
+    private protected async Task<AuthoritativeClientMessage> WaitForCastEffectAsync(
+        StartedServer server, AuthoritativeClient client, uint playerEntityId, uint spellId, ulong admittedTick)
+    {
+        Assert.True(server.IsClockHeld, "Cast effect observations require the fixture's controlled clock.");
+        var actionMessage = await WaitForGameConditionAsync(server, client, message => message.Snapshot is { } snapshot
+            && snapshot.Tick >= admittedTick
+            && snapshot.Players.Single(player => player.EntityId == playerEntityId).CurrentAction is {
+                Kind: PlayerActionKind.Cast, Cast.SpellId: var currentSpell,
+            } && currentSpell == spellId);
+        var action = actionMessage.Snapshot!.Players.Single(player => player.EntityId == playerEntityId).CurrentAction!;
+        Assert.True(actionMessage.Snapshot.Tick <= action.EffectTick,
+            "The controlled clock advanced beyond the advertised cast effect before observation.");
+        if (actionMessage.Snapshot.Tick == action.EffectTick)
+            return actionMessage;
+        server.AdvanceObservedClock(action.EffectTick);
+        // Do not auto-advance or predicate on the effect: a missing charge deduction/projectile/status
+        // must fail its assertion at this exact tick, rather than observing a later unrelated state.
+        return await WaitForMessageAsync(client, message => message.Snapshot?.Tick == action.EffectTick);
+    }
+
     // UI admission has only two ticks of lateness tolerance. Catch up to the server's
     // rejection boundary before retrying; never retry a gameplay-rule refusal.
     private protected async Task<CommandResult> SubmitFreshUiCommandAsync(

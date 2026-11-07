@@ -540,7 +540,7 @@ public sealed class LiveAuthoritativeClassAbilityTests : LiveAuthoritativeTestBa
     public async Task LiveServerUsesMonkSearchAbilityAsAuthoritativeStatus()
     {
         using var server = await StartedServer.StartAsync(
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken, controlledClock: true);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-monk-search", requestedClassId: 3));
 
@@ -563,18 +563,15 @@ public sealed class LiveAuthoritativeClassAbilityTests : LiveAuthoritativeTestBa
                 SpellId = 46,
                 Source = CastSourceKind.Ability,
             },
-        }, client.SuggestedCommandTick(model.CurrentTick));
+        }, server.CurrentTick);
         await client.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
             $"Monk Search was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; class was {player.CharacterClassId}, ability was {player.AbilitySpellId}.");
 
-        var searched = await WaitForMessageAsync(
-            client,
-            message => message.Snapshot?.Players.Single().StatusEffects
-                .Any(effect => effect.Behavior == StatusEffectBehavior.Search
-                    && effect.RemainingTicks > 0) == true);
+        var searched = await WaitForCastEffectAsync(server, client, player.EntityId, 46,
+            acknowledgement.AppliedTick);
         var search = Assert.Single(
             Assert.Single(searched.Snapshot!.Players).StatusEffects,
             effect => effect.Behavior == StatusEffectBehavior.Search);
