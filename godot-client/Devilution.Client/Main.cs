@@ -408,7 +408,7 @@ public partial class Main : Node2D
         persistLocalSession = connectionOptions is not null
             && SessionLifecyclePolicy.ShouldPersistLocalBookmark(
                 connectionOptions, options, resumeTokenPath);
-        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true }) {
+        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true, UseLevelScopedIdleReferences = true }) {
             AllocationMetrics = ClientFrameEvidenceRecorder.IsRequested ? new ClientTransportAllocationMetrics() : null,
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()

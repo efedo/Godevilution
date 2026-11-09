@@ -28,6 +28,8 @@ public partial class Main
             if (!StartPerformanceRecording(model.Snapshot?.Players.Count ?? 1, 0, environmentWarmup: true))
                 GD.PushWarning("Frame capture could not start: check the fresh output directory and capture settings.");
         }
+        if (model.Snapshot is not null)
+            frameEvidence?.ObserveWorldAdmission(ClientFrameEvidenceRecorder.GetTimestamp());
         admissionMilliseconds = worldMilliseconds = hudMilliseconds = 0;
         admissionAllocated = worldAllocated = hudAllocated = 0;
         if (world is not null) world.CaptureFrameCost = frameEvidence is {IsStopped: false};

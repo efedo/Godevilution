@@ -6,6 +6,7 @@ namespace Devilution.Client.Protocol;
 public sealed class AuthoritativePresentationClock
 {
     public const uint DefaultTickRateHz = 20;
+    private double leadCorrection;
 
     public double? CurrentTick { get; private set; }
 
@@ -31,18 +32,25 @@ public sealed class AuthoritativePresentationClock
             if (snapshot.Players[i].CurrentAction is { } action) horizon = Math.Max(horizon, action.EndTick);
         for (var i = 0; i < snapshot.Monsters.Count; i++)
             if (snapshot.Monsters[i].Moving) horizon = Math.Max(horizon, snapshot.Monsters[i].MovementEffectTick);
-        return AdvanceCore(snapshot.Tick, deltaSeconds, tickRateHz, horizon);
+        return AdvanceCore(snapshot.Tick, deltaSeconds, tickRateHz, horizon, consumeForwardAdmissionDelta: true);
     }
 
-    private double AdvanceCore(ulong authoritativeTick, double deltaSeconds, uint tickRateHz, double presentationHorizon)
+    private double AdvanceCore(ulong authoritativeTick, double deltaSeconds, uint tickRateHz, double presentationHorizon,
+        bool consumeForwardAdmissionDelta = false)
     {
+        var frameAlreadyObserved = false;
         LastAdvanceRewound = AuthoritativeSnapshotTick is { } previousTick
             && authoritativeTick < previousTick;
         if (AuthoritativeSnapshotTick is null
             || authoritativeTick < AuthoritativeSnapshotTick.Value) {
             CurrentTick = authoritativeTick;
+            leadCorrection = 0;
         } else if (authoritativeTick > AuthoritativeSnapshotTick.Value) {
+            frameAlreadyObserved = consumeForwardAdmissionDelta && CurrentTick <= authoritativeTick;
             CurrentTick = Math.Max(CurrentTick ?? authoritativeTick, authoritativeTick);
+            // The paced host drops elapsed time after a stall. Repay that lead at
+            // half speed on later frames; never reverse an actor's current animation.
+            leadCorrection = CurrentTick.Value - authoritativeTick;
         }
         AuthoritativeSnapshotTick = authoritativeTick;
 
@@ -50,9 +58,13 @@ public sealed class AuthoritativePresentationClock
             ? deltaSeconds
             : 0;
         var effectiveTickRate = tickRateHz == 0 ? DefaultTickRateHz : tickRateHz;
-        CurrentTick = Math.Min(
-            presentationHorizon,
-            (CurrentTick ?? authoritativeTick) + frameDelta * effectiveTickRate);
+        // A forward snapshot already covers this frame's elapsed time. Adding it
+        // again skips walk frames, particularly when the server runs above frame rate.
+        var advance = frameAlreadyObserved ? 0 : frameDelta * effectiveTickRate;
+        var correction = Math.Min(leadCorrection, advance * 0.5);
+        leadCorrection -= correction;
+        var current = CurrentTick ?? authoritativeTick;
+        CurrentTick = Math.Max(current, Math.Min(presentationHorizon, current + advance - correction));
         return CurrentTick.Value;
     }
 
@@ -61,5 +73,6 @@ public sealed class AuthoritativePresentationClock
         CurrentTick = null;
         AuthoritativeSnapshotTick = null;
         LastAdvanceRewound = false;
+        leadCorrection = 0;
     }
 }

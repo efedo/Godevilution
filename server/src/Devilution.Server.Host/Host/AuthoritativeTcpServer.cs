@@ -664,7 +664,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             }
 
             if (helloEnvelope.ClientHello.SupportsSnapshotReferences)
-                snapshotGeometryCaches.Add(stream, new Devilution.Protocol.AuthoritativeSnapshotGeometryCache());
+                snapshotGeometryCaches.Add(stream, new Devilution.Protocol.AuthoritativeSnapshotGeometryCache(
+                    helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences));
             SessionState session;
             ulong currentTick;
             if (CohortStore is not null) {
@@ -707,6 +708,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     session = admission.Session!;
                     currentTick = admission.Tick;
                     admission.Hello!.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
+                    admission.Hello.SupportsLevelScopedIdleReferences = admission.Hello.SupportsSnapshotReferences
+                        && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;
                     await EnvelopeCodec.WriteAsync(
                         stream,
                         new Envelope { ServerHello = admission.Hello! },
@@ -740,6 +743,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
                     serverHello.HostInstanceId = HostInstanceId;
                     serverHello.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
+                    serverHello.SupportsLevelScopedIdleReferences = serverHello.SupportsSnapshotReferences
+                        && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());

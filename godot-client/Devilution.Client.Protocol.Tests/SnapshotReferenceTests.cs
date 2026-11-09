@@ -10,6 +10,54 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class SnapshotReferenceTests(ITestOutputHelper output)
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OffLevelMovementOnlyAllowsNegotiatedLevelScopedIdleReferences(bool scoped)
+    {
+        var source = TownSnapshot(large: true);
+        source.Monsters.Add(new MonsterSnapshot { EntityId = 2, LevelId = 1, MonsterId = 1,
+            HitPoints = 1, MaxHitPoints = 1, Alive = true, Moving = true,
+            PositionX = 1, PositionY = 1, FuturePositionX = 1, FuturePositionY = 2,
+            MovementStartedTick = 0, MovementEffectTick = 8 });
+        var cache = new AuthoritativeSnapshotGeometryCache(scoped);
+        var model = new AuthoritativeClientModel();
+        AuthoritativeClientMessage Message(Snapshot wire) => new(Snapshot: RoundTrip(wire)) { LevelScopedIdleReferences = scoped };
+        model.Apply(Message(cache.Project(source)));
+        source.Tick++;
+        var reference = RoundTrip(cache.Project(source));
+        Assert.Equal(scoped, reference.StateUnchanged);
+        model.Apply(new(Snapshot: reference) { LevelScopedIdleReferences = scoped });
+        Assert.Equal(source, model.Snapshot);
+
+        if (scoped) {
+            var payload = new Envelope { Snapshot = reference }.ToByteArray();
+            void Poll() => model.Apply(AuthoritativeClientMessage.FromEnvelope(Envelope.Parser.ParseFrom(payload))
+                with { LevelScopedIdleReferences = true });
+            for (var i = 0; i < 32; i++) Poll();
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 512; i++) Poll();
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            output.WriteLine($"Town with off-level movement: {payload.Length} wire bytes, {allocated / 512d:F0} B/poll.");
+            Assert.InRange(allocated, 0, 512L * 8192);
+            // An old receiver never trusts this relaxed policy without negotiation.
+            var legacy = new AuthoritativeClientModel();
+            var legacyCache = new AuthoritativeSnapshotGeometryCache();
+            legacy.Apply(new(Snapshot: RoundTrip(legacyCache.Project(source))));
+            Assert.Throws<InvalidDataException>(() => legacy.Apply(new(Snapshot: reference)));
+            Assert.Throws<InvalidDataException>(() => model.Apply(new(Snapshot: reference)));
+        }
+
+        // A level transition sends the active monster in full; local activity never becomes a clock-only reference.
+        source.Players[0].LevelId = 1;
+        source.Tick++;
+        var active = RoundTrip(cache.Project(source));
+        Assert.False(active.StateUnchanged);
+        model.Apply(new(Snapshot: active) { LevelScopedIdleReferences = scoped });
+        Assert.Equal(source, model.Snapshot);
+        Assert.False(cache.Project(source).StateUnchanged);
+    }
+
     [Fact]
     public void ProjectionCopiesPreserveEverySchemaFieldAndUnknownFields()
     {

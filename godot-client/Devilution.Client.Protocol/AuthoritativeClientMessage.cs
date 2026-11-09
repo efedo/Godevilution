@@ -12,6 +12,9 @@ public sealed record AuthoritativeClientMessage(
     /** Local receiving attempt; zero for offline messages. Never serialized on the product wire. */
     public long ConnectionAttemptEpoch { get; init; }
 
+    /** Connection-negotiated body-reference policy, supplied by the receiving transport. */
+    public bool LevelScopedIdleReferences { get; init; }
+
     /** Frozen local send identities for rescheduled receipts; never added to the wire. */
     public IReadOnlyList<AuthoritativeCommandReceiptContext>? AcknowledgedCommands { get; init; }
 

@@ -1,3 +1,4 @@
+using System.Buffers;
 using Devilution.Domain.Inventory;
 using Devilution.Engine;
 
@@ -855,23 +856,35 @@ public sealed partial class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
         }
 
-        var directions = AuthoritativeNativePlayerPathfinder.FindPath(
-            startX,
-            startY,
-            intent.TargetX,
-            intent.TargetY,
-            AuthoritativeNativePlayerPathfinder.MaximumPathLength,
-            (x, y) => world.ContainsPosition(player.LevelId, x, y)
-                && world.IsWalkable(player.LevelId, x, y)
-                && !world.IsOccupied(player.LevelId, x, y, participants, player.EntityId),
-            (fromX, fromY, toX, toY) => {
-                var dx = toX - fromX;
-                var dy = toY - fromY;
-                if (dx == 0 || dy == 0)
-                    return true;
-                return world.IsWalkable(player.LevelId, fromX + dx, fromY)
-                    && world.IsWalkable(player.LevelId, fromX, fromY + dy);
-            });
+        // Occupancy is immutable during this command. A* revisits neighboring cells;
+        // evaluate each native uint8 coordinate once and return the buffer before leaving.
+        var validity = ArrayPool<byte>.Shared.Rent(256 * 256);
+        validity.AsSpan(0, 256 * 256).Clear();
+        int[] directions;
+        try {
+            directions = AuthoritativeNativePlayerPathfinder.FindPath(
+                startX,
+                startY,
+                intent.TargetX,
+                intent.TargetY,
+                AuthoritativeNativePlayerPathfinder.MaximumPathLength,
+                (x, y) => {
+                    var cell = y * 256 + x;
+                    if (validity[cell] == 0)
+                        validity[cell] = world.ContainsPosition(player.LevelId, x, y)
+                            && world.IsWalkable(player.LevelId, x, y)
+                            && !world.IsOccupied(player.LevelId, x, y, participants, player.EntityId) ? (byte)1 : (byte)2;
+                    return validity[cell] == 1;
+                },
+                (fromX, fromY, toX, toY) => {
+                    var dx = toX - fromX;
+                    var dy = toY - fromY;
+                    if (dx == 0 || dy == 0)
+                        return true;
+                    return world.IsWalkable(player.LevelId, fromX + dx, fromY)
+                        && world.IsWalkable(player.LevelId, fromX, fromY + dy);
+                });
+        } finally { ArrayPool<byte>.Shared.Return(validity); }
         if (directions.Length == 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 

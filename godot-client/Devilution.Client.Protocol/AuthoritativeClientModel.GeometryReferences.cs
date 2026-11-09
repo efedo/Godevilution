@@ -9,6 +9,7 @@ public sealed partial class AuthoritativeClientModel
     private ulong cachedGeometryRevision, cachedStateRevision;
     private Snapshot? cachedSnapshotBody;
     private string? cachedGeometryContent, cachedGeometryRuleset;
+    private bool cachedLevelScopedIdleReferences;
 
     private Snapshot ExpandSnapshotGeometry(Snapshot wire)
     {
@@ -21,10 +22,11 @@ public sealed partial class AuthoritativeClientModel
         return wire.WithGeometryForTransport(cachedSnapshotGeometry);
     }
 
-    private Snapshot? OwnSnapshotProjection(Snapshot wire, bool discarded)
+    private Snapshot? OwnSnapshotProjection(Snapshot wire, bool discarded, bool levelScopedIdleReferences)
     {
         // Stale publications are validated, but cannot change an admitted reference baseline.
         if (discarded) return null;
+        cachedLevelScopedIdleReferences = levelScopedIdleReferences;
         Snapshot? owned = null;
         if (wire.GeometryUnchanged) {
             if (!discarded) {
@@ -60,7 +62,8 @@ public sealed partial class AuthoritativeClientModel
     private Snapshot ExpandIdleSnapshotReference(Snapshot wire)
     {
         if (acceptNextSnapshotAsNewEpoch || !wire.GeometryUnchanged || wire.StateRevision == 0 || wire.StateRevision != cachedStateRevision
-            || cachedSnapshotBody is null || !Devilution.Protocol.AuthoritativeSnapshotGeometryCache.IsIdleBody(cachedSnapshotBody))
+            || cachedSnapshotBody is null || !Devilution.Protocol.AuthoritativeSnapshotGeometryCache.IsIdleBody(
+                cachedSnapshotBody, cachedLevelScopedIdleReferences))
             throw new InvalidDataException("The authoritative snapshot has an unknown or active body reference.");
         // This also fences the geometry token and content/ruleset identity.
         ExpandSnapshotGeometry(wire);

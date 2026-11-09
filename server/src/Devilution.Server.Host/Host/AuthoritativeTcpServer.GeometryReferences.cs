@@ -12,7 +12,10 @@ public sealed partial class AuthoritativeTcpServer
     private Envelope ProjectSnapshotGeometry(Stream stream, Envelope envelope)
     {
         if (!snapshotGeometryCaches.TryGetValue(stream, out var cache)) return envelope;
-        if (envelope.ServerHello is { } hello) hello.SupportsSnapshotReferences = true;
+        if (envelope.ServerHello is { } hello) {
+            hello.SupportsSnapshotReferences = true;
+            hello.SupportsLevelScopedIdleReferences = cache.LevelScopedIdleReferences;
+        }
         if (envelope.Snapshot is { } snapshot) {
             // The writer owns the envelope; preserve its unknown fields and the actual wire-size counters.
             envelope.Snapshot = cache.Project(snapshot);

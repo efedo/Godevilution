@@ -1227,36 +1227,42 @@ public sealed partial class DiabloWorldState
         uint excludedEntityId = 0)
     {
         ArgumentNullException.ThrowIfNull(players);
-        return IsNativeTownOccupied(levelId, positionX, positionY)
+        if (IsNativeTownOccupied(levelId, positionX, positionY)
             || IsNativePopulationObjectSolid(levelId, positionX, positionY)
             || !OwnsNativePopulationLevel(levelId)
-                && IsCathedralLightObjectSolid(levelId, positionX, positionY)
-            || CombatTargets.Values.Any(target => target.HitPoints > 0
-            && target.EntityId != excludedEntityId
-            && (target.LevelId == 0 || target.LevelId == levelId)
-            && ((target.PositionX == positionX
-                    && target.PositionY == positionY)
-                || (target.IsMoving
-                    && target.FuturePositionX == positionX
-                    && target.FuturePositionY == positionY)))
-            || players.Any(player => player.EntityId != 0
-                && !IsDeadPlayerOnCathedralDoor(player.Life, levelId, positionX, positionY)
+                && IsCathedralLightObjectSolid(levelId, positionX, positionY))
+            return true;
+        // Native pathfinding probes thousands of cells. Avoid a closure/enumerator
+        // per probe, and reject off-level objects before consulting their owners.
+        foreach (var target in CombatTargets.Values)
+            if (target.HitPoints > 0 && target.EntityId != excludedEntityId
+                && (target.LevelId == 0 || target.LevelId == levelId)
+                && (target.PositionX == positionX && target.PositionY == positionY
+                    || target.IsMoving && target.FuturePositionX == positionX && target.FuturePositionY == positionY))
+                return true;
+        if (players is IReadOnlyList<AuthoritativePlayerState> indexed) {
+            for (var i = 0; i < indexed.Count; i++)
+                if (PlayerOccupies(indexed[i])) return true;
+        } else {
+            foreach (var player in players)
+                if (PlayerOccupies(player)) return true;
+        }
+        foreach (var value in Objects.Values)
+            if (value.LevelId == levelId && value.PositionX == positionX && value.PositionY == positionY
+                && !OwnsNativePopulationLevel(value.LevelId) && !value.ActivateOnOccupancy
+                && value.CathedralDoor is null && !value.Activated && !value.Destroyed && value.EntityId != excludedEntityId)
+                return true;
+        return false;
+
+        bool PlayerOccupies(AuthoritativePlayerState player) => player.EntityId != 0
                 && player.EntityId != excludedEntityId
                 && player.LevelId == levelId
                 && ((player.PositionX == positionX
                         && player.PositionY == positionY)
                     || (player.IsMoving
                         && player.FuturePositionX == positionX
-                        && player.FuturePositionY == positionY)))
-            || Objects.Values.Any(@object => !OwnsNativePopulationLevel(@object.LevelId)
-                && !@object.ActivateOnOccupancy
-                && @object.CathedralDoor is null
-                && !@object.Activated
-                && !@object.Destroyed
-                && @object.EntityId != excludedEntityId
-                && @object.LevelId == levelId
-                && @object.PositionX == positionX
-                && @object.PositionY == positionY);
+                        && player.FuturePositionY == positionY))
+                && (player.Life != 0 || !IsDeadPlayerOnCathedralDoor(player.Life, levelId, positionX, positionY));
     }
 
     public void ValidateInitialPlayerPosition(uint levelId, int positionX, int positionY)

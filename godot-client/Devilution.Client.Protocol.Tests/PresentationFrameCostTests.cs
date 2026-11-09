@@ -172,6 +172,7 @@ public sealed class PresentationFrameCostTests(ITestOutputHelper output)
                 new("build", "schema", "content", "rules", "renderer", "device", "808x520", true, 60, true, "4.7.1", 1, VsyncMode: "Enabled"));
             recorder.ObserveServerIdentity(new("build", "schema", "content", "rules", 20, GameMode.SinglePlayer)); recorder.ObserveParticipantCount(1);
             var started = Stopwatch.GetTimestamp();
+            recorder.ObserveWorldAdmission(started);
             for (var i = 0; i < 120; i++) {
                 var timestamp = started + i * Stopwatch.Frequency / 60;
                 recorder.RecordFrameCost(timestamp, new(1, 2, 3, 4, i == 0 ? 1354 : 0, 20, null, null));

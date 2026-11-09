@@ -61,6 +61,8 @@ message ClientHello {
 	bool supports_clock_gated_commands = 8;
 	// Negotiates references to unchanged geometry and idle bodies on this connection.
 	bool supports_snapshot_references = 9;
+	// Idle references may ignore frozen monster movement on other levels.
+	bool supports_level_scoped_idle_references = 10;
 }
 
 message ServerHello {
@@ -88,6 +90,7 @@ message ServerHello {
 	// hosts that predate it.
 	string host_instance_id = 13;
 	bool supports_snapshot_references = 14;
+	bool supports_level_scoped_idle_references = 15;
 }
 
 enum CommandSchedulingMode {

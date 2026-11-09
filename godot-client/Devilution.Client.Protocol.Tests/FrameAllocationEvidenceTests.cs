@@ -9,6 +9,55 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class FrameAllocationEvidenceTests
 {
     [Fact]
+    public void MenuTimeDoesNotConsumeTheWorldWarmupOrMeasurementWindow()
+    {
+        var root = NewRoot();
+        try {
+            var recorder = ClientFrameEvidenceRecorder.Create(new(root, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(3), 128, true),
+                new("build", "schema", "content", "rules", "renderer", "device", "808x520", true, 60, true, "4.7.2", 1));
+            var start = Stopwatch.GetTimestamp();
+            for (var second = 0; second < 180; second++) {
+                var timestamp = start + second * Stopwatch.Frequency;
+                recorder.RecordFrameCost(timestamp, new(0, 7, 0, 0, 0, 0, null, null));
+                recorder.RecordFrame(timestamp, timestamp, timestamp);
+            }
+            Assert.False(recorder.IsStopped);
+            var admission = start + 180 * Stopwatch.Frequency;
+            recorder.ObserveWorldAdmission(admission);
+            recorder.ObserveServerIdentity(new("server", "schema", "content", "rules", 20, GameMode.SinglePlayer));
+            recorder.ObserveParticipantCount(1);
+            // Later snapshots must not restart either timer.
+            recorder.ObserveWorldAdmission(admission + Stopwatch.Frequency);
+            recorder.RecordFrameCost(admission, new(0, 99, 0, 0, 0, 0, null, null));
+            recorder.RecordFrame(admission, admission, admission);
+            var worldStart = admission + 2 * Stopwatch.Frequency;
+            for (var frame = 0; frame < 180; frame++) {
+                var timestamp = worldStart + frame * Stopwatch.Frequency / 60;
+                recorder.RecordFrameCost(timestamp, new(0, 2, 0, 0, 0, 0, null, null));
+                recorder.RecordFrame(timestamp, timestamp, timestamp);
+            }
+            Assert.False(recorder.IsStopped);
+            var end = worldStart + 3 * Stopwatch.Frequency;
+            recorder.RecordFrameCost(end, default);
+            recorder.RecordFrame(end, end, end);
+            Assert.True(recorder.IsStopped);
+            using var document = JsonDocument.Parse(File.ReadAllText(recorder.EvidenceFilePath));
+            var evidence = document.RootElement;
+            Assert.Equal(worldStart, evidence.GetProperty("ActiveWindowStartTimestamp").GetInt64());
+            Assert.Equal(3000, evidence.GetProperty("MeasuredDurationMilliseconds").GetDouble(), 5);
+            Assert.True(evidence.GetProperty("Outcome").GetProperty("Succeeded").GetBoolean());
+            var world = evidence.GetProperty("FrameCosts").EnumerateArray().ToArray();
+            Assert.Equal(3, world.Length);
+            Assert.All(world, sample => {
+                Assert.Equal(60, sample.GetProperty("FramesPerSecond").GetDouble(), 5);
+                Assert.Equal(2, sample.GetProperty("WorldUpdateMillisecondsPerFrame").GetDouble());
+            });
+            Assert.All(evidence.GetProperty("MenuFrameCosts").EnumerateArray(), sample =>
+                Assert.Equal(7, sample.GetProperty("WorldUpdateMillisecondsPerFrame").GetDouble()));
+        } finally { DeleteRoot(root); }
+    }
+
+    [Fact]
     public void RecordsStageThreadProcessGcAndSnapshotRates()
     {
         var root = NewRoot();
@@ -54,7 +103,8 @@ public sealed class FrameAllocationEvidenceTests
             recorder.RecordFrameCost(start + Stopwatch.Frequency, default);
             recorder.Stop("menu-capture", true);
             using var document = JsonDocument.Parse(File.ReadAllText(recorder.EvidenceFilePath));
-            Assert.NotEmpty(document.RootElement.GetProperty("FrameCosts").EnumerateArray());
+            Assert.Empty(document.RootElement.GetProperty("FrameCosts").EnumerateArray());
+            Assert.NotEmpty(document.RootElement.GetProperty("MenuFrameCosts").EnumerateArray());
             Assert.False(document.RootElement.GetProperty("Quality").GetProperty("IdentityObserved").GetBoolean());
         } finally { DeleteRoot(root); }
     }
@@ -87,6 +137,7 @@ public sealed class FrameAllocationEvidenceTests
             new("build", "schema", "content", "rules", "renderer", "device", "808x520", true, 60, true, "4.7.2", 1));
         recorder.ObserveServerIdentity(new("server", "schema", "content", "rules", 20, GameMode.SinglePlayer));
         recorder.ObserveParticipantCount(1);
+        recorder.ObserveWorldAdmission(Stopwatch.GetTimestamp());
         return recorder;
     }
 

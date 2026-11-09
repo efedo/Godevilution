@@ -69,6 +69,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
     private bool supportsTargetCellPathing;
     private bool supportsQueuedRangedAttacks;
     private bool supportsSnapshotReferences;
+    private bool supportsLevelScopedIdleReferences;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -235,6 +236,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 supportsQueuedRangedAttacks = false;
             }
             supportsSnapshotReferences = false;
+            supportsLevelScopedIdleReferences = false;
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
@@ -268,6 +270,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 ResumeToken = requestedResumeToken,
                 SupportsClockGatedCommands = true,
                 SupportsSnapshotReferences = options.UseSnapshotReferences,
+                SupportsLevelScopedIdleReferences = options.UseSnapshotReferences && options.UseLevelScopedIdleReferences,
             };
             if (options.RequestedCharacterClassId.HasValue) {
                 clientHello.RequestedCharacterClassId
@@ -302,6 +305,8 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException("The server returned an unknown command scheduling mode.");
 
             supportsSnapshotReferences = options.UseSnapshotReferences && hello.ServerHello.SupportsSnapshotReferences;
+            supportsLevelScopedIdleReferences = supportsSnapshotReferences && options.UseLevelScopedIdleReferences
+                && hello.ServerHello.SupportsLevelScopedIdleReferences;
             var peerSupportsTargetCellPathing = hello.ServerHello.SupportsTargetCellPathing;
             var peerSupportsQueuedRangedAttacks = hello.ServerHello.SupportsQueuedRangedAttacks;
             lock (pendingLock) {
@@ -1111,7 +1116,9 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             TryRecordSnapshot(CommandTimingRecorder, snapshotTiming);
         var attemptEpoch = Interlocked.Read(ref initialConnectionAttemptEpoch);
         incoming.Enqueue(envelope.PayloadCase switch {
-            Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot) { ConnectionAttemptEpoch = attemptEpoch },
+            Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot) {
+                ConnectionAttemptEpoch = attemptEpoch, LevelScopedIdleReferences = supportsLevelScopedIdleReferences,
+            },
             Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch) { ConnectionAttemptEpoch = attemptEpoch },
             Envelope.PayloadOneofCase.CommandAck => new AuthoritativeClientMessage(Acknowledgement: envelope.CommandAck) {
                 AcknowledgedCommands = acknowledgedCommands, ConnectionAttemptEpoch = attemptEpoch,

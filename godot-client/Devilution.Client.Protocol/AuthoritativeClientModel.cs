@@ -200,6 +200,8 @@ public sealed partial class AuthoritativeClientModel
     {
         var wireSnapshot = message.Snapshot;
         if (wireSnapshot is { StateUnchanged: true }) {
+            if (message.LevelScopedIdleReferences != cachedLevelScopedIdleReferences)
+                throw new InvalidDataException("The authoritative idle snapshot reference changed its negotiated activity policy.");
             ApplyIdleSnapshotReference(wireSnapshot);
             message = message with { Snapshot = null };
             wireSnapshot = null;
@@ -323,7 +325,7 @@ public sealed partial class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid portal.");
                 }
             }
-            var ownedSnapshot = OwnSnapshotProjection(wireSnapshot!, discardSnapshot);
+            var ownedSnapshot = OwnSnapshotProjection(wireSnapshot!, discardSnapshot, message.LevelScopedIdleReferences);
             if (!discardSnapshot) {
                 var previousPlayer = Snapshot?.Players.FirstOrDefault();
                 var nextPlayer = message.Snapshot.Players[0];

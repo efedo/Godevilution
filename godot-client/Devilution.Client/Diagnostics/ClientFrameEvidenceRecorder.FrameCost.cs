@@ -10,6 +10,7 @@ public sealed partial class ClientFrameEvidenceRecorder
     public static bool UsesNormalFrameCapture(string? performanceOutput, string? frameOutput)
         => string.IsNullOrWhiteSpace(performanceOutput) && !string.IsNullOrWhiteSpace(frameOutput);
     private readonly List<ClientSecondFrameCostSample> frameCostSamples = [];
+    private readonly List<ClientSecondFrameCostSample> menuFrameCostSamples = [];
     private long costWindowStart, costAllocatedStart, costMainAllocatedStart, costTerrain, costPauseStart;
     private long costAdmissionBytes, costWorldBytes, costHudBytes, costDrawBytes;
     private long costSnapshots, costSnapshotBytes, costDecodeBytes, costProcessingBytes;
@@ -22,8 +23,8 @@ public sealed partial class ClientFrameEvidenceRecorder
     /** Aggregates real process/renderer observations once per second; no gameplay data is retained. */
     public void RecordFrameCost(long timestamp, ClientFrameCostMetrics metrics)
     {
-        if (stopped || timestamp < activeAtTimestamp) return;
-        if (timestamp >= stopAtTimestamp) { FlushFrameCosts(timestamp); return; }
+        if (stopped || !awaitingWorldAdmission && timestamp < activeAtTimestamp) return;
+        if (!awaitingWorldAdmission && timestamp >= stopAtTimestamp) { FlushFrameCosts(timestamp); return; }
         if (costWindowStart == 0) {
             costWindowStart = timestamp;
             costAllocatedStart = GC.GetTotalAllocatedBytes(false);
@@ -59,8 +60,10 @@ public sealed partial class ClientFrameEvidenceRecorder
         var gen0 = GC.CollectionCount(0); var gen1 = GC.CollectionCount(1); var gen2 = GC.CollectionCount(2);
         var pause = GC.GetTotalPauseDuration().Ticks;
         var cpu = CaptureProcessObservation().TotalProcessorTimeMilliseconds;
-        if (frameCostSamples.Count < 3601) frameCostSamples.Add(new(
-            (costWindowStart - activeAtTimestamp) / (double)Stopwatch.Frequency, seconds, costFrames / seconds,
+        var section = awaitingWorldAdmission ? menuFrameCostSamples : frameCostSamples;
+        var sectionStart = awaitingWorldAdmission ? createdAtTimestamp : activeAtTimestamp;
+        if (section.Count < 3601) section.Add(new(
+            (costWindowStart - sectionStart) / (double)Stopwatch.Frequency, seconds, costFrames / seconds,
             metadata.FrameCap, metadata.VsyncMode, costAdmission / costFrames, costWorld / costFrames,
             costHud / costFrames, costDraw / costFrames, processRate,
             cpu.HasValue && costCpuStart.HasValue ? Math.Max(0, cpu.Value - costCpuStart.Value) / seconds : null,

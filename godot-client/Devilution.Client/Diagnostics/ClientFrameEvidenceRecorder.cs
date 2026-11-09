@@ -16,8 +16,9 @@ public sealed partial class ClientFrameEvidenceRecorder
     private readonly ClientFrameEvidenceMetadata metadata;
     private readonly long createdAtTimestamp;
     private readonly DateTimeOffset createdAtUtc;
-    private readonly long activeAtTimestamp;
-    private readonly long stopAtTimestamp;
+    private long activeAtTimestamp;
+    private long stopAtTimestamp;
+    private bool awaitingWorldAdmission;
     private readonly ClientFrameEvidenceSample[] samples;
     private readonly ClientProcessObservation startupProcess;
     private ClientFrameEvidenceServerIdentity? serverIdentity;
@@ -52,6 +53,10 @@ public sealed partial class ClientFrameEvidenceRecorder
         stopAtTimestamp = AddSeconds(
             activeAtTimestamp,
             configuration.MeasurementWindow.TotalSeconds);
+        if (configuration.FrameCostOnly) {
+            awaitingWorldAdmission = true;
+            activeAtTimestamp = stopAtTimestamp = long.MaxValue;
+        }
         samples = new ClientFrameEvidenceSample[configuration.MaximumSamples];
         startupProcess = CaptureProcessObservation();
         Directory.CreateDirectory(configuration.OutputDirectory);
@@ -72,6 +77,17 @@ public sealed partial class ClientFrameEvidenceRecorder
     public int SampleCount => sampleCount;
 
     public int DroppedSampleCount => droppedSampleCount;
+
+    /** Normal captures retain menu costs separately, then warm up a full world measurement window. */
+    public void ObserveWorldAdmission(long timestamp)
+    {
+        if (stopped || !awaitingWorldAdmission) return;
+        FlushFrameCosts(timestamp);
+        costWindowStart = 0;
+        awaitingWorldAdmission = false;
+        activeAtTimestamp = AddSeconds(timestamp, configuration.Warmup.TotalSeconds);
+        stopAtTimestamp = AddSeconds(activeAtTimestamp, configuration.MeasurementWindow.TotalSeconds);
+    }
 
     public static long GetTimestamp() => Stopwatch.GetTimestamp();
 
@@ -192,13 +208,13 @@ public sealed partial class ClientFrameEvidenceRecorder
         if (frameTimestamp < activeAtTimestamp)
             return;
         if (frameTimestamp >= stopAtTimestamp) {
-            Stop("measurement-window-ended", succeeded: configuration.FrameCostOnly);
+            Stop("measurement-window-ended", configuration.FrameCostOnly, frameTimestamp);
             return;
         }
 
         if (observedFrameCount == 0) {
             firstMeasurementTimestamp = frameTimestamp;
-            measurementStartedAtUtc = DateTimeOffset.UtcNow;
+            measurementStartedAtUtc = createdAtUtc + Stopwatch.GetElapsedTime(createdAtTimestamp, frameTimestamp);
         }
         observedFrameCount++;
 
@@ -233,13 +249,16 @@ public sealed partial class ClientFrameEvidenceRecorder
 
     /** Stops and writes evidence; success is valid only when explicitly supplied by the caller. */
     public bool Stop(string reason, bool succeeded)
+        => Stop(reason, succeeded, Stopwatch.GetTimestamp());
+
+    private bool Stop(string reason, bool succeeded, long timestamp)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         if (stopped)
             return false;
         stopped = true;
-        stoppedAtUtc = DateTimeOffset.UtcNow;
-        measurementStopTimestamp = Stopwatch.GetTimestamp();
+        stoppedAtUtc = createdAtUtc + Stopwatch.GetElapsedTime(createdAtTimestamp, timestamp);
+        measurementStopTimestamp = timestamp;
         FlushFrameCosts(measurementStopTimestamp);
         var capturedQuality = EvaluateQuality(measurementStopTimestamp);
         quality = capturedQuality;
@@ -308,7 +327,7 @@ public sealed partial class ClientFrameEvidenceRecorder
             MeasurementStartedAtUtc: measurementStartedAtUtc,
             StoppedAtUtc: stoppedAtUtc,
             MeasuredDurationMilliseconds: quality?.MeasuredDurationMilliseconds ?? 0,
-            ActiveWindowStartTimestamp: activeAtTimestamp,
+            ActiveWindowStartTimestamp: awaitingWorldAdmission ? 0 : activeAtTimestamp,
             StoppedAtTimestamp: measurementStopTimestamp,
             ActiveWindowDurationMilliseconds: ToMilliseconds(
                 Math.Max(0, measurementStopTimestamp - activeAtTimestamp)),
@@ -324,7 +343,7 @@ public sealed partial class ClientFrameEvidenceRecorder
             NonMonotonicTimestampCount: nonMonotonicTimestampCount,
             InvalidTimestampCount: invalidTimestampCount,
             Quality: quality ?? EvaluateQuality(measurementStopTimestamp),
-            Samples: samples[..sampleCount], FrameCosts: frameCostSamples);
+            Samples: samples[..sampleCount], FrameCosts: frameCostSamples, MenuFrameCosts: menuFrameCostSamples);
         var options = new JsonSerializerOptions { WriteIndented = true };
         using var stream = new FileStream(
             EvidenceFilePath,
@@ -502,4 +521,5 @@ public sealed record ClientFrameEvidenceDocument(
     int InvalidTimestampCount,
     ClientFrameEvidenceQuality Quality,
     IReadOnlyList<ClientFrameEvidenceSample> Samples,
-    IReadOnlyList<ClientSecondFrameCostSample>? FrameCosts = null);
+    IReadOnlyList<ClientSecondFrameCostSample>? FrameCosts = null,
+    IReadOnlyList<ClientSecondFrameCostSample>? MenuFrameCosts = null);

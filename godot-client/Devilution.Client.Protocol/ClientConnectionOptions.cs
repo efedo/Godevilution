@@ -34,6 +34,9 @@ public sealed record ClientConnectionOptions(
     /** Opt in only with a reference-aware consumer; existing transport callers retain complete snapshots. */
     public bool UseSnapshotReferences { get; init; }
 
+    /** Separately negotiated so reference-aware older peers keep the global activity policy. */
+    public bool UseLevelScopedIdleReferences { get; init; }
+
     public static ClientConnectionOptions FromEnvironment()
     {
         return new ClientConnectionOptions(

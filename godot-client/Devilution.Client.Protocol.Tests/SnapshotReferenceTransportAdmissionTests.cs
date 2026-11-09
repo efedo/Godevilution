@@ -32,7 +32,9 @@ public sealed class SnapshotReferenceTransportAdmissionTests
                 await Task.Delay(Timeout.InfiniteTimeSpan, token);
             }, token);
             await using var client = new AuthoritativeClient(new("127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port,
-                "snapshot-reference-test", "0.2.0", "content-hash", RulesetIdentityHash: "ruleset-hash") { UseSnapshotReferences = true });
+                "snapshot-reference-test", "0.2.0", "content-hash", RulesetIdentityHash: "ruleset-hash") {
+                    UseSnapshotReferences = true, UseLevelScopedIdleReferences = true,
+                });
             try {
                 await client.ConnectAsync(token);
                 var first = Assert.Single(client.DrainMessages(), message => message.Snapshot is not null);
