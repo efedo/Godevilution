@@ -6,6 +6,32 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class AcceptanceCommandBoundaryTests
 {
+    [Theory]
+    [InlineData(Command.IntentOneofCase.DropItemRequested)]
+    [InlineData(Command.IntentOneofCase.DropHeldItemRequested)]
+    [InlineData(Command.IntentOneofCase.MoveRequested)]
+    [InlineData(Command.IntentOneofCase.DisarmTrapRequested)]
+    public void AWorldClickWithAnotherIntentCannotProveAnObjectOpening(Command.IntentOneofCase intent)
+    {
+        var error = Assert.Throws<InvalidOperationException>(() => AcceptanceCommandBoundary.RequireObjectOperation(
+            267, 268, intent, 0, 151199857, "Open the required native trapped sarcophagus"));
+        Assert.Contains(intent.ToString(), error.Message);
+        Assert.Contains("OperateObjectRequested", error.Message);
+        Assert.Contains("151199857", error.Message);
+        Assert.Contains("queuedSequence=268", error.Message);
+    }
+
+    [Theory]
+    [InlineData(267UL, 151199857U)] [InlineData(268UL, 151199858U)] [InlineData(268UL, 0U)]
+    public void AnOpeningRequiresANewOperationForTheExactObject(ulong sequence, uint target)
+        => Assert.Throws<InvalidOperationException>(() => AcceptanceCommandBoundary.RequireObjectOperation(
+            267, sequence, Command.IntentOneofCase.OperateObjectRequested, target, 151199857, "Open sarcophagus"));
+
+    [Fact]
+    public void TheActualQueuedOperationCanProveTheOpening()
+        => AcceptanceCommandBoundary.RequireObjectOperation(267, 268,
+            Command.IntentOneofCase.OperateObjectRequested, 151199857, 151199857, "Open sarcophagus");
+
     [Fact]
     public void DrainedTransportAndAnEarlierMovementReceiptDoNotCompleteTheHealerApproach()
     {

@@ -58,7 +58,7 @@ public partial class SessionAcceptance
             var sequence = main.ObservedLastQueuedSequence;
             GetViewport().GuiReleaseFocus();
             await ClickWorld(main, target.PositionX, target.PositionY);
-            await AcceptedAndSettled(main, sequence, "Operate a native theme room object");
+            await AcceptedObjectOperationAndSettled(main, sequence, target.EntityId, "Operate a native theme room object");
             var afterSnapshot = main.ObservedSnapshot!;
             var after = afterSnapshot.Players.Single();
             var used = afterSnapshot.Objects.Single(value => value.EntityId == target.EntityId);
@@ -117,7 +117,7 @@ public partial class SessionAcceptance
         var sequence = main.ObservedLastQueuedSequence;
         GetViewport().GuiReleaseFocus();
         await ClickWorld(main, expected.X, expected.Y);
-        await AcceptedAndSettled(main, sequence, "Reuse a native fountain on the fresh host");
+        await AcceptedObjectOperationAndSettled(main, sequence, expected.Entity, "Reuse a native fountain on the fresh host");
         Require(NativeThemeObjectJourneyEvidence.EffectApplied(expected.Type, before, main.ObservedSnapshot!.Players.Single()),
             "The fresh host did not retain the native fountain's reusable effect.");
         VerifyNativeThemeObjectRetention(main.ObservedSnapshot, expected);

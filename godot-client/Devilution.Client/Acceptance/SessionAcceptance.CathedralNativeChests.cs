@@ -109,7 +109,7 @@ public partial class SessionAcceptance
                 var beforeSequence = main.ObservedCommandResult?.ClientSequence ?? savedSequence;
                 GetViewport().GuiReleaseFocus();
                 await ClickWorld(main, chestBefore.PositionX, chestBefore.PositionY);
-                await AcceptedAndSettled(main, beforeSequence, "Open an ordinary native Cathedral chest");
+                await AcceptedObjectOperationAndSettled(main, beforeSequence, chestBefore.EntityId, "Open an ordinary native Cathedral chest");
                 var result = main.ObservedCommandResult!;
                 var chestAfter = main.ObservedSnapshot!.Objects.Single(item => item.EntityId == chestBefore.EntityId);
                 Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result)

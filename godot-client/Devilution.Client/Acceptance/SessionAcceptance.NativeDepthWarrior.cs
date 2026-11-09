@@ -576,7 +576,7 @@ public partial class SessionAcceptance
         }
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickWorld(main, door.PositionX, door.PositionY);
-        await AcceptedAndSettled(main, sequence, "Operate a native Catacombs door");
+        await AcceptedObjectOperationAndSettled(main, sequence, door.EntityId, "Operate a native Catacombs door");
         var operatedTick = main.ObservedCommandResult!.AppliedTick;
         var opening = new NativeCatacombsDoorTrapObservation.Opened(baseline, operatedTick,
             checked(operatedTick + 5UL * (main.ObservedIdentity?.TickRateHz ?? 20)));

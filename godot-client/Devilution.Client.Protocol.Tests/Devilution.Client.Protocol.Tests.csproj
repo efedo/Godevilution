@@ -26,6 +26,8 @@
              Link="Presentation/Main.AuthoritativeAdmission.cs" />
     <Compile Include="../Devilution.Client/Main.Session.cs"
              Link="Presentation/Main.Session.cs" />
+    <Compile Include="../Devilution.Client/HudPresentation.ItemSelection.cs"
+             Link="Presentation/HudPresentation.ItemSelection.cs" />
     <Compile Include="../Devilution.Client/HudPresentation.Changes.cs"
              Link="Presentation/HudPresentation.Changes.cs" />
     <Compile Include="../Devilution.Client/ClientRuntimeAssemblyProvenance.cs"

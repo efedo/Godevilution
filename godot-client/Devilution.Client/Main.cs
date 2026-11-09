@@ -66,6 +66,8 @@ public partial class Main : Node2D
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
+    internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal bool ObservedSpellSourceArmed => spellSourceArmed;
     internal int ObservedWorldBrightness => world?.Brightness ?? 0;
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
@@ -1221,6 +1223,8 @@ public partial class Main : Node2D
             ? client!.QueueRealtimeMovement(command, model.CurrentTick)
             : client!.QueueRealtime(command, model.CurrentTick);
         ObservedLastQueuedSequence = sequence;
+        ObservedLastQueuedIntent = command.IntentCase;
+        ObservedLastQueuedObjectEntityId = command.OperateObjectRequested?.ObjectEntityId ?? 0;
         if (command.MoveRequested is { } move) {
             if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
             else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);

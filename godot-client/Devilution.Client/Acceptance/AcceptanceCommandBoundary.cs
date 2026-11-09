@@ -6,6 +6,17 @@ namespace Devilution.Client.Acceptance;
 /** A drained transport ledger can precede main-thread admission of its receipt and snapshot. */
 internal static class AcceptanceCommandBoundary
 {
+    /** A carried-item cursor can turn a world click into a drop; its receipt cannot prove an opening. */
+    internal static void RequireObjectOperation(ulong previousSequence, ulong queuedSequence,
+        Command.IntentOneofCase intent, uint queuedObjectEntityId, uint expectedObjectEntityId, string context)
+    {
+        if (queuedSequence <= previousSequence || intent != Command.IntentOneofCase.OperateObjectRequested
+            || queuedObjectEntityId != expectedObjectEntityId || expectedObjectEntityId == 0)
+            throw new InvalidOperationException($"{context}: queued {intent} for object {queuedObjectEntityId}, "
+                + $"expected OperateObjectRequested for object {expectedObjectEntityId}; "
+                + $"previousSequence={previousSequence}, queuedSequence={queuedSequence}.");
+    }
+
     // Callers retain their success/rejection rules and player-settlement checks.
     internal static bool HasLatestAppliedReceipt(ulong snapshotTick, CommandResult? receipt, ulong lastQueuedSequence)
         => receipt is {ClientSequence: > 0} && receipt.ClientSequence == lastQueuedSequence

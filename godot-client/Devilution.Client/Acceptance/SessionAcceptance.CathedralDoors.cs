@@ -108,7 +108,7 @@ public partial class SessionAcceptance
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         GetViewport().GuiReleaseFocus();
         await ClickWorld(main, door.PositionX, door.PositionY);
-        await AcceptedAndSettled(main, sequence, "Operate native Cathedral door");
+        await AcceptedObjectOperationAndSettled(main, sequence, door.EntityId, "Operate native Cathedral door");
         await Until(() => ObserveDoor(main, entityId) is { } observed
             && observed.CathedralDoor.DoorState == expectedState && observed.AnimationFrame == expectedFrame,
             "The accepted door operation did not publish its exact native status/frame.", 5);

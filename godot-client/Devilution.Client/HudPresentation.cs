@@ -430,12 +430,13 @@ public partial class HudPresentation : CanvasLayer
             SetStatus(connectionTask.Exception?.GetBaseException().Message ?? "Connection failed");
 
         var player = model.Snapshot?.Players.FirstOrDefault();
+        ReconcileItemSelections(player, model.Snapshot?.ActiveStore);
         if (player is null || selectedInventoryIndex >= player.Inventory.Count)
             selectedInventoryIndex = -1;
         if (player is null)
             ClearSelectedStashItem();
         else if (selectedStashStableItemId is { } stableItemId && stableItemId != 0) {
-            selectedStashItemIndex = FindStashItemIndex(
+            selectedStashItemIndex = FindSelectedStashItemIndex(
                 player,
                 stableItemId,
                 selectedStashItemPage,
@@ -445,7 +446,7 @@ public partial class HudPresentation : CanvasLayer
         } else if (selectedStashItemIndex >= 0) {
             // Positional fallback is for an explicit older-peer selection only.
             // Cleared defaults (page 0/cell 0) must not select a newly stored item.
-            selectedStashItemIndex = FindStashItemIndex(
+            selectedStashItemIndex = FindSelectedStashItemIndex(
                 player,
                 selectedStashStableItemId,
                 selectedStashItemPage,
@@ -939,20 +940,6 @@ public partial class HudPresentation : CanvasLayer
         ClearSelectedStashItem();
         selectedItemReference = null;
         RefreshSelectedConsumableAvailability();
-    }
-
-    private static int FindStashItemIndex(
-        PlayerSnapshot player,
-        uint? stableItemId,
-        uint page,
-        uint cell)
-    {
-        for (var index = 0; index < player.Stash.Count; index++)
-            if (stableItemId is { } stable
-                ? player.Stash[index].Item?.State?.StableItemId == stable
-                : player.Stash[index].Page == page && player.Stash[index].Cell == cell)
-                return index;
-        return -1;
     }
 
     private void BuySelected()

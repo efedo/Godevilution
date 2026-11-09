@@ -223,6 +223,13 @@ public partial class SessionAcceptance
         => main.ObservedSnapshot?.Players.Single() is { } player
             && AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount);
 
+    private Task AcceptedObjectOperationAndSettled(Main main, ulong previousSequence, uint objectEntityId, string action)
+    {
+        AcceptanceCommandBoundary.RequireObjectOperation(previousSequence, main.ObservedLastQueuedSequence,
+            main.ObservedLastQueuedIntent, main.ObservedLastQueuedObjectEntityId, objectEntityId, action);
+        return AcceptedAndSettled(main, previousSequence, action);
+    }
+
     private async Task AcceptedAndSettled(Main main, ulong previousSequence, string action,
         Action<Snapshot>? observe = null, double stageSeconds = 10)
     {

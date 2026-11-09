@@ -59,7 +59,7 @@ public partial class SessionAcceptance
             var sequence = main.ObservedLastQueuedSequence;
             GetViewport().GuiReleaseFocus();
             await ClickWorld(main, shrine.PositionX, shrine.PositionY);
-            await AcceptedAndSettled(main, sequence, "Operate a native vanilla shrine");
+            await AcceptedObjectOperationAndSettled(main, sequence, shrine.EntityId, "Operate a native vanilla shrine");
             await Until(() => main.ObservedRecentEvents.Any(value => value.Dialogue is { } message
                     && message.TargetEntityId == shrine.EntityId && !string.IsNullOrEmpty(message.Text)),
                 "The native shrine message did not reach the client.", 10);

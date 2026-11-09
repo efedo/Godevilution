@@ -20,6 +20,47 @@ namespace Devilution.Client
         private PlayerItemReference? selectedOilTarget = null;
         private string selectedSpellText = "none";
         private bool sessionMenuTransition = false;
+        private PlayerSnapshot? currentPlayer;
+        private PlayerItemReference? selectedItemReference;
+        internal PlayerItemReference? HeadlessSelectedItem => selectedItemReference;
+        internal PlayerItemReference? HeadlessSelectedOilTarget => selectedOilTarget;
+        internal uint? HeadlessSelectedStoreSlot => selectedStoreSlot;
+        internal bool HeadlessItemSelectionIndicesCleared => selectedInventoryIndex == -1 && selectedStashItemIndex == -1
+            && selectedBeltSlot is null && selectedEquipmentSlot is null;
+        internal void ApplyHeadlessItemSelection(PlayerSnapshot? player, StoreSnapshot? store = null)
+        {
+            ReconcileItemSelections(player, store);
+            currentPlayer = player;
+        }
+        internal void SelectHeadlessItem(PlayerSnapshot player, PlayerItemReference reference)
+        {
+            currentPlayer = player;
+            selectedItemReference = reference;
+            selectedInventoryIndex = reference.Location == PlayerItemLocation.Inventory ? (int)reference.Slot : -1;
+            selectedBeltSlot = reference.Location == PlayerItemLocation.Belt ? reference.Slot : null;
+            selectedEquipmentSlot = reference.Location == PlayerItemLocation.Equipment ? reference.Slot : null;
+            selectedStashItemIndex = reference.Location == PlayerItemLocation.Stash
+                ? FindSelectedStashItemIndex(player, reference.StableItemId, reference.Page, reference.Slot) : -1;
+        }
+        internal void SelectHeadlessOilTarget(PlayerSnapshot player, PlayerItemReference reference)
+        {
+            currentPlayer = player;
+            selectedOilTarget = reference;
+        }
+        internal void SelectHeadlessStoreItem(StoreSnapshot store, uint slot)
+        {
+            ReconcileItemSelections(null, store);
+            selectedStoreSlot = slot;
+        }
+        internal static int HeadlessFindSelectedStashItem(PlayerSnapshot player, uint? stableId, uint page, uint cell)
+            => FindSelectedStashItemIndex(player, stableId, page, cell);
+        // Widget refresh is outside this fixture; the existing clear operation resets these fields.
+        private void ClearSelectedItem()
+        {
+            selectedInventoryIndex = selectedStashItemIndex = -1;
+            selectedBeltSlot = selectedEquipmentSlot = null;
+            selectedItemReference = null;
+        }
 
         internal bool NeedsHeadlessHudUpdate() => NeedsHudApply(headlessModel, null, null);
         internal int RouteSelection { set => routes.Selected = value; }

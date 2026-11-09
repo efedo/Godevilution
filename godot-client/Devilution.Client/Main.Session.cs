@@ -228,6 +228,8 @@ public partial class Main
         spellSourceArmed = false;
         heldMouseWalk = false;
         ObservedLastQueuedSequence = 0;
+        ObservedLastQueuedIntent = default;
+        ObservedLastQueuedObjectEntityId = 0;
         localSessionWarning = null;
         bookmarkRetrySeconds = 0;
         persistLocalSession = false;

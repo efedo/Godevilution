@@ -82,7 +82,7 @@ public partial class SessionAcceptance
             var sequence = main.ObservedLastQueuedSequence;
             GetViewport().GuiReleaseFocus();
             await ClickWorld(main, chest.PositionX, chest.PositionY);
-            await AcceptedAndSettled(main, sequence, "Open a native Catacombs chest");
+            await AcceptedObjectOperationAndSettled(main, sequence, chest.EntityId, "Open a native Catacombs chest");
             var opened = main.ObservedSnapshot!.Objects.Single(value => value.EntityId == chest.EntityId);
             Require(opened.Activated && opened.AnimationFrame == chest.AnimationFrame + 2
                 && !opened.NativeChestInteractable, "The Catacombs chest did not retain its native opened state.");

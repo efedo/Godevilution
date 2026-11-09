@@ -28,6 +28,8 @@ public partial class Main : IAsyncDisposable
     internal Action<CommandAck>? AcceptanceAcknowledgementObserver { get; set; }
     internal Action<Snapshot>? AcceptanceSnapshotObserver { get; set; }
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
+    internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal AuthoritativeClientModel AdmissionModel => model;
     internal string? AdmissionStatus => sessionStatusOverride;
     internal bool AdmissionMenuVisible => characterSetup.Visible;

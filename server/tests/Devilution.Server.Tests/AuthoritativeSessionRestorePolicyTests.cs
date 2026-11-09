@@ -197,6 +197,31 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         }
     }
 
+    [Fact]
+    public async Task StrictCheckpointBaselineWaitsForTheFirstPeriodicAdvanceBeforeSampling()
+    {
+        var executor = new RecordingExecutor();
+        var commands = new AuthoritativeCommandServer(executor);
+        await using var server = new AuthoritativeTcpServer(commands, CreateHandshake(), () => 10);
+        using var timeout = CreateTimeout();
+        var samples = 0;
+        Task baseline = Task.CompletedTask;
+        commands.WithSynchronizedState(() => {
+            // Startup is reentrant here, but the periodic turn cannot acquire this monitor yet.
+            server.Start();
+            baseline = WaitForStableValueAsync(() => {
+                Interlocked.Increment(ref samples);
+                return executor.AdvanceCount;
+            }, timeout.Token, executor.FirstAdvance.Task);
+            Assert.False(baseline.IsCompleted);
+            Assert.Equal(0, Volatile.Read(ref samples));
+            return 0;
+        });
+        await baseline;
+        Assert.Equal(1, executor.AdvanceCount);
+        Assert.True(Volatile.Read(ref samples) >= 4);
+    }
+
     [Theory]
     [InlineData("format-1")]
     [InlineData("format-2")]
@@ -223,7 +248,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
                 policy: AuthoritativeSessionRestorePolicy.CurrentRulesetOnly);
             server.Start();
             using var timeout = CreateTimeout();
-            await WaitForStableValueAsync(() => executor.AdvanceCount, timeout.Token);
+            await WaitForStableValueAsync(() => executor.AdvanceCount, timeout.Token, executor.FirstAdvance.Task);
             var advancesBeforeRejectedCheckpoint = executor.AdvanceCount;
 
             using (var rejectedClient = new TcpClient()) {
@@ -797,10 +822,13 @@ public sealed class AuthoritativeSessionRestorePolicyTests
             await Task.Delay(TimeSpan.FromMilliseconds(10), deadline.Token);
     }
 
-    private static async Task WaitForStableValueAsync(Func<int> readValue, CancellationToken cancellationToken)
+    private static async Task WaitForStableValueAsync(Func<int> readValue, CancellationToken cancellationToken, Task? initialAdvance = null)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(5));
+        // Three zero samples do not prove that the initial periodic turn has run.
+        if (initialAdvance is not null)
+            await initialAdvance.WaitAsync(deadline.Token);
         var previous = readValue();
         var stableSamples = 0;
         while (stableSamples < 3) {
@@ -936,6 +964,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         private int advanceCount;
 
         public int AdvanceCount => Volatile.Read(ref advanceCount);
+        public TaskCompletionSource FirstAdvance { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
@@ -946,6 +975,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         public void AdvanceTo(ulong tick)
         {
             Interlocked.Increment(ref advanceCount);
+            FirstAdvance.TrySetResult();
         }
     }
 

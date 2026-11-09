@@ -36,7 +36,7 @@ public partial class SessionAcceptance
         var sequence = main.ObservedLastQueuedSequence;
         GetViewport().GuiReleaseFocus();
         await ClickWorld(main, target.PositionX, target.PositionY);
-        await AcceptedAndSettled(main, sequence, "Open the required native trapped sarcophagus");
+        await AcceptedObjectOperationAndSettled(main, sequence, target.EntityId, "Open the required native trapped sarcophagus");
         var receipt = main.ObservedCommandResult!.Clone();
         var deadline = checked(receipt.AppliedTick + 10UL * (main.ObservedIdentity?.TickRateHz ?? 20));
         await Until(() => opening.Find(main.ObservedSnapshot!, receipt.AppliedTick, deadline) is not null,
