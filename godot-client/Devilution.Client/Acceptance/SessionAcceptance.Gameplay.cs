@@ -223,11 +223,15 @@ public partial class SessionAcceptance
         => main.ObservedSnapshot?.Players.Single() is { } player
             && AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount);
 
-    private Task AcceptedObjectOperationAndSettled(Main main, ulong previousSequence, uint objectEntityId, string action)
+    private async Task AcceptedObjectOperationAndSettled(Main main, ulong previousSequence, uint objectEntityId, string action)
     {
-        AcceptanceCommandBoundary.RequireObjectOperation(previousSequence, main.ObservedLastQueuedSequence,
-            main.ObservedLastQueuedIntent, main.ObservedLastQueuedObjectEntityId, objectEntityId, action);
-        return AcceptedAndSettled(main, previousSequence, action);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var startTick = main.ObservedSnapshot?.Tick;
+        await AcceptanceCommandBoundary.WaitForObjectOperationAsync(
+            () => new(ObserveNativeCommandBoundary(main), main.ObservedLastQueuedIntent, main.ObservedLastQueuedObjectEntityId), Frame,
+            state => AcceptanceTickBudget.StageExpired(10, clock.Elapsed.TotalSeconds,
+                main.ObservedIdentity?.TickRateHz, startTick, state.Snapshot?.Tick), previousSequence, objectEntityId, action);
+        await AcceptedAndSettled(main, previousSequence, action);
     }
 
     private async Task AcceptedAndSettled(Main main, ulong previousSequence, string action,

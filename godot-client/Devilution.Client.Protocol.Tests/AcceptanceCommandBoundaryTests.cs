@@ -33,6 +33,160 @@ public sealed class AcceptanceCommandBoundaryTests
             Command.IntentOneofCase.OperateObjectRequested, 151199857, 151199857, "Open sarcophagus");
 
     [Fact]
+    public async Task KnockbackAfterPreparationCanApproachThenQueueTheExactOperation()
+    {
+        const uint target = 151199857;
+        var boundary = ReadyNativeBoundary();
+        var player = boundary.Player!;
+        player.PositionX = 31;
+        player.PositionY = 62;
+        // Preparation saw (32,62); knockback committed before the click, leaving it out of range.
+        var travel = new AuthoritativeInteractionTravel();
+        travel.Start(boundary.Snapshot, 33, 62, new Command {
+            OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = target },
+        }, connected: true);
+        var move = travel.Next(boundary.Snapshot, boundary.Receipt, true, 0, targetPresent: true, inRange: false)!;
+        Assert.NotNull(move.MoveRequested);
+        travel.Submitted(125, player);
+        boundary = boundary with { LastQueuedSequence = 125, PendingCount = 1 };
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(boundary, move.IntentCase, 0);
+        var frames = 0;
+        await AcceptanceCommandBoundary.WaitForObjectOperationAsync(() => queued, () => {
+            boundary.Snapshot!.Tick++;
+            switch (++frames) {
+            case 1:
+                player.PositionX = 32;
+                player.CombatMode = PlayerCombatMode.WalkNorthwards;
+                break;
+            case 2:
+                boundary = boundary with { Receipt = new CommandResult {
+                    ClientSequence = 125, AppliedTick = boundary.Snapshot.Tick, Status = CommandStatus.Accepted,
+                }, PendingCount = 0 };
+                break;
+            case 3: player.CombatMode = PlayerCombatMode.Stand; break;
+            }
+            var command = travel.Next(boundary.Snapshot, boundary.Receipt, true, boundary.PendingCount,
+                targetPresent: true, AuthoritativeInteractionRange.IsAdjacent(player, 33, 62));
+            if (command is not null) {
+                boundary = boundary with { LastQueuedSequence = boundary.LastQueuedSequence + 1, PendingCount = 1 };
+                queued = new(boundary, command.IntentCase, command.OperateObjectRequested?.ObjectEntityId ?? 0);
+                if (command.MoveRequested is not null) travel.Submitted(boundary.LastQueuedSequence, player);
+            } else queued = queued with { Boundary = boundary };
+            return Task.CompletedTask;
+        }, _ => frames >= 4, 124, target, "Open sarcophagus after knockback");
+
+        Assert.Equal(3, frames);
+        Assert.False(travel.Active);
+        Assert.Equal(Command.IntentOneofCase.OperateObjectRequested, queued.Intent);
+        Assert.Equal(target, queued.ObjectEntityId);
+        Assert.Equal(126UL, queued.Boundary.LastQueuedSequence);
+        // The movement receipt cannot prove opening; the caller still waits for operation 126's receipt.
+        Assert.Equal(125UL, queued.Boundary.Receipt!.ClientSequence);
+    }
+
+    [Fact]
+    public async Task AnAlreadyQueuedExactOperationNeedsNoExtraFrame()
+    {
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(ReadyNativeBoundary(),
+            Command.IntentOneofCase.OperateObjectRequested, 151199857);
+        await AcceptanceCommandBoundary.WaitForObjectOperationAsync(() => queued,
+            () => throw new InvalidOperationException("An immediate operation must not add a frame."),
+            _ => true, 123, 151199857, "Open sarcophagus");
+    }
+
+    [Fact]
+    public async Task ThePreviousClicksCommandDoesNotStandInForThisClicksOperation()
+    {
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(ReadyNativeBoundary(),
+            Command.IntentOneofCase.DropItemRequested, 0);
+        var frames = 0;
+        await AcceptanceCommandBoundary.WaitForObjectOperationAsync(() => queued, () => {
+            frames++;
+            queued = new(queued.Boundary with { LastQueuedSequence = 125 },
+                Command.IntentOneofCase.OperateObjectRequested, 151199857);
+            return Task.CompletedTask;
+        }, _ => frames >= 2, 124, 151199857, "Open sarcophagus");
+        Assert.Equal(1, frames);
+    }
+
+    [Theory]
+    [InlineData(Command.IntentOneofCase.DropItemRequested)]
+    [InlineData(Command.IntentOneofCase.DropHeldItemRequested)]
+    [InlineData(Command.IntentOneofCase.DisarmTrapRequested)]
+    [InlineData(Command.IntentOneofCase.UseConsumableRequested)]
+    [InlineData(Command.IntentOneofCase.CastRequested)]
+    [InlineData(Command.IntentOneofCase.None)]
+    public async Task AnApproachCannotHideAnotherCommandInsteadOfOperating(Command.IntentOneofCase intent)
+    {
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(ReadyNativeBoundary(), Command.IntentOneofCase.MoveRequested, 0);
+        var frames = 0;
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceCommandBoundary.WaitForObjectOperationAsync(
+            () => queued, () => {
+                frames++;
+                queued = new(queued.Boundary with { LastQueuedSequence = 125 }, intent, 0);
+                return Task.CompletedTask;
+            }, _ => frames >= 2, 123, 151199857, "Open sarcophagus"));
+        Assert.Equal(1, frames);
+        Assert.Contains(intent.ToString(), error.Message);
+        Assert.Contains("expected OperateObjectRequested for object 151199857", error.Message);
+    }
+
+    [Theory]
+    [InlineData(0U)] [InlineData(151199858U)]
+    public async Task AnApproachCannotCompleteByOperatingAnotherTarget(uint target)
+    {
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(ReadyNativeBoundary(), Command.IntentOneofCase.MoveRequested, 0);
+        var frames = 0;
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceCommandBoundary.WaitForObjectOperationAsync(
+            () => queued, () => {
+                frames++;
+                queued = new(queued.Boundary with { LastQueuedSequence = 125 }, Command.IntentOneofCase.OperateObjectRequested, target);
+                return Task.CompletedTask;
+            }, _ => frames >= 2, 123, 151199857, "Open sarcophagus"));
+        Assert.Equal(1, frames);
+        Assert.Contains($"for object {target}", error.Message);
+        Assert.Contains("expected OperateObjectRequested for object 151199857", error.Message);
+    }
+
+    [Theory]
+    [InlineData(123UL)] [InlineData(124UL)]
+    public async Task AnApproachOrAnUnqueuedClickHasABoundedDeadlineWithItsLatestState(ulong sequence)
+    {
+        var boundary = ReadyNativeBoundary() with { LastQueuedSequence = sequence, PendingCount = 1 };
+        boundary.Receipt!.ClientSequence = 123;
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(boundary, Command.IntentOneofCase.MoveRequested, 0);
+        var frames = 0;
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceCommandBoundary.WaitForObjectOperationAsync(
+            () => queued, () => {
+                frames++;
+                boundary.Snapshot!.Tick++;
+                return Task.CompletedTask;
+            }, _ => frames >= 2, 123, 151199857, "Open sarcophagus"));
+        Assert.Equal(2, frames);
+        Assert.Contains("timed out waiting for OperateObjectRequested for object 151199857", error.Message);
+        Assert.Contains("intent=MoveRequested", error.Message);
+        Assert.Contains($"queued={sequence}", error.Message);
+        Assert.Contains("receipt=123/6625", error.Message);
+        Assert.Contains("snapshotTick=6771", error.Message);
+        Assert.Contains("pending=1", error.Message);
+    }
+
+    [Fact]
+    public async Task DeathDuringTheDeferredApproachFailsWithoutWaitingForItsDeadline()
+    {
+        var queued = new AcceptanceCommandBoundary.QueuedCommandObservation(ReadyNativeBoundary(), Command.IntentOneofCase.MoveRequested, 0);
+        var frames = 0;
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceCommandBoundary.WaitForObjectOperationAsync(
+            () => queued, () => {
+                frames++;
+                queued.Boundary.Player!.Life = 0;
+                return Task.CompletedTask;
+            }, _ => frames >= 2, 123, 151199857, "Open sarcophagus"));
+        Assert.Equal(1, frames);
+        Assert.Contains("character died", error.Message);
+    }
+
+    [Fact]
     public void DrainedTransportAndAnEarlierMovementReceiptDoNotCompleteTheHealerApproach()
     {
         // Observed shrine journey: approach started at 273, movement 274 arrived,

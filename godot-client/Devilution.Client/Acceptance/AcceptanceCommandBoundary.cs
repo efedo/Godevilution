@@ -17,6 +17,28 @@ internal static class AcceptanceCommandBoundary
                 + $"previousSequence={previousSequence}, queuedSequence={queuedSequence}.");
     }
 
+    internal readonly record struct QueuedCommandObservation(Observation Boundary, Command.IntentOneofCase Intent, uint ObjectEntityId);
+
+    /** Knockback can make the ordinary click approach first; only its exact operation completes this wait. */
+    internal static async Task WaitForObjectOperationAsync(Func<QueuedCommandObservation> observe, Func<Task> nextFrame,
+        Func<Observation, bool> expired, ulong previousSequence, uint expectedObjectEntityId, string context)
+    {
+        while (true) {
+            var queued = observe();
+            var state = queued.Boundary;
+            RequireAlive(state, context);
+            if (state.LastQueuedSequence > previousSequence && queued.Intent != Command.IntentOneofCase.MoveRequested) {
+                RequireObjectOperation(previousSequence, state.LastQueuedSequence, queued.Intent,
+                    queued.ObjectEntityId, expectedObjectEntityId, context);
+                return;
+            }
+            if (expired(state))
+                throw new InvalidOperationException($"{context} timed out waiting for OperateObjectRequested for object {expectedObjectEntityId}; "
+                    + $"intent={queued.Intent}, object={queued.ObjectEntityId}; {state.Describe()}.");
+            await nextFrame();
+        }
+    }
+
     // Callers retain their success/rejection rules and player-settlement checks.
     internal static bool HasLatestAppliedReceipt(ulong snapshotTick, CommandResult? receipt, ulong lastQueuedSequence)
         => receipt is {ClientSequence: > 0} && receipt.ClientSequence == lastQueuedSequence
