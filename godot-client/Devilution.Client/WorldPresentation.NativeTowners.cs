@@ -33,7 +33,9 @@ public partial class WorldPresentation
     {
         var inTown = snapshot?.Players.FirstOrDefault()?.LevelId == 0 && snapshot.NativeTownResidents.Count == 11;
         nativeTownerClock.Advance(delta, tickRate, inTown, connected && !presentationEpochPending, reset);
-        if (snapshot is not null && townerBindingChanges.ShouldUpdate(true,
+        // Scoped dungeon views omit Town residents; validate their full roster on the next Town admission.
+        if (snapshot is not null && townerBindingChanges.ShouldUpdate(
+                snapshot.PlayerRoster.Count == 0 || snapshot.Players[0].LevelId == 0,
                 (nativeTownerContentIdentity, snapshot.NativeTownCatalogFingerprint, snapshot.NativeTownResidents))) {
             cachedTownerPack = null;
             nativeTownerArtReady = nativeTownerAssets.Bind(nativeTownerContentIdentity, snapshot.NativeTownCatalogFingerprint,

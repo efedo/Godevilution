@@ -82,12 +82,14 @@ public partial class SessionAcceptance
 
     private static void VerifyNativeShrineRetention(Snapshot snapshot, NativeShrineCheckpoint expected)
     {
-        var shrine = snapshot.Objects.SingleOrDefault(value => value.EntityId == expected.Entity);
-        Require(shrine is not null && shrine.LevelId == expected.Level && shrine.Activated
-                && !shrine.NativeShrineInteractable && shrine.NativeShrineType == expected.Type,
-            "The used native shrine lost its retained identity or became usable again.");
-        if (RequiresSeededMysterious)
-            Require(NativeShrineJourneyEvidence.IsSeededMysterious(shrine!), "The seed-98 Mysterious shrine lost its known identity on fresh-host resume.");
+        if (LevelScopedSnapshotEvidence.IncludesLevel(snapshot, expected.Level)) {
+            var shrine = snapshot.Objects.SingleOrDefault(value => value.EntityId == expected.Entity);
+            Require(shrine is not null && shrine.LevelId == expected.Level && shrine.Activated
+                    && !shrine.NativeShrineInteractable && shrine.NativeShrineType == expected.Type,
+                "The used native shrine lost its retained identity or became usable again.");
+            if (RequiresSeededMysterious)
+                Require(NativeShrineJourneyEvidence.IsSeededMysterious(shrine!), "The seed-98 Mysterious shrine lost its known identity on fresh-host resume.");
+        }
         var after = PlayerSnapshot.Parser.ParseFrom(Convert.FromBase64String(expected.PlayerAfterEffect));
         Require(NativeShrineJourneyEvidence.Retained(expected.Type, expected.Level, after, snapshot.Players.Single()),
             "The native shrine's lasting effect did not survive retention or fresh-host resume.");

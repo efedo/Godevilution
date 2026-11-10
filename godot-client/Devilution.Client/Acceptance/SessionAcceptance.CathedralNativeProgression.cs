@@ -576,11 +576,12 @@ public partial class SessionAcceptance
             && HashProto(DepthGeometry(main, 2)) == expected.L2GeometryHash,
             "A retained native floor changed its generated geometry or door mutations.");
         var earned = expected.L1;
+        var l1Visible = LevelScopedSnapshotEvidence.IncludesLevel(snapshot, 1);
         Require(!snapshot.WorldItems.Any(item => item.EntityId == earned.DropEntityId)
-            && CountNativeItemOccurrences(main, snapshot.Players.Single(), earned.StableItemId, earned.ItemSeed) == 1
-            && snapshot.Corpses.Count(corpse => corpse.EntityId == earned.MonsterEntityId) == 1,
+            && (!l1Visible || snapshot.Corpses.Count(corpse => corpse.EntityId == earned.MonsterEntityId) == 1)
+            && CountNativeItemOccurrences(main, snapshot.Players.Single(), earned.StableItemId, earned.ItemSeed) == 1,
             "A retained L1 floor revived the earned-gear victim, duplicated its claimed drop or lost the item.");
-        foreach (var kill in expected.L1.Kills.Concat(expected.L1Gold.ApproachKills))
+        foreach (var kill in expected.L1.Kills.Concat(expected.L1Gold.ApproachKills).Where(_ => l1Visible))
             Require(snapshot.Corpses.Count(corpse => corpse.EntityId == kill.MonsterEntityId) == 1
                 && !snapshot.Monsters.Any(monster => monster.EntityId == kill.MonsterEntityId && monster.Alive),
                 $"A retained L1 floor revived or lost actual combat corpse {kill.MonsterEntityId}.");
@@ -589,14 +590,14 @@ public partial class SessionAcceptance
             && expected.L2.WorkUsed <= NativeCombatWorkBudget.MaximumWork
             && expected.L2.Kills.All(kill => kill.AcceptedShots.Length > 0),
             "The fresh-host L2 checkpoint does not retain its actual combat, XP and accepted-shot proof.");
-        foreach (var kill in expected.L2.Kills)
+        foreach (var kill in expected.L2.Kills.Where(_ => LevelScopedSnapshotEvidence.IncludesLevel(snapshot, 2)))
             Require(snapshot.Corpses.Count(corpse => corpse.EntityId == kill.MonsterEntityId) == 1
                 && !snapshot.Monsters.Any(monster => monster.EntityId == kill.MonsterEntityId && monster.Alive),
                 $"A retained L2 floor revived or lost actual combat corpse {kill.MonsterEntityId}.");
     }
 
     private static string HashNativeProgressionWorld(Snapshot snapshot)
-        => HashProtoCollection(snapshot.LevelGeometry.OrderBy(value => value.LevelId).Select(value => value.ToByteArray())
+        => LevelScopedSnapshotEvidence.CompleteWorldHash(snapshot) ?? HashProtoCollection(snapshot.LevelGeometry.OrderBy(value => value.LevelId).Select(value => value.ToByteArray())
             .Concat(snapshot.Monsters.OrderBy(value => value.EntityId).Select(value => value.ToByteArray()))
             .Concat(snapshot.Objects.OrderBy(value => value.EntityId).Select(value => value.ToByteArray()))
             .Concat(snapshot.WorldItems.OrderBy(value => value.EntityId).Select(value => value.ToByteArray()))

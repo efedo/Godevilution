@@ -13,16 +13,18 @@ public sealed partial class AuthoritativeTcpServer
     {
         if (!snapshotGeometryCaches.TryGetValue(stream, out var cache)) return envelope;
         if (envelope.ServerHello is { } hello) {
-            hello.SupportsSnapshotReferences = true;
+            hello.SupportsSnapshotReferences = cache.UseSnapshotReferences;
             hello.SupportsLevelScopedIdleReferences = cache.LevelScopedIdleReferences;
+            hello.SupportsLevelScopedSnapshots = cache.LevelScopedSnapshots;
         }
         if (envelope.Snapshot is { } snapshot) {
             // The writer owns the envelope; preserve its unknown fields and the actual wire-size counters.
             envelope.Snapshot = cache.Project(snapshot);
             if (envelope.CalculateSize() > AuthoritativeProtocolLimits.MaximumEnvelopeBytes) {
                 // Revision metadata must not reject a formerly valid maximum-size envelope.
-                envelope.Snapshot = snapshot;
-                snapshotGeometryCaches.Remove(stream);
+                envelope.Snapshot = cache.ProjectComplete(snapshot);
+                if (cache.LevelScopedSnapshots) cache.DisableReferences();
+                else snapshotGeometryCaches.Remove(stream);
             }
         }
         return envelope;

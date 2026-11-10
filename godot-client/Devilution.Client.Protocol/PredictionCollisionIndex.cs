@@ -60,7 +60,7 @@ internal sealed class PredictionCollisionIndex
             AddPlayerCell(future.X, future.Y, other.Life != 0);
         }
         foreach (var monster in snapshot.Monsters) {
-            if (!monster.Alive || monster.LevelId != 0 && monster.LevelId != player.LevelId) continue;
+            if (!monster.Alive || !AuthoritativeLevelVisibility.IsVisible(monster.LevelId, player.LevelId)) continue;
             nextOccupied.Add((monster.PositionX, monster.PositionY));
             if (monster.Moving) nextOccupied.Add((monster.FuturePositionX, monster.FuturePositionY));
         }

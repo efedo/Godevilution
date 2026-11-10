@@ -85,10 +85,12 @@ public partial class SessionAcceptance
 
     private static void VerifyNativeThemeObjectRetention(Snapshot snapshot, NativeThemeObjectCheckpoint expected)
     {
-        var target = snapshot.Objects.SingleOrDefault(value => value.EntityId == expected.Entity);
-        NativeThemeObjectJourneyEvidence.VerifyRetained(target, expected.Level, expected.Type, expected.Frame);
-        Require(target!.PositionX == expected.X && target.PositionY == expected.Y,
-            "The native theme object's retained position changed.");
+        if (LevelScopedSnapshotEvidence.IncludesLevel(snapshot, expected.Level)) {
+            var target = snapshot.Objects.SingleOrDefault(value => value.EntityId == expected.Entity);
+            NativeThemeObjectJourneyEvidence.VerifyRetained(target, expected.Level, expected.Type, expected.Frame);
+            Require(target!.PositionX == expected.X && target.PositionY == expected.Y,
+                "The native theme object's retained position changed.");
+        }
         // Drops may later be picked up or spent; their recorded birth identity proves the floor loot and native item level.
         if (NativeThemeObjectJourneyEvidence.IsLoot(expected.Type)) {
             Require(expected.Drops.Length > 0, "The theme object checkpoint omitted its native floor loot evidence.");

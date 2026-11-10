@@ -136,7 +136,7 @@ public partial class Main : Node2D
         var serverIdentity = client?.ServerIdentity;
         // Normal captures include the menu. Authority evidence remains incomplete until a real admission.
         if (!(environmentWarmup && normalFrameCaptureRequested)
-            && (snapshot is null || serverIdentity is null || snapshot.Players.Count != participantCount))
+            && (snapshot is null || serverIdentity is null || snapshot.ParticipantCount != participantCount))
             return false;
 
         var options = connectionOptions ?? ClientConnectionOptions.FromEnvironment();
@@ -182,7 +182,7 @@ public partial class Main : Node2D
             environmentWarmup ? null : warmupSeconds);
         if (frameEvidence is { } recorder) {
             if (serverIdentity is not null) recorder.ObserveServerIdentity(serverIdentity);
-            if (snapshot is not null) recorder.ObserveParticipantCount(snapshot.Players.Count);
+            if (snapshot is not null) recorder.ObserveParticipantCount(snapshot.ParticipantCount);
         }
         return frameEvidence is not null;
     }
@@ -410,7 +410,7 @@ public partial class Main : Node2D
         persistLocalSession = connectionOptions is not null
             && SessionLifecyclePolicy.ShouldPersistLocalBookmark(
                 connectionOptions, options, resumeTokenPath);
-        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true, UseLevelScopedIdleReferences = true }) {
+        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true, UseLevelScopedIdleReferences = true, UseLevelScopedSnapshots = true }) {
             AllocationMetrics = ClientFrameEvidenceRecorder.IsRequested ? new ClientTransportAllocationMetrics() : null,
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()
@@ -457,7 +457,7 @@ public partial class Main : Node2D
                 if (client?.ServerIdentity is { } identity)
                     evidence.ObserveServerIdentity(identity);
                 if (model.Snapshot is { } snapshot)
-                    evidence.ObserveParticipantCount(snapshot.Players.Count);
+                    evidence.ObserveParticipantCount(snapshot.ParticipantCount);
                 RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
                 evidence.RecordFrame(
                     evidenceFrameTimestamp,

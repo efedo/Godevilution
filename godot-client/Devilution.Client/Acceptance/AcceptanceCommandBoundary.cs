@@ -68,7 +68,7 @@ internal static class AcceptanceCommandBoundary
     /** Keeps command admission separate from animation settlement: native quick-use can run during an action. */
     internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount)
     {
-        internal PlayerSnapshot? Player => Snapshot?.Players.Count == 1 ? Snapshot.Players[0] : null;
+        internal PlayerSnapshot? Player => Snapshot?.ParticipantCount == 1 ? Snapshot.Players[0] : null;
         internal bool CommandsAdmitted => Snapshot is not null && PendingCount == 0
             && (LastQueuedSequence == 0 ? Receipt is null : HasLatestAppliedReceipt(Snapshot.Tick, Receipt, LastQueuedSequence));
         internal bool PlayerSettled => Player is { } player && AuthoritativePlayerSettlement.IsSettled(player, PendingCount);

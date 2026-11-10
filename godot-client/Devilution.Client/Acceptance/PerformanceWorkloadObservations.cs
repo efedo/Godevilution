@@ -6,7 +6,7 @@ namespace Devilution.Client.Acceptance;
 public static class PerformanceWorkloadObservations
 {
     public static bool AllParticipantsStaged(Snapshot? snapshot, int participants)
-        => participants is 1 or 4 && snapshot?.Players.Count == participants
+        => participants is 1 or 4 && snapshot?.ParticipantCount == participants
             && StagedSlots(snapshot, participants).All(ready => ready);
 
     public static bool[] StagedSlots(Snapshot? snapshot, int participants)

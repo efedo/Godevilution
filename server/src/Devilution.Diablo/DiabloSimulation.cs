@@ -1244,7 +1244,7 @@ public sealed partial class DiabloSimulation
         var reserved = new HashSet<(int X, int Y)>();
         foreach (var target in WorldState.CombatTargets.Values.Where(target =>
                      target.HitPoints > 0
-                     && (target.LevelId == 0 || target.LevelId == levelId))) {
+                     && Devilution.Shared.LevelMembership.IsOnLevel(target.LevelId, levelId))) {
             reserved.Add((target.PositionX, target.PositionY));
             if (target.IsMoving)
                 reserved.Add((target.FuturePositionX, target.FuturePositionY));
