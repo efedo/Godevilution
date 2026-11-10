@@ -1,3 +1,4 @@
+using Devilution.Shared;
 using Google.Protobuf.Collections;
 
 namespace Devilution.Protocol.V1;
@@ -26,22 +27,23 @@ public sealed partial class Snapshot
         objects_ = AtLevel(objects_, level, static value => value.LevelId);
         projectiles_ = AtLevel(projectiles_, level, static value => value.LevelId);
         corpses_ = AtLevel(corpses_, level, static value => value.LevelId);
-        questTownerInteractions_ = AtLevel(questTownerInteractions_, level, static value => value.LevelId);
-        townerGreetings_ = AtLevel(townerGreetings_, level, static value => value.LevelId);
-        nativeTownResidents_ = AtLevel(nativeTownResidents_, level, static value => value.LevelId);
-        setLevelObjectOrigins_ = AtLevel(setLevelObjectOrigins_, level, static value => value.LevelId);
-        proceduralQuestPieceOrigins_ = AtLevel(proceduralQuestPieceOrigins_, level, static value => value.LevelId);
+        questTownerInteractions_ = AtLevel(questTownerInteractions_, level, static value => value.LevelId, legacyZeroWildcard: false);
+        townerGreetings_ = AtLevel(townerGreetings_, level, static value => value.LevelId, legacyZeroWildcard: false);
+        nativeTownResidents_ = AtLevel(nativeTownResidents_, level, static value => value.LevelId, legacyZeroWildcard: false);
+        setLevelObjectOrigins_ = AtLevel(setLevelObjectOrigins_, level, static value => value.LevelId, legacyZeroWildcard: false);
+        proceduralQuestPieceOrigins_ = AtLevel(proceduralQuestPieceOrigins_, level, static value => value.LevelId, legacyZeroWildcard: false);
         portals_ = new();
         foreach (var portal in other.portals_)
-            if (portal.SourceLevelId == level || portal.Bidirectional && portal.DestinationLevelId == level)
+            if (LevelMembership.IsOnLevel(portal.SourceLevelId, level, legacyZeroWildcard: false)
+                || portal.Bidirectional && LevelMembership.IsOnLevel(portal.DestinationLevelId, level, legacyZeroWildcard: false))
                 portals_.Add(portal);
     }
 
-    private static RepeatedField<T> AtLevel<T>(RepeatedField<T> source, uint level, Func<T, uint> levelId)
+    private static RepeatedField<T> AtLevel<T>(RepeatedField<T> source, uint level, Func<T, uint> levelId, bool legacyZeroWildcard = true)
     {
         var result = new RepeatedField<T>();
         foreach (var value in source)
-            if (levelId(value) == level) result.Add(value);
+            if (LevelMembership.IsOnLevel(levelId(value), level, legacyZeroWildcard)) result.Add(value);
         return result;
     }
 }

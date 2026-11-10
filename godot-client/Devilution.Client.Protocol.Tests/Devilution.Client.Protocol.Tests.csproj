@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Devilution.Client/Acceptance/NativeLevelRetentionEvidence.cs"
+             Link="Acceptance/NativeLevelRetentionEvidence.cs" />
     <Compile Include="../Devilution.Client/Acceptance/LevelScopedSnapshotEvidence.cs"
              Link="Acceptance/LevelScopedSnapshotEvidence.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceCommandBoundary.cs"

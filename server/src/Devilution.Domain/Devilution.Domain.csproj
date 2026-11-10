@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../../../protocol/Devilution.Protocol/LevelMembership.cs" Link="LevelMembership.cs" />
     <Compile Include="../../../protocol/Devilution.Protocol/NativeVision.cs" Link="NativeVision.cs" />
     <Compile Include="../../../protocol/Devilution.Protocol/NativeCompatibilityLimits.cs" Link="NativeCompatibilityLimits.cs" />
   </ItemGroup>

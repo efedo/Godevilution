@@ -78,7 +78,7 @@ public sealed class AuthoritativeSnapshotGeometryCache
             if (player.CombatMode != PlayerCombatMode.Stand || player.CurrentAction is not null
                 || player.NativeWalkPathPending || player.StatusEffects.Count != 0) return false;
         foreach (var monster in snapshot.Monsters)
-            if (monster.Moving && (!levelScopedMonsterActivity || monster.LevelId == snapshot.Players[0].LevelId)) return false;
+            if (monster.Moving && (!levelScopedMonsterActivity || Devilution.Shared.LevelMembership.IsOnLevel(monster.LevelId, snapshot.Players[0].LevelId))) return false;
         return snapshot.Projectiles.Count == 0;
     }
 }

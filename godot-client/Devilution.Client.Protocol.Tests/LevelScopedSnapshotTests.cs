@@ -176,7 +176,7 @@ public sealed class LevelScopedSnapshotTests
         Assert.Equal(references, dungeon.GeometryUnchanged);
         if (references) Assert.True(dungeon.StateRevision > first.StateRevision);
         Assert.Equal(2, model.Snapshot!.Players.Count);
-        Assert.All(model.Snapshot.Monsters, value => Assert.Equal(1U, value.LevelId));
+        Assert.All(model.Snapshot.Monsters, value => Assert.True(AuthoritativeLevelVisibility.IsVisible(value.LevelId, 1)));
         source.Players[0].LevelId = 0; source.Tick++;
         Deliver(source);
         Assert.Single(model.Snapshot!.Players);

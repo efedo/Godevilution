@@ -35,7 +35,8 @@ public partial class SessionAcceptance
         uint RandomState,
         string WorldHash,
         NativeDepthProgressionGeometry[] Floors,
-        NativeDepthProgressionCombat[] Combat);
+        NativeDepthProgressionCombat[] Combat,
+        NativeLevelRetentionBaseline[]? RetainedLevels = null);
     private sealed record NativeDepthEntryCheckpointInputProof(int FormatVersion, string InputCheckpointSha256);
     private readonly record struct NativeDepthEntryGearIdentity(uint StableItemId, uint ItemSeed);
 
@@ -120,18 +121,30 @@ public partial class SessionAcceptance
         });
 
         Require(IsNativeProgressionBowUsable(bow), "The copied L3 checkpoint has no usable earned Rogue bow.");
+        var retainedLevels = new Dictionary<uint, NativeLevelRetentionBaseline>();
+        async Task TravelWithRetainedBaseline(uint destination)
+        {
+            var observed = main.ObservedSnapshot!;
+            var level = observed.Players.Single().LevelId;
+            if (level is >= 1 and <= 4) {
+                if (retainedLevels.TryGetValue(level, out var earlier))
+                    NativeLevelRetentionEvidence.Verify(observed, earlier);
+                retainedLevels[level] = NativeLevelRetentionEvidence.Capture(observed, level);
+            }
+            await travel(destination);
+        }
         var combat = new List<NativeDepthProgressionCombat>(capacity: 2);
         var defeatedL3 = await FightNativeProgressionCombatAsync(main, directory, 3);
         combat.Add(new(3, defeatedL3));
         await ReequipNativeBarrelWeapon(main, bow);
-        await travel(4);
+        await TravelWithRetainedBaseline(4);
         Require(main.ObservedSnapshot!.Players.Single().LevelId == 4,
             "The ordinary native stair route did not enter L4 from the copied L3 checkpoint.");
         var defeatedL4 = await FightNativeProgressionCombatAsync(main, directory, 4);
         combat.Add(new(4, defeatedL4));
         await ReequipNativeBarrelWeapon(main, bow);
         for (var destination = 3; destination >= 0; destination--)
-            await travel((uint)destination);
+            await TravelWithRetainedBaseline((uint)destination);
         Require(main.ObservedSnapshot!.Players.Single().LevelId == 0,
             "The L3/L4 continuation did not return to Town through ordinary routes.");
         await UseNativeTownHealer(main);
@@ -141,6 +154,8 @@ public partial class SessionAcceptance
         var finalPlayer = final.Players.Single();
         Require(finalPlayer.Life > 0 && finalPlayer.LevelId == 0 && Settled(main),
             "The L3/L4 continuation did not reach a living, settled Town checkpoint.");
+        var floorBaselines = NativeLevelRetentionEvidence.RequireBaselines(
+            retainedLevels.Values.OrderBy(value => value.LevelId).ToArray(), final, 1, 2, 3, 4);
         VerifyEntryContinuationRetention(final, combat);
         var report = main.ObservedCommandTimingReport ?? timing;
         var pathCommands = CaptureAcceptedNativePathCommands(report, startingSequence);
@@ -165,7 +180,7 @@ public partial class SessionAcceptance
             HashNativeProgressionWorld(final),
             Enumerable.Range(1, 4).Select(level => new NativeDepthProgressionGeometry((uint)level,
                 HashProto(DepthGeometry(main, (uint)level)))).ToArray(),
-            combat.ToArray());
+            combat.ToArray(), floorBaselines);
         WriteEvidence(directory, "native-depth-entry-continuation.json", new {
             CheckpointKind = NativeDepthEntryTownCheckpointKind,
             FullRouteClaimed = false,
@@ -223,7 +238,9 @@ public partial class SessionAcceptance
                 ? expected.WorldHash : expectedSnapshot.StateSha256)
             && main.ObservedLastQueuedSequence == 0 && main.ObservedPendingCommandCount == 0 && Settled(main),
             "Fresh Town restore changed the exact saved player, RNG, world, entity or level before input.");
-        VerifyEntryContinuationRetention(initial, expected, expectedSnapshot);
+        var retainedLevels = NativeLevelRetentionEvidence.RequireBaselines(
+            expected.RetainedLevels, expectedSnapshot, 1, 2, 3, 4);
+        VerifyEntryContinuationRetention(initial, expected, expectedSnapshot, retainedLevels);
 
         var revisited = new List<uint>();
         for (uint depth = 1; depth <= 4; depth++) {
@@ -231,18 +248,18 @@ public partial class SessionAcceptance
             var floorSnapshot = main.ObservedSnapshot!;
             Require(floorSnapshot.Players.Single().LevelId == depth,
                 $"Fresh Town continuation did not revisit L{depth} through its ordinary route.");
-            VerifyEntryContinuationFloor(floorSnapshot, expected, expectedSnapshot, depth);
+            VerifyEntryContinuationFloor(floorSnapshot, expected, expectedSnapshot, depth, retainedLevels);
             revisited.Add(depth);
         }
         for (var destination = 3; destination >= 0; destination--) {
             await travel((uint)destination);
-            VerifyEntryContinuationRetention(main.ObservedSnapshot!, expected, expectedSnapshot);
+            VerifyEntryContinuationRetention(main.ObservedSnapshot!, expected, expectedSnapshot, retainedLevels);
         }
         await townCheckpoint();
         var final = main.ObservedSnapshot!;
         Require(final.Players.Single().LevelId == 0 && final.Players.Single().Life > 0 && Settled(main),
             "The fresh-host continuation did not return alive and settled in Town.");
-        VerifyEntryContinuationRetention(final, expected, expectedSnapshot);
+        VerifyEntryContinuationRetention(final, expected, expectedSnapshot, retainedLevels);
         WriteEvidence(directory, "native-depth-entry-continuation-resume.json", new {
             ContinuationComplete = true,
             FullRouteClaimed = false,
@@ -258,6 +275,7 @@ public partial class SessionAcceptance
             RevisitedLevels = revisited.ToArray(),
             FloorGeometry = expected.Floors,
             RetainedCombat = expected.Combat,
+            RetainedLevels = retainedLevels.Select(value => value.LevelId).ToArray(),
         });
     }
 
@@ -275,14 +293,15 @@ public partial class SessionAcceptance
     private static void VerifyEntryContinuationRetention(
         Snapshot snapshot,
         NativeDepthEntryTownCheckpoint expected,
-        Snapshot expectedSnapshot)
+        Snapshot expectedSnapshot,
+        IReadOnlyList<NativeLevelRetentionBaseline> retainedLevels)
     {
         foreach (var floor in expected.Floors)
             Require(HashProto(snapshot.LevelGeometry.Single(row => row.LevelId == floor.LevelId)) == floor.Hash,
                 $"The Town continuation changed retained L{floor.LevelId} geometry.");
         VerifyEntryContinuationRetention(snapshot, expected.Combat);
-        VerifyEntryContinuationFloorRetention(snapshot, expectedSnapshot, 1);
-        VerifyEntryContinuationFloorRetention(snapshot, expectedSnapshot, 2);
+        foreach (var baseline in retainedLevels)
+            VerifyEntryContinuationFloorRetention(snapshot, retainedLevels, baseline.LevelId);
         VerifyEntryContinuationGear(snapshot, expectedSnapshot);
     }
 
@@ -290,33 +309,24 @@ public partial class SessionAcceptance
         Snapshot snapshot,
         NativeDepthEntryTownCheckpoint expected,
         Snapshot expectedSnapshot,
-        uint levelId)
+        uint levelId,
+        IReadOnlyList<NativeLevelRetentionBaseline> retainedLevels)
     {
         var floor = expected.Floors.Single(row => row.LevelId == levelId);
         Require(HashProto(snapshot.LevelGeometry.Single(row => row.LevelId == levelId)) == floor.Hash,
             $"Fresh Town continuation changed retained L{levelId} geometry.");
-        if (levelId is 1 or 2)
-            VerifyEntryContinuationFloorRetention(snapshot, expectedSnapshot, levelId);
+        VerifyEntryContinuationFloorRetention(snapshot, retainedLevels, levelId);
         VerifyEntryContinuationGear(snapshot, expectedSnapshot);
         var combat = expected.Combat.SingleOrDefault(row => row.LevelId == levelId);
         if (combat is not null)
             VerifyEntryContinuationFloor(snapshot, levelId, combat);
     }
 
-    private static void VerifyEntryContinuationFloorRetention(Snapshot snapshot, Snapshot expectedSnapshot, uint levelId)
+    private static void VerifyEntryContinuationFloorRetention(Snapshot snapshot,
+        IReadOnlyList<NativeLevelRetentionBaseline> retainedLevels, uint levelId)
     {
         if (!LevelScopedSnapshotEvidence.IncludesLevel(snapshot, levelId)) return;
-        foreach (var corpse in expectedSnapshot.Corpses.Where(corpse => corpse.LevelId == levelId)) {
-            var retained = snapshot.Corpses.Where(row => row.EntityId == corpse.EntityId && row.LevelId == levelId).ToArray();
-            Require(retained.Length == 1 && retained[0].PositionX == corpse.PositionX
-                && retained[0].PositionY == corpse.PositionY,
-                $"Fresh Town continuation changed or lost retained L{levelId} corpse {corpse.EntityId}.");
-        }
-        foreach (var monster in expectedSnapshot.Monsters.Where(monster => monster.LevelId == levelId && !monster.Alive)) {
-            var retained = snapshot.Monsters.Where(row => row.EntityId == monster.EntityId && row.LevelId == levelId).ToArray();
-            Require(retained.Length == 1 && !retained[0].Alive,
-                $"Fresh Town continuation revived or lost retained L{levelId} dead actor {monster.EntityId}.");
-        }
+        NativeLevelRetentionEvidence.Verify(snapshot, retainedLevels.Single(value => value.LevelId == levelId));
     }
 
     private static void VerifyEntryContinuationGear(Snapshot snapshot, Snapshot expectedSnapshot)
