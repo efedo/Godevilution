@@ -20,6 +20,8 @@
              Link="Acceptance/AcceptanceCommandBoundary.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceRouteRecovery.cs"
              Link="Acceptance/AcceptanceRouteRecovery.cs" />
+    <Compile Include="../Devilution.Client/WorldPresentation.CanvasTransforms.cs"
+             Link="Presentation/WorldPresentation.CanvasTransforms.cs" />
     <Compile Include="../Devilution.Client/WorldPresentation.ActorPositions.cs"
              Link="Presentation/WorldPresentation.ActorPositions.cs" />
     <Compile Include="../Devilution.Client/Main.AuthoritativeAdmission.cs"

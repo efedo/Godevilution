@@ -13,7 +13,7 @@ using Xunit;
 namespace Devilution.Server.Tests;
 
 /** Private captures stay outside the repository; the deterministic clock regression needs no capture. */
-public sealed class SavedTownWalkReplayTests(ITestOutputHelper output)
+public sealed partial class SavedTownWalkReplayTests(ITestOutputHelper output)
 {
     [Fact]
     [Trait("Category", "Slow")]
