@@ -17,20 +17,20 @@ namespace Devilution.Client
         {
             var canvas = new RetainedSceneCanvas();
             canvas.SetRetainedPosition(new(0, 0));
-            canvas.SetRetainedPosition(new(0, 0)); // Warm the value equality operator.
-            var allocated = GC.GetAllocatedBytesForCurrentThread();
-            for (var frame = 0; frame < 4096; frame++) canvas.SetRetainedPosition(new(0, 0));
-            allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+            Action<int> idleFrame = _ => canvas.SetRetainedPosition(new(0, 0));
+            Protocol.Tests.HotPathAllocation.Warm(idleFrame);
+            var measured = Protocol.Tests.HotPathAllocation.Measure(idleFrame, 4096);
             canvas.SetRetainedPosition(new(12.5f, -4));
             canvas.SetRetainedPosition(new(12.5f, -4));
             canvas.SetRetainedPosition(new(0, 0));
-            return (canvas.Assignments, allocated, canvas.Position);
+            return (canvas.Assignments, measured.Bytes, canvas.Position);
         }
     }
 }
 
 namespace Devilution.Client.Protocol.Tests
 {
+    [Collection(AllocationMeasurementCollection.Name)]
     public sealed class RetainedCanvasTransformTests
     {
         [Fact]

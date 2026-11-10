@@ -5,6 +5,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class NativeTownerPickingTests
 {
     private static readonly IReadOnlyDictionary<int, NativeTownerOpacityMask> NoMasks = new Dictionary<int, NativeTownerOpacityMask>();
@@ -103,10 +104,10 @@ public sealed class NativeTownerPickingTests
         var residents = new[] { Resident(0, 50, 50) };
         var masks = new Dictionary<int, NativeTownerOpacityMask> { [0] = MaskWithPixel(residents[0], 400.25, 285.25) };
         var catalog = Catalog.Value;
-        for (var i = 0; i < 100; i++) NativeTownerPicking.Select(View, residents, catalog, masks, 0, 400.25, 285.25);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++) NativeTownerPicking.Select(View, residents, catalog, masks, 0, i % 2 == 0 ? 400.25 : 410, i % 2 == 0 ? 285.25 : 300);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Action<int> click = i => NativeTownerPicking.Select(View, residents, catalog, masks, 0, i % 2 == 0 ? 400.25 : 410, i % 2 == 0 ? 285.25 : 300);
+        HotPathAllocation.Warm(click); // Both pixel-hit and tile-fallback paths.
+        var measured = HotPathAllocation.Measure(click, 1000);
+        Assert.Equal(0, measured.Bytes);
     }
 
     private static NativeTownResidentSnapshot? Select(NativeTownResidentSnapshot[] residents, double x, double y)

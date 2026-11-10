@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class HudItemSelectionTests
 {
     [Fact]
@@ -193,10 +194,10 @@ public sealed class HudItemSelectionTests
     {
         var player = Player(PlayerItemLocation.Inventory);
         var hud = Select(player, PlayerItemLocation.Inventory);
-        for (var i = 0; i < 32; i++) hud.ApplyHeadlessItemSelection(player);
-        var allocated = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++) hud.ApplyHeadlessItemSelection(player);
-        Assert.InRange(GC.GetAllocatedBytesForCurrentThread() - allocated, 0, 256);
+        Action<int> frame = _ => hud.ApplyHeadlessItemSelection(player);
+        HotPathAllocation.Warm(frame);
+        var measured = HotPathAllocation.Measure(frame, 1000);
+        Assert.InRange(measured.Bytes, 0, 256);
         Assert.NotNull(hud.HeadlessSelectedItem);
     }
 

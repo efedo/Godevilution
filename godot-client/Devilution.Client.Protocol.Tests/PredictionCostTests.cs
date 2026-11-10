@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Devilution.Client.Protocol;
 using Devilution.Diablo;
 using Devilution.Protocol.V1;
@@ -6,6 +5,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class PredictionCostTests(ITestOutputHelper output)
 {
     [Fact]
@@ -81,9 +81,10 @@ public sealed class PredictionCostTests(ITestOutputHelper output)
         var unchanged = snapshot.Clone(); unchanged.Tick++;
         index.Prepare(unchanged, unchanged.Players[0]);
         Assert.Equal(revision, index.Revision);
-        var allocated = GC.GetAllocatedBytesForCurrentThread();
-        for (var repeat = 0; repeat < 1000; repeat++) search.FirstStep(new(50, 50), new(70, 50));
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - allocated);
+        Action<int> cachedSearch = _ => search.FirstStep(new(50, 50), new(70, 50));
+        HotPathAllocation.Warm(cachedSearch);
+        var measured = HotPathAllocation.Measure(cachedSearch, 1000);
+        Assert.Equal(0, measured.Bytes);
         Assert.Equal(searches, search.SearchCount);
         search.FirstStep(new(49, 50), new(70, 50)); Assert.Equal(++searches, search.SearchCount);
         search.FirstStep(new(49, 50), new(71, 50)); Assert.Equal(++searches, search.SearchCount);
@@ -122,24 +123,23 @@ public sealed class PredictionCostTests(ITestOutputHelper output)
         var snapshot = DisconnectedTown();
         var model = new AuthoritativeClientModel(); model.Apply(new(Snapshot: snapshot));
         model.TrackPredictedMoveTo(1, 70, 50); // JIT and index warmup.
-        var allocation = GC.GetAllocatedBytesForCurrentThread();
-        var started = Stopwatch.GetTimestamp();
-        model.TrackPredictedMoveTo(2, 71, 50);
-        var elapsed = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
-        var bytes = GC.GetAllocatedBytesForCurrentThread() - allocation;
+        // A different destination must still execute a fresh search; do not warm it into a cached result.
+        var measured = HotPathAllocation.Measure(_ => model.TrackPredictedMoveTo(2, 71, 50), 1);
+        var elapsed = measured.Elapsed.TotalMilliseconds;
+        var bytes = measured.Bytes;
         Assert.Null(model.LocalMovementTarget);
         Assert.InRange(bytes, 0, 1_000_000);
         // The deterministic probe bound protects loaded CI; report the actual wall cost separately.
         Assert.InRange(elapsed, 0, 50);
-        allocation = GC.GetAllocatedBytesForCurrentThread(); started = Stopwatch.GetTimestamp();
-        for (var repeat = 0; repeat < 1000; repeat++) model.TrackPredictedMoveTo((ulong)repeat + 3, 71, 50);
-        var cachedBytes = GC.GetAllocatedBytesForCurrentThread() - allocation;
+        HotPathAllocation.Warm(_ => model.TrackPredictedMoveTo(2, 71, 50));
+        var cached = HotPathAllocation.Measure(repeat => model.TrackPredictedMoveTo((ulong)repeat + 3, 71, 50), 1000);
+        var cachedBytes = cached.Bytes;
         Assert.InRange(cachedBytes, 0, 100_000);
         var index = new PredictionCollisionIndex(); index.Prepare(snapshot, snapshot.Players[0]);
         var search = new NativePredictionSearch(index); search.FirstStep(new(50, 50), new(70, 50));
         Assert.InRange(search.CollisionQueries, 1, NativePredictionSearch.MaximumCollisionQueries + 1);
         output.WriteLine($"Unreachable click: {elapsed:F3} ms, {bytes} B; 1000 cached clicks: "
-            + $"{Stopwatch.GetElapsedTime(started).TotalMilliseconds:F3} ms, {cachedBytes} B; probes={search.CollisionQueries}.");
+            + $"{cached.Elapsed.TotalMilliseconds:F3} ms, {cachedBytes} B; probes={search.CollisionQueries}.");
     }
 
     private static Snapshot Town() => new() { Tick = 10, Players = { new PlayerSnapshot {

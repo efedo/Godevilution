@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class FrameAllocationEvidenceTests
 {
     [Fact]
@@ -125,14 +126,17 @@ public sealed class FrameAllocationEvidenceTests
             var start = Stopwatch.GetTimestamp();
             recorder.RecordFrameCost(start, default);
             recorder.RecordFrame(start, start, start);
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 1; i <= 4096; i++) {
-                recorder.RecordFrameCost(start + i, new(1, 2, 3, 4, 0, 0, null, null,
+            var timestamp = start;
+            Action<int> frame = _ => {
+                timestamp++;
+                recorder.RecordFrameCost(timestamp, new(1, 2, 3, 4, 0, 0, null, null,
                     ProcessMilliseconds: 0, InputMilliseconds: 5, PredictionMilliseconds: 4, RenderFrameSetupCpuMilliseconds: 0.75));
-                recorder.RecordFrame(start + i, start + i, start + i);
-                recorder.RecordProcessCost(start + i, 12);
-            }
-            Assert.InRange(GC.GetAllocatedBytesForCurrentThread() - before, 0, 256);
+                recorder.RecordFrame(timestamp, timestamp, timestamp);
+                recorder.RecordProcessCost(timestamp, 12);
+            };
+            HotPathAllocation.Warm(frame); // Warm every API, including process-cost recording, within the same fake second.
+            var measured = HotPathAllocation.Measure(frame, 4096);
+            Assert.InRange(measured.Bytes, 0, 256);
             recorder.Stop("test-complete", true);
         } finally { DeleteRoot(root); }
     }
