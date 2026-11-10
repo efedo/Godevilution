@@ -27,7 +27,7 @@ public partial class Main
     {
         if (frameEvidence is null && normalFrameCaptureRequested && !normalFrameCaptureAttempted) {
             normalFrameCaptureAttempted = true;
-            if (!StartPerformanceRecording(model.Snapshot?.Players.Count ?? 1, 0, environmentWarmup: true))
+            if (!StartPerformanceRecording(model.Snapshot?.ParticipantCount ?? 1, 0, environmentWarmup: true))
                 GD.PushWarning("Frame capture could not start: check the fresh output directory and capture settings.");
         }
         if (model.Snapshot is not null)

@@ -220,8 +220,10 @@ public partial class SessionAcceptance
             "A collected L1 Gold pickup respawned during retained-floor revisit.");
         void RetainedKill(NativeKillEvidence kill, uint level)
         {
-            Require(kill.AcceptedShots.Length > 0 && kill.ExperienceAfter > kill.ExperienceBefore
-                && snapshot.Corpses.Count(corpse => corpse.EntityId == kill.MonsterEntityId && corpse.LevelId == level) == 1
+            Require(kill.AcceptedShots.Length > 0 && kill.ExperienceAfter > kill.ExperienceBefore,
+                $"Retained native floor {level} omitted its actual combat proof.");
+            if (!LevelScopedSnapshotEvidence.IncludesLevel(snapshot, level)) return;
+            Require(snapshot.Corpses.Count(corpse => corpse.EntityId == kill.MonsterEntityId && corpse.LevelId == level) == 1
                 && !snapshot.Monsters.Any(monster => monster.EntityId == kill.MonsterEntityId && monster.Alive),
                 $"Retained native floor {level} revived or lost actual combat corpse {kill.MonsterEntityId}.");
         }

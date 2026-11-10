@@ -15,6 +15,8 @@ public sealed record AuthoritativeClientMessage(
     /** Connection-negotiated body-reference policy, supplied by the receiving transport. */
     public bool LevelScopedIdleReferences { get; init; }
 
+    public bool LevelScopedSnapshots { get; init; }
+
     /** Frozen local send identities for rescheduled receipts; never added to the wire. */
     public IReadOnlyList<AuthoritativeCommandReceiptContext>? AcknowledgedCommands { get; init; }
 

@@ -171,7 +171,7 @@ public partial class SessionAcceptance
                 var snapshot = main.ObservedSnapshot;
                 return main.ObservedPendingCommandCount == 0
                     && snapshot is not null
-                    && snapshot.Players.Count == participants
+                    && snapshot.ParticipantCount == participants
                     && snapshot.Players.All(player =>
                         player.CombatMode == PlayerCombatMode.Stand
                         && player.CurrentAction is null);
@@ -432,7 +432,7 @@ public partial class SessionAcceptance
                     "round-first-check", matches);
                 observationRecorded = true;
             }
-            if (snapshot is null || snapshot.Players.Count != participants)
+            if (snapshot is null || snapshot.ParticipantCount != participants)
                 return false;
             var leader = FindPerformancePlayer(snapshot, "M0-Performance-1");
             var expectedX = round % 2 == 1 ? 1 : 0;
@@ -602,7 +602,7 @@ public partial class SessionAcceptance
         // Controlled slot booleans identify mismatches without player state or credentials.
         WriteEvidence(directory, $"performance-observation-{round}-{boundary}.json", new {
             Phase = "Performance", Slot = slot, Round = round, Boundary = boundary,
-            ParticipantCount = participants, ObservedParticipantCount = snapshot?.Players.Count ?? 0,
+            ParticipantCount = participants, ObservedParticipantCount = snapshot?.ParticipantCount ?? 0,
             main.ObservedSnapshotRevision, main.TransportConnected, main.ObservedClockGatedScheduling,
             StagedSlots = PerformanceWorkloadObservations.StagedSlots(snapshot, participants),
             SettledSlots = PerformanceWorkloadObservations.SettledSlots(snapshot, participants),

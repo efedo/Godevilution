@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed class LiveSnapshotReferenceTests : LiveAuthoritativeTestBase
+public sealed partial class LiveSnapshotReferenceTests : LiveAuthoritativeTestBase
 {
     [Theory]
     [InlineData(null, CommandSchedulingMode.Immediate, "legacy")] [InlineData(false, CommandSchedulingMode.Immediate, "legacy")]

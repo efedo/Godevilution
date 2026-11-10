@@ -95,7 +95,7 @@ public partial class SessionAcceptance
             && initialPlayer.LevelId == baseline.LevelId
             && initialPlayer.ToByteArray().AsSpan().SequenceEqual(expectedSnapshot.Players.Single().ToByteArray())
             && initial.RandomState == expectedSnapshot.RandomState
-            && HashNativeProgressionWorld(initial) == HashNativeProgressionWorld(expectedSnapshot)
+            && HashNativeProgressionWorld(initial) == HashNativeProgressionWorld(LevelScopedSnapshotEvidence.ExpectedView(expectedSnapshot, initial))
             && main.ObservedLastQueuedSequence == 0 && main.ObservedPendingCommandCount == 0 && Settled(main),
             "The copied L3 checkpoint changed its player, RNG, world or cursor before continuation input.");
 
@@ -219,7 +219,8 @@ public partial class SessionAcceptance
         Require(initial.Tick >= expected.Tick && player.EntityId == expected.EntityId && player.LevelId == 0
             && player.ToByteArray().AsSpan().SequenceEqual(expectedSnapshot.Players.Single().ToByteArray())
             && initial.RandomState == expected.RandomState
-            && HashNativeProgressionWorld(initial) == expected.WorldHash
+            && HashNativeProgressionWorld(initial) == (LevelScopedSnapshotEvidence.CompleteWorldHash(initial) is null
+                ? expected.WorldHash : expectedSnapshot.StateSha256)
             && main.ObservedLastQueuedSequence == 0 && main.ObservedPendingCommandCount == 0 && Settled(main),
             "Fresh Town restore changed the exact saved player, RNG, world, entity or level before input.");
         VerifyEntryContinuationRetention(initial, expected, expectedSnapshot);
@@ -304,6 +305,7 @@ public partial class SessionAcceptance
 
     private static void VerifyEntryContinuationFloorRetention(Snapshot snapshot, Snapshot expectedSnapshot, uint levelId)
     {
+        if (!LevelScopedSnapshotEvidence.IncludesLevel(snapshot, levelId)) return;
         foreach (var corpse in expectedSnapshot.Corpses.Where(corpse => corpse.LevelId == levelId)) {
             var retained = snapshot.Corpses.Where(row => row.EntityId == corpse.EntityId && row.LevelId == levelId).ToArray();
             Require(retained.Length == 1 && retained[0].PositionX == corpse.PositionX
@@ -363,6 +365,7 @@ public partial class SessionAcceptance
 
     private static void VerifyEntryContinuationFloor(Snapshot snapshot, uint levelId, NativeDepthProgressionCombat floor)
     {
+        if (!LevelScopedSnapshotEvidence.IncludesLevel(snapshot, levelId)) return;
         foreach (var kill in floor.Combat.Kills) {
             Require(kill.MonsterEntityId != 0 && kill.AcceptedShots.Length > 0
                 && kill.ExperienceAfter > kill.ExperienceBefore
