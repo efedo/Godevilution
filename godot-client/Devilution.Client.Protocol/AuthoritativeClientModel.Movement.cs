@@ -5,6 +5,8 @@ namespace Devilution.Client.Protocol;
 public sealed partial class AuthoritativeClientModel
 {
     private MovementIntent? movementIntent;
+    private readonly PredictionCollisionIndex movementCollision = new();
+    private NativePredictionSearch? movementSearch;
     /** At most one unconfirmed tile beyond the native reserved tile; never gameplay occupancy. */
     public ClientPosition? LocalMovementTarget { get; private set; }
 
@@ -62,23 +64,11 @@ public sealed partial class AuthoritativeClientModel
     }
 
     /** Native engine/path.cpp ordering, using only projected collision; never advances gameplay. */
-    private static ClientPosition? FirstVisualStep(Snapshot snapshot, PlayerSnapshot player,
+    private ClientPosition? FirstVisualStep(Snapshot snapshot, PlayerSnapshot player,
         ClientPosition origin, ClientPosition destination)
     {
-        if (origin == destination || (uint)origin.X > byte.MaxValue || (uint)origin.Y > byte.MaxValue
-            || (uint)destination.X > byte.MaxValue || (uint)destination.Y > byte.MaxValue) return null;
-        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
-        bool Corner(int x, int y) => geometry is null || (x >= 0 && y >= 0 && x < geometry.Width && y < geometry.Height
-            && !geometry.BlockedCells.Contains(y * geometry.Width + x)
-            && !geometry.StaticObjectBlockedCells.Contains(y * geometry.Width + x));
-        var path = NativeWalkPredictionPathfinder.FindPath(origin.X, origin.Y, destination.X, destination.Y,
-            NativeWalkPredictionPathfinder.MaximumPathLength,
-            (x, y) => IsProjectedMoveAvailable(snapshot, player, x, y),
-            (x, y, nx, ny) => x == nx || y == ny || Corner(nx, y) && Corner(x, ny));
-        if (path.Length == 0) return null;
-        var step = NativeWalkPredictionPathfinder.GetDisplacement(path[0]);
-        var next = new ClientPosition(origin.X + step.X, origin.Y + step.Y);
-        return IsProjectedMoveAvailable(snapshot, player, next.X, next.Y) ? next : null;
+        movementCollision.Prepare(snapshot, player);
+        return (movementSearch ??= new(movementCollision)).FirstStep(origin, destination);
     }
 
     private sealed record MovementIntent(ulong Sequence, uint Entity, uint Level, ClientPosition Target,

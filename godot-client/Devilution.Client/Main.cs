@@ -442,11 +442,35 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        var processStarted = FrameCostTimestamp();
         BeginFrameCostFrame();
+        if (processStarted == 0) processStarted = FrameCostTimestamp();
         var evidenceFrameTimestamp = frameEvidence is null
             ? 0
             : ClientFrameEvidenceRecorder.GetTimestamp();
         var evidenceSceneStartTimestamp = evidenceFrameTimestamp;
+        try { ProcessFrame(delta); } finally {
+            var evidenceSceneEndTimestamp = frameEvidence is null
+                ? 0
+                : ClientFrameEvidenceRecorder.GetTimestamp();
+            if (frameEvidence is { } evidence && evidenceFrameTimestamp != 0) {
+                if (client?.ServerIdentity is { } identity)
+                    evidence.ObserveServerIdentity(identity);
+                if (model.Snapshot is { } snapshot)
+                    evidence.ObserveParticipantCount(snapshot.Players.Count);
+                RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
+                evidence.RecordFrame(
+                    evidenceFrameTimestamp,
+                    evidenceSceneStartTimestamp,
+                    evidenceSceneEndTimestamp);
+                // Include capture/recording overhead in the full callback measurement too.
+                evidence.RecordProcessCost(evidenceSceneEndTimestamp, FrameCostElapsed(processStarted));
+            }
+        }
+    }
+
+    private void ProcessFrame(double delta)
+    {
         if (localSessionWarning is not null && client?.IsConnected == true) {
             bookmarkRetrySeconds += delta;
             if (bookmarkRetrySeconds >= 5) {
@@ -512,8 +536,8 @@ public partial class Main : Node2D
         hudMilliseconds += FrameCostElapsed(layoutStarted);
         hudAllocated += FrameCostAllocationSince(layoutAllocationStart);
         if (hud is not null) {
-            worldFrame.Position = hud.PlayArea.Position;
-            worldFrame.Size = hud.PlayArea.Size;
+            if (worldFrame.Position != hud.PlayArea.Position) worldFrame.Position = hud.PlayArea.Position;
+            if (worldFrame.Size != hud.PlayArea.Size) worldFrame.Size = hud.PlayArea.Size;
         }
         var worldStarted = FrameCostTimestamp();
         var worldAllocationStart = FrameCostAllocation();
@@ -548,20 +572,6 @@ public partial class Main : Node2D
         hudMilliseconds += FrameCostElapsed(hudStarted);
         hudAllocated += FrameCostAllocationSince(hudAllocationStart);
         feedback?.Apply(model, world);
-        var evidenceSceneEndTimestamp = frameEvidence is null
-            ? 0
-            : ClientFrameEvidenceRecorder.GetTimestamp();
-        if (frameEvidence is { } evidence && evidenceFrameTimestamp != 0) {
-            if (client?.ServerIdentity is { } identity)
-                evidence.ObserveServerIdentity(identity);
-            if (model.Snapshot is { } snapshot)
-                evidence.ObserveParticipantCount(snapshot.Players.Count);
-            RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
-            evidence.RecordFrame(
-                evidenceFrameTimestamp,
-                evidenceSceneStartTimestamp,
-                evidenceSceneEndTimestamp);
-        }
     }
 
     private bool RequestTownRestart()
@@ -576,6 +586,16 @@ public partial class Main : Node2D
     }
 
     public override void _UnhandledInput(InputEvent @event)
+    {
+        var inputStarted = FrameCostTimestamp();
+        var inputAllocation = FrameCostAllocation();
+        try { HandleUnhandledInput(@event); } finally {
+            inputMilliseconds += FrameCostElapsed(inputStarted);
+            inputAllocated += FrameCostAllocationSince(inputAllocation);
+        }
+    }
+
+    private void HandleUnhandledInput(InputEvent @event)
     {
         if (@event is InputEventKey toggle && toggle.Pressed && !toggle.Echo) {
             if (toggle.Keycode == Key.F3) {
@@ -1226,8 +1246,15 @@ public partial class Main : Node2D
         ObservedLastQueuedIntent = command.IntentCase;
         ObservedLastQueuedObjectEntityId = command.OperateObjectRequested?.ObjectEntityId ?? 0;
         if (command.MoveRequested is { } move) {
-            if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
-            else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);
+            var predictionStarted = FrameCostTimestamp();
+            var predictionAllocation = FrameCostAllocation();
+            try {
+                if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
+                else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);
+            } finally {
+                predictionMilliseconds += FrameCostElapsed(predictionStarted);
+                predictionAllocated += FrameCostAllocationSince(predictionAllocation);
+            }
         }
         return sequence;
     }

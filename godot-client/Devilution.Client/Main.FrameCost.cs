@@ -9,6 +9,8 @@ public partial class Main
     private readonly AuthoritativeSpellSourceCache frameSpellSources = new();
     private double admissionMilliseconds, worldMilliseconds, hudMilliseconds;
     private long admissionAllocated, worldAllocated, hudAllocated;
+    private double inputMilliseconds, predictionMilliseconds;
+    private long inputAllocated, predictionAllocated;
     private ClientTransportAllocationObservation previousTransportAllocations;
     private bool renderTimeMeasurementEnabled;
     private bool normalFrameCaptureAttempted;
@@ -59,7 +61,13 @@ public partial class Main
             Math.Max(0, transport.SnapshotCount - previous.SnapshotCount),
             Math.Max(0, transport.SnapshotWireBytes - previous.SnapshotWireBytes),
             Math.Max(0, transport.DecodeAllocatedBytes - previous.DecodeAllocatedBytes),
-            Math.Max(0, transport.ProcessingAllocatedBytes - previous.ProcessingAllocatedBytes)));
+            Math.Max(0, transport.ProcessingAllocatedBytes - previous.ProcessingAllocatedBytes),
+            0, inputMilliseconds, predictionMilliseconds,
+            renderTimeMeasurementEnabled ? RenderingServer.GetFrameSetupTimeCpu() : null,
+            inputAllocated, predictionAllocated));
+        // Input callbacks can precede _Process; consume here instead of resetting them at frame start.
+        inputMilliseconds = predictionMilliseconds = 0;
+        inputAllocated = predictionAllocated = 0;
     }
 
 }

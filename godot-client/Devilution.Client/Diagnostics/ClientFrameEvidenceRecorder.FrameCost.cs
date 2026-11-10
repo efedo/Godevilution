@@ -18,7 +18,9 @@ public sealed partial class ClientFrameEvidenceRecorder
     private double? costCpuStart;
     private int costFrames;
     private double costAdmission, costWorld, costHud, costDraw, costDrawCalls, costRenderCpu, costRenderGpu;
-    private int costRenderSamples;
+    private int costRenderSamples, costFrameSetupSamples;
+    private double costProcess, costInput, costPrediction, costFrameSetup;
+    private long costInputBytes, costPredictionBytes;
 
     /** Aggregates real process/renderer observations once per second; no gameplay data is retained. */
     public void RecordFrameCost(long timestamp, ClientFrameCostMetrics metrics)
@@ -42,10 +44,22 @@ public sealed partial class ClientFrameEvidenceRecorder
         costHudBytes += metrics.HudUpdateAllocatedBytes; costDrawBytes += metrics.DrawAllocatedBytes;
         costSnapshots += metrics.SnapshotsReceived; costSnapshotBytes += metrics.SnapshotWireBytesReceived;
         costDecodeBytes += metrics.SnapshotDecodeAllocatedBytes; costProcessingBytes += metrics.SnapshotProcessingAllocatedBytes;
+        // Process includes admission/world/HUD; input and prediction can overlap it or each other.
+        costProcess += metrics.ProcessMilliseconds; costInput += metrics.InputMilliseconds;
+        costPrediction += metrics.PredictionMilliseconds;
+        costInputBytes += metrics.InputAllocatedBytes; costPredictionBytes += metrics.PredictionAllocatedBytes;
+        if (metrics.RenderFrameSetupCpuMilliseconds is { } setup) { costFrameSetup += setup; costFrameSetupSamples++; }
         costTerrain += metrics.TerrainSubmissions; costDrawCalls += metrics.RenderDrawCalls;
         if (metrics.ViewportRenderCpuMilliseconds is { } cpu && metrics.ViewportRenderGpuMilliseconds is { } gpu) {
             costRenderCpu += cpu; costRenderGpu += gpu; costRenderSamples++;
         }
+    }
+
+    /** Completes the callback after recording, so its own capture overhead is accounted for. */
+    public void RecordProcessCost(long timestamp, double milliseconds)
+    {
+        if (stopped || !awaitingWorldAdmission && (timestamp < activeAtTimestamp || timestamp >= stopAtTimestamp)) return;
+        costProcess += milliseconds;
     }
 
     private void FlushFrameCosts(long timestamp)
@@ -74,13 +88,18 @@ public sealed partial class ClientFrameEvidenceRecorder
             costAdmissionBytes / seconds, costWorldBytes / seconds, costHudBytes / seconds, costDrawBytes / seconds,
             (gen0 - costGen0) / seconds, (gen1 - costGen1) / seconds, (gen2 - costGen2) / seconds,
             Math.Max(0, pause - costPauseStart) / (double)TimeSpan.TicksPerMillisecond / seconds,
-            costSnapshots / seconds, costSnapshotBytes / seconds, costDecodeBytes / seconds, costProcessingBytes / seconds));
+            costSnapshots / seconds, costSnapshotBytes / seconds, costDecodeBytes / seconds, costProcessingBytes / seconds,
+            costProcess / costFrames, costInput / costFrames, costPrediction / costFrames,
+            costFrameSetupSamples == 0 ? null : costFrameSetup / costFrameSetupSamples,
+            costInputBytes / seconds, costPredictionBytes / seconds));
         costWindowStart = timestamp; costAllocatedStart = allocated; costMainAllocatedStart = mainAllocated; costCpuStart = cpu;
         costThread = Environment.CurrentManagedThreadId; costGen0 = gen0; costGen1 = gen1; costGen2 = gen2; costPauseStart = pause;
         costFrames = 0; costAdmission = costWorld = costHud = costDraw = costDrawCalls = costRenderCpu = costRenderGpu = 0;
         costAdmissionBytes = costWorldBytes = costHudBytes = costDrawBytes = 0;
         costSnapshots = costSnapshotBytes = costDecodeBytes = costProcessingBytes = 0;
-        costTerrain = 0; costRenderSamples = 0;
+        costTerrain = 0; costRenderSamples = costFrameSetupSamples = 0;
+        costProcess = costInput = costPrediction = costFrameSetup = 0;
+        costInputBytes = costPredictionBytes = 0;
     }
 }
 
@@ -89,7 +108,9 @@ public readonly record struct ClientFrameCostMetrics(double SnapshotAdmissionMil
     double? ViewportRenderCpuMilliseconds, double? ViewportRenderGpuMilliseconds,
     long SnapshotAdmissionAllocatedBytes = 0, long WorldUpdateAllocatedBytes = 0, long HudUpdateAllocatedBytes = 0,
     long DrawAllocatedBytes = 0, long SnapshotsReceived = 0, long SnapshotWireBytesReceived = 0,
-    long SnapshotDecodeAllocatedBytes = 0, long SnapshotProcessingAllocatedBytes = 0);
+    long SnapshotDecodeAllocatedBytes = 0, long SnapshotProcessingAllocatedBytes = 0,
+    double ProcessMilliseconds = 0, double InputMilliseconds = 0, double PredictionMilliseconds = 0,
+    double? RenderFrameSetupCpuMilliseconds = null, long InputAllocatedBytes = 0, long PredictionAllocatedBytes = 0);
 
 public sealed record ClientSecondFrameCostSample(double StartSeconds, double DurationSeconds, double FramesPerSecond,
     int? FrameCap, string? VsyncMode, double SnapshotAdmissionMillisecondsPerFrame, double WorldUpdateMillisecondsPerFrame,
@@ -101,4 +122,7 @@ public sealed record ClientSecondFrameCostSample(double StartSeconds, double Dur
     double HudUpdateAllocatedBytesPerSecond = 0, double DrawAllocatedBytesPerSecond = 0,
     double Gen0CollectionsPerSecond = 0, double Gen1CollectionsPerSecond = 0, double Gen2CollectionsPerSecond = 0,
     double GcPauseMillisecondsPerSecond = 0, double SnapshotsReceivedPerSecond = 0, double SnapshotWireBytesPerSecond = 0,
-    double SnapshotDecodeAllocatedBytesPerSecond = 0, double SnapshotProcessingAllocatedBytesPerSecond = 0);
+    double SnapshotDecodeAllocatedBytesPerSecond = 0, double SnapshotProcessingAllocatedBytesPerSecond = 0,
+    double ProcessMillisecondsPerFrame = 0, double InputMillisecondsPerFrame = 0, double PredictionMillisecondsPerFrame = 0,
+    double? RenderFrameSetupCpuMillisecondsPerFrame = null, double InputAllocatedBytesPerSecond = 0,
+    double PredictionAllocatedBytesPerSecond = 0);

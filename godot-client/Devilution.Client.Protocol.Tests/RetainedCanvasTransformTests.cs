@@ -1,0 +1,45 @@
+using Godot;
+using Xunit;
+
+namespace Devilution.Client
+{
+    public partial class WorldPresentation
+    {
+        // The linked production guard runs without loading the Godot native runtime.
+        private sealed partial class RetainedSceneCanvas
+        {
+            internal int Assignments;
+            private Vector2 position;
+            internal Vector2 Position { get => position; set { position = value; Assignments++; } }
+        }
+
+        internal static (int Assignments, long Allocated, Vector2 Position) ExerciseCanvasTransforms()
+        {
+            var canvas = new RetainedSceneCanvas();
+            canvas.SetRetainedPosition(new(0, 0));
+            canvas.SetRetainedPosition(new(0, 0)); // Warm the value equality operator.
+            var allocated = GC.GetAllocatedBytesForCurrentThread();
+            for (var frame = 0; frame < 4096; frame++) canvas.SetRetainedPosition(new(0, 0));
+            allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+            canvas.SetRetainedPosition(new(12.5f, -4));
+            canvas.SetRetainedPosition(new(12.5f, -4));
+            canvas.SetRetainedPosition(new(0, 0));
+            return (canvas.Assignments, allocated, canvas.Position);
+        }
+    }
+}
+
+namespace Devilution.Client.Protocol.Tests
+{
+    public sealed class RetainedCanvasTransformTests
+    {
+        [Fact]
+        public void IdleFramesSkipNativeTransformNotificationsAndMovingFramesKeepExactPositions()
+        {
+            var result = WorldPresentation.ExerciseCanvasTransforms();
+            Assert.Equal(3, result.Assignments);
+            Assert.Equal(0, result.Allocated);
+            Assert.Equal(new Vector2(0, 0), result.Position);
+        }
+    }
+}
