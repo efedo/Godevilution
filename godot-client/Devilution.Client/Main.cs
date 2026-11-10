@@ -22,6 +22,7 @@ public partial class Main : Node2D
     private CommandLogAppender? commandLog;
     private WorldPresentation? world;
     private HudPresentation? hud;
+    private readonly ScreenBrightness screenBrightness = new();
     private PresentationFeedback? feedback;
     private CharacterSetupPresentation? characterSetup;
     private ClientConnectionOptions? connectionOptions;
@@ -69,7 +70,7 @@ public partial class Main : Node2D
     internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
     internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal bool ObservedSpellSourceArmed => spellSourceArmed;
-    internal int ObservedWorldBrightness => world?.Brightness ?? 0;
+    internal int ObservedWorldBrightness => screenBrightness.Brightness;
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
@@ -235,9 +236,11 @@ public partial class Main : Node2D
         world = new WorldPresentation();
         AddChild(worldFrame);
         worldFrame.AddChild(world);
-        LoadBrightness();
         hud = new HudPresentation();
         AddChild(hud);
+        AddChild(screenBrightness);
+        LoadBrightness();
+        hud.BrightnessChanged += ApplyBrightness;
         feedback = new PresentationFeedback();
         AddChild(feedback);
         characterSetup = new CharacterSetupPresentation { Name = "CharacterSetup" };
