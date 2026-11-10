@@ -105,8 +105,6 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
 
     public ClientTransportAllocationMetrics? AllocationMetrics { get; init; }
 
-    public uint ServerTickRateHz { get; private set; } = 20;
-
     public GameMode ServerGameMode { get; private set; } = GameMode.Unspecified;
 
     /** The negotiated scheduler; omitted or Unspecified values remain immediate. */
@@ -136,14 +134,23 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
     /** The most recently accepted server identity; retained across reconnects. */
     public AuthoritativeServerIdentity? ServerIdentity { get; private set; }
 
+    /** Faster servers and game speeds shorten a configured interval no further than this. */
+    public const double MinimumSnapshotPollIntervalMilliseconds = 10;
+
     /**
      * The configured interval holds at the 20 Hz reference rate and shortens on faster servers,
      * so a poll spans the same game time and commands decide on equally fresh state.
      */
     private double SnapshotPollIntervalMilliseconds
-        => (supportsClockOnlyProbes && IsClockGatedCommandScheduling && snapshotHasActiveActions
+    {
+        get {
+            var configured = supportsClockOnlyProbes && IsClockGatedCommandScheduling && snapshotHasActiveActions
                 ? Math.Min(options.SnapshotPollInterval.TotalMilliseconds, options.MovingSnapshotPollInterval.TotalMilliseconds)
-                : options.SnapshotPollInterval.TotalMilliseconds) * Math.Min(1d, 20d / ServerTickRateHz);
+                : options.SnapshotPollInterval.TotalMilliseconds;
+            return Math.Max(configured * Math.Min(1d, 20d / ServerTickRateHz),
+                Math.Min(configured, MinimumSnapshotPollIntervalMilliseconds));
+        }
+    }
 
     public ulong SuggestedCommandTick(ulong observedTick)
     {
@@ -239,6 +246,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             supportsLevelScopedIdleReferences = false;
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
+            ResetGameSpeedNegotiation();
             tcpClient = new TcpClient();
             var connectStartedAt = ElapsedMilliseconds;
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
@@ -271,6 +279,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 SupportsClockGatedCommands = true,
                 SupportsSnapshotReferences = options.UseSnapshotReferences,
                 SupportsLevelScopedIdleReferences = options.UseSnapshotReferences && options.UseLevelScopedIdleReferences,
+                SupportsGameSpeed = true,
             };
             if (options.RequestedCharacterClassId.HasValue) {
                 clientHello.RequestedCharacterClassId
@@ -327,7 +336,8 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             }
 
             SessionToken = hello.ServerHello.SessionToken;
-            ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
+            BaseTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
+            CaptureGameSpeedHello(hello.ServerHello);
             ServerGameMode = hello.ServerHello.GameMode;
             commandSchedulingMode = hello.ServerHello.CommandSchedulingMode;
             supportsClockOnlyProbes = commandSchedulingMode == CommandSchedulingMode.ClockGated
@@ -339,7 +349,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 hello.ServerHello.ProtocolSchemaVersion,
                 hello.ServerHello.ContentManifestHash,
                 hello.ServerHello.RulesetIdentityHash,
-                ServerTickRateHz,
+                BaseTickRateHz,
                 ServerGameMode);
 
             var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
@@ -526,6 +536,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         try {
             if (!IsConnected || stream is null)
                 return;
+            await SendDesiredGameSpeedAsync(cancellationToken);
 
             var now = ElapsedMilliseconds;
             var normalRetryMilliseconds = RetryTimeout.TotalMilliseconds;
@@ -1067,6 +1078,10 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.TimingReply) {
             if (connectionGeneration is { } epoch)
                 ObserveTimingReply(envelope.TimingReply, epoch);
+            return;
+        }
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.GameSpeedAck) {
+            ObserveGameSpeedAck(envelope.GameSpeedAck);
             return;
         }
         if (envelope.Snapshot is { } referenced && (referenced.GeometryUnchanged || referenced.StateUnchanged) && !supportsSnapshotReferences)

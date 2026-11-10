@@ -17,6 +17,8 @@ message Envelope {
 		SnapshotRequest snapshot_request = 32;
 		TimingReply timing_reply = 33;
 		ClockProbeRequest clock_probe_request = 34;
+		GameSpeedRequest game_speed_request = 35;
+		GameSpeedAck game_speed_ack = 36;
 		ProtocolError error = 40;
 	}
 
@@ -44,6 +46,33 @@ message ClockProbeRequest {
 	uint64 request_id = 1;
 }
 
+// Asks the host to pace its authoritative clock at multiplier times the
+// negotiated tick_rate_hz. Only sent when ServerHello.supports_game_speed and
+// game_speed_controllable are set. Gameplay per tick is unchanged.
+message GameSpeedRequest {
+	uint64 request_id = 1;
+	uint32 multiplier = 2;
+}
+
+enum GameSpeedRejectReason {
+	GAME_SPEED_REJECT_REASON_UNSPECIFIED = 0;
+	GAME_SPEED_REJECT_REASON_OUT_OF_RANGE = 1;
+	// Multiplayer speed is set by the host operator, not by participants.
+	GAME_SPEED_REJECT_REASON_HOST_CONTROLLED = 2;
+	// The host's clock cannot be scaled.
+	GAME_SPEED_REJECT_REASON_UNSUPPORTED = 3;
+}
+
+// Answers one GameSpeedRequest with the multiplier now in effect, accepted or not.
+message GameSpeedAck {
+	uint64 request_id = 1;
+	bool accepted = 2;
+	GameSpeedRejectReason reject_reason = 3;
+	uint32 multiplier = 4;
+	// First authoritative tick paced at multiplier.
+	uint64 effective_tick = 5;
+}
+
 message ClientHello {
 	string client_build_id = 1;
 	string protocol_schema_version = 2;
@@ -63,6 +92,8 @@ message ClientHello {
 	bool supports_snapshot_references = 9;
 	// Idle references may ignore frozen monster movement on other levels.
 	bool supports_level_scoped_idle_references = 10;
+	// Understands ServerHello.game_speed_multiplier and GameSpeedRequest.
+	bool supports_game_speed = 11;
 }
 
 message ServerHello {
@@ -91,6 +122,13 @@ message ServerHello {
 	string host_instance_id = 13;
 	bool supports_snapshot_references = 14;
 	bool supports_level_scoped_idle_references = 15;
+	// Game speed: the host paces tick_rate_hz * game_speed_multiplier ticks per
+	// second. Zero (older hosts) means 1x. Hosts above 1x refuse clients that do
+	// not set ClientHello.supports_game_speed.
+	bool supports_game_speed = 16;
+	uint32 game_speed_multiplier = 17;
+	// True when this session may send GameSpeedRequest (single-player sessions).
+	bool game_speed_controllable = 18;
 }
 
 enum CommandSchedulingMode {

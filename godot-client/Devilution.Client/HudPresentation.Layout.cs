@@ -129,7 +129,7 @@ public partial class HudPresentation
                 DestinationRequested?.Invoke(displayedDestinations[destinations.Selected]);
         };
         interactions.AddChild(Caption("ui.hud.world-help",
-            $"Left click: walk (hold to keep walking), attack or interact. Right click: attack, or cast the readied spell on an empty tile. A spell picked in {hudAssets.Localize("ui.hud.tab.hero", "Hero")} or with Q/E casts on left click until Escape. WASD: walk while held; arrows: one grid step. G / Shift+G: brightness. Movement, world clicks, or Escape cancel travel. After death settles, Escape or {hudAssets.Localize("ui.hud.tab.hero", "Hero")} / Restart in Town requests server recovery.",
+            $"Left click: walk (hold to keep walking), attack or interact. Right click: attack, or cast the readied spell on an empty tile. A spell picked in {hudAssets.Localize("ui.hud.tab.hero", "Hero")} or with Q/E casts on left click until Escape. WASD: walk while held; arrows: one grid step. G / Shift+G: brightness. + / -: game speed (1x-20x, single player). Movement, world clicks, or Escape cancel travel. After death settles, Escape or {hudAssets.Localize("ui.hud.tab.hero", "Hero")} / Restart in Town requests server recovery.",
             "WorldHelpCaption"));
         interactions.AddChild(Buttons(interactObject, disarmTrap, advanceQuest, questTownerInteraction, clearEvents));
         interactions.AddChild(dialog);

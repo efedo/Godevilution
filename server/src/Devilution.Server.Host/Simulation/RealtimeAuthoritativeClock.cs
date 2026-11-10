@@ -7,8 +7,9 @@ namespace Devilution.Server.Simulation;
  * happen under the authority lock, so time spent executing ticks counts against the next
  * read: one read grants at most `MaximumStepSeconds` of game time and drops any excess.
  * A host that falls behind therefore runs slower instead of jumping to catch up.
+ * A game-speed multiplier scales the paced rate only; the tick sequence is unchanged.
  */
-public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumableAuthoritativeClock
+public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumableAuthoritativeClock, IGameSpeedClock
 {
     /** One tick at the 20 Hz reference rate; timer jitter below this loses no game time. */
     public const double MaximumStepSeconds = 0.05;
@@ -16,7 +17,8 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
     private readonly object synchronization = new();
     private readonly TimeProvider time;
     private readonly uint tickRateHz;
-    private readonly ulong maximumStepTicks;
+    private ulong maximumStepTicks;
+    private uint speedMultiplier = 1;
     private long anchor;
     private ulong tick;
 
@@ -30,7 +32,7 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
         if (tickRateHz == 0)
             throw new ArgumentOutOfRangeException(nameof(tickRateHz));
         this.tickRateHz = tickRateHz;
-        maximumStepTicks = Math.Max(1UL, (ulong)(tickRateHz * MaximumStepSeconds));
+        maximumStepTicks = MaximumStepTicks(tickRateHz);
         time = timeProvider ?? TimeProvider.System;
         anchor = time.GetTimestamp();
     }
@@ -43,6 +45,44 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
                 return CurrentTickCore();
         }
     }
+
+    /** The negotiated base rate; the paced rate is this times `SpeedMultiplier`. */
+    public uint BaseTickRateHz => tickRateHz;
+
+    public uint SpeedMultiplier
+    {
+        get {
+            lock (synchronization)
+                return speedMultiplier;
+        }
+    }
+
+    /**
+     * Settles elapsed time at the old rate, then paces later ticks at the new one, keeping
+     * the fractional tick in progress. Returns the first tick paced at the new rate.
+     */
+    public ulong SetSpeedMultiplier(uint multiplier)
+    {
+        if (multiplier == 0 || (ulong)tickRateHz * multiplier > uint.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(multiplier));
+        lock (synchronization) {
+            var current = CurrentTickCore();
+            if (multiplier == speedMultiplier)
+                return current;
+            var oldRate = PacedRate;
+            speedMultiplier = multiplier;
+            var now = time.GetTimestamp();
+            var fraction = Math.Clamp(time.GetElapsedTime(anchor, now).TotalSeconds * oldRate, 0, 1);
+            anchor = now - (long)(fraction / PacedRate * time.TimestampFrequency);
+            maximumStepTicks = MaximumStepTicks(PacedRate);
+            return current;
+        }
+    }
+
+    private double PacedRate => (double)tickRateHz * speedMultiplier;
+
+    private static ulong MaximumStepTicks(double pacedRate)
+        => Math.Max(1UL, (ulong)(pacedRate * MaximumStepSeconds));
 
     /** Resumes immediately at a saved boundary without replaying offline time. */
     public void RestoreAtTick(ulong tick)
@@ -58,7 +98,8 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
     private ulong CurrentTickCore()
     {
         var now = time.GetTimestamp();
-        var due = (ulong)(time.GetElapsedTime(anchor, now).TotalSeconds * tickRateHz);
+        var rate = PacedRate;
+        var due = (ulong)(time.GetElapsedTime(anchor, now).TotalSeconds * rate);
         if (due == 0)
             return tick;
         if (due > maximumStepTicks) {
@@ -67,7 +108,7 @@ public sealed class RealtimeAuthoritativeClock : IAuthoritativeClock, IResumable
         } else {
             tick = checked(tick + due);
             // Keep the fractional tick so a steady reader runs at exactly the target rate.
-            anchor += (long)(due * (double)time.TimestampFrequency / tickRateHz);
+            anchor += (long)(due * (double)time.TimestampFrequency / rate);
         }
         return tick;
     }

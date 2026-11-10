@@ -11,19 +11,39 @@ namespace Devilution.Server.Commands;
  */
 public sealed class CommandAdmissionPolicy
 {
+    private readonly ulong gameplayCriticalLateToleranceTicks;
+    private readonly ulong nonCriticalLateToleranceTicks;
+    private readonly Func<uint>? gameSpeedMultiplier;
+
     public CommandAdmissionPolicy(ulong gameplayCriticalLateToleranceTicks = 0, ulong nonCriticalLateToleranceTicks = 2)
+        : this(gameplayCriticalLateToleranceTicks, nonCriticalLateToleranceTicks, null)
     {
-        GameplayCriticalLateToleranceTicks = gameplayCriticalLateToleranceTicks;
-        NonCriticalLateToleranceTicks = nonCriticalLateToleranceTicks;
     }
 
-    public ulong GameplayCriticalLateToleranceTicks { get; }
+    private CommandAdmissionPolicy(ulong gameplayCriticalLateToleranceTicks, ulong nonCriticalLateToleranceTicks,
+        Func<uint>? gameSpeedMultiplier)
+    {
+        this.gameplayCriticalLateToleranceTicks = gameplayCriticalLateToleranceTicks;
+        this.nonCriticalLateToleranceTicks = nonCriticalLateToleranceTicks;
+        this.gameSpeedMultiplier = gameSpeedMultiplier;
+    }
 
-    public ulong NonCriticalLateToleranceTicks { get; }
+    /** Live tolerances are wall time, so they scale with the current game speed. */
+    public ulong GameplayCriticalLateToleranceTicks => Scaled(gameplayCriticalLateToleranceTicks);
+
+    public ulong NonCriticalLateToleranceTicks => Scaled(nonCriticalLateToleranceTicks);
+
+    private ulong Scaled(ulong ticks)
+        => gameSpeedMultiplier is null ? ticks : checked(ticks * Math.Max(1U, gameSpeedMultiplier()));
 
     /** A live host's policy at its tick rate, tolerating `LiveLateToleranceSeconds` of lateness. */
     public static CommandAdmissionPolicy ForLiveHost(uint tickRateHz)
         => new(gameplayCriticalLateToleranceTicks: (ulong)LiveLateToleranceSeconds * tickRateHz);
+
+    /** A live host's policy whose paced rate is `tickRateHz` times the current game speed. */
+    public static CommandAdmissionPolicy ForLiveHost(uint tickRateHz, Func<uint> gameSpeedMultiplier)
+        => new((ulong)LiveLateToleranceSeconds * tickRateHz, 2, gameSpeedMultiplier
+            ?? throw new ArgumentNullException(nameof(gameSpeedMultiplier)));
 
     /** Matches the client's longest retry timeout, so only a stale resend is still refused. */
     public const uint LiveLateToleranceSeconds = 2;

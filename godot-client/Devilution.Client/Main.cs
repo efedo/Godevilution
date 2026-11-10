@@ -236,6 +236,7 @@ public partial class Main : Node2D
         AddChild(worldFrame);
         worldFrame.AddChild(world);
         LoadBrightness();
+        LoadGameSpeed();
         hud = new HudPresentation();
         AddChild(hud);
         feedback = new PresentationFeedback();
@@ -417,6 +418,7 @@ public partial class Main : Node2D
                 : null,
             CommandLog = commandLog ??= CreateCommandLog(),
         };
+        ApplyDesiredGameSpeed(newClient);
         client = newClient;
         activeConnectionOptions = options;
         connectionTask = ConnectAsync(newClient, generation, connectionLifetime.Token);
@@ -493,6 +495,7 @@ public partial class Main : Node2D
                 StartReconnect(force: false);
         }
 
+        ReportGameSpeed();
         DriveHeldEntityAttack();
         TrySubmitPendingWorldInteraction();
         UpdateHeldWalk(delta);
@@ -590,6 +593,11 @@ public partial class Main : Node2D
             }
             if (toggle.Keycode == Key.G) {
                 AdjustBrightness(toggle.ShiftPressed ? -1 : 1);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (IsGameSpeedKey(toggle.Keycode, out var speedDirection)) {
+                AdjustGameSpeed(speedDirection);
                 GetViewport().SetInputAsHandled();
                 return;
             }

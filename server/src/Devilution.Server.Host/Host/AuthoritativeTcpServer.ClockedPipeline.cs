@@ -134,6 +134,7 @@ public sealed partial class AuthoritativeTcpServer
             try { readFailure.Data["ClockGatedWriterCancellation"] = outcome; } catch { }
             ExceptionDispatchInfo.Capture(readFailure).Throw();
         } finally {
+            ReleaseGameSpeedOwner(lane);
             pipelineCancellation.Cancel();
             workChannel.Writer.TryComplete();
             while (workChannel.Reader.TryRead(out var abandoned)) {
@@ -283,6 +284,34 @@ public sealed partial class AuthoritativeTcpServer
                             workWriter,
                             responseBudget,
                             clockProbeWork,
+                            pipelineCancellation.Token);
+                    } catch (OperationCanceledException)
+                        when (pipelineCancellation.IsCancellationRequested) {
+                        return;
+                    }
+                    break;
+                case Envelope.PayloadOneofCase.GameSpeedRequest:
+                    try {
+                        var gameSpeedWork = ClockGatedResponseWork.GameSpeed(
+                            envelope.GameSpeedRequest,
+                            envelopeReadCompletedTimestamp);
+                        if (!responseBudget.TryReserve(1)) {
+                            await EnqueueClockGatedErrorAsync(
+                                workWriter,
+                                responseBudget,
+                                ProtocolErrorCode.InvalidMessage,
+                                "The clock-gated command response capacity is exhausted.",
+                                terminal: true,
+                                reserveResponseWeight: false,
+                                pipelineCancellation.Token);
+                            terminal = true;
+                            break;
+                        }
+                        gameSpeedWork.SetResponseWeight(1);
+                        await EnqueueClockGatedWorkAsync(
+                            workWriter,
+                            responseBudget,
+                            gameSpeedWork,
                             pipelineCancellation.Token);
                     } catch (OperationCanceledException)
                         when (pipelineCancellation.IsCancellationRequested) {
@@ -639,6 +668,14 @@ public sealed partial class AuthoritativeTcpServer
                                 pipelineCancellation.Token,
                                 currentTick);
                             break;
+                        case ClockGatedResponseKind.GameSpeed:
+                            await WriteClockGatedGameSpeedAsync(
+                                stream,
+                                work.GameSpeedRequest!,
+                                lane,
+                                scheduler,
+                                pipelineCancellation.Token);
+                            break;
                         case ClockGatedResponseKind.Snapshot:
                             currentTick = await WriteClockGatedSnapshotAsync(
                                 stream,
@@ -919,6 +956,39 @@ public sealed partial class AuthoritativeTcpServer
             RecordTimingReply(connectionOrdinal, entityId, envelopeReadCompletedTimestamp, requestId);
             EmitCommandTimingOutsideAuthorityLock();
             return currentTick;
+        } catch (ClockGatedTransportException) {
+            throw;
+        } catch (Exception exception) {
+            PoisonClockGatedLane(scheduler, lane, exception);
+            throw;
+        }
+    }
+
+    private async Task WriteClockGatedGameSpeedAsync(
+        Stream stream,
+        GameSpeedRequest request,
+        ClockGatedCommandLane lane,
+        ClockGatedCommandScheduler scheduler,
+        CancellationToken pipelineCancellationToken)
+    {
+        try {
+            GameSpeedAck acknowledgement;
+            IDisposable? authorityTurn = await EnterCohortAuthorityTurnAsync(
+                pipelineCancellationToken,
+                classifyClockedTransportFailure: true);
+            try {
+                acknowledgement = commandServer.WithSynchronizedState(() => {
+                    RequireClockedTransportActive(true, pipelineCancellationToken);
+                    RequireCohortHealthy();
+                    return ApplyGameSpeedRequestCore(lane, request);
+                });
+            } finally {
+                authorityTurn?.Dispose();
+            }
+            await WriteClockedTransportEnvelopeAsync(
+                stream,
+                new Envelope { GameSpeedAck = acknowledgement },
+                pipelineCancellationToken);
         } catch (ClockGatedTransportException) {
             throw;
         } catch (Exception exception) {
@@ -1307,6 +1377,7 @@ public sealed partial class AuthoritativeTcpServer
     {
         Command,
         ClockProbe,
+        GameSpeed,
         Snapshot,
         Error,
     }
@@ -1326,6 +1397,7 @@ public sealed partial class AuthoritativeTcpServer
         public ulong TimingRequestId { get; private init; }
         public long? EnvelopeReadCompletedTimestamp { get; private init; }
         public ProtocolError? Error { get; private init; }
+        public GameSpeedRequest? GameSpeedRequest { get; private init; }
         public bool Terminal { get; private init; }
         public int ResponseWeight { get; private set; }
         public IReadOnlyList<long> AdmissionTraceOrdinals { get; private init; } = [];
@@ -1370,6 +1442,14 @@ public sealed partial class AuthoritativeTcpServer
             long? envelopeReadCompletedTimestamp)
             => new(ClockGatedResponseKind.ClockProbe) {
                 TimingRequestId = requestId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+            };
+
+        public static ClockGatedResponseWork GameSpeed(
+            GameSpeedRequest request,
+            long? envelopeReadCompletedTimestamp)
+            => new(ClockGatedResponseKind.GameSpeed) {
+                GameSpeedRequest = request,
                 EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
             };
 

@@ -432,6 +432,7 @@ public sealed partial class AuthoritativeTcpServer
             serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
             serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
             serverHello.HostInstanceId = HostInstanceId;
+            ApplyGameSpeedHello(serverHello, hello);
 
             var tick = commandServer.CurrentTick;
             var snapshot = snapshotProvider?.CreateSnapshot(session.Id, session.EntityId, tick);

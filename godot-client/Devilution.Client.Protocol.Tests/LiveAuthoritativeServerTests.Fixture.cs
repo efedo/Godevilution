@@ -70,6 +70,8 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
         public IDisposable HoldClockForObservation(ulong? tick = null)
             => inProcess?.HoldClockForObservation(tick) ?? throw new InvalidOperationException("Clock observation requires an in-process host.");
         public ulong CurrentTick => inProcess?.CurrentTick ?? throw new InvalidOperationException("Clock observation requires an in-process host.");
+        public uint GameSpeedMultiplier => inProcess?.GameSpeedMultiplier ?? throw new InvalidOperationException("Game speed observation requires an in-process host.");
+        public int PendingCommandCount => inProcess?.PendingCommandCount ?? throw new InvalidOperationException("Command observation requires an in-process host.");
         public int ProcessId => RequireProcess().Id;
         public bool HasExited => process?.HasExited ?? inProcess!.HasStopped;
         public string SaveRoot => saveRoot;
@@ -98,10 +100,12 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
             bool useProcess = false,
             bool passiveMonsters = false,
             bool productionStartup = false,
-            bool controlledClock = false)
+            bool controlledClock = false,
+            uint? gameSpeed = null,
+            TimeProvider? clockTime = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (useProcess && controlledClock)
+            if (useProcess && (controlledClock || clockTime is not null))
                 throw new ArgumentException("Controlled clocks require an in-process fixture.", nameof(controlledClock));
             if (!useProcess && performanceOutput is not null)
                 throw new ArgumentException("Operator/performance tests require a real process.", nameof(useProcess));
@@ -154,6 +158,10 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
             arguments.Add("--tick-rate");
             arguments.Add((tickRateHz ?? LiveServerProcess.DefaultTickRateHz).ToString(
                 System.Globalization.CultureInfo.InvariantCulture));
+            if (gameSpeed.HasValue) {
+                arguments.Add("--game-speed");
+                arguments.Add(gameSpeed.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
             if (startingGoldOverride.HasValue) {
                 arguments.Add("--starting-gold");
                 arguments.Add(startingGoldOverride.Value.ToString(
@@ -216,7 +224,7 @@ public abstract class LiveAuthoritativeTestBase : IAsyncLifetime
             }
             if (!useProcess) {
                 try {
-                    var host = InProcessLiveServer.Start(repositoryRoot, arguments, cancellationToken, controlledClock);
+                    var host = InProcessLiveServer.Start(repositoryRoot, arguments, cancellationToken, controlledClock, clockTime);
                     var hosted = new StartedServer(null, saveRoot, deleteSaveRootOnDispose, ownsSaveRoot,
                         owner, cleanupRoot, host) { identity = host.Identity, startupComplete = true };
                     owner.ownedServers.Add(hosted);

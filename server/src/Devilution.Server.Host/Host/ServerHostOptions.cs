@@ -44,6 +44,12 @@ public sealed record ServerHostOptions(
 
     public const uint DefaultCohortCheckpointIntervalSeconds = 30;
 
+    /**
+     * Initial game-speed multiplier of the paced clock. Multiplayer hosts keep it for
+     * their lifetime; a single-player session may change it and returns to it on disconnect.
+     */
+    public uint GameSpeedMultiplier { get; init; } = 1;
+
     /** Most recent command receipts a cohort host keeps per participant. */
     public const int CohortCompletedCommandWindow = 256;
 
@@ -201,6 +207,15 @@ public sealed record ServerHostOptions(
                     return false;
                 }
                 current = current with { CohortCheckpointIntervalSeconds = checkpointInterval };
+                break;
+            case "--game-speed":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var gameSpeed)
+                    || !GameSpeedLimits.IsValid(gameSpeed)) {
+                    options = current;
+                    error = $"'{value}' is not a valid game speed ({GameSpeedLimits.Minimum}-{GameSpeedLimits.Maximum}).";
+                    return false;
+                }
+                current = current with { GameSpeedMultiplier = gameSpeed };
                 break;
             case "--performance-output":
                 if (string.IsNullOrWhiteSpace(value)) {
@@ -457,6 +472,7 @@ public sealed record ServerHostOptions(
           --build-id <id>              Server build identity
           --protocol-version <version> Protocol schema version
           --tick-rate <hz>             Authoritative simulation rate
+          --game-speed <n>             Initial game speed, 1-20x of the tick rate (default: 1); fixed in multiplayer
           --skip-floor-entry-warmup <bool> Skip background floor-entry preparation (default: false)
           --command-scheduling <mode>  immediate (default) or clock-gated; requires capable clients
           --starting-gold <amount>     Override content-defined initial wallet

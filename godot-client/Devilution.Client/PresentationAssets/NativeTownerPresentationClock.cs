@@ -4,6 +4,9 @@ namespace Devilution.Client.PresentationAssets;
 public sealed class NativeTownerPresentationClock
 {
     public const double MaximumFrameSeconds = 0.25;
+
+    /** Highest paced rate followed: the 20 Hz reference at the maximum game speed. */
+    public const uint MaximumTickRateHz = 20 * 20;
     private bool active;
     public double Tick { get; private set; }
 
@@ -21,7 +24,7 @@ public sealed class NativeTownerPresentationClock
             return Tick;
         }
         if (connected && double.IsFinite(delta) && delta > 0)
-            Tick += Math.Min(delta, MaximumFrameSeconds) * Math.Clamp(tickRateHz, 1U, 120U);
+            Tick += Math.Min(delta, MaximumFrameSeconds) * Math.Clamp(tickRateHz, 1U, MaximumTickRateHz);
         return Tick;
     }
 }

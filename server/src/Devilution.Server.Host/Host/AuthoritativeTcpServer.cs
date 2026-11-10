@@ -368,6 +368,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             throw new InvalidOperationException("The server has already started.");
 
         ValidateSessionRestorePolicyForStart();
+        if (DefaultGameSpeedMultiplier != CurrentGameSpeedMultiplier)
+            (SpeedClock ?? throw new InvalidOperationException("This host clock does not support game speed."))
+                .SetSpeedMultiplier(DefaultGameSpeedMultiplier);
 
         var startupCancellation = new CancellationTokenSource();
         try {
@@ -663,6 +666,11 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 return;
             }
 
+            if (ValidateGameSpeedPeer(helloEnvelope.ClientHello) is { } gameSpeedRejection) {
+                await EnvelopeCodec.WriteAsync(stream, new Envelope { Error = gameSpeedRejection }, cancellationToken);
+                return;
+            }
+
             if (helloEnvelope.ClientHello.SupportsSnapshotReferences)
                 snapshotGeometryCaches.Add(stream, new Devilution.Protocol.AuthoritativeSnapshotGeometryCache(
                     helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences));
@@ -710,6 +718,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     admission.Hello!.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
                     admission.Hello.SupportsLevelScopedIdleReferences = admission.Hello.SupportsSnapshotReferences
                         && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;
+                    ApplyGameSpeedHello(admission.Hello, helloEnvelope.ClientHello);
                     await EnvelopeCodec.WriteAsync(
                         stream,
                         new Envelope { ServerHello = admission.Hello! },
@@ -745,6 +754,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
                     serverHello.SupportsLevelScopedIdleReferences = serverHello.SupportsSnapshotReferences
                         && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;
+                    ApplyGameSpeedHello(serverHello, helloEnvelope.ClientHello);
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());

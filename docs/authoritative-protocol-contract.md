@@ -137,6 +137,20 @@ this field and retain their existing snapshot-boundary behavior. The scheduling
 clock is paced by the tick rate and slows when the host stalls, so a sample may
 correct the client's projection backward.
 
+Game speed (1x–20x) scales only the wall-clock pacing of the host clock: it runs
+`tick_rate_hz * game_speed_multiplier` ticks per second, every tick is unchanged and
+`tick_rate_hz` stays the base rate in identities and saves. A clock-gated host
+advertises `ServerHello.supports_game_speed` to clients that set
+`ClientHello.supports_game_speed`, with the current multiplier (zero from older hosts
+means 1x). `GameSpeedRequest` is answered in order by a `GameSpeedAck` carrying the
+multiplier now in effect and the first tick paced at it. Single-player sessions
+(`game_speed_controllable`) may change it; the host returns to its `--game-speed`
+default when that connection closes and the client re-requests on reconnect.
+Multiplayer speed is host-controlled: fixed by `--game-speed` for the host's
+lifetime, with requests refused as `HOST_CONTROLLED`. A host above 1x refuses
+clients that do not negotiate game speed. Late-command tolerances are wall time
+and scale with the multiplier.
+
 Acknowledgements are authoritative for accepted, rescheduled, rejected, and
 duplicate outcomes. Commands express intent only: clients never supply the
 resulting gold, health, damage, inventory placement, quest state, or world

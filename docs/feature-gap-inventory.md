@@ -458,7 +458,7 @@ native visual usability or a complete campaign/multiplayer release flow.
 | 10.21 | Accessibility | Partial | High-contrast controls and functional text/UI foundations exist. | Acceptance/implementation: readable scaling, focus/navigation, contrast and supported accessibility behavior throughout play. |
 | 10.22 | Localization | Partial | Pack-bound localized presentation strings and fallback support exist. | Implementation/acceptance: complete text/quest/service coverage, layout and supported language behavior. |
 | 10.23 | Resolution, scaling and window behavior | Partial | Godot layouts, camera/viewport and isolated visible checks exist. | Acceptance/parity: supported resolutions, aspect ratios, DPI/fullscreen and input alignment. |
-| 10.24 | Player settings and preferences | Unverified | Launcher and presentation-pack configuration exist. | Assessment/implementation: establish native-equivalent player-facing audio/input/display preferences and persistence. |
+| 10.24 | Player settings and preferences | Unverified | Launcher and presentation-pack configuration exist; brightness and game speed (1x–20x, server-paced, single player) are saved per user. | Assessment/implementation: establish native-equivalent player-facing audio/input/display preferences and persistence. |
 | 10.25 | Exit/cancellation and scene cleanup | Partial | Reviewed joined cleanup passes scene exit during handshake and active return, preserving disposal outcomes and preventing post-exit publication. | Acceptance: broader campaign/multiplayer/application failure paths and rendered flow. |
 
 Basis: [client scope](../godot-client/README.md),

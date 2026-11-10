@@ -213,7 +213,8 @@ internal static class Program
         var modulePlan = activeRuleset.ModulePlan;
         var ruleset = activeRuleset.Identity;
         var gameAdapter = new LeasedAuthoritativeGameHostAdapter(rulesetRuntime);
-        var commandServer = new AuthoritativeCommandServer(gameAdapter, CommandAdmissionPolicy.ForLiveHost(options.TickRateHz)) {
+        var commandServer = new AuthoritativeCommandServer(gameAdapter, CommandAdmissionPolicy.ForLiveHost(
+            options.TickRateHz, () => clock.SpeedMultiplier)) {
             CompletedCommandWindow = options.UseCohortPersistence && options.UseClockGatedCommandScheduling
                 ? ServerHostOptions.CohortCompletedCommandWindow : null,
             CommandLog = commandLog,
@@ -245,6 +246,7 @@ internal static class Program
                 ? null
                 : commandTimingSink.Enqueue,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
+            DefaultGameSpeedMultiplier = options.GameSpeedMultiplier,
             CohortStore = cohortStore,
             CommandLog = commandLog,
             // Immediate scheduling keeps its per-mutation checkpoints.

@@ -24,6 +24,8 @@ internal sealed class InProcessLiveServer : IDisposable
     public LiveServerProcess.Identity Identity { get; private set; }
     public bool HasStopped { get; private set; }
     public ulong CurrentTick => clock!.CurrentTick;
+    public uint GameSpeedMultiplier => clock!.SpeedMultiplier;
+    public int PendingCommandCount => server!.PendingCommandCount;
     public bool IsClockHeld => observationTime.IsHeld;
     public IDisposable HoldClockForObservation(ulong? tick = null)
     {
@@ -39,14 +41,16 @@ internal sealed class InProcessLiveServer : IDisposable
         clock!.RestoreAtTick(tick);
     }
 
-    public static InProcessLiveServer Start(string repositoryRoot, IReadOnlyList<string> arguments, CancellationToken cancellationToken, bool controlClock = false)
+    /** `clockTime` replaces wall time for the authoritative clock only, for deterministic pacing tests. */
+    public static InProcessLiveServer Start(string repositoryRoot, IReadOnlyList<string> arguments, CancellationToken cancellationToken, bool controlClock = false,
+        TimeProvider? clockTime = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!ServerHostOptions.TryParse(arguments, out var options, out var error))
             throw new ArgumentException(error, nameof(arguments));
         var host = new InProcessLiveServer();
         try {
-            host.StartCore(repositoryRoot, options, arguments, controlClock);
+            host.StartCore(repositoryRoot, options, arguments, controlClock, clockTime);
             cancellationToken.ThrowIfCancellationRequested();
             return host;
         } catch (Exception failure) {
@@ -56,7 +60,8 @@ internal sealed class InProcessLiveServer : IDisposable
         }
     }
 
-    private void StartCore(string repositoryRoot, ServerHostOptions options, IReadOnlyList<string> arguments, bool controlClock)
+    private void StartCore(string repositoryRoot, ServerHostOptions options, IReadOnlyList<string> arguments, bool controlClock,
+        TimeProvider? clockTime)
     {
         // Match Program's content, activation, clock, admission and persistence configuration.
         // Startup/operator/crash tests continue to run Program in a separate process.
@@ -90,7 +95,7 @@ internal sealed class InProcessLiveServer : IDisposable
         // Only their explicit game-condition observations advance this per-host clock.
         if (controlClock)
             controlledClock = observationTime.Hold();
-        clock = new RealtimeAuthoritativeClock(options.TickRateHz, observationTime);
+        clock = new RealtimeAuthoritativeClock(options.TickRateHz, clockTime ?? observationTime);
         var start = new AuthoritativePlayerStartConfiguration(options.StartingGold, options.StartingLife, options.StartingMana) {
             StatPoints = options.StartingStatPoints,
             StartingLevelId = options.StartingLevelId,
@@ -109,7 +114,8 @@ internal sealed class InProcessLiveServer : IDisposable
             commandLog = new HostCommandLog(Path.Combine(options.SaveRoot, "test-command-logs", Guid.NewGuid().ToString("N")),
                 arguments, seed);
         }
-        var commands = new AuthoritativeCommandServer(adapter, CommandAdmissionPolicy.ForLiveHost(options.TickRateHz)) {
+        var commands = new AuthoritativeCommandServer(adapter, CommandAdmissionPolicy.ForLiveHost(options.TickRateHz,
+            () => clock.SpeedMultiplier)) {
             CompletedCommandWindow = options.UseCohortPersistence && options.UseClockGatedCommandScheduling
                 ? ServerHostOptions.CohortCompletedCommandWindow : null,
             CommandLog = commandLog,
@@ -119,6 +125,7 @@ internal sealed class InProcessLiveServer : IDisposable
         server = new AuthoritativeTcpServer(commands, handshake, clock, adapter, options.Port, options.BindAddress,
             options.UseCohortPersistence ? null : new AuthoritativeSaveStore(options.SaveRoot)) {
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
+            DefaultGameSpeedMultiplier = options.GameSpeedMultiplier,
             CohortStore = cohortStore,
             CommandLog = commandLog,
             CohortCheckpointInterval = options.UseClockGatedCommandScheduling

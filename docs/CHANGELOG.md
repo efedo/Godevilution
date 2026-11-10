@@ -5,6 +5,13 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-10
+
+- Game speed (2.6c): `+`/`-` run a single-player host at 1x–20x through an additive, negotiated
+  `GameSpeedRequest`/`GameSpeedAck`; multiplayer speed is fixed by `--game-speed`. The host clock,
+  late tolerances, command lead, polling and presentation follow the scaled rate; ticks, saves and
+  checkpoints are unchanged, and hosts above 1x refuse clients without game-speed support.
+
 ## 2026-11-07
 
 - Responsive, smooth play (2.6a): the local player and both cameras share one fractional

@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-10 — Game speed (2.6c)
+
+Server 2313 passed (one load-only disposal timeout in `ClockGatedPipelineOrderingTests`, 3 of 3 alone),
+client 1949 passed. Same script on seed 7, L1: 1x and 20x states match at tick 400. Explicit headless
+20 s walk at 20x of 20 Hz: host 394–399 of 400 ticks/s (Town and L1), snapshot admission p95 0.4–1.2 ms,
+no `TooLate`, 148 of 155 Town steps on their tick (rest accepted 3–80 ticks late). Not run: Godot
+journeys at speed and a windowed check.
+
 ### 2026-11-07 â€” Responsive, smooth play (2.6a)
 
 Suites on `d739bbfc6`: server 2289, Diablo 3927, client 1779, all passing; native comparisons 5
