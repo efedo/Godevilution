@@ -53,6 +53,27 @@ public sealed class NativeTownerCatalogTests
     }
 
     [Fact]
+    public void EveryResidentAnimationUsesTheNativeNominalWidthFromTheSameTileLeftEdge()
+    {
+        Assert.True(NativeTownerCatalog.TryParse(CreateCatalogJson(), out var catalog, out var errors), string.Join("; ", errors));
+        var view = NativeSceneViewport.Create(800, 600, 112, 112, 62.25, 63.125);
+        foreach (var resident in catalog!.Residents) {
+            Assert.True(catalog.TryGetSprite(resident.SpriteId, out var sprite));
+            var anchor = view.CellBottomAnchor(resident.PositionX, resident.PositionY);
+            var nativeLeft = anchor.X - 32; // DrawMonsterHelper receives the left floor microtile's origin.
+            var nativeOffset = resident.TownerId == 9 ? -32 : -16; // towners.tsv: _tAnimWidth 128 or 96.
+            for (var direction = 0; direction < 8; direction++)
+                for (var tick = 0; tick < 400; tick++) {
+                    var frame = sprite.ResolveFrame(tick, direction);
+                    var bounds = NativeScenePlacement.ResolveResidentBounds(anchor.X, anchor.Y,
+                        sprite.AlignmentWidth, frame.Width, frame.Height);
+                    Assert.Equal(nativeLeft + nativeOffset, bounds.X, 8);
+                    Assert.Equal(anchor.Y, bounds.Y + bounds.Height - 1, 8);
+                }
+        }
+    }
+
+    [Fact]
     public void RejectsEmptyOversizedMalformedUnknownAndDuplicateCatalogJson()
     {
         Assert.False(NativeTownerCatalog.TryParse(null, out _, out var emptyErrors));
