@@ -74,25 +74,16 @@ public partial class WorldPresentation
         return bounds.IntersectsViewport(view.ViewportWidth, view.ViewportHeight);
     }
 
-    /** Sprite picking shares draw placement; transparent padding remains ordinary floor. */
+    /** Native pixel selection followed by native neighbouring-tile fallback. */
     public Vector2I? NativeTownerTileAt(Vector2 screenPosition)
     {
         if (snapshot?.Players.FirstOrDefault()?.LevelId != 0 || nativeSceneViewport is not { } view
             || !nativeTownerArtReady || nativeTownerAssets.Catalog is not { } catalog)
             return null;
         var point = ToLocal(screenPosition);
-        if (!view.ContainsViewportPoint(point.X, point.Y)) return null;
-        // Reverse ResolveIsometricCellOrder and the resident-slot tie break: the last drawn opaque sprite wins.
-        foreach (var resident in snapshot.NativeTownResidents.Where(row => row.LevelId == 0)
-                     .OrderByDescending(row => row.PositionX + row.PositionY).ThenByDescending(row => row.PositionX)
-                     .ThenByDescending(row => row.ResidentSlot)) {
-            if (!catalog.TryGetSprite(catalog.Residents[resident.ResidentSlot].SpriteId, out var sprite)) continue;
-            var frame = sprite.ResolveFrame(nativeTownerClock.Tick, resident.NativeDirection);
-            var anchor = view.CellBottomAnchor(resident.PositionX, resident.PositionY);
-            if (nativeTownerAssets.HitTest(frame, sprite.AlignmentWidth, (float)anchor.X, (float)anchor.Y, point.X, point.Y))
-                return new(resident.PositionX, resident.PositionY);
-        }
-        return null;
+        var resident = NativeTownerPicking.Select(view, snapshot.NativeTownResidents, catalog,
+            nativeTownerAssets.PickingMasks, nativeTownerClock.Tick, point.X, point.Y);
+        return resident is null ? null : new(resident.PositionX, resident.PositionY);
     }
 
     private void DrawGenericTowners()

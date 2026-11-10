@@ -67,6 +67,10 @@ public sealed class NativeSetupTests : IDisposable
         File.WriteAllText(Path.Combine(repository, "server", "src", "Devilution.Diablo", "Schema.cs"), "// new schema");
         Assert.NotEqual(changedInput, NativeSetupFingerprint.Compute(repository, archive));
 
+        var beforePicking = NativeSetupFingerprint.Compute(repository, archive);
+        File.WriteAllText(Path.Combine(repository, "godot-client", "Devilution.Client", "PresentationAssets", "NativeTownerPickingData.cs"), "// changed picking metadata");
+        Assert.NotEqual(beforePicking, NativeSetupFingerprint.Compute(repository, archive));
+
         var beforeArchive = NativeSetupFingerprint.Compute(repository, archive);
         File.WriteAllText(archive, "archive, patched");
         Assert.NotEqual(beforeArchive, NativeSetupFingerprint.Compute(repository, archive));
@@ -108,7 +112,7 @@ public sealed class NativeSetupTests : IDisposable
         var repository = Path.Combine(root, "repository");
         foreach (var input in NativeSetupFingerprint.InputPaths) {
             var path = Path.Combine(repository, input);
-            if (Path.GetExtension(input) is ".txt" or ".dun") {
+            if (Path.GetExtension(input) is ".txt" or ".dun" or ".cs") {
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                 File.WriteAllText(path, input);
             } else {

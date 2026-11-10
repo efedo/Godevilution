@@ -150,7 +150,7 @@ public sealed class NativeTownerCatalogTests
         Assert.Contains(residentErrors, error => error.Contains("canonical base roster", StringComparison.Ordinal));
     }
 
-    private static string CreateCatalogJson()
+    internal static string CreateCatalogJson()
     {
         var textDataRoot = Path.Combine(FindRepositoryRoot(), "assets", "txtdata");
         var canonicalMetadata = NativeTownerArtCompiler.ReadBaseTownSpriteMetadata(textDataRoot);

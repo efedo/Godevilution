@@ -78,9 +78,7 @@ internal sealed class NativeTownerAssets
     public bool TryGetTexture(int atlasId, out Texture2D texture)
         => textures.TryGetValue(atlasId, out texture!);
 
-    public bool HitTest(NativeTownerFrame frame, int alignmentWidth, double anchorX, double anchorY, double x, double y)
-        => opacity.TryGetValue(frame.AtlasId, out var mask)
-            && mask.HitTest(frame, alignmentWidth, anchorX, anchorY, x, y);
+    public IReadOnlyDictionary<int, NativeTownerOpacityMask> PickingMasks => opacity;
 
     public NativeTownerPackObservation ObservePack()
         => new(manifestPath, catalog is not null, catalog?.PackId, contentHash, fingerprint,
@@ -120,8 +118,16 @@ internal sealed class NativeTownerAssets
                 textures.Clear(); opacity.Clear();
                 return false;
             }
-            image.Convert(Image.Format.Rgba8);
-            opacity.Add(atlas.Id, new NativeTownerOpacityMask(atlas.Width, atlas.Height, image.GetData()));
+            try {
+                if (NativeTownerPickingData.TryReadPng(bytes, atlas.Width, atlas.Height, out var pickingData)) {
+                    image.Convert(Image.Format.Rgba8);
+                    opacity.Add(atlas.Id, new NativeTownerOpacityMask(atlas.Width, atlas.Height, image.GetData(), pickingData));
+                }
+            } catch (InvalidDataException failure) {
+                diagnostic = $"Native resident picking metadata refused: {failure.Message}";
+                textures.Clear(); opacity.Clear();
+                return false;
+            }
             textures.Add(atlas.Id, ImageTexture.CreateFromImage(image));
             loadedPaths.Add(path);
         }
