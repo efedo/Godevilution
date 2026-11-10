@@ -756,6 +756,14 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+            // A resident's upper body may cover another floor cell. Resolve its real
+            // sprite before the tile-based dialogue selectors, preserving drop/spell/Ctrl-walk input above.
+            if (!spellSourceArmed && world?.NativeTownerTileAt(mouse.Position) is { } residentTile
+                && (model.QuestTownerInteractionAt(residentTile.X, residentTile.Y) is not null
+                    || model.TownerGreetingAt(residentTile.X, residentTile.Y) is not null)) {
+                target = residentTile;
+                world.SetTargetPreview(target);
+            }
             if (world?.WorldItemEntityIdAt(target) is { } itemEntityId) {
                 QueueInteractionAfterMove(target, new Command {
                     PickupWorldItemRequested = new PickupWorldItemRequested {

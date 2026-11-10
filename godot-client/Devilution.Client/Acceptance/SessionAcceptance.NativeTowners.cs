@@ -195,13 +195,7 @@ public partial class SessionAcceptance
             var row = main.ObservedSnapshot!.NativeTownResidents.Single(row => row.ResidentSlot == draw.ResidentSlot);
             var metadata = catalog!.Residents[draw.ResidentSlot];
             Require(catalog.TryGetSprite(metadata.SpriteId, out var sprite), "The observed resident sprite is absent.");
-            var frame = sprite.ResolveFrame(draw.CosmeticTick, row.NativeDirection);
-            Require(draw.AnchorInsideViewport && draw.TownerId == row.TownerId && draw.PositionX == row.PositionX && draw.PositionY == row.PositionY
-                && draw.NativeDirection == row.NativeDirection
-                && draw.DirectionIndex == frame.DirectionIndex && draw.FrameIndex == frame.FrameIndex
-                && draw.AlignmentWidth == sprite.AlignmentWidth
-                && draw.DrawX == draw.AnchorX - (sprite.AlignmentWidth - 64) / 2f
-                && draw.DrawY == draw.AnchorY - frame.Height + 1,
+            Require(draw.MatchesNativeDraw(row, sprite),
                 "An actual resident draw changed its authoritative identity, native group, frame order or bottom anchor.");
         }
         Require(nativeTownerSamples.Count > 0, "No actual native resident raster draw was observed.");

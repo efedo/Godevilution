@@ -5,11 +5,6 @@ using Godot;
 
 namespace Devilution.Client;
 
-internal sealed record NativeTownerDrawObservation(int ResidentSlot, int TownerId, int PositionX, int PositionY,
-    int NativeDirection, bool NativeArt, bool GenericFallback, string? PackId, string? AtlasPath,
-    int DirectionIndex, int FrameIndex, int AlignmentWidth, float AnchorX, float AnchorY,
-    float DrawX, float DrawY, int Width, int Height, double CosmeticTick, string? Diagnostic, bool AnchorInsideViewport);
-
 public partial class WorldPresentation
 {
     private readonly NativeTownerAssets nativeTownerAssets = new();
@@ -77,6 +72,27 @@ public partial class WorldPresentation
             bounds = NativeScenePlacement.ResolveResidentBounds(anchor.X, anchor.Y, sprite.AlignmentWidth, frame.Width, frame.Height);
         }
         return bounds.IntersectsViewport(view.ViewportWidth, view.ViewportHeight);
+    }
+
+    /** Sprite picking shares draw placement; transparent padding remains ordinary floor. */
+    public Vector2I? NativeTownerTileAt(Vector2 screenPosition)
+    {
+        if (snapshot?.Players.FirstOrDefault()?.LevelId != 0 || nativeSceneViewport is not { } view
+            || !nativeTownerArtReady || nativeTownerAssets.Catalog is not { } catalog)
+            return null;
+        var point = ToLocal(screenPosition);
+        if (!view.ContainsViewportPoint(point.X, point.Y)) return null;
+        // Reverse ResolveIsometricCellOrder and the resident-slot tie break: the last drawn opaque sprite wins.
+        foreach (var resident in snapshot.NativeTownResidents.Where(row => row.LevelId == 0)
+                     .OrderByDescending(row => row.PositionX + row.PositionY).ThenByDescending(row => row.PositionX)
+                     .ThenByDescending(row => row.ResidentSlot)) {
+            if (!catalog.TryGetSprite(catalog.Residents[resident.ResidentSlot].SpriteId, out var sprite)) continue;
+            var frame = sprite.ResolveFrame(nativeTownerClock.Tick, resident.NativeDirection);
+            var anchor = view.CellBottomAnchor(resident.PositionX, resident.PositionY);
+            if (nativeTownerAssets.HitTest(frame, sprite.AlignmentWidth, (float)anchor.X, (float)anchor.Y, point.X, point.Y))
+                return new(resident.PositionX, resident.PositionY);
+        }
+        return null;
     }
 
     private void DrawGenericTowners()
