@@ -827,7 +827,6 @@ public partial class SessionAcceptance
         retreatSteps ??= new(NativeWarriorTargetApproaches);
         var attacks = 0;
         var approaches = 0;
-        var coverSteps = 0;
         var attacked = new HashSet<uint>();
         // Monsters whose click queued nothing or was refused, for example diagonally past a door corner.
         var unattackable = new HashSet<uint>();
@@ -861,9 +860,10 @@ public partial class SessionAcceptance
                 throw new NativeWarriorRetreatException(
                     $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
             if (adjacent is null) {
-                if (journeyPositioning.ShouldHold(ObserveJourneySafety(main))) {
-                    await HoldNativeWarriorSwarmAsync(main, seekCover: coverSteps++ < 2);
-                    approaches++;
+                var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
+                    .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
+                if (journeyPositioning.ShouldHold(ObserveJourneySafety(main), nearest)) {
+                    await HoldNativeWarriorSwarmAsync(main);
                     continue;
                 }
                 var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);

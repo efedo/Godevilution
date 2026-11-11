@@ -277,8 +277,10 @@ public partial class SessionAcceptance
                 bool AttackGoal(int x, int y) => AttackCell(target, x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
                 if (CanAttackNow(target)) return target;
-                if (!ranged && player.CharacterClassId == 0 && journeyPositioning.ShouldHold(ObserveJourneySafety(main))) {
+                if (!ranged && player.CharacterClassId == 0 && journeyPositioning.ShouldHold(ObserveJourneySafety(main),
+                        NativeMonsterDistance(player, target))) {
                     await HoldNativeWarriorSwarmAsync(main);
+                    movement--; // A bounded observation/cover pause is not a failed pathfinding step.
                     moved = true;
                     break;
                 }

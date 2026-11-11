@@ -48,4 +48,89 @@ public sealed class JourneyCombatPositioningTests
         geometry.WarpTriggers.Clear();
         Assert.Null(positioning.CoverStep(snapshot, player, geometry, (_, _) => true));
     }
+
+    private static JourneyCombatSafety.Observation ArcherState()
+        => new(1, 6, 100, 9000, 11776, 3, 0, 0, true, true, 200);
+
+    [Fact]
+    public void StationaryArchersCannotConsumeTheMovementBudgetWithoutTryingAClearPath()
+    {
+        var positioning = new JourneyCombatPositioning();
+        var state = ArcherState();
+        var snapshot = new Snapshot { Tick = state.Tick,
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 6, PositionX = 2, PositionY = 4, Life = state.Life, LifeMaximum = state.MaximumLife } },
+            LevelGeometry = { new LevelGeometrySnapshot { LevelId = 6, Width = 12, Height = 12 } },
+        };
+        for (uint index = 0; index < 3; index++) snapshot.Monsters.Add(new MonsterSnapshot {
+            EntityId = index + 2, LevelId = 6, Alive = true, PositionX = 7, PositionY = (int)index + 3,
+            HitPoints = 64, MaxHitPoints = 64, HitPointsQ6 = 4096, MaxHitPointsQ6 = 4096,
+        });
+        var model = new AuthoritativeClientModel();
+        var pauses = 0; var moves = 0;
+        // Even a search with just one movement remaining gets its real collision/pathfinding attempt.
+        for (var work = 0; work < 4 && moves == 0; work++) {
+            positioning.Observe(state, 2, 4);
+            snapshot.Tick = state.Tick;
+            model.Apply(new(Snapshot: snapshot));
+            if (positioning.ShouldHold(state)) {
+                pauses++;
+                state = state with { Tick = state.Tick + 5 };
+                continue;
+            }
+            model.TrackPredictedMoveTo(1, 6, 4);
+            moves++;
+        }
+        Assert.Equal(2, pauses);
+        Assert.Equal(1, moves);
+        Assert.Equal(new ClientPosition(3, 4), model.LocalMovementTarget);
+        // Re-entering the melee helper cannot replenish holding for the same stationary group.
+        for (var retry = 0; retry < 20; retry++) {
+            state = state with { Tick = state.Tick + 5 };
+            positioning.Observe(state, 2, 4);
+            Assert.False(positioning.ShouldHold(state));
+        }
+    }
+
+    [Fact]
+    public void EnemiesThatStopClosingReleaseApproachAfterOneHold()
+    {
+        var positioning = new JourneyCombatPositioning(); var state = ArcherState();
+        Assert.True(positioning.ShouldHold(state, 5));
+        state = state with { Tick = 105 };
+        Assert.False(positioning.ShouldHold(state, 5));
+        Assert.False(positioning.ShouldHold(state with { Tick = 110 }, 4));
+    }
+
+    [Fact]
+    public void ClosingMeleeGetsOnlyTwoPositioningOpportunities()
+    {
+        var positioning = new JourneyCombatPositioning(); var state = ArcherState();
+        Assert.True(positioning.ShouldHold(state, 6));
+        Assert.True(positioning.ShouldHold(state with { Tick = 105 }, 5));
+        Assert.False(positioning.ShouldHold(state with { Tick = 110 }, 4));
+    }
+
+    [Fact]
+    public void DamageFromRangeReleasesApproachEvenWhenEnemiesAreStillClosing()
+    {
+        var positioning = new JourneyCombatPositioning(); var state = ArcherState();
+        Assert.True(positioning.ShouldHold(state, 5));
+        Assert.False(positioning.ShouldHold(state with { Tick = 105, Life = 8500 }, 4));
+    }
+
+    [Theory]
+    [InlineData(2, 0, 6U)]
+    [InlineData(3, 1, 6U)]
+    [InlineData(0, 0, 0U)]
+    public void OnlyEndingTheSwarmOrPreparingInTownRearmsHolding(int nearby, int potions, uint level)
+    {
+        var positioning = new JourneyCombatPositioning(); var state = ArcherState();
+        Assert.True(positioning.ShouldHold(state));
+        Assert.True(positioning.ShouldHold(state));
+        Assert.False(positioning.ShouldHold(state));
+        positioning.Observe(state with { Tick = 105, Nearby = nearby, HealingItems = potions, Level = level }, 2, 4);
+        state = state with { Tick = 110 };
+        positioning.Observe(state, 2, 4);
+        Assert.True(positioning.ShouldHold(state));
+    }
 }

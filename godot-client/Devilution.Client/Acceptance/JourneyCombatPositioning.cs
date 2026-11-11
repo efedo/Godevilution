@@ -8,16 +8,37 @@ internal sealed class JourneyCombatPositioning
 {
     private readonly HashSet<(uint Level, int X, int Y)> visited = [];
     private readonly HashSet<(uint Level, int X, int Y)> cleared = [];
-    internal void Reset() { visited.Clear(); cleared.Clear(); }
+    private JourneyCombatSafety.Observation? lastHold;
+    private long? lastHoldDistance;
+    private int holds;
+    private bool approachReleased;
+    private void ResetHold() { lastHold = null; lastHoldDistance = null; holds = 0; approachReleased = false; }
+    internal void Reset() { visited.Clear(); cleared.Clear(); ResetHold(); }
     internal void Observe(JourneyCombatSafety.Observation state, int x, int y)
     {
+        if (!UnhealedSwarm(state) || lastHold is { } held && (held.Player != state.Player || held.Level != state.Level)) ResetHold();
         if (state.Level == 0) return;
         visited.Add((state.Level, x, y));
         if (state.Nearby == 0) cleared.Add((state.Level, x, y));
     }
 
-    internal bool ShouldHold(JourneyCombatSafety.Observation state)
-        => state.HealingItems == 0 && state.Nearby >= 3;
+    private static bool UnhealedSwarm(JourneyCombatSafety.Observation state)
+        => state.Level != 0 && state.HealingItems == 0 && state.Nearby >= 3;
+
+    /** Two positioning opportunities per swarm; stationary shooters must not suppress pathfinding. */
+    internal bool ShouldHold(JourneyCombatSafety.Observation state, long? nearestDistance = null)
+    {
+        if (!UnhealedSwarm(state)) { ResetHold(); return false; }
+        if (lastHold is { } old) {
+            if (old.Player != state.Player || old.Level != state.Level) ResetHold();
+            else if (state.Adjacent == 0 && state.Life < old.Life
+                || state.Tick > old.Tick && nearestDistance is { } distance && lastHoldDistance is { } previous && distance >= previous)
+                approachReleased = true;
+        }
+        if (approachReleased || holds >= 2) { approachReleased = true; return false; }
+        lastHold = state; lastHoldDistance = nearestDistance; holds++;
+        return true;
+    }
 
     internal (int X, int Y)? CoverStep(Snapshot snapshot, PlayerSnapshot player, LevelGeometrySnapshot geometry,
         Func<int, int, bool> open)
