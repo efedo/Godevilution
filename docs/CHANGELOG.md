@@ -18,6 +18,12 @@ contracts stay in their existing guides.
   -ClientBuildConfiguration Release` and `tools/run-auto-capture.ps1` (an automated windowed
   Town capture) support measurement. Older peers keep complete snapshots; saves are unchanged.
 
+- Brightness slider: the Hero panel shows a Brightness slider below High contrast with
+  DevilutionX's brightness range (0–100, step 5, default 0). It applies live and stays in
+  step with G / Shift+G; the tone curve is now a full-screen pass over the world, HUD and
+  menus, hidden at 0 so the default frame is unchanged. Settings files without the value
+  load 0.
+
 ## 2026-11-07
 
 - Responsive, smooth play (2.6a): the local player and both cameras share one fractional
