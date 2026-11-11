@@ -445,6 +445,17 @@ public partial class SessionAcceptance
                 await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
                 // Give the interrupted walk's last queued command time to return its receipt.
                 await WaitTicksWhile(main, () => main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence, 2);
+                if (main.ObservedSnapshot!.Players.Single().LevelId == player.LevelId
+                    && main.ObservedLastQueuedIntent == Command.IntentOneofCase.MoveRequested
+                    && main.ObservedCommandResult is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.InvalidTarget }) {
+                    await WaitForNativeCommandBoundaryAsync(main, "Rejected native stair path recovery");
+                    await AcceptanceRouteRecovery.ClearBlockedRouteAsync(ObserveNativeCommandBoundary(main),
+                        main.ObservedLastQueuedIntent, destination, async blocker => {
+                        GD.Print($"Native Warrior stair path to L{destination} blocked by {blocker.EntityId} "
+                            + $"at ({blocker.PositionX},{blocker.PositionY}); approaching and clearing");
+                        await ClearNativeWarriorThreatsAsync(main, player.LevelId, blocker.EntityId);
+                    });
+                }
             })) return;
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
@@ -708,7 +719,7 @@ public partial class SessionAcceptance
     }
 
     /** Kills every live monster within reach of the Warrior before it walks on. */
-    private async Task ClearNativeWarriorThreatsAsync(Main main, uint levelId)
+    private async Task ClearNativeWarriorThreatsAsync(Main main, uint levelId, uint? routeBlocker = null)
     {
         var skipped = new HashSet<uint>();
         for (var kills = 0; kills < 12; kills++) {
@@ -720,8 +731,10 @@ public partial class SessionAcceptance
                 return;
             var threat = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId
                     && !skipped.Contains(monster.EntityId)
-                    && NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 4)
-                .OrderBy(monster => NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY))
+                    && (monster.EntityId == routeBlocker
+                        || NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 4))
+                .OrderBy(monster => monster.EntityId == routeBlocker ? 0 : 1)
+                .ThenBy(monster => NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY))
                 .ThenBy(monster => monster.EntityId).FirstOrDefault();
             if (threat is null || skipped.Contains(threat.EntityId))
                 return;
