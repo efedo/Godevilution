@@ -798,7 +798,7 @@ public partial class SessionAcceptance
                 && !startingItems.Contains(item.EntityId)).Select(item => item.EntityId).ToArray();
         return new NativeKillEvidence(targetId, initial.MonsterId, experienceBefore,
             main.ObservedSnapshot!.Players.Single().Experience, corpse.PositionX, corpse.PositionY,
-            progressionCombat ? acceptedShots[^1].Sequence : main.ObservedCommandResult!.ClientSequence,
+            JourneyCombatSafety.KillAttackSequence(targetId, acceptedShots.Select(shot => (shot.TargetEntityId, shot.Sequence))),
             dropEntityIds, encounterCorpses,
             acceptedShots.ToArray(), localRefusals.ToArray(),
             progressionCombat ? "EncounterAreaCandidates" : "TargetCorpse");
@@ -1896,6 +1896,8 @@ public partial class SessionAcceptance
         var potionSeed = beltPotion?.ItemSeed ?? inventoryPotion.Item!.ItemSeed;
         var potionStableId = beltPotion?.State.StableItemId ?? inventoryPotion.Item!.State.StableItemId;
         var beforeCount = CountNativeHealingItemOccurrences(player, potionStableId, potionSeed);
+        _ = JourneySafetyDecision(main);
+        var damageAtDispatch = journeySafety.DamageObservations;
         var sequence = NativeProgressionCommandCursor(main);
         var expectedSequence = checked(sequence + 1);
         await Click(useButton.GetGlobalRect().GetCenter());
@@ -1929,13 +1931,11 @@ public partial class SessionAcceptance
         }
         var result = main.ObservedCommandResult;
         var after = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
-        var concurrentCombat = player.LevelId != 0;
+        _ = JourneySafetyDecision(main);
+        var concurrentDamage = journeySafety.DamageObservations > damageAtDispatch;
         var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;
-        // Damage can arrive between the accepted potion and the settled snapshot.
-        // Combat requires exact accepted consumption and survival, not net life gain.
-        var lifeOutcomeValid = concurrentCombat
-            ? beforeLife < player.LifeMaximum && after.Life > 0
-            : after.Life > beforeLife;
+        // Only an observed life loss or a fresh hit-recovery interval can mask the potion's net life gain.
+        var lifeOutcomeValid = journeySafety.HealingOutcomeValid(beforeLife, player.LifeMaximum, after.Life, damageAtDispatch);
         // A retransmitted command answers Duplicate with the original outcome.
         Require(result is not null && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence == expectedSequence
@@ -1945,7 +1945,7 @@ public partial class SessionAcceptance
             + $"matchingItems={beforeCount}->{CountNativeHealingItemOccurrences(after, potionStableId, potionSeed)}, "
             + $"life={beforeLife}->{after.Life}, "
             + $"seed={potionSeed}, stableId={potionStableId}; {DescribeNativeHealingState(main)}.");
-        if (concurrentCombat)
+        if (concurrentDamage)
             GD.Print($"Native L{player.LevelId} potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
                 + $"observedTick={main.ObservedSnapshot!.Tick}, life={beforeLife}->{after.Life}, "
                 + $"netLifeDelta={after.Life - beforeLife}, exactSeed={potionSeed}, stableId={potionStableId}.");

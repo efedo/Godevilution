@@ -232,4 +232,97 @@ public sealed class JourneyCombatSafetyTests
         Assert.False(safety.Observe(quiet).Drink);
         Assert.True(safety.Observe(quiet, (JourneySafetyActivity)activity).Drink);
     }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(8)]
+    public void PursuitWithoutPotionsCannotResetTheFloorRetreatBudget(int stepsPerAttempt)
+    {
+        var budget = new JourneyCombatSafety.RetreatBudget(8);
+        var state = State(life: 4000, potions: 0);
+        var attempts = 0;
+        var attacks = 0;
+        var error = Assert.Throws<InvalidOperationException>(() => {
+            while (attacks == 0) {
+                attempts++;
+                // A fresh target/approach loop still shares the floor's retreat work.
+                for (var approaches = 0; approaches < stepsPerAttempt; approaches++)
+                    budget.Charge(state with { Tick = state.Tick + (ulong)budget.Used });
+                if (attempts > 8) throw new InvalidOperationException("The pursuit loop never charged its retreats.");
+            }
+        });
+        Assert.Equal(8, budget.Used);
+        Assert.Equal(8 / stepsPerAttempt, attempts);
+        Assert.Equal(0, attacks);
+        Assert.Contains("out of potions", error.Message);
+        Assert.Contains("cannot disengage", error.Message);
+        Assert.Contains("L5", error.Message);
+    }
+
+    [Theory]
+    [InlineData(8000, false)]
+    [InlineData(9000, true)]
+    [InlineData(0, false)]
+    public void QuietDungeonPotionMustRestoreLifeEvenWithNearbyAttackers(int after, bool valid)
+    {
+        var safety = new JourneyCombatSafety();
+        safety.Observe(State(life: 8000, nearby: 7));
+        var baseline = safety.DamageObservations;
+        // A dungeon, Attack mode or missed attacks are not evidence of concurrent damage.
+        if (after > 0) safety.Observe(State(life: after, tick: 101, nearby: 7));
+        Assert.Equal(valid, safety.HealingOutcomeValid(8000, 10000, after, baseline));
+    }
+
+    [Fact]
+    public void LifeLossDuringQuickUseCanMaskItsNetGainButEarlierDamageCannot()
+    {
+        var safety = new JourneyCombatSafety();
+        safety.Observe(State());
+        safety.Observe(State(life: 8000, tick: 101));
+        var baseline = safety.DamageObservations;
+        safety.Observe(State(life: 8000, tick: 102));
+        Assert.False(safety.HealingOutcomeValid(8000, 10000, 8000, baseline));
+        safety.Observe(State(life: 6000, tick: 103));
+        safety.Observe(State(life: 7500, tick: 104));
+        Assert.True(safety.HealingOutcomeValid(8000, 10000, 7500, baseline));
+        Assert.False(safety.HealingOutcomeValid(8000, 10000, 0, baseline));
+        Assert.False(safety.HealingOutcomeValid(10000, 10000, 10000, baseline));
+    }
+
+    [Theory]
+    [InlineData(false, 110UL, true)]
+    [InlineData(true, 110UL, false)]
+    [InlineData(true, 120UL, true)]
+    public void OnlyFreshHitRecoveryDuringQuickUseCanMaskThePotionsLifeGain(bool alreadyHit, ulong afterEnd, bool valid)
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 8000) with { HitRecovery = alreadyHit, HitRecoveryEndTick = alreadyHit ? 110UL : 0 };
+        safety.Observe(state);
+        var baseline = safety.DamageObservations;
+        var after = state with { Tick = 101, HitRecovery = true, HitRecoveryEndTick = afterEnd };
+        safety.Observe(after);
+        var damage = safety.DamageObservations;
+        safety.Observe(after);
+        Assert.Equal(damage, safety.DamageObservations);
+        Assert.Equal(valid, safety.HealingOutcomeValid(8000, 10000, 8000, baseline));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task KillEvidenceUsesThePreservedAttackWhenHealingReplacesTheLatestReceipt(bool duringAttack)
+    {
+        var attack = new CommandResult { ClientSequence = 60, AppliedTick = 100, Status = CommandStatus.Accepted };
+        var latest = attack;
+        var preserved = await JourneyCombatSafety.PreserveReceiptAsync(() => Task.FromResult(latest), () => {
+            if (duringAttack) latest = new CommandResult { ClientSequence = 61, AppliedTick = 101, Status = CommandStatus.Accepted };
+            return Task.CompletedTask;
+        });
+        // Otherwise the arrow settlement uses a potion after the attack's action boundary.
+        if (!duringAttack) latest = new CommandResult { ClientSequence = 61, AppliedTick = 101, Status = CommandStatus.Accepted };
+        (uint Target, ulong Sequence)[] shots = [(123U, preserved.ClientSequence), (456U, 62UL)];
+        Assert.Equal(60UL, JourneyCombatSafety.KillAttackSequence(123U, shots));
+        Assert.NotEqual(latest.ClientSequence, JourneyCombatSafety.KillAttackSequence(123U, shots));
+        Assert.Throws<InvalidOperationException>(() => JourneyCombatSafety.KillAttackSequence(789U, shots));
+    }
 }

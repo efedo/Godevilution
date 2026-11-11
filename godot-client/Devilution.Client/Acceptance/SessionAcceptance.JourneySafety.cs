@@ -71,7 +71,8 @@ public partial class SessionAcceptance
             || AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence));
         return new(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, nearby, adjacent,
             NativeHealingSupply(player), admitted, AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount),
-            main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0);
+            main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0,
+            player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick);
     }
 
     private JourneyCombatSafety.Decision JourneySafetyDecision(Main main)

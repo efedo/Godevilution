@@ -7,14 +7,15 @@ internal sealed class JourneyCombatSafety
 {
     internal readonly record struct Observation(uint Player, uint Level, ulong Tick, int Life, int MaximumLife,
         int Nearby, int Adjacent, int HealingItems, bool CommandsAdmitted, bool Settled,
-        uint TickRateHz = 20, double RoundTripMilliseconds = 0);
+        uint TickRateHz = 20, double RoundTripMilliseconds = 0, bool HitRecovery = false, ulong HitRecoveryEndTick = 0);
     internal readonly record struct Decision(bool Drink, bool StopWalking, bool Retreat,
         double HealingThreshold, double LossPerTick, int Nearby, int Adjacent);
     private readonly (ulong Tick, ulong Interval, int Loss)[] losses = new (ulong, ulong, int)[32];
     private int count, cursor;
     private Observation? previous;
+    internal ulong DamageObservations { get; private set; }
 
-    internal void Reset() { previous = null; count = cursor = 0; }
+    internal void Reset() { previous = null; count = cursor = 0; DamageObservations = 0; }
 
     internal Decision Observe(Observation state, JourneySafetyActivity activity = JourneySafetyActivity.Combat)
     {
@@ -22,10 +23,14 @@ internal sealed class JourneyCombatSafety
         if (previous is not { } old || old.Player != state.Player || old.Level != state.Level
             || old.MaximumLife != state.MaximumLife || state.Tick < old.Tick) {
             count = cursor = 0;
-        } else if (state.Tick > old.Tick && state.Life < old.Life) {
-            losses[cursor] = (state.Tick, state.Tick - old.Tick, old.Life - state.Life);
-            cursor = (cursor + 1) % losses.Length;
-            count = Math.Min(losses.Length, count + 1);
+        } else {
+            if (state.Life < old.Life || state.HitRecovery && (!old.HitRecovery || state.HitRecoveryEndTick > old.HitRecoveryEndTick))
+                DamageObservations++;
+            if (state.Tick > old.Tick && state.Life < old.Life) {
+                losses[cursor] = (state.Tick, state.Tick - old.Tick, old.Life - state.Life);
+                cursor = (cursor + 1) % losses.Length;
+                count = Math.Min(losses.Length, count + 1);
+            }
         }
         previous = state;
         if (state.Level == 0 || state.MaximumLife <= 0)
@@ -67,6 +72,33 @@ internal sealed class JourneyCombatSafety
             throw new InvalidOperationException($"Journey safety: the character died at tick {state.Tick}; "
                 + $"entity={state.Player}, level={state.Level}, life={state.Life}/{state.MaximumLife}, "
                 + $"nearby={state.Nearby}, adjacent={state.Adjacent}, potions={state.HealingItems}.");
+    }
+
+    /** Dungeon membership or nearby attackers alone cannot excuse a potion with no observed effect. */
+    internal bool HealingOutcomeValid(int before, int maximum, int after, ulong damageAtDispatch)
+        => after > before || DamageObservations > damageAtDispatch && before < maximum && after > 0;
+
+    /** Shared by floor attempts: selecting the pursuer again must not replenish retreat work. */
+    internal sealed class RetreatBudget(int maximumSteps)
+    {
+        internal int Used { get; private set; }
+        internal void Charge(Observation state)
+        {
+            if (++Used >= maximumSteps)
+                throw new InvalidOperationException($"Native Warrior cannot disengage on L{state.Level} after {Used}/{maximumSteps} retreat steps; "
+                    + (state.HealingItems == 0 ? "out of potions" : $"potions={state.HealingItems}")
+                    + $", life={state.Life}/{state.MaximumLife}, nearby={state.Nearby}, tick={state.Tick}.");
+        }
+    }
+
+    /** A later quick-use receipt cannot identify the accepted attack that earned a kill. */
+    internal static ulong KillAttackSequence(uint target, IEnumerable<(uint Target, ulong Sequence)> acceptedShots)
+    {
+        ulong sequence = 0;
+        foreach (var shot in acceptedShots)
+            if (shot.Target == target && shot.Sequence > 0) sequence = shot.Sequence;
+        return sequence > 0 ? sequence
+            : throw new InvalidOperationException($"Native target {target} produced a kill without a preserved accepted attack receipt.");
     }
 
     /** Callers invoke this before planning the next action, never while validating an earlier command's receipt. */

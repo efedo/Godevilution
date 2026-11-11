@@ -730,6 +730,7 @@ public partial class SessionAcceptance
         var doorEvidence = new List<NativeDoorOperationEvidence>();
         var doorCommands = new Dictionary<uint, int>();
         var work = new NativeCombatWorkBudget();
+        var retreatSteps = new JourneyCombatSafety.RetreatBudget(NativeWarriorTargetApproaches);
         while (attacks < NativeWarriorAttacksPerFloor) {
             await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             MonsterSnapshot target;
@@ -759,7 +760,7 @@ public partial class SessionAcceptance
             int used;
             try {
                 (killed, used) = await AttackNativeWarriorTargetAsync(main, levelId, target.EntityId, NativeWarriorAttacksPerFloor - attacks,
-                    NativeWarriorPotionReserveOn(levelId));
+                    NativeWarriorPotionReserveOn(levelId), retreatSteps);
             } catch (NativeWarriorRetreatException retreat) when (retreats < NativeWarriorRetreats) {
                 retreats++;
                 GD.Print($"Native Warrior retreating from L{levelId} ({retreat.Message})");
@@ -795,8 +796,9 @@ public partial class SessionAcceptance
      * budget ends.
      */
     private async Task<(uint? Killed, int Attacks)> AttackNativeWarriorTargetAsync(Main main, uint levelId, uint targetId, int budget,
-        int reserve = 0)
+        int reserve = 0, JourneyCombatSafety.RetreatBudget? retreatSteps = null)
     {
+        retreatSteps ??= new(NativeWarriorTargetApproaches);
         var attacks = 0;
         var approaches = 0;
         var attacked = new HashSet<uint>();
@@ -807,7 +809,11 @@ public partial class SessionAcceptance
         while (attacks < budget && approaches < NativeWarriorTargetApproaches) {
             await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var danger = JourneySafetyDecision(main);
-            if (danger.Retreat && await TryJourneyRetreatStepAsync(main)) { approaches++; continue; }
+            if (danger.Retreat && await TryJourneyRetreatStepAsync(main)) {
+                retreatSteps.Charge(ObserveJourneySafety(main));
+                approaches++;
+                continue;
+            }
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0, $"The Warrior died on L{levelId} during combat; last swings [{string.Join("; ", swings.TakeLast(12))}]; "
