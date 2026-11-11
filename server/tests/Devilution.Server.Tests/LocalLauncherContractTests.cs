@@ -496,7 +496,8 @@ public sealed class LocalLauncherContractTests
         Assert.True(expectedNextSequence > secondIdleGuard && inputDispatch > expectedNextSequence);
         Assert.True(nextReceiptValidation > inputDispatch);
         Assert.Contains("expectedLocalQueuedSequence=0", handler, StringComparison.Ordinal);
-        Assert.Contains("activeMain.ObservedLastQueuedSequence != expectedSequence", handler, StringComparison.Ordinal);
+        // TooLate retries keep the intent's original sequence, so the guard checks intent correlation.
+        Assert.Contains("!activeMain.ObservedQueuedCommandMatchesIntent(expectedSequence)", handler, StringComparison.Ordinal);
     }
     [Fact]
     public void GodotPerformanceWorkloadIsOptInAndPreservesOrdinaryProfiles()
