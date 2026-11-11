@@ -93,6 +93,19 @@ Clients retain unresolved commands
 and retry after an adaptive acknowledgement deadline. A duplicate returns the
 original receipt and applied tick without mutating state twice.
 
+A ledger-backed `Rejected/TooLate` (or its `Duplicate/TooLate` replay) may start
+at most two fresh commands for the same latest input: store/stash open or close,
+move, operate, talk, pickup or an unconsumed item. Each new attempt has its own
+sequence and freezes a newly computed adaptive requested tick; retransmissions
+of that attempt retain both fields. A retired receipt with no server receipt
+sequence is uncertain and never authorizes this retry. The client checks the
+following model-admitted snapshot, unchanged actor/level/rules and target/item
+identity, and abandons superseded inputs. The snapshot wait is bounded to two
+seconds. `ApplyMessageToModel` supplies this admitted state; consumers that bypass
+it retain terminal refusals. Local-only retry correlation keeps intent waiters
+pending until the actual terminal receipt; raw wire ACKs and their validation
+remain unchanged. A final `TooLate` or any other rejection remains a failure.
+
 Clock calibration may correlate a `SnapshotRequest` with a nonzero timing
 request ID. Its `TimingReply` follows successful event and snapshot validation,
 publication, and response writes; a failed snapshot boundary sends no reply.

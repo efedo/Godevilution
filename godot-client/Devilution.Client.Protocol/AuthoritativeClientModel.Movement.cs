@@ -32,6 +32,12 @@ public sealed partial class AuthoritativeClientModel
         RebuildMovementTarget();
     }
 
+    private void RemapMovementRetry(AuthoritativeCommandRetry retry)
+    {
+        if (movementIntent is { } intent && intent.Sequence == retry.PreviousSequence)
+            movementIntent = intent with { Sequence = retry.ClientSequence };
+    }
+
     private void ObserveMovementResult(CommandResult result)
     {
         if (movementIntent is not { } intent || intent.Sequence != result.ClientSequence) return;

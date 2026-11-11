@@ -162,7 +162,7 @@ public partial class SessionAcceptance
         Require(pathCommands.Length > 0,
             "The actual continuation did not record an accepted ordinary world-click destination path.");
         var sequence = main.ObservedLastQueuedSequence;
-        Require(sequence > startingSequence && main.ObservedCommandResult?.ClientSequence == sequence,
+        Require(sequence > startingSequence && main.ObservedReceiptMatchesIntent(main.ObservedCommandResult, sequence),
             "The continuation Town checkpoint has no settled command cursor.");
         var townCheckpointState = new NativeDepthEntryTownCheckpoint(
             1,

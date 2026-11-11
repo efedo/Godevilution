@@ -62,11 +62,13 @@ internal static class AcceptanceCommandBoundary
     internal static bool CommandSettled(Observation state, ulong sequence, string context)
     {
         RequireAlive(state, context);
-        return state.LastQueuedSequence == sequence && state.CommandsAdmitted && state.PlayerSettled;
+        return (state.LastQueuedSequence == sequence || AuthoritativeCommandOutcome.IsForIntent(state.Receipt,
+                state.ReceiptIntentSequence, sequence)) && state.CommandsAdmitted && state.PlayerSettled;
     }
 
     /** Keeps command admission separate from animation settlement: native quick-use can run during an action. */
-    internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount)
+    internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount,
+        ulong ReceiptIntentSequence = 0)
     {
         internal PlayerSnapshot? Player => Snapshot?.ParticipantCount == 1 ? Snapshot.Players[0] : null;
         internal bool CommandsAdmitted => Snapshot is not null && PendingCount == 0

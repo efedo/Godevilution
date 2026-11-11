@@ -120,7 +120,7 @@ public partial class SessionAcceptance
                 && ObservePlayer(moved) == (expectedLocal with { X = expectedLocal.X + 1 }),
             "The next genuinely new control settles beyond the restored receipt high-water.");
         var result = main.ObservedCommandResult!;
-        Require(result.ClientSequence == pendingSequence + 1 && IsAcceptedOrSuccessfulDuplicate(result)
+        Require(main.ObservedReceiptMatchesIntent(result, pendingSequence + 1) && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ServerReceiptSequence > original.ServerReceiptSequence && result.AppliedTick >= reconnectTick,
             "The next new control reused or regressed the restored receipt identity.");
         var movedLocal = ObservePlayer(main.ObservedSnapshot!.Players.Single(player => player.EntityId == previous.EntityId));

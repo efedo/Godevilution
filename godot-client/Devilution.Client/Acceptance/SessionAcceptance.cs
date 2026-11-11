@@ -502,7 +502,7 @@ public partial class SessionAcceptance : Node
             "The scene retained a stale disconnect error after receiving authoritative state.");
         await PressDown();
         await Until(() => main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
-            && result.ClientSequence == savedSequence + 1
+            && main.ObservedReceiptMatchesIntent(result, savedSequence + 1)
             && main.ObservedSnapshot!.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
             && player.PositionX == restored.PositionX && player.PositionY == restored.PositionY + 1,
             "Reconnect did not restore exactly-once authoritative movement with the next command sequence.");

@@ -81,7 +81,7 @@ public partial class SessionAcceptance
             await Click(main.ObservedTileScreenPosition(waypoint.X, waypoint.Y), walk: true);
             await AcceptedAndSettled(main, sequence, "Native object viewing walk");
             var arrived = main.ObservedSnapshot!.Players.Single();
-            Require(main.ObservedCommandResult!.ClientSequence == sequence + 1
+            Require(main.ObservedReceiptMatchesIntent(main.ObservedCommandResult!, sequence + 1)
                 && arrived.PositionX == waypoint.X && arrived.PositionY == waypoint.Y,
                 "The ordinary object-art waypoint did not accept its exact receipt and arrive.");
             Require(work < 63, "The native object-art approach exceeded its bounded work.");
@@ -95,7 +95,7 @@ public partial class SessionAcceptance
         await AcceptedAndSettled(main, prior, "Open native chest with optional original art");
         var after = FindNativeChest(main.ObservedSnapshot!, before.EntityId);
         var receipt = main.ObservedCommandResult!.Clone();
-        Require(receipt.ClientSequence == prior + 1 && after.NativeObjectId == before.NativeObjectId
+        Require(main.ObservedReceiptMatchesIntent(receipt, prior + 1) && after.NativeObjectId == before.NativeObjectId
             && after.Activated && !after.Destroyed && !after.NativeChestInteractable
             && after.AnimationFrame == before.AnimationFrame + 2 && HashProto(DepthGeometry(main, 1)) == geometry,
             "The ordinary native chest interaction changed its frame mapping, identity or collision geometry.");

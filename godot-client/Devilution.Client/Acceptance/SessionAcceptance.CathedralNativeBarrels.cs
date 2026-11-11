@@ -446,7 +446,7 @@ public partial class SessionAcceptance
                 var queued = main.ObservedLastQueuedSequence;
                 var player = snapshot?.Players.SingleOrDefault();
                 var conditionsHold = snapshot is not null && player is not null && result is not null
-                    && queued > 0 && result.ClientSequence == queued
+                    && queued > 0 && main.ObservedReceiptMatchesIntent(result, queued)
                     && AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result) && result.AppliedTick > 0
                     && snapshot.Tick >= result.AppliedTick
                     && main.ObservedPendingCommandCount == 0 && Settled(main)

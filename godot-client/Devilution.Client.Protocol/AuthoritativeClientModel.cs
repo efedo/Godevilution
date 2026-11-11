@@ -114,6 +114,9 @@ public sealed partial class AuthoritativeClientModel
 
     public CommandResult? LastCommandResult { get; private set; }
 
+    /** The original input sequence, while LastCommandResult always retains the actual server receipt identity. */
+    public ulong LastCommandIntentSequence { get; private set; }
+
     /** Successful receipt, including a late UI command matched to its frozen local send. */
     public bool LastCommandWasApplied { get; private set; }
 
@@ -369,15 +372,24 @@ public sealed partial class AuthoritativeClientModel
         if (message.Error is not null)
             LastError = message.Error.Detail;
 
+        if (message.CommandRetry is { } retry) {
+            if (predictedMoves.Remove(retry.PreviousSequence, out var prediction)) predictedMoves[retry.ClientSequence] = prediction;
+            RemapMovementRetry(retry);
+            RebuildPredictedPosition();
+        }
         if (message.Acknowledgement is not null) {
             AuthoritativeCommandAckValidator.Validate(message.Acknowledgement);
             if (message.Acknowledgement.Results.Count > 0) {
                 var latestResult = message.Acknowledgement.Results
+                    .Where(result => !AuthoritativeCommandOutcome.IsAwaitingRetry(result, message.AcknowledgedCommands))
                     .OrderBy(result => result.ClientSequence)
-                    .Last();
-                if (LastCommandResult is null
-                    || latestResult.ClientSequence >= LastCommandResult.ClientSequence) {
+                    .LastOrDefault();
+                if (latestResult is not null && (LastCommandResult is null
+                    || latestResult.ClientSequence >= LastCommandResult.ClientSequence)) {
+                    var previousIntent = LastCommandResult?.ClientSequence == latestResult.ClientSequence ? LastCommandIntentSequence : 0;
                     LastCommandResult = latestResult.Clone();
+                    LastCommandIntentSequence = message.AcknowledgedCommands?.FirstOrDefault(command => command.ClientSequence == latestResult.ClientSequence).IntentSequence ?? 0;
+                    if (LastCommandIntentSequence == 0) LastCommandIntentSequence = previousIntent != 0 ? previousIntent : latestResult.ClientSequence;
                     LastCommandWasApplied = AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(latestResult)
                         || message.AcknowledgedCommands?.Any(command =>
                             AuthoritativeCommandAckValidator.IsSuccessfulRescheduledInterfaceCommand(latestResult,
@@ -385,6 +397,7 @@ public sealed partial class AuthoritativeClientModel
                 }
             }
             foreach (var result in message.Acknowledgement.Results) {
+                if (AuthoritativeCommandOutcome.IsAwaitingRetry(result, message.AcknowledgedCommands)) continue;
                 predictedMoves.Remove(result.ClientSequence);
                 ObserveMovementResult(result);
             }

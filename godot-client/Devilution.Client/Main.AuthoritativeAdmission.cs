@@ -13,6 +13,12 @@ public partial class Main
         TaskCompletionSource<Exception?> Completion);
     private sealed record AdmissionRecoveryFailure(AuthoritativeClient Client, long Generation, string Detail);
 
+    /** A captured prior receipt cannot borrow correlation from the current command. */
+    internal bool ObservedReceiptMatchesIntent(Devilution.Protocol.V1.CommandResult? receipt, ulong expectedSequence)
+        => AuthoritativeCommandOutcome.IsForIntent(receipt,
+            receipt?.ClientSequence == model.LastCommandResult?.ClientSequence ? model.LastCommandIntentSequence : 0,
+            expectedSequence);
+
     private static bool NeedsTransportReconnect(AuthoritativeClient activeClient, Task? connection, Task? reconnect)
         => !activeClient.IsTransportConnected && (connection?.IsCompleted ?? true) && (reconnect?.IsCompleted ?? true);
 
@@ -37,6 +43,11 @@ public partial class Main
                     sessionStatusOverride = null;
                     recoveredEpoch = message.ConnectionAttemptEpoch != 0 ? message.ConnectionAttemptEpoch
                         : activeClient.InitialConnectionObservation!.AttemptEpoch;
+                }
+                if (message.CommandRetry is { } retry) {
+                    if (ObservedLastQueuedSequence == retry.PreviousSequence) ObservedLastQueuedSequence = retry.ClientSequence;
+                    routeTravel.ObserveRetry(retry);
+                    interactionTravel.ObserveRetry(retry);
                 }
                 if (message.Events is not null) observedEventBatchCount = checked(observedEventBatchCount + 1);
                 if (message.Acknowledgement is { } acknowledgement) {

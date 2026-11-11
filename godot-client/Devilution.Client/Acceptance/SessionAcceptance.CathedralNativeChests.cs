@@ -250,7 +250,7 @@ public partial class SessionAcceptance
                 "The duplicate native chest request did not settle.", stageSeconds: 12);
             var repeatResult = main.ObservedCommandResult!;
             Require(queuedAfterClick == checked(priorQueued + 1)
-                && repeatResult.ClientSequence == queuedAfterClick
+                && main.ObservedReceiptMatchesIntent(repeatResult, queuedAfterClick)
                 && (AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(repeatResult)
                     || (repeatResult.Status == CommandStatus.Rejected
                         && repeatResult.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget)),
@@ -478,7 +478,8 @@ public partial class SessionAcceptance
     }
 
     private static AcceptanceCommandBoundary.Observation ObserveNativeCommandBoundary(Main main)
-        => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount);
+        => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount,
+            main.ObservedCommandIntentSequence);
 
     private Task PrepareNativeObjectAsync(Main main, string context)
         => AcceptanceCommandBoundary.PrepareObjectAsync(

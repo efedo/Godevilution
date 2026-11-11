@@ -147,7 +147,7 @@ public partial class SessionAcceptance
                 var result = activeMain.ObservedCommandResult;
                 if (result is null || result.ClientSequence <= baseline.LastCommand.ClientSequence)
                     return false;
-                Require(result.ClientSequence == expectedSequence,
+                Require(main.ObservedReceiptMatchesIntent(result, expectedSequence),
                     "PerformanceResume observed an unexpected client command after the saved cursor.");
                 PerformanceResumeStateContract.ValidateNextCommandReceipt(
                     baseline,
@@ -165,7 +165,7 @@ public partial class SessionAcceptance
                 var result = activeMain.ObservedCommandResult;
                 if (result is null || result.ClientSequence < expectedSequence)
                     return false;
-                Require(result.ClientSequence == expectedSequence,
+                Require(main.ObservedReceiptMatchesIntent(result, expectedSequence),
                     "PerformanceResume observed an unexpected client command after the saved cursor.");
                 var command = new PerformanceResumeCommandReceipt(
                     result.ClientSequence,

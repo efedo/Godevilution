@@ -20,6 +20,9 @@ public sealed record AuthoritativeClientMessage(
     /** Frozen local send identities for rescheduled receipts; never added to the wire. */
     public IReadOnlyList<AuthoritativeCommandReceiptContext>? AcknowledgedCommands { get; init; }
 
+    /** Local correlation only: a refused intent is dispatched with a new frozen wire identity. */
+    public AuthoritativeCommandRetry? CommandRetry { get; init; }
+
     public static AuthoritativeClientMessage FromEnvelope(Envelope envelope)
     {
         ArgumentNullException.ThrowIfNull(envelope);
@@ -35,4 +38,10 @@ public sealed record AuthoritativeClientMessage(
 
 /** Transport-owned identity, without retaining command payloads or a receipt registry. */
 public readonly record struct AuthoritativeCommandReceiptContext(
-    ulong ClientSequence, ulong RequestedTick, Command.IntentOneofCase Intent);
+    ulong ClientSequence, ulong RequestedTick, Command.IntentOneofCase Intent)
+{
+    public ulong IntentSequence { get; init; }
+    public bool RetryPending { get; init; }
+}
+
+public readonly record struct AuthoritativeCommandRetry(ulong IntentSequence, ulong PreviousSequence, ulong ClientSequence);

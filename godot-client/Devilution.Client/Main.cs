@@ -44,6 +44,7 @@ public partial class Main : Node2D
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
     internal bool ObservedCommandWasApplied => model.LastCommandWasApplied;
+    internal ulong ObservedCommandIntentSequence => model.LastCommandIntentSequence;
     internal long ObservedModelGeneration => modelGeneration;
     internal int ObservedRecentEventCount => model.RecentEvents.Count;
     internal ulong ObservedRecentEventSequenceStart => model.RecentEventsStartSequence;
