@@ -6,6 +6,20 @@ namespace Devilution.Client.Acceptance;
 /** The bot may fall back onto observed ground; an empty-looking unexplored room is not cover. */
 internal sealed class JourneyCombatPositioning
 {
+    private const int MaximumHoldPauses = 2;
+    /** Search lifetime, not visibility lifetime: Observe/Reset cannot replenish this budget. */
+    internal sealed class PauseBudget(JourneyCombatPositioning positioning)
+    {
+        internal int Used { get; private set; }
+        internal bool TryHold(JourneyCombatSafety.Observation state, long? nearestDistance = null)
+        {
+            if (Used >= MaximumHoldPauses || !positioning.ShouldHold(state, nearestDistance)) return false;
+            Used++;
+            return true;
+        }
+    }
+    internal PauseBudget BeginSearch() => new(this);
+
     private readonly HashSet<(uint Level, int X, int Y)> visited = [];
     private readonly HashSet<(uint Level, int X, int Y)> cleared = [];
     private JourneyCombatSafety.Observation? lastHold;
@@ -35,7 +49,7 @@ internal sealed class JourneyCombatPositioning
                 || state.Tick > old.Tick && nearestDistance is { } distance && lastHoldDistance is { } previous && distance >= previous)
                 approachReleased = true;
         }
-        if (approachReleased || holds >= 2) { approachReleased = true; return false; }
+        if (approachReleased || holds >= MaximumHoldPauses) { approachReleased = true; return false; }
         lastHold = state; lastHoldDistance = nearestDistance; holds++;
         return true;
     }

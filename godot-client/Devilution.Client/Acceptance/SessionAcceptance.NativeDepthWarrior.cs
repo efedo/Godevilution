@@ -827,6 +827,7 @@ public partial class SessionAcceptance
         retreatSteps ??= new(NativeWarriorTargetApproaches);
         var attacks = 0;
         var approaches = 0;
+        var pauses = journeyPositioning.BeginSearch();
         var attacked = new HashSet<uint>();
         // Monsters whose click queued nothing or was refused, for example diagonally past a door corner.
         var unattackable = new HashSet<uint>();
@@ -862,7 +863,7 @@ public partial class SessionAcceptance
             if (adjacent is null) {
                 var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                     .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
-                if (journeyPositioning.ShouldHold(ObserveJourneySafety(main), nearest)) {
+                if (pauses.TryHold(ObserveJourneySafety(main), nearest)) {
                     await HoldNativeWarriorSwarmAsync(main);
                     continue;
                 }

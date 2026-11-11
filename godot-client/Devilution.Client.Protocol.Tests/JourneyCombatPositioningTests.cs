@@ -52,11 +52,8 @@ public sealed class JourneyCombatPositioningTests
     private static JourneyCombatSafety.Observation ArcherState()
         => new(1, 6, 100, 9000, 11776, 3, 0, 0, true, true, 200);
 
-    [Fact]
-    public void StationaryArchersCannotConsumeTheMovementBudgetWithoutTryingAClearPath()
+    private static Snapshot ArcherWorld(JourneyCombatSafety.Observation state)
     {
-        var positioning = new JourneyCombatPositioning();
-        var state = ArcherState();
         var snapshot = new Snapshot { Tick = state.Tick,
             Players = { new PlayerSnapshot { EntityId = 1, LevelId = 6, PositionX = 2, PositionY = 4, Life = state.Life, LifeMaximum = state.MaximumLife } },
             LevelGeometry = { new LevelGeometrySnapshot { LevelId = 6, Width = 12, Height = 12 } },
@@ -65,6 +62,15 @@ public sealed class JourneyCombatPositioningTests
             EntityId = index + 2, LevelId = 6, Alive = true, PositionX = 7, PositionY = (int)index + 3,
             HitPoints = 64, MaxHitPoints = 64, HitPointsQ6 = 4096, MaxHitPointsQ6 = 4096,
         });
+        return snapshot;
+    }
+
+    [Fact]
+    public void StationaryArchersCannotConsumeTheMovementBudgetWithoutTryingAClearPath()
+    {
+        var positioning = new JourneyCombatPositioning();
+        var state = ArcherState();
+        var snapshot = ArcherWorld(state);
         var model = new AuthoritativeClientModel();
         var pauses = 0; var moves = 0;
         // Even a search with just one movement remaining gets its real collision/pathfinding attempt.
@@ -132,5 +138,55 @@ public sealed class JourneyCombatPositioningTests
         state = state with { Tick = 110 };
         positioning.Observe(state, 2, 4);
         Assert.True(positioning.ShouldHold(state));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void OscillatingNearbyCountCannotReplenishTheSearchPauseBudget(int boundaryCount)
+    {
+        var positioning = new JourneyCombatPositioning(); var pauses = positioning.BeginSearch();
+        var state = ArcherState(); var snapshot = ArcherWorld(state);
+        var model = new AuthoritativeClientModel();
+        var held = 0; var pathAttempts = 0;
+        for (var work = 0; work < 64 && pathAttempts == 0; work++) {
+            foreach (var monster in snapshot.Monsters) monster.PositionX = 7;
+            positioning.Observe(state, 2, 4);
+            if (pauses.TryHold(state, 5)) {
+                held++;
+                // During each pause the same archers move across the six-tile visibility boundary.
+                for (var index = 0; index < snapshot.Monsters.Count; index++)
+                    snapshot.Monsters[index].PositionX = index >= boundaryCount ? 9 : 7;
+                state = state with { Tick = state.Tick + 20, Nearby = boundaryCount };
+                positioning.Observe(state, 2, 4);
+                state = state with { Tick = state.Tick + 20, Nearby = 3 };
+                continue; // No movement budget has been spent by waiting.
+            }
+            snapshot.Tick = state.Tick;
+            model.Apply(new(Snapshot: snapshot));
+            model.TrackPredictedMoveTo(1, 6, 4);
+            pathAttempts++;
+        }
+        Assert.Equal(2, held);
+        Assert.Equal(2, pauses.Used);
+        Assert.Equal(1, pathAttempts);
+        Assert.Equal(new ClientPosition(3, 4), model.LocalMovementTarget);
+        for (var repeat = 0; repeat < 20; repeat++) {
+            positioning.Observe(state with { Nearby = boundaryCount }, 2, 4);
+            positioning.Observe(state, 2, 4);
+            Assert.False(pauses.TryHold(state, 5));
+        }
+    }
+
+    [Fact]
+    public void ResettingPositioningCannotRefillAnActiveSearchBudget()
+    {
+        var positioning = new JourneyCombatPositioning(); var pauses = positioning.BeginSearch();
+        var state = ArcherState();
+        Assert.True(pauses.TryHold(state));
+        Assert.True(pauses.TryHold(state));
+        positioning.Reset();
+        Assert.False(pauses.TryHold(state));
+        Assert.True(positioning.BeginSearch().TryHold(state));
     }
 }

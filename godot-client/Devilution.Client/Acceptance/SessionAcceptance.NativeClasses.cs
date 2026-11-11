@@ -253,6 +253,7 @@ public partial class SessionAcceptance
         int maximumMoves = 48, uint? requiredTarget = null)
     {
         var approach = new NativeCombatApproachTarget(requiredTarget);
+        var pauses = journeyPositioning.BeginSearch();
         for (var movement = 0; movement < maximumMoves; movement++) {
             await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
@@ -277,7 +278,7 @@ public partial class SessionAcceptance
                 bool AttackGoal(int x, int y) => AttackCell(target, x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
                 if (CanAttackNow(target)) return target;
-                if (!ranged && player.CharacterClassId == 0 && journeyPositioning.ShouldHold(ObserveJourneySafety(main),
+                if (!ranged && player.CharacterClassId == 0 && pauses.TryHold(ObserveJourneySafety(main),
                         NativeMonsterDistance(player, target))) {
                     await HoldNativeWarriorSwarmAsync(main);
                     movement--; // A bounded observation/cover pause is not a failed pathfinding step.
