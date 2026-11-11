@@ -5,6 +5,19 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-10
+
+- Lighter, steadier client (2.6a): negotiated snapshot references skip unchanged geometry and
+  idle bodies, and snapshots carry only the receiving player's level (walking in Town:
+  33 KB to 1.6 KB per snapshot; idle allocation 30 MB/s to 0.2 MB/s). The presentation clock
+  corrects excess lead, so walks no longer freeze on their last frame after the server drops
+  ticks. Faster native path searches (mean 14.5 to 2.3 ms per command) and bounded, cached
+  client prediction (unreachable clicks 844 ms to 4 ms) remove stalls. Town residents and
+  cows draw at their native offset and are selected as native does. Using a potion clears
+  the item selection. Skipped checkpoints are retried. `run-godot-client.ps1
+  -ClientBuildConfiguration Release` and `tools/run-auto-capture.ps1` (an automated windowed
+  Town capture) support measurement. Older peers keep complete snapshots; saves are unchanged.
+
 ## 2026-11-07
 
 - Responsive, smooth play (2.6a): the local player and both cameras share one fractional

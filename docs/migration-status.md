@@ -144,7 +144,10 @@ Passing a scoped test or adding a schema version does not close a milestone.
   prediction, known actions render through their interval, the command lead adapts
   to measured latency (minimum 50 ms), terrain drawing is retained per level and the
   client is capped at 60 FPS with VSync. `GODEVILUTION_CLIENT_FRAME_CAPTURE` records
-  per-second frame costs. Windowed CPU measurement and the user re-playtest are pending.
+  per-second frame costs. Snapshots carry only the receiving player's level and reuse
+  unchanged geometry and idle bodies by reference. `tools/run-auto-capture.ps1` drives a
+  windowed Town capture: in Release, standing costs about 6% of one core and walking
+  about 12%. The user re-playtest is pending.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 - CI now regenerates 24 archive-free native oracle corpora and runs their
   managed comparisons (2.2b added 48 multiplayer Catacombs theme and chest cases;

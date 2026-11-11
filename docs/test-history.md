@@ -9,6 +9,18 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-10 — Lighter, steadier client (2.6a)
+
+Suites on `de8a160ab`: Diablo 3939, client 2006 and server 2293 passed; native comparisons
+5 Domain and 261 Diablo cases. One server concurrency test timed out under load and passed
+5 of 5 in isolation. All seven headless journeys passed (normal L8, door, shrine, theme,
+sarcophagus, 10 Hz and 20 Hz micro). In-memory replays matched every receipt and state
+hash for the optimised path search (268 commands) and the cached prediction (153 clicks;
+all 12,544 Town cells). Offline Town pipeline allocation: 32.6 to 0.014 MB/s idle.
+Automated windowed capture (`tools/run-auto-capture.ps1`, 60 FPS + VSync, RTX 3070) on
+`aa1aaccda`: Release idle 62 ms CPU/s and 0.16 MB/s, walking 123 ms/s and 2.2 MB/s,
+p99 frame 17.8 ms; Debug idle 138 ms/s, walking 186 ms/s, p99 19.2 ms.
+
 ### 2026-11-07 — Responsive, smooth play (2.6a)
 
 Suites on `d739bbfc6`: server 2289, Diablo 3927, client 1779, all passing; native comparisons 5
