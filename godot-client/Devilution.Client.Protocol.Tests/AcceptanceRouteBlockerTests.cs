@@ -103,6 +103,55 @@ public sealed class AcceptanceRouteBlockerTests
             _ => throw new InvalidOperationException("An unrelated monster must not be hunted.")));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task UnreachableShooterDoesNotSkipTheReachableDistantStairBlocker(bool throws)
+    {
+        var state = RefusedStairBoundary(); var snapshot = state.Snapshot!; var geometry = snapshot.LevelGeometry[0];
+        var blocker = snapshot.Monsters[0];
+        var shooter = new MonsterSnapshot { EntityId = 800, LevelId = 6, PositionX = 110, PositionY = 110, Alive = true };
+        geometry.BlockedCells.Remove(110 * 112 + 110); // An isolated room: confirmed damage does not imply a walking route.
+        snapshot.Monsters.Add(shooter);
+        snapshot.Projectiles.Add(new ProjectileSnapshot { EntityId = 801, SourceEntityId = shooter.EntityId,
+            TargetEntityId = 1, LevelId = 6, RemainingTicks = 20, NativeMissileId = "Arrow" });
+        var threats = new JourneyCombatThreats();
+        var pressure = threats.Observe(snapshot, snapshot.Players[0], [], 0, 0);
+        Assert.Equal(shooter.EntityId, pressure.RangedTarget);
+        Assert.Empty(NativePath(snapshot));
+        var attempts = new List<uint>(); var skipped = new HashSet<uint>();
+        Assert.True(await AcceptanceRouteRecovery.ClearBlockedRouteAsync(state, Command.IntentOneofCase.MoveRequested, 7, async target => {
+            Assert.Same(blocker, target);
+            var attack = new NativeCombatAttackTarget(target.EntityId);
+            attack.PreferRanged(pressure.RangedTarget, threats.IsRangedAttacker(attack.Current));
+            var approached = await attack.ApproachAsync(id => {
+                attempts.Add(id);
+                var monster = snapshot.Monsters.Single(value => value.EntityId == id);
+                var path = NativeObjectApproachPath.Find(snapshot, geometry, new ObjectSnapshot {
+                    LevelId = 6, PositionX = monster.PositionX, PositionY = monster.PositionY,
+                }, pickup: true);
+                if (path is null) {
+                    if (throws) throw new InvalidOperationException("No ordinary reachable native class encounter within the movement budget.");
+                    return Task.FromResult(new MonsterSnapshot { EntityId = 999, PositionX = 110, PositionY = 110 });
+                }
+                Assert.True(path.Count > 4); // The requested blocker remains outside ordinary local clearing.
+                return Task.FromResult(monster);
+            }, (monster, id) => monster.EntityId == id
+                || Math.Max(Math.Abs(monster.PositionX - 90), Math.Abs(monster.PositionY - 84)) <= 1, () => true);
+            if (approached is null) skipped.Add(target.EntityId);
+            else {
+                Assert.Same(blocker, approached);
+                blocker.Alive = false; // The normal combat callback supplies the authoritative kill in the journey.
+            }
+            attack.PreferRanged(pressure.RangedTarget, threats.IsRangedAttacker(attack.Current));
+            Assert.Equal(blocker.EntityId, attack.Current);
+        }));
+        Assert.Equal(new[] { shooter.EntityId, blocker.EntityId }, attempts);
+        Assert.Empty(skipped);
+        Assert.False(blocker.Alive);
+        Assert.NotEmpty(NativePath(snapshot));
+    }
+
     private static AcceptanceCommandBoundary.Observation RefusedStairBoundary()
     {
         var geometry = new LevelGeometrySnapshot { LevelId = 6, Width = 112, Height = 112,

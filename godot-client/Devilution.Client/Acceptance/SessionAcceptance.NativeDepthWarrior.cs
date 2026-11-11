@@ -856,6 +856,7 @@ public partial class SessionAcceptance
         retreatSteps ??= new(NativeWarriorTargetApproaches);
         var attacks = 0;
         var approaches = 0;
+        var attackTarget = new NativeCombatAttackTarget(targetId);
         var pauses = journeyPositioning.BeginSearch();
         var attacked = new HashSet<uint>();
         // Monsters whose click queued nothing or was refused, for example diagonally past a door corner.
@@ -884,33 +885,32 @@ public partial class SessionAcceptance
             // Focus the weakest attacker so a pack loses members before its regeneration catches up.
             var adjacent = adjacentMonsters.Where(monster => !unattackable.Contains(monster.EntityId))
                 .OrderBy(monster => monster.HitPointsQ6)
-                .ThenBy(monster => monster.EntityId == targetId ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
+                .ThenBy(monster => monster.EntityId == attackTarget.Current ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
             // The reserve plans a Town visit; it never withholds a needed dose during a fight.
             if (danger.Retreat && NativeHealingSupply(player) == 0)
                 throw new NativeWarriorRetreatException(
                     $"{danger.Attackers} attackers ({danger.Adjacent} melee, {danger.RangedAttackers} ranged), "
                         + $"life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
             if (adjacent is null) {
-                if (danger.RangedTarget != 0 && !journeyThreats.IsRangedAttacker(targetId))
-                    targetId = danger.RangedTarget; // Keep closing on this shooter while it remains a damaging source.
+                attackTarget.PreferRanged(danger.RangedTarget, journeyThreats.IsRangedAttacker(attackTarget.Current));
                 var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                     .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
                 if (pauses.TryHold(ObserveJourneySafety(main), nearest)) {
                     await HoldNativeWarriorSwarmAsync(main);
                     continue;
                 }
-                var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
-                if (target is null)
+                var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == attackTarget.Current && monster.Alive);
+                if (target is null) {
+                    if (attackTarget.FallBack()) continue;
                     return (null, attacks);
-                approaches++;
-                MonsterSnapshot approached;
-                try {
-                    approached = await FindNativeClassTargetAsync(main, ranged: false, levelId, requiredTarget: targetId);
-                } catch (InvalidOperationException) when (main.ObservedSnapshot!.Players.Single().Life > 0) {
-                    return (null, attacks); // Not reachable from here (for example behind a wall).
                 }
-                if (approached.EntityId != targetId
-                    && NativeDistance(player.PositionX, player.PositionY, approached.PositionX, approached.PositionY) > 1)
+                approaches++;
+                var approached = await attackTarget.ApproachAsync(
+                    required => FindNativeClassTargetAsync(main, ranged: false, levelId, requiredTarget: required),
+                    (monster, required) => monster.EntityId == required
+                        || NativeMonsterDistance(main.ObservedSnapshot!.Players.Single(), monster) <= 1,
+                    () => main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive && alive.LevelId == levelId);
+                if (approached is null)
                     return (null, attacks);
                 continue;
             }
