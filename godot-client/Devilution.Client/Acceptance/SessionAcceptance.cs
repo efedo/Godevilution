@@ -519,12 +519,13 @@ public partial class SessionAcceptance : Node
         await Frame();
     }
 
-    private static void WriteEvidence(string directory, string filename, object evidence)
+    /** Evidence is write-once unless `overwrite` is set (only for progress files rewritten per phase). */
+    private static void WriteEvidence(string directory, string filename, object evidence, bool overwrite = false)
     {
         var path = System.IO.Path.Combine(directory, filename);
         var staging = path + ".tmp";
         System.IO.File.WriteAllText(staging, JsonSerializer.Serialize(evidence));
-        System.IO.File.Move(staging, path, overwrite: true);
+        System.IO.File.Move(staging, path, overwrite);
     }
 
     /** Polls each frame; `stageSeconds` is game time at 20 Hz on a faster or slower test server (AcceptanceTickBudget). */

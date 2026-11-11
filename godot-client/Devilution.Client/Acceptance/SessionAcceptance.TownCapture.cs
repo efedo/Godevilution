@@ -34,7 +34,7 @@ public partial class SessionAcceptance
                 Passed = run.Completed, Partial = !run.Completed, run.Phase, run.Operation, run.Failure,
                 run.CompletedPhases, ResidentsSelected = selectedResidents.ToArray(), BlockedClicks = blockedClicks,
                 State = Describe(), FrameEvidence = main?.ClientFrameEvidencePath,
-            });
+            }, overwrite: true);
         }
         async Task Phase(string name, double seconds, Func<Task> work)
         {
