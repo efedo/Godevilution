@@ -137,7 +137,7 @@ this field and retain their existing snapshot-boundary behavior. The scheduling
 clock is paced by the tick rate and slows when the host stalls, so a sample may
 correct the client's projection backward.
 
-Game speed (1x–20x) scales only the wall-clock pacing of the host clock: it runs
+Game speed (1xâ€“20x) scales only the wall-clock pacing of the host clock: it runs
 `tick_rate_hz * game_speed_multiplier` ticks per second, every tick is unchanged and
 `tick_rate_hz` stays the base rate in identities and saves. A clock-gated host
 advertises `ServerHello.supports_game_speed` to clients that set
@@ -187,6 +187,17 @@ commands and older profiles retain their established behavior. The native owner
 finishes the active movement/attack phase and executes an admitted pending
 follow-up at its native readiness boundary. Cohort v10 retains this server-owned
 pending intent across fresh-host restore without allocating another client receipt.
+
+`supports_snapshot_references` (both Hellos) lets the host omit unchanged level
+geometry (`geometry_unchanged` with `geometry_revision`) and send idle bodies as
+references (`state_unchanged` with `state_revision`); revisions are connection-local
+and never part of gameplay state or saves. `supports_level_scoped_idle_references`
+decides idle eligibility from the receiving player's level only, and
+`supports_level_scoped_snapshots` limits dynamic entities, interactions and usable
+portal endpoints to that level, while navigation, quests and a lightweight player
+roster stay global. A client that cannot admit a reference fences its controls and
+reconnects for a complete snapshot (250/500/1000 ms backoff, then the menu). Peers
+without these flags receive complete bodies.
 
 Before acknowledgement results mutate retry or presentation state, native and
 Godot clients enforce the same admission rules: no more than 256 results;

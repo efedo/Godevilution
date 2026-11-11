@@ -1236,7 +1236,7 @@ public sealed partial class DiabloWorldState
         // per probe, and reject off-level objects before consulting their owners.
         foreach (var target in CombatTargets.Values)
             if (target.HitPoints > 0 && target.EntityId != excludedEntityId
-                && (target.LevelId == 0 || target.LevelId == levelId)
+                && Devilution.Shared.LevelMembership.IsOnLevel(target.LevelId, levelId)
                 && (target.PositionX == positionX && target.PositionY == positionY
                     || target.IsMoving && target.FuturePositionX == positionX && target.FuturePositionY == positionY))
                 return true;

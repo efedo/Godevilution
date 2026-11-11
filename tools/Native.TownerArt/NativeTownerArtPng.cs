@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using Devilution.Tools.NativePlayerArt;
+using Devilution.Client.PresentationAssets;
 
 namespace Devilution.Tools.NativeTownerArt;
 
@@ -39,6 +40,7 @@ public static class NativeTownerArtPng
         if (rawLength > MaximumPngBytes)
             throw new InvalidDataException("Generated native towner atlas exceeds its raw PNG limit.");
         var rgba = new byte[rawLength];
+        var picking = NativeTownerPickingData.Create(atlasWidth, atlasHeight);
         for (var y = 0; y < atlasHeight; y++)
             rgba[y * scanlineBytes] = 0;
 
@@ -59,6 +61,9 @@ public static class NativeTownerArtPng
                         rgba[targetPixel + 1] = palette.Rgb[paletteOffset + 1];
                         rgba[targetPixel + 2] = palette.Rgb[paletteOffset + 2];
                         rgba[targetPixel + 3] = byte.MaxValue;
+                        // clx_render.cpp IsPointWithinClx rejects index-zero shadows, including opaque runs.
+                        if (frame.Indices[sourcePixel] != 0)
+                            NativeTownerPickingData.SetSelectable(picking, (targetY + y) * atlasWidth + targetX + x);
                     }
                 }
             }
@@ -79,6 +84,7 @@ public static class NativeTownerArtPng
         ihdr[8] = 8;
         ihdr[9] = 6;
         WriteChunk(png, "IHDR"u8, ihdr);
+        WriteChunk(png, NativeTownerPickingData.ChunkName, picking);
         WriteChunk(png, "IDAT"u8, compressed.GetBuffer().AsSpan(0, checked((int)compressed.Length)));
         WriteChunk(png, "IEND"u8, ReadOnlySpan<byte>.Empty);
         if (png.Length > MaximumPngBytes)

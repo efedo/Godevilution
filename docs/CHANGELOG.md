@@ -7,10 +7,27 @@ contracts stay in their existing guides.
 
 ## 2026-11-10
 
-- Game speed (2.6c): `+`/`-` run a single-player host at 1x�20x through an additive, negotiated
+- Game speed (2.6c): `+`/`-` run a single-player host at 1x–20x through an additive, negotiated
   `GameSpeedRequest`/`GameSpeedAck`; multiplayer speed is fixed by `--game-speed`. The host clock,
   late tolerances, command lead, polling and presentation follow the scaled rate; ticks, saves and
   checkpoints are unchanged, and hosts above 1x refuse clients without game-speed support.
+
+- Lighter, steadier client (2.6a): negotiated snapshot references skip unchanged geometry and
+  idle bodies, and snapshots carry only the receiving player's level (walking in Town:
+  33 KB to 1.6 KB per snapshot; idle allocation 30 MB/s to 0.2 MB/s). The presentation clock
+  corrects excess lead, so walks no longer freeze on their last frame after the server drops
+  ticks. Faster native path searches (mean 14.5 to 2.3 ms per command) and bounded, cached
+  client prediction (unreachable clicks 844 ms to 4 ms) remove stalls. Town residents and
+  cows draw at their native offset and are selected as native does. Using a potion clears
+  the item selection. Skipped checkpoints are retried. `run-godot-client.ps1
+  -ClientBuildConfiguration Release` and `tools/run-auto-capture.ps1` (an automated windowed
+  Town capture) support measurement. Older peers keep complete snapshots; saves are unchanged.
+
+- Brightness slider: the Hero panel shows a Brightness slider below High contrast with
+  DevilutionX's brightness range (0–100, step 5, default 0). It applies live and stays in
+  step with G / Shift+G; the tone curve is now a full-screen pass over the world, HUD and
+  menus, hidden at 0 so the default frame is unchanged. Settings files without the value
+  load 0.
 
 ## 2026-11-07
 

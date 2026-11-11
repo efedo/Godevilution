@@ -223,7 +223,7 @@ public partial class SessionAcceptance
 
     private static void VerifyNativeCatacombsObjects(Snapshot snapshot, NativeCatacombsObjectCheckpoint expected)
     {
-        if (expected.DoorEntity != 0) {
+        if (expected.DoorEntity != 0 && LevelScopedSnapshotEvidence.IncludesLevel(snapshot, expected.DoorLevel)) {
             var door = snapshot.Objects.Single(value => value.EntityId == expected.DoorEntity);
             Require(door.LevelId == expected.DoorLevel && door.NativeObjectId is 42 or 43
                 && door.MissilePassable && !door.TrapArmed,
@@ -238,9 +238,11 @@ public partial class SessionAcceptance
             Require(expected.DoorEntity != 0, "The native object checkpoint contains neither chest nor trapped-door evidence.");
             return;
         }
-        var chest = snapshot.Objects.Single(value => value.EntityId == expected.ChestEntity);
-        Require(chest.LevelId == expected.ChestLevel && chest.Activated && !chest.NativeChestInteractable,
-            "The Catacombs chest lost its one-use opened state on restore.");
+        if (LevelScopedSnapshotEvidence.IncludesLevel(snapshot, expected.ChestLevel)) {
+            var chest = snapshot.Objects.Single(value => value.EntityId == expected.ChestEntity);
+            Require(chest.LevelId == expected.ChestLevel && chest.Activated && !chest.NativeChestInteractable,
+                "The Catacombs chest lost its one-use opened state on restore.");
+        }
         Require(!NativePickedUpItemIdentity.IsOnFloor(snapshot, expected.ItemSeed, expected.StableItemId),
             "The picked-up Catacombs drop reappeared on the floor.");
         if (!expected.Gold && !expected.Consumable) {

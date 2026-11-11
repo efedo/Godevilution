@@ -70,6 +70,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
     private bool supportsQueuedRangedAttacks;
     private bool supportsSnapshotReferences;
     private bool supportsLevelScopedIdleReferences;
+    private bool supportsLevelScopedSnapshots;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -244,6 +245,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             }
             supportsSnapshotReferences = false;
             supportsLevelScopedIdleReferences = false;
+            supportsLevelScopedSnapshots = false;
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
             ResetGameSpeedNegotiation();
@@ -279,6 +281,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 SupportsClockGatedCommands = true,
                 SupportsSnapshotReferences = options.UseSnapshotReferences,
                 SupportsLevelScopedIdleReferences = options.UseSnapshotReferences && options.UseLevelScopedIdleReferences,
+                SupportsLevelScopedSnapshots = options.UseLevelScopedSnapshots,
                 SupportsGameSpeed = true,
             };
             if (options.RequestedCharacterClassId.HasValue) {
@@ -316,6 +319,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             supportsSnapshotReferences = options.UseSnapshotReferences && hello.ServerHello.SupportsSnapshotReferences;
             supportsLevelScopedIdleReferences = supportsSnapshotReferences && options.UseLevelScopedIdleReferences
                 && hello.ServerHello.SupportsLevelScopedIdleReferences;
+            supportsLevelScopedSnapshots = options.UseLevelScopedSnapshots && hello.ServerHello.SupportsLevelScopedSnapshots;
             var peerSupportsTargetCellPathing = hello.ServerHello.SupportsTargetCellPathing;
             var peerSupportsQueuedRangedAttacks = hello.ServerHello.SupportsQueuedRangedAttacks;
             lock (pendingLock) {
@@ -1133,6 +1137,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         incoming.Enqueue(envelope.PayloadCase switch {
             Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot) {
                 ConnectionAttemptEpoch = attemptEpoch, LevelScopedIdleReferences = supportsLevelScopedIdleReferences,
+                LevelScopedSnapshots = supportsLevelScopedSnapshots,
             },
             Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch) { ConnectionAttemptEpoch = attemptEpoch },
             Envelope.PayloadOneofCase.CommandAck => new AuthoritativeClientMessage(Acknowledgement: envelope.CommandAck) {

@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class PresentationFrameCostTests(ITestOutputHelper output)
 {
     [Fact]
@@ -20,18 +21,16 @@ public sealed class PresentationFrameCostTests(ITestOutputHelper output)
         Assert.Equal("res://private/native/sprites/town/frames.png", expected.ResourcePath);
         var missing = cache.Resolve(family, 999);
         Assert.NotNull(missing.Diagnostic);
-        for (var i = 0; i < 1000; i++) cache.Resolve(family, 0);
-        var allocated = GC.GetAllocatedBytesForCurrentThread(); var started = Stopwatch.GetTimestamp();
-        for (var i = 0; i < 20000; i++) cache.Resolve(family, 0);
-        var elapsed = Stopwatch.GetElapsedTime(started); var bytes = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        Action<int> lookup = _ => { cache.Resolve(family, 0); cache.Resolve(family, 999); };
+        HotPathAllocation.Warm(lookup);
+        var (bytes, elapsed) = HotPathAllocation.Measure(lookup, 20000);
         Assert.Equal(0, bytes); Assert.Equal(2, cache.ResolutionCount); Assert.Same(missing, cache.Resolve(family, 999));
-        output.WriteLine($"20,000 cached atlas lookups: {elapsed.TotalMilliseconds:0.000} ms, {bytes} allocated bytes, one path resolution per atlas.");
+        output.WriteLine($"20,000 cached atlas pairs (success and failure): {elapsed.TotalMilliseconds:0.000} ms, {bytes} allocated bytes, one path resolution per atlas.");
         Assert.True(family.TryGetAtlas(0, out var atlas));
-        allocated = GC.GetAllocatedBytesForCurrentThread(); started = Stopwatch.GetTimestamp();
         string? originalPath = null;
-        for (var i = 0; i < 20000; i++)
-            PresentationAssetPath.TryCombineResourcePath("res://private/native/catalog.json", atlas.Path, out originalPath, out _);
-        elapsed = Stopwatch.GetElapsedTime(started); bytes = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        Action<int> normalize = iteration => PresentationAssetPath.TryCombineResourcePath("res://private/native/catalog.json", atlas.Path, out originalPath, out _);
+        HotPathAllocation.Warm(normalize);
+        (bytes, elapsed) = HotPathAllocation.Measure(normalize, 20000);
         Assert.Equal(expected.ResourcePath, originalPath); Assert.True(bytes > 0);
         output.WriteLine($"20,000 original per-draw path normalizations: {elapsed.TotalMilliseconds:0.000} ms, {bytes} allocated bytes (texture submission excluded).");
     }
@@ -153,10 +152,10 @@ public sealed class PresentationFrameCostTests(ITestOutputHelper output)
         var state = new NativeSceneRetentionState(); var geometry = new object();
         var view = NativeSceneViewport.Create(808, 520, 112, 112, 56, 78);
         state.Update(geometry, 0, view, 1, 10);
-        for (var i = 0; i < 1000; i++) state.Update(geometry, 0, view, 1, 10);
-        var allocated = GC.GetAllocatedBytesForCurrentThread(); var started = Stopwatch.GetTimestamp(); var rebuilds = 0;
-        for (var i = 0; i < 20000; i++) if (state.Update(geometry, 0, view, 1, 10) != NativeSceneRefresh.None) rebuilds++;
-        var elapsed = Stopwatch.GetElapsedTime(started); var bytes = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        var rebuilds = 0;
+        Action<int> frame = _ => { if (state.Update(geometry, 0, view, 1, 10) != NativeSceneRefresh.None) rebuilds++; };
+        HotPathAllocation.Warm(frame);
+        var (bytes, elapsed) = HotPathAllocation.Measure(frame, 20000);
         Assert.Equal(0, rebuilds); Assert.Equal(0, bytes);
         var visible = NativeSceneRetentionState.VisiblePieceCells(view, 16).Count();
         output.WriteLine($"20,000 static Town scheduling frames: {elapsed.TotalMilliseconds:0.000} ms, {bytes} bytes, {rebuilds} rebuilds. Culling visits {visible} cells instead of 12,544.");

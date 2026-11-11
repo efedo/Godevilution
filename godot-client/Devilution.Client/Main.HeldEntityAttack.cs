@@ -17,13 +17,20 @@ public partial class Main
 
     public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventMouseButton {
-            ButtonIndex: MouseButton.Right,
-            Pressed: false,
-        })
-            heldEntityAttack.Release();
-        else if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
-            heldEntityAttack.Release();
+        var inputStarted = FrameCostTimestamp();
+        var inputAllocation = FrameCostAllocation();
+        try {
+            if (@event is InputEventMouseButton {
+                ButtonIndex: MouseButton.Right,
+                Pressed: false,
+            })
+                heldEntityAttack.Release();
+            else if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                heldEntityAttack.Release();
+        } finally {
+            inputMilliseconds += FrameCostElapsed(inputStarted);
+            inputAllocated += FrameCostAllocationSince(inputAllocation);
+        }
     }
 
     private void EnsureHeldEntityAttackFocusMonitor()

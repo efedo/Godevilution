@@ -74,6 +74,8 @@ public partial class HudPresentation
         hero.AddChild(restartTown);
         hero.AddChild(returnToSessionMenu);
         hero.AddChild(highContrastToggle);
+        hero.AddChild(brightnessCaption);
+        hero.AddChild(brightnessSlider);
 
         var items = AddPage("Items");
         items.AddChild(inventory);

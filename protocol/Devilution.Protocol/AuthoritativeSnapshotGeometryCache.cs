@@ -14,13 +14,28 @@ public sealed class AuthoritativeSnapshotGeometryCache
     public AuthoritativeSnapshotGeometryCache() : this(false) { }
 
     public AuthoritativeSnapshotGeometryCache(bool levelScopedIdleReferences)
-        => LevelScopedIdleReferences = levelScopedIdleReferences;
+        : this(levelScopedIdleReferences, levelScopedSnapshots: false, useSnapshotReferences: true) { }
+
+    public AuthoritativeSnapshotGeometryCache(bool levelScopedIdleReferences, bool levelScopedSnapshots, bool useSnapshotReferences = true)
+    {
+        LevelScopedIdleReferences = levelScopedIdleReferences;
+        LevelScopedSnapshots = levelScopedSnapshots;
+        UseSnapshotReferences = useSnapshotReferences;
+    }
 
     public bool LevelScopedIdleReferences { get; }
+    public bool LevelScopedSnapshots { get; }
+    public bool UseSnapshotReferences { get; private set; }
+
+    public void DisableReferences() => UseSnapshotReferences = false;
+
+    public Snapshot ProjectComplete(Snapshot snapshot) => LevelScopedSnapshots ? snapshot.ForReceivingLevel() : snapshot;
 
     public Snapshot Project(Snapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        snapshot = ProjectComplete(snapshot);
+        if (!UseSnapshotReferences) return snapshot;
         var unchanged = geometry is not null && content == snapshot.ContentManifestHash
             && ruleset == snapshot.RulesetIdentityHash && geometry.Equals(snapshot.LevelGeometry);
         if (!unchanged) {
@@ -63,7 +78,7 @@ public sealed class AuthoritativeSnapshotGeometryCache
             if (player.CombatMode != PlayerCombatMode.Stand || player.CurrentAction is not null
                 || player.NativeWalkPathPending || player.StatusEffects.Count != 0) return false;
         foreach (var monster in snapshot.Monsters)
-            if (monster.Moving && (!levelScopedMonsterActivity || monster.LevelId == snapshot.Players[0].LevelId)) return false;
+            if (monster.Moving && (!levelScopedMonsterActivity || Devilution.Shared.LevelMembership.IsOnLevel(monster.LevelId, snapshot.Players[0].LevelId))) return false;
         return snapshot.Projectiles.Count == 0;
     }
 }

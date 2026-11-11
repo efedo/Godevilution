@@ -671,9 +671,11 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 return;
             }
 
-            if (helloEnvelope.ClientHello.SupportsSnapshotReferences)
+            if (helloEnvelope.ClientHello.SupportsSnapshotReferences || helloEnvelope.ClientHello.SupportsLevelScopedSnapshots)
                 snapshotGeometryCaches.Add(stream, new Devilution.Protocol.AuthoritativeSnapshotGeometryCache(
-                    helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences));
+                    helloEnvelope.ClientHello.SupportsSnapshotReferences && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences,
+                    helloEnvelope.ClientHello.SupportsLevelScopedSnapshots,
+                    helloEnvelope.ClientHello.SupportsSnapshotReferences));
             SessionState session;
             ulong currentTick;
             if (CohortStore is not null) {
@@ -715,7 +717,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     }
                     session = admission.Session!;
                     currentTick = admission.Tick;
-                    admission.Hello!.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
+                    admission.Hello!.SupportsLevelScopedSnapshots = helloEnvelope.ClientHello.SupportsLevelScopedSnapshots;
+                    admission.Hello.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
                     admission.Hello.SupportsLevelScopedIdleReferences = admission.Hello.SupportsSnapshotReferences
                         && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;
                     ApplyGameSpeedHello(admission.Hello, helloEnvelope.ClientHello);
@@ -751,6 +754,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
                     serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
                     serverHello.HostInstanceId = HostInstanceId;
+                    serverHello.SupportsLevelScopedSnapshots = helloEnvelope.ClientHello.SupportsLevelScopedSnapshots;
                     serverHello.SupportsSnapshotReferences = helloEnvelope.ClientHello.SupportsSnapshotReferences;
                     serverHello.SupportsLevelScopedIdleReferences = serverHello.SupportsSnapshotReferences
                         && helloEnvelope.ClientHello.SupportsLevelScopedIdleReferences;

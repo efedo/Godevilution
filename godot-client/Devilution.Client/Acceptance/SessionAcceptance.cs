@@ -38,6 +38,11 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+        if (phase == "TownCapture") {
+            await RunTownCaptureAsync(Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
+                ?? throw new InvalidOperationException("An isolated capture session is required."));
+            return;
+        }
         if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume" or "NativeWarriorJourney" or "NativeWarriorResume" or "NativeSorcererJourney" or "NativeSorcererResume" or "NativeRogueJourney" or "NativeRogueResume" or "NativeDepthJourney" or "NativeDepthResume" or "NativeMultiplayerCreate" or "NativeMultiplayerJourney" or "NativeMultiplayerResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var sessionMenuAcceptance = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1";
@@ -514,12 +519,13 @@ public partial class SessionAcceptance : Node
         await Frame();
     }
 
-    private static void WriteEvidence(string directory, string filename, object evidence)
+    /** Evidence is write-once unless `overwrite` is set (only for progress files rewritten per phase). */
+    private static void WriteEvidence(string directory, string filename, object evidence, bool overwrite = false)
     {
         var path = System.IO.Path.Combine(directory, filename);
         var staging = path + ".tmp";
         System.IO.File.WriteAllText(staging, JsonSerializer.Serialize(evidence));
-        System.IO.File.Move(staging, path);
+        System.IO.File.Move(staging, path, overwrite);
     }
 
     /** Polls each frame; `stageSeconds` is game time at 20 Hz on a faster or slower test server (AcceptanceTickBudget). */
@@ -550,6 +556,7 @@ public partial class SessionAcceptance : Node
             "NativeWarriorResume" or "NativeSorcererResume" or "NativeRogueResume" => 180,
             "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
+                "TownCapture" => 360,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,
             };
             if (sessionMenuPhase)
@@ -613,7 +620,10 @@ public partial class SessionAcceptance : Node
     private async Task Frame()
     {
         nativeObjectStageBudget?.Check();
-        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        if (townCaptureCancellation.CanBeCanceled)
+            await CaptureFrameSignal().WaitAsync(townCaptureCancellation);
+        else
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         nativeObjectStageBudget?.Check();
     }
 

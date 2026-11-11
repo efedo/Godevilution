@@ -207,6 +207,8 @@ public partial class SessionAcceptance
             "The fresh host did not restore the open Town warp.");
         for (uint depth = 1; depth <= target; depth++) {
             await TravelNativeWarriorAsync(main, directory, depth);
+            Require(main.ObservedSnapshot!.Players.Single().LevelId == depth,
+                $"The retained native revisit did not publish L{depth}'s actual receiving view.");
             VerifyNativeWarriorRetention(main, expected);
             await VerifyNativeThemeObjectReuseAsync(main, expected.ThemeObject);
         }
@@ -907,7 +909,8 @@ public partial class SessionAcceptance
             sarcophagus?.Level ?? 0, sarcophagus?.Entity ?? 0, sarcophagus?.TrapSource ?? 0,
             sarcophagus?.OpeningTick ?? 0, sarcophagus?.FiringTick ?? 0,
             sarcophagus is not null && (sarcophagus.Drops?.Length ?? 0) + (sarcophagus.Skeletons?.Length ?? 0) > 0);
-        if (sarcophagus is not null) NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(snapshot, sarcophagus);
+        if (sarcophagus is not null && LevelScopedSnapshotEvidence.IncludesLevel(snapshot, sarcophagus.Level))
+            NativeTrappedSarcophagusJourneyEvidence.VerifyRetained(snapshot, sarcophagus);
         if (expected.ThemeObject is not null) VerifyNativeThemeObjectRetention(snapshot, expected.ThemeObject);
         if (expected.Objects is not null)
             VerifyNativeCatacombsObjects(snapshot, expected.Objects);
@@ -922,8 +925,9 @@ public partial class SessionAcceptance
                 Require(floor.MonsterEntityId == 0, $"Traversed native floor {floor.LevelId} recorded a kill.");
                 continue;
             }
-            Require(floor.ExperienceAfter > floor.ExperienceBefore
-                && snapshot.Corpses.Count(corpse => corpse.EntityId == floor.MonsterEntityId && corpse.LevelId == floor.LevelId) == 1
+            Require(floor.ExperienceAfter > floor.ExperienceBefore, $"Retained L{floor.LevelId} omitted its combat XP proof.");
+            if (!LevelScopedSnapshotEvidence.IncludesLevel(snapshot, floor.LevelId)) continue;
+            Require(snapshot.Corpses.Count(corpse => corpse.EntityId == floor.MonsterEntityId && corpse.LevelId == floor.LevelId) == 1
                 && !snapshot.Monsters.Any(monster => monster.EntityId == floor.MonsterEntityId && monster.Alive),
                 $"Retained native floor {floor.LevelId} revived or lost its combat corpse {floor.MonsterEntityId}.");
         }

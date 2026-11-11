@@ -29,6 +29,7 @@ public static class NativeSetupFingerprint
         "tools/Native.PlayerArt",
         "tools/Native.SceneArt",
         "tools/Native.TownerArt",
+        "godot-client/Devilution.Client/PresentationAssets/NativeTownerPickingData.cs",
         "tools/Native.ObjectArt",
         "tools/Native.Setup",
     ];

@@ -92,8 +92,10 @@ message ClientHello {
 	bool supports_snapshot_references = 9;
 	// Idle references may ignore frozen monster movement on other levels.
 	bool supports_level_scoped_idle_references = 10;
+	// Per-connection level views; absent/false preserves complete snapshot bodies.
+	bool supports_level_scoped_snapshots = 11;
 	// Understands ServerHello.game_speed_multiplier and GameSpeedRequest.
-	bool supports_game_speed = 11;
+	bool supports_game_speed = 12;
 }
 
 message ServerHello {
@@ -122,13 +124,14 @@ message ServerHello {
 	string host_instance_id = 13;
 	bool supports_snapshot_references = 14;
 	bool supports_level_scoped_idle_references = 15;
+	bool supports_level_scoped_snapshots = 16;
 	// Game speed: the host paces tick_rate_hz * game_speed_multiplier ticks per
 	// second. Zero (older hosts) means 1x. Hosts above 1x refuse clients that do
 	// not set ClientHello.supports_game_speed.
-	bool supports_game_speed = 16;
-	uint32 game_speed_multiplier = 17;
+	bool supports_game_speed = 17;
+	uint32 game_speed_multiplier = 18;
 	// True when this session may send GameSpeedRequest (single-player sessions).
-	bool game_speed_controllable = 18;
+	bool game_speed_controllable = 19;
 }
 
 enum CommandSchedulingMode {
@@ -570,11 +573,18 @@ message Snapshot {
 	// Connection-local transport metadata; excluded from gameplay state and saves.
 	uint64 geometry_revision = 26;
 	// True only after negotiation: use the validated geometry from geometry_revision.
-	// Unless state_unchanged, only level_geometry is omitted; the body remains complete.
+	// Unless state_unchanged, only level_geometry is omitted; the negotiated view remains complete.
 	bool geometry_unchanged = 27;
 	// Idle body references retain tick, hash, identities and both revision tokens only.
 	uint64 state_revision = 28;
 	bool state_unchanged = 29;
+	// Negotiated level views retain global cohort presence without off-level actor state.
+	repeated PlayerRosterEntry player_roster = 30;
+}
+
+message PlayerRosterEntry {
+	uint32 entity_id = 1;
+	uint32 level_id = 2;
 }
 
 message SetLevelObjectOriginSnapshot {

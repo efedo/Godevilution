@@ -22,6 +22,7 @@ public partial class Main : Node2D
     private CommandLogAppender? commandLog;
     private WorldPresentation? world;
     private HudPresentation? hud;
+    private readonly ScreenBrightness screenBrightness = new();
     private PresentationFeedback? feedback;
     private CharacterSetupPresentation? characterSetup;
     private ClientConnectionOptions? connectionOptions;
@@ -69,7 +70,7 @@ public partial class Main : Node2D
     internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
     internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal bool ObservedSpellSourceArmed => spellSourceArmed;
-    internal int ObservedWorldBrightness => world?.Brightness ?? 0;
+    internal int ObservedWorldBrightness => screenBrightness.Brightness;
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
@@ -136,7 +137,7 @@ public partial class Main : Node2D
         var serverIdentity = client?.ServerIdentity;
         // Normal captures include the menu. Authority evidence remains incomplete until a real admission.
         if (!(environmentWarmup && normalFrameCaptureRequested)
-            && (snapshot is null || serverIdentity is null || snapshot.Players.Count != participantCount))
+            && (snapshot is null || serverIdentity is null || snapshot.ParticipantCount != participantCount))
             return false;
 
         var options = connectionOptions ?? ClientConnectionOptions.FromEnvironment();
@@ -182,7 +183,7 @@ public partial class Main : Node2D
             environmentWarmup ? null : warmupSeconds);
         if (frameEvidence is { } recorder) {
             if (serverIdentity is not null) recorder.ObserveServerIdentity(serverIdentity);
-            if (snapshot is not null) recorder.ObserveParticipantCount(snapshot.Players.Count);
+            if (snapshot is not null) recorder.ObserveParticipantCount(snapshot.ParticipantCount);
         }
         return frameEvidence is not null;
     }
@@ -235,10 +236,12 @@ public partial class Main : Node2D
         world = new WorldPresentation();
         AddChild(worldFrame);
         worldFrame.AddChild(world);
-        LoadBrightness();
-        LoadGameSpeed();
         hud = new HudPresentation();
         AddChild(hud);
+        AddChild(screenBrightness);
+        LoadBrightness();
+        LoadGameSpeed();
+        hud.BrightnessChanged += ApplyBrightness;
         feedback = new PresentationFeedback();
         AddChild(feedback);
         characterSetup = new CharacterSetupPresentation { Name = "CharacterSetup" };
@@ -411,7 +414,7 @@ public partial class Main : Node2D
         persistLocalSession = connectionOptions is not null
             && SessionLifecyclePolicy.ShouldPersistLocalBookmark(
                 connectionOptions, options, resumeTokenPath);
-        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true, UseLevelScopedIdleReferences = true }) {
+        var newClient = new AuthoritativeClient(options with { UseSnapshotReferences = true, UseLevelScopedIdleReferences = true, UseLevelScopedSnapshots = true }) {
             AllocationMetrics = ClientFrameEvidenceRecorder.IsRequested ? new ClientTransportAllocationMetrics() : null,
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()
@@ -444,11 +447,35 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        var processStarted = FrameCostTimestamp();
         BeginFrameCostFrame();
+        if (processStarted == 0) processStarted = FrameCostTimestamp();
         var evidenceFrameTimestamp = frameEvidence is null
             ? 0
             : ClientFrameEvidenceRecorder.GetTimestamp();
         var evidenceSceneStartTimestamp = evidenceFrameTimestamp;
+        try { ProcessFrame(delta); } finally {
+            var evidenceSceneEndTimestamp = frameEvidence is null
+                ? 0
+                : ClientFrameEvidenceRecorder.GetTimestamp();
+            if (frameEvidence is { } evidence && evidenceFrameTimestamp != 0) {
+                if (client?.ServerIdentity is { } identity)
+                    evidence.ObserveServerIdentity(identity);
+                if (model.Snapshot is { } snapshot)
+                    evidence.ObserveParticipantCount(snapshot.ParticipantCount);
+                RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
+                evidence.RecordFrame(
+                    evidenceFrameTimestamp,
+                    evidenceSceneStartTimestamp,
+                    evidenceSceneEndTimestamp);
+                // Include capture/recording overhead in the full callback measurement too.
+                evidence.RecordProcessCost(evidenceSceneEndTimestamp, FrameCostElapsed(processStarted));
+            }
+        }
+    }
+
+    private void ProcessFrame(double delta)
+    {
         if (localSessionWarning is not null && client?.IsConnected == true) {
             bookmarkRetrySeconds += delta;
             if (bookmarkRetrySeconds >= 5) {
@@ -515,8 +542,8 @@ public partial class Main : Node2D
         hudMilliseconds += FrameCostElapsed(layoutStarted);
         hudAllocated += FrameCostAllocationSince(layoutAllocationStart);
         if (hud is not null) {
-            worldFrame.Position = hud.PlayArea.Position;
-            worldFrame.Size = hud.PlayArea.Size;
+            if (worldFrame.Position != hud.PlayArea.Position) worldFrame.Position = hud.PlayArea.Position;
+            if (worldFrame.Size != hud.PlayArea.Size) worldFrame.Size = hud.PlayArea.Size;
         }
         var worldStarted = FrameCostTimestamp();
         var worldAllocationStart = FrameCostAllocation();
@@ -551,20 +578,6 @@ public partial class Main : Node2D
         hudMilliseconds += FrameCostElapsed(hudStarted);
         hudAllocated += FrameCostAllocationSince(hudAllocationStart);
         feedback?.Apply(model, world);
-        var evidenceSceneEndTimestamp = frameEvidence is null
-            ? 0
-            : ClientFrameEvidenceRecorder.GetTimestamp();
-        if (frameEvidence is { } evidence && evidenceFrameTimestamp != 0) {
-            if (client?.ServerIdentity is { } identity)
-                evidence.ObserveServerIdentity(identity);
-            if (model.Snapshot is { } snapshot)
-                evidence.ObserveParticipantCount(snapshot.Players.Count);
-            RecordFrameCosts(evidence, evidenceSceneEndTimestamp);
-            evidence.RecordFrame(
-                evidenceFrameTimestamp,
-                evidenceSceneStartTimestamp,
-                evidenceSceneEndTimestamp);
-        }
     }
 
     private bool RequestTownRestart()
@@ -579,6 +592,16 @@ public partial class Main : Node2D
     }
 
     public override void _UnhandledInput(InputEvent @event)
+    {
+        var inputStarted = FrameCostTimestamp();
+        var inputAllocation = FrameCostAllocation();
+        try { HandleUnhandledInput(@event); } finally {
+            inputMilliseconds += FrameCostElapsed(inputStarted);
+            inputAllocated += FrameCostAllocationSince(inputAllocation);
+        }
+    }
+
+    private void HandleUnhandledInput(InputEvent @event)
     {
         if (@event is InputEventKey toggle && toggle.Pressed && !toggle.Echo) {
             if (toggle.Keycode == Key.F3) {
@@ -763,6 +786,14 @@ public partial class Main : Node2D
                 });
                 GetViewport().SetInputAsHandled();
                 return;
+            }
+            // A resident's upper body may cover another floor cell. Resolve its real
+            // sprite before the tile-based dialogue selectors, preserving drop/spell/Ctrl-walk input above.
+            if (!spellSourceArmed && world?.NativeTownerTileAt(mouse.Position) is { } residentTile
+                && (model.QuestTownerInteractionAt(residentTile.X, residentTile.Y) is not null
+                    || model.TownerGreetingAt(residentTile.X, residentTile.Y) is not null)) {
+                target = residentTile;
+                world.SetTargetPreview(target);
             }
             if (world?.WorldItemEntityIdAt(target) is { } itemEntityId) {
                 QueueInteractionAfterMove(target, new Command {
@@ -1234,8 +1265,15 @@ public partial class Main : Node2D
         ObservedLastQueuedIntent = command.IntentCase;
         ObservedLastQueuedObjectEntityId = command.OperateObjectRequested?.ObjectEntityId ?? 0;
         if (command.MoveRequested is { } move) {
-            if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
-            else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);
+            var predictionStarted = FrameCostTimestamp();
+            var predictionAllocation = FrameCostAllocation();
+            try {
+                if (move.TargetCell) model.TrackPredictedMoveTo(sequence, move.TargetX, move.TargetY, client!.SupportsTargetCellPathing);
+                else model.TrackPredictedMove(sequence, move.DirectionX, move.DirectionY);
+            } finally {
+                predictionMilliseconds += FrameCostElapsed(predictionStarted);
+                predictionAllocated += FrameCostAllocationSince(predictionAllocation);
+            }
         }
         return sequence;
     }

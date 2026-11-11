@@ -22,11 +22,12 @@ public sealed partial class AuthoritativeClientModel
         return wire.WithGeometryForTransport(cachedSnapshotGeometry);
     }
 
-    private Snapshot? OwnSnapshotProjection(Snapshot wire, bool discarded, bool levelScopedIdleReferences)
+    private Snapshot? OwnSnapshotProjection(Snapshot wire, bool discarded, bool levelScopedIdleReferences, bool levelScopedSnapshots)
     {
         // Stale publications are validated, but cannot change an admitted reference baseline.
         if (discarded) return null;
         cachedLevelScopedIdleReferences = levelScopedIdleReferences;
+        cachedLevelScopedSnapshots = levelScopedSnapshots;
         Snapshot? owned = null;
         if (wire.GeometryUnchanged) {
             if (!discarded) {
@@ -67,7 +68,7 @@ public sealed partial class AuthoritativeClientModel
             throw new InvalidDataException("The authoritative snapshot has an unknown or active body reference.");
         // This also fences the geometry token and content/ruleset identity.
         ExpandSnapshotGeometry(wire);
-        if (wire.Players.Count != 0 || wire.Monsters.Count != 0 || wire.WorldItems.Count != 0 || wire.Objects.Count != 0
+        if (wire.PlayerRoster.Count != 0 || wire.Players.Count != 0 || wire.Monsters.Count != 0 || wire.WorldItems.Count != 0 || wire.Objects.Count != 0
             || wire.Quests.Count != 0 || wire.Projectiles.Count != 0 || wire.Portals.Count != 0 || wire.Corpses.Count != 0
             || wire.ActiveStore is not null || wire.RandomState != 0 || wire.VictoryTriggered || wire.Difficulty != GameDifficulty.Unspecified
             || wire.QuestTownerInteractions.Count != 0 || wire.ActiveWorldMutationIds.Count != 0 || wire.SetLevelObjectOrigins.Count != 0

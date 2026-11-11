@@ -76,25 +76,36 @@ public partial class Main
     /** Restores the saved brightness; acceptance runs keep the native default. */
     private void LoadBrightness()
     {
-        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE")))
-            return;
-        var settings = new ConfigFile();
-        if (settings.Load(SettingsPath) == Error.Ok)
-            world?.SetBrightness(settings.GetValue("graphics", "brightness", 0).AsInt32());
+        var brightness = NativeBrightnessSetting.Default;
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE"))) {
+            var settings = new ConfigFile();
+            if (settings.Load(SettingsPath) == Error.Ok)
+                brightness = NativeBrightnessSetting.Load(new ConfigFileSettingsStore(settings));
+        }
+        screenBrightness.SetBrightness(brightness);
+        hud?.SetBrightness(screenBrightness.Brightness);
     }
 
-    /** G brightens and Shift+G darkens by one native step; the value is saved for later sessions. */
+    /** G brightens and Shift+G darkens by one native step. */
     private void AdjustBrightness(int direction)
     {
-        if (world is null)
+        ApplyBrightness(NativeBrightness.Adjust(screenBrightness.Brightness, direction));
+        hud?.SetStatus($"Brightness {screenBrightness.Brightness} (G brighter, Shift+G darker)");
+    }
+
+    /** Applies a brightness from the key or the HUD slider live and saves it for later sessions. */
+    private void ApplyBrightness(int brightness)
+    {
+        var normalized = NativeBrightness.Normalize(brightness);
+        hud?.SetBrightness(normalized);
+        if (normalized == screenBrightness.Brightness)
             return;
-        world.SetBrightness(NativeBrightness.Adjust(world.Brightness, direction));
+        screenBrightness.SetBrightness(normalized);
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE"))) {
             var settings = new ConfigFile();
             settings.Load(SettingsPath);
-            settings.SetValue("graphics", "brightness", world.Brightness);
+            NativeBrightnessSetting.Save(new ConfigFileSettingsStore(settings), normalized);
             settings.Save(SettingsPath);
         }
-        hud?.SetStatus($"Brightness {world.Brightness} (G brighter, Shift+G darker)");
     }
 }

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class AuthoritativePresentationClockRecoveryTests
 {
     [Theory]
@@ -64,10 +65,10 @@ public sealed class AuthoritativePresentationClockRecoveryTests
     {
         var clock = new AuthoritativePresentationClock();
         var snapshot = new Snapshot();
-        for (var i = 0; i < 1000; i++) { snapshot.Tick = (ulong)i; clock.Advance(snapshot, 0.1, 20); }
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 1000; i < 11000; i++) { snapshot.Tick = (ulong)i; clock.Advance(snapshot, 0.1, 20); }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Action<int> frame = _ => { snapshot.Tick++; clock.Advance(snapshot, 0.1, 20); };
+        HotPathAllocation.Warm(frame);
+        var measured = HotPathAllocation.Measure(frame, 10000);
+        Assert.Equal(0, measured.Bytes);
     }
 
     internal static NativePlayerCatalog TownWalkCatalog()

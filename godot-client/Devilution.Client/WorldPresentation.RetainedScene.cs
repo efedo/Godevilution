@@ -60,8 +60,8 @@ public partial class WorldPresentation
         if (snapshotDataChanged) refresh |= NativeSceneRefresh.Actors;
         var translation = new Vector2((float)(view.OriginX - retainedReferenceView.OriginX), (float)(view.OriginY - retainedReferenceView.OriginY));
         // Static commands keep their reference coordinates. Canvas transforms scroll them without _Draw.
-        retainedRoot.Position = translation;
-        retainedPreview!.Position = -translation;
+        retainedRoot.SetRetainedPosition(translation);
+        retainedPreview!.SetRetainedPosition(-translation);
         if (refresh.HasFlag(NativeSceneRefresh.Viewport)) { retainedPreview.QueueRedraw(); QueueRedraw(); }
         if (refresh.HasFlag(NativeSceneRefresh.Geometry)) {
             retainedLevel = currentLevel;
@@ -83,7 +83,7 @@ public partial class WorldPresentation
         if (refresh != NativeSceneRefresh.None) UpdateRetainedCells(family, view);
         foreach (var cell in retainedVisibleCells) {
             if (cell.ActorCanvas is null) continue;
-            cell.ActorCanvas.Position = -translation;
+            cell.ActorCanvas.SetRetainedPosition(-translation);
             cell.ActorCanvas.Visible = retainedActors.TryGetValue((cell.X, cell.Y), out var actors) && actors.Any(ActorVisible);
             if (cell.ActorCanvas.Visible) cell.ActorCanvas.QueueRedraw();
         }

@@ -80,8 +80,10 @@ world view (minimum window 960x600). Left click walks to a tile along a native p
 interacts. Right click attacks a monster or casts the readied spell on an empty
 tile. Picking a spell in the Hero panel or with Q/E makes left click cast it until
 Escape. WASD walk screen-relative while held; arrows take one grid step. G and
-Shift+G step the DevilutionX brightness option (0 is the native palette, saved in
-`user://settings.cfg`; acceptance runs keep 0). World art draws pixel-exact.
+Shift+G, or the Brightness slider under High contrast in the Hero panel, step the
+DevilutionX brightness option (0–100 in steps of 5; 0 is the native palette, saved in
+`user://settings.cfg`; acceptance runs keep 0). It applies to the whole screen, HUD
+and menus included. World art draws pixel-exact.
 The always-visible Quick use belt row and keys 1–8 use the matching belt slot
 without changing item or spell selection; the server remains authoritative for
 whether use is allowed in the current context.

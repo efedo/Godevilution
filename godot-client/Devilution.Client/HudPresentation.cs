@@ -84,6 +84,17 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button clearEvents = new() { Name = "ClearEvents", Text = "Clear events" };
     private readonly CheckButton diagnosticsToggle = new() { Text = "Diagnostics (F3)" };
     private readonly CheckButton highContrastToggle = new() { Text = "High contrast (F4)" };
+    private readonly Label brightnessCaption = new() { Name = "BrightnessCaption" };
+    private readonly HSlider brightnessSlider = new() {
+        Name = "Brightness",
+        MinValue = NativeBrightness.Minimum,
+        MaxValue = NativeBrightness.Maximum,
+        Step = NativeBrightness.Step,
+        TickCount = (NativeBrightness.Maximum - NativeBrightness.Minimum) / NativeBrightness.Step + 1,
+        TicksOnBorders = true,
+        FocusMode = Control.FocusModeEnum.None,
+        TooltipText = "DevilutionX brightness: 0 is the native palette.",
+    };
     private PanelContainer? sidePanel;
     private InventoryLayout inventoryLayout = InventoryLayout.Build(null, null, InventoryColumns, VisibleInventoryRows);
     private uint activeStoreId;
@@ -108,6 +119,8 @@ public partial class HudPresentation : CanvasLayer
     private bool sessionMenuTransition;
     private string selectedSpellText = "none";
 
+    /** The player moved the brightness slider (already normalized to the native step). */
+    public event Action<int>? BrightnessChanged;
     public event Action<uint>? OpenStoreRequested;
     public event Action? CloseStoreRequested;
     public event Action? OpenStashRequested;
@@ -284,6 +297,12 @@ public partial class HudPresentation : CanvasLayer
         clearEvents.Pressed += () => ClearEventsRequested?.Invoke();
         diagnosticsToggle.Toggled += visible => diagnostics.Visible = visible;
         highContrastToggle.Toggled += _ => ApplyAccessibility();
+        brightnessSlider.ValueChanged += value => {
+            var brightness = NativeBrightness.Normalize((int)Math.Round(value));
+            ShowBrightnessCaption(brightness);
+            BrightnessChanged?.Invoke(brightness);
+        };
+        ShowBrightnessCaption(NativeBrightnessSetting.Default);
 
         status.Text = "Starting...";
         statusEffects.Text = "Statuses: waiting for authoritative snapshot";
@@ -413,6 +432,17 @@ public partial class HudPresentation : CanvasLayer
     }
 
     public void ToggleHighContrast() => highContrastToggle.ButtonPressed = !highContrastToggle.ButtonPressed;
+
+    /** Shows a brightness applied elsewhere (saved value, G / Shift+G) without raising BrightnessChanged. */
+    public void SetBrightness(int brightness)
+    {
+        var normalized = NativeBrightness.Normalize(brightness);
+        brightnessSlider.SetValueNoSignal(normalized);
+        ShowBrightnessCaption(normalized);
+    }
+
+    private void ShowBrightnessCaption(int brightness)
+        => brightnessCaption.Text = $"Brightness {brightness} (G / Shift+G)";
 
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
@@ -1103,7 +1133,7 @@ public partial class HudPresentation : CanvasLayer
         appliedHighContrast = highContrastToggle.ButtonPressed;
         var color = highContrastToggle.ButtonPressed ? Colors.White : new Color("d5d5e5");
         var muted = highContrastToggle.ButtonPressed ? Colors.White : new Color("b2b2c5");
-        foreach (var control in new Control[] { status, state, statusEffects, victory, inventory, store, dialog, commandFeedback, diagnostics }) {
+        foreach (var control in new Control[] { status, state, statusEffects, victory, inventory, store, dialog, commandFeedback, diagnostics, brightnessCaption }) {
             control.Modulate = control == diagnostics ? muted : color;
             control.AddThemeFontSizeOverride("font_size", highContrastToggle.ButtonPressed ? 18 : 14);
         }

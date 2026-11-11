@@ -316,7 +316,7 @@ internal static class PerformanceResumeStateContract
         if (firstWireSnapshot.Tick < baseline.SnapshotTick
             || firstWireSnapshot.ContentManifestHash != baseline.Identity.ContentManifestHash
             || firstWireSnapshot.RulesetIdentityHash != baseline.Identity.RulesetIdentityHash
-            || firstWireSnapshot.Players.Count != 1)
+            || firstWireSnapshot.ParticipantCount != 1)
             throw new InvalidDataException("The first Resume snapshot does not match the saved session.");
         var player = Project(firstWireSnapshot.Players[0]);
         if (player != baseline.Player)
@@ -402,7 +402,7 @@ internal static class PerformanceResumeStateContract
         => snapshot.Tick >= baseline.SnapshotTick
             && snapshot.ContentManifestHash == baseline.Identity.ContentManifestHash
             && snapshot.RulesetIdentityHash == baseline.Identity.RulesetIdentityHash
-            && snapshot.Players.Count == 1
+            && snapshot.ParticipantCount == 1
             && Project(snapshot.Players[0]) == baseline.Player;
 
     private static bool IsLegalTarget(Snapshot snapshot, uint actorEntityId, int x, int y)

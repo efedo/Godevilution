@@ -5,11 +5,6 @@ using Godot;
 
 namespace Devilution.Client;
 
-internal sealed record NativeTownerDrawObservation(int ResidentSlot, int TownerId, int PositionX, int PositionY,
-    int NativeDirection, bool NativeArt, bool GenericFallback, string? PackId, string? AtlasPath,
-    int DirectionIndex, int FrameIndex, int AlignmentWidth, float AnchorX, float AnchorY,
-    float DrawX, float DrawY, int Width, int Height, double CosmeticTick, string? Diagnostic, bool AnchorInsideViewport);
-
 public partial class WorldPresentation
 {
     private readonly NativeTownerAssets nativeTownerAssets = new();
@@ -38,7 +33,9 @@ public partial class WorldPresentation
     {
         var inTown = snapshot?.Players.FirstOrDefault()?.LevelId == 0 && snapshot.NativeTownResidents.Count == 11;
         nativeTownerClock.Advance(delta, tickRate, inTown, connected && !presentationEpochPending, reset);
-        if (snapshot is not null && townerBindingChanges.ShouldUpdate(true,
+        // Scoped dungeon views omit Town residents; validate their full roster on the next Town admission.
+        if (snapshot is not null && townerBindingChanges.ShouldUpdate(
+                snapshot.PlayerRoster.Count == 0 || snapshot.Players[0].LevelId == 0,
                 (nativeTownerContentIdentity, snapshot.NativeTownCatalogFingerprint, snapshot.NativeTownResidents))) {
             cachedTownerPack = null;
             nativeTownerArtReady = nativeTownerAssets.Bind(nativeTownerContentIdentity, snapshot.NativeTownCatalogFingerprint,
@@ -77,6 +74,18 @@ public partial class WorldPresentation
             bounds = NativeScenePlacement.ResolveResidentBounds(anchor.X, anchor.Y, sprite.AlignmentWidth, frame.Width, frame.Height);
         }
         return bounds.IntersectsViewport(view.ViewportWidth, view.ViewportHeight);
+    }
+
+    /** Native pixel selection followed by native neighbouring-tile fallback. */
+    public Vector2I? NativeTownerTileAt(Vector2 screenPosition)
+    {
+        if (snapshot?.Players.FirstOrDefault()?.LevelId != 0 || nativeSceneViewport is not { } view
+            || !nativeTownerArtReady || nativeTownerAssets.Catalog is not { } catalog)
+            return null;
+        var point = ToLocal(screenPosition);
+        var resident = NativeTownerPicking.Select(view, snapshot.NativeTownResidents, catalog,
+            nativeTownerAssets.PickingMasks, nativeTownerClock.Tick, point.X, point.Y);
+        return resident is null ? null : new(resident.PositionX, resident.PositionY);
     }
 
     private void DrawGenericTowners()

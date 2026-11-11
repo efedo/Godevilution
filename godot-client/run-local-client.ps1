@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume', 'NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume', 'NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume', 'NativeRogueJourney', 'NativeRogueResume', 'NativeDepthJourney', 'NativeDepthResume', 'NativeMultiplayerCreate', 'NativeMultiplayerJourney', 'NativeMultiplayerResume', 'TownCapture')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
@@ -33,10 +33,18 @@ param(
     # Automated acceptance only: server simulation rate. Above 20 Hz runs the game faster than real time
     # to shorten clock-bound journeys; the cohort identity records it, so a resume must use the same rate.
     [ValidateRange(1, 200)] [int]$TickRateHz = 20,
-    [ValidateSet('Debug', 'Release')] [string]$ClientBuildConfiguration = 'Debug'
+    [ValidateSet('Debug', 'Release')] [string]$ClientBuildConfiguration = 'Debug',
+    [switch]$TownCaptureSmoke
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($AcceptancePhase -eq 'TownCapture' -and ($Headless -or $TickRateHz -ne 20 -or -not $Automated -or
+    [string]::IsNullOrWhiteSpace($CathedralNativeTownProfileDirectory) -or
+    [string]::IsNullOrWhiteSpace($env:GODEVILUTION_CLIENT_FRAME_CAPTURE) -or $env:GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT)) {
+    throw 'TownCapture requires an automated windowed native Town, 20 Hz, and the normal frame capture output.'
+}
+if ($TownCaptureSmoke -and $AcceptancePhase -ne 'TownCapture') { throw '-TownCaptureSmoke requires -AcceptancePhase TownCapture.' }
 
 function Get-GodotClientBuildArguments([string]$ProjectDirectory, [ValidateSet('Debug', 'Release')] [string]$Configuration = 'Debug') {
     # Project launches load this runtime slot. Release compilation still emits optimized Release images here.
@@ -179,7 +187,7 @@ if ($nativeClassPhase -and ((-not $Headless -and $AcceptancePhase -cne 'NativeDe
     }
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
-if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not ($nativeClassPhase -or $nativeMultiplayerPhase)) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
+if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not ($nativeClassPhase -or $nativeMultiplayerPhase -or $AcceptancePhase -ceq 'TownCapture')) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
     ($CharacterClassId -ge 0 -and $CharacterClassId -notin @(0, 1, 2)))) {
     throw 'Class-bound native profiles require a direct single-player Warrior, Rogue or Sorcerer cohort launch or their explicit acceptance phases.'
 }
@@ -2249,6 +2257,7 @@ try {
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
         if ($CommandTimingTrace) { $clientEnvironment['GODEVILUTION_COMMAND_TIMING_TRACE'] = '1' }
+        if ($AcceptancePhase -eq 'TownCapture' -and $TownCaptureSmoke) { $clientEnvironment['GODEVILUTION_TOWN_CAPTURE_SMOKE'] = '1' }
         if ($LifecyclePreviewContent) { $clientEnvironment['GODEVILUTION_LIFECYCLE_PREVIEW'] = '1' }
         if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }

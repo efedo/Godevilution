@@ -43,5 +43,6 @@ public sealed partial class Snapshot
         geometryUnchanged_ = other.geometryUnchanged_;
         stateRevision_ = other.stateRevision_;
         stateUnchanged_ = other.stateUnchanged_;
+        playerRoster_ = cloneBody ? other.playerRoster_.Clone() : other.playerRoster_;
     }
 }

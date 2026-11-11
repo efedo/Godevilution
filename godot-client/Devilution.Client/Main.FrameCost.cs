@@ -6,9 +6,44 @@ namespace Devilution.Client;
 
 public partial class Main
 {
+    internal bool FrameCaptureActive => frameEvidence?.IsActive == true;
+    internal string FrameCaptureState {
+        get {
+            var snapshot = model.Snapshot;
+            var player = snapshot?.Players.FirstOrDefault();
+            var receipt = model.LastCommandResult;
+            return $"connected={client?.IsConnected}, tick={snapshot?.Tick}, level={player?.LevelId}, "
+                + $"position=({player?.PositionX},{player?.PositionY}), store={player?.ActiveStoreId}, "
+                + $"queued={ObservedLastQueuedSequence}, receipt={receipt?.ClientSequence}/{receipt?.AppliedTick}/{receipt?.Status}/{receipt?.RejectReason}, "
+                + $"pending={client?.PendingCommandCount}";
+        }
+    }
+    internal void BeginFrameCapturePhase(string phase)
+        => (frameEvidence ?? throw new InvalidOperationException("Frame capture was not configured."))
+            .BeginPhase(phase, ClientFrameEvidenceRecorder.GetTimestamp());
+
+    // Scalar observations keep the capture driver from cloning the full snapshot on every input check.
+    internal (int X, int Y, uint Level, ulong Tick, bool Settled, bool Admitted) TownCapturePlayer
+    {
+        get {
+            var snapshot = model.Snapshot ?? throw new InvalidOperationException("Town capture lost its snapshot.");
+            var player = snapshot.Players[0];
+            var position = AuthoritativePlayerPositionProjection.Resolve(player);
+            var receipt = model.LastCommandResult;
+            var admitted = client?.PendingCommandCount == 0 && (ObservedLastQueuedSequence == 0
+                || receipt?.ClientSequence == ObservedLastQueuedSequence && snapshot.Tick >= receipt.AppliedTick);
+            return (position.X, position.Y, player.LevelId, snapshot.Tick,
+                AuthoritativePlayerSettlement.IsSettled(player, client?.PendingCommandCount ?? 0), admitted);
+        }
+    }
+
+    internal Vector2I? FrameCaptureResidentAt(Vector2 position) => world?.NativeTownerTileAt(position);
+
     private readonly AuthoritativeSpellSourceCache frameSpellSources = new();
     private double admissionMilliseconds, worldMilliseconds, hudMilliseconds;
     private long admissionAllocated, worldAllocated, hudAllocated;
+    private double inputMilliseconds, predictionMilliseconds;
+    private long inputAllocated, predictionAllocated;
     private ClientTransportAllocationObservation previousTransportAllocations;
     private bool renderTimeMeasurementEnabled;
     private bool normalFrameCaptureAttempted;
@@ -25,7 +60,7 @@ public partial class Main
     {
         if (frameEvidence is null && normalFrameCaptureRequested && !normalFrameCaptureAttempted) {
             normalFrameCaptureAttempted = true;
-            if (!StartPerformanceRecording(model.Snapshot?.Players.Count ?? 1, 0, environmentWarmup: true))
+            if (!StartPerformanceRecording(model.Snapshot?.ParticipantCount ?? 1, 0, environmentWarmup: true))
                 GD.PushWarning("Frame capture could not start: check the fresh output directory and capture settings.");
         }
         if (model.Snapshot is not null)
@@ -59,7 +94,13 @@ public partial class Main
             Math.Max(0, transport.SnapshotCount - previous.SnapshotCount),
             Math.Max(0, transport.SnapshotWireBytes - previous.SnapshotWireBytes),
             Math.Max(0, transport.DecodeAllocatedBytes - previous.DecodeAllocatedBytes),
-            Math.Max(0, transport.ProcessingAllocatedBytes - previous.ProcessingAllocatedBytes)));
+            Math.Max(0, transport.ProcessingAllocatedBytes - previous.ProcessingAllocatedBytes),
+            0, inputMilliseconds, predictionMilliseconds,
+            renderTimeMeasurementEnabled ? RenderingServer.GetFrameSetupTimeCpu() : null,
+            inputAllocated, predictionAllocated));
+        // Input callbacks can precede _Process; consume here instead of resetting them at frame start.
+        inputMilliseconds = predictionMilliseconds = 0;
+        inputAllocated = predictionAllocated = 0;
     }
 
 }

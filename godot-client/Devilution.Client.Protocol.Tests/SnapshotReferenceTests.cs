@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
@@ -8,6 +7,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class SnapshotReferenceTests(ITestOutputHelper output)
 {
     [Theory]
@@ -34,10 +34,9 @@ public sealed class SnapshotReferenceTests(ITestOutputHelper output)
             var payload = new Envelope { Snapshot = reference }.ToByteArray();
             void Poll() => model.Apply(AuthoritativeClientMessage.FromEnvelope(Envelope.Parser.ParseFrom(payload))
                 with { LevelScopedIdleReferences = true });
-            for (var i = 0; i < 32; i++) Poll();
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 512; i++) Poll();
-            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            Action<int> poll = _ => Poll();
+            HotPathAllocation.Warm(poll);
+            var allocated = HotPathAllocation.Measure(poll, 512).Bytes;
             output.WriteLine($"Town with off-level movement: {payload.Length} wire bytes, {allocated / 512d:F0} B/poll.");
             Assert.InRange(allocated, 0, 512L * 8192);
             // An old receiver never trusts this relaxed policy without negotiation.
@@ -310,12 +309,10 @@ public sealed class SnapshotReferenceTests(ITestOutputHelper output)
         model.Apply(new(Snapshot: RoundTrip(cache.Project(source))));
         var payload = new Envelope { Snapshot = cache.Project(source) }.ToByteArray();
         void Poll() => model.Apply(AuthoritativeClientMessage.FromEnvelope(Envelope.Parser.ParseFrom(payload)));
-        for (var i = 0; i < 32; i++) Poll();
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        var watch = Stopwatch.StartNew();
-        for (var i = 0; i < 512; i++) Poll();
-        var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
-        output.WriteLine($"idle reference: wire={payload.Length}, allocation={bytes / 512.0:F0} B/poll, elapsed={watch.Elapsed.TotalMilliseconds / 512:F4} ms/poll");
+        Action<int> poll = _ => Poll();
+        HotPathAllocation.Warm(poll);
+        var (bytes, elapsed) = HotPathAllocation.Measure(poll, 512);
+        output.WriteLine($"idle reference: wire={payload.Length}, allocation={bytes / 512.0:F0} B/poll, elapsed={elapsed.TotalMilliseconds / 512:F4} ms/poll");
         Assert.InRange(bytes, 0, 512L * 8192);
         Assert.Equal(source, model.Snapshot);
     }
@@ -330,10 +327,9 @@ public sealed class SnapshotReferenceTests(ITestOutputHelper output)
         model.Apply(new(Snapshot: RoundTrip(cache.Project(source))));
         var payload = new Envelope { Snapshot = cache.Project(source) }.ToByteArray();
         void Poll() => model.Apply(AuthoritativeClientMessage.FromEnvelope(Envelope.Parser.ParseFrom(payload)));
-        for (var i = 0; i < 16; i++) Poll();
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 128; i++) Poll();
-        var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Action<int> poll = _ => Poll();
+        HotPathAllocation.Warm(poll);
+        var bytes = HotPathAllocation.Measure(poll, 128).Bytes;
         output.WriteLine($"moving reference: wire={payload.Length}, allocation={bytes / 128.0:F0} B/poll");
         Assert.InRange(bytes, 0, 128L * 32768);
     }
@@ -345,10 +341,9 @@ public sealed class SnapshotReferenceTests(ITestOutputHelper output)
         var clock = new AuthoritativePresentationClock();
         var cadence = new HeldWalkCadence();
         void Frame() { clock.Advance(source, 1d / 60, 20); cadence.Advance(1d / 60); cadence.Due(new(1, 1)); }
-        for (var i = 0; i < 32; i++) Frame();
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 4096; i++) Frame();
-        var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Action<int> frame = _ => Frame();
+        HotPathAllocation.Warm(frame);
+        var bytes = HotPathAllocation.Measure(frame, 4096).Bytes;
         output.WriteLine($"idle presentation/held cadence: {bytes} B / 4096 frames");
         Assert.InRange(bytes, 0, 256);
     }

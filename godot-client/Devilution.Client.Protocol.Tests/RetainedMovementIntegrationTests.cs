@@ -48,6 +48,35 @@ public sealed class RetainedMovementIntegrationTests
         }
     }
 
+    [Theory]
+    [InlineData(96, 96, -16)] [InlineData(96, 64, -16)] [InlineData(128, 128, -32)]
+    public void ResidentPlacementTracksRetainedTerrainWhileTheLocalPlayerWalks(int width, int height, int nativeOffset)
+    {
+        var player = Player(49, 49);
+        var reference = NativeSceneViewport.Create(808, 520, 112, 112, 49, 49);
+        var world = new WorldPresentation();
+        world.BeginRetainedPlayerTest(player, new(49, 49), reference);
+        world.AddRetainedStaticTestActor(99, 50, 50);
+        var terrain = CreateTerrainCell(reference);
+        var original = Assert.Single(terrain.Cell.Content).Bounds;
+        for (var frame = 0; frame <= 24; frame++) {
+            var position = new ClientPresentationPosition(49 + frame / 24d, 49);
+            var view = NativeSceneViewport.Create(808, 520, 112, 112, position.X, position.Y);
+            world.AdvanceRetainedTest(position, view);
+            var residentAnchor = world.RetainedTestAnchor(99);
+            var actual = NativeScenePlacement.ResolveResidentBounds(residentAnchor.X, residentAnchor.Y, width, width, height);
+            var terrainLeft = original.X + view.OriginX - reference.OriginX;
+            var terrainBottom = original.Y + 31 + view.OriginY - reference.OriginY;
+            // Native DrawMonsterHelper draws from this terrain left edge, then applies Towner::getRenderingOffset.
+            Assert.Equal(terrainLeft + nativeOffset, actual.X, 8);
+            Assert.Equal(terrainBottom, actual.Y + height - 1, 8);
+            Assert.False(terrain.Cell.Update(terrain.Family, 0, null));
+            Assert.Equal(original, Assert.Single(terrain.Cell.Content).Bounds);
+            Assert.Equal(view.CellBottomAnchor(position.X, position.Y), world.RetainedTestAnchor(1));
+            Assert.Equal((50, 50), world.RetainedTestCell(99));
+        }
+    }
+
     // Literal marker choices from native world_renderer.cpp DrawDungeon (899-926, 946-974),
     // WalkSettings (players.cpp 160-169), and GetMonsterMovementMode (monsters.cpp 3746-3759).
     public static IEnumerable<object[]> NativeDirections() => [

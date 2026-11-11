@@ -19,6 +19,8 @@ public sealed class LiveAuthoritativeGameSpeedTests : LiveAuthoritativeTestBase
             startingLevelOverride: 0, randomSeed: 0, gameMode: "single-player",
             commandSchedulingMode: CommandSchedulingMode.ClockGated, tickRateHz: 20);
         await using var client = new AuthoritativeClient(CreateOptions(server, "godot-live-game-speed", 1) with {
+            // Match the Godot client: references and level-scoped snapshots stay on at speed.
+            UseSnapshotReferences = true, UseLevelScopedIdleReferences = true, UseLevelScopedSnapshots = true,
             SnapshotPollInterval = TimeSpan.FromMilliseconds(100),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
         });
@@ -189,6 +191,8 @@ public sealed class LiveAuthoritativeGameSpeedTests : LiveAuthoritativeTestBase
             startingLevelOverride: level, randomSeed: 0, gameMode: "single-player",
             commandSchedulingMode: CommandSchedulingMode.ClockGated, tickRateHz: 20);
         await using var client = new AuthoritativeClient(CreateOptions(server, "godot-live-game-speed-budget", 1) with {
+            // Match the Godot client: references and level-scoped snapshots stay on at speed.
+            UseSnapshotReferences = true, UseLevelScopedIdleReferences = true, UseLevelScopedSnapshots = true,
             SnapshotPollInterval = TimeSpan.FromMilliseconds(250),
             MovingSnapshotPollInterval = TimeSpan.FromMilliseconds(100),
             MaximumRetryTimeout = TimeSpan.FromSeconds(2),
@@ -284,6 +288,7 @@ public sealed class LiveAuthoritativeGameSpeedTests : LiveAuthoritativeTestBase
     private sealed class Pump(AuthoritativeClient client, CancellationToken cancellationToken)
     {
         private readonly Dictionary<ulong, CommandResult> results = [];
+        private readonly AuthoritativeClientModel model = new();
         private Snapshot? snapshot;
 
         private async Task StepAsync()
@@ -291,8 +296,11 @@ public sealed class LiveAuthoritativeGameSpeedTests : LiveAuthoritativeTestBase
             await client.PollAsync(cancellationToken);
             foreach (var message in client.DrainMessages()) {
                 Assert.Null(message.Error);
-                if (message.Snapshot is { } received && (snapshot is null || received.Tick >= snapshot.Tick))
-                    snapshot = received;
+                // Admit through the model: referenced snapshots omit unchanged bodies on the wire.
+                client.ApplyMessageToModel(model, message);
+                if (message.Snapshot is not null && model.Snapshot is { } admitted
+                    && (snapshot is null || admitted.Tick >= snapshot.Tick))
+                    snapshot = admitted;
                 foreach (var result in message.Acknowledgement?.Results ?? [])
                     results.TryAdd(result.ClientSequence, result);
             }

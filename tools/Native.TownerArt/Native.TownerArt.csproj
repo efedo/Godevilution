@@ -7,6 +7,8 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../godot-client/Devilution.Client/PresentationAssets/NativeTownerPickingData.cs"
+             Link="NativeTownerPickingData.cs" />
     <ProjectReference Include="../Native.PlayerArt/Native.PlayerArt.csproj" />
   </ItemGroup>
 </Project>

@@ -9,13 +9,26 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
-### 2026-11-10 — Game speed (2.6c)
+### 2026-11-10 â€” Game speed (2.6c)
 
-Server 2313 passed (one load-only disposal timeout in `ClockGatedPipelineOrderingTests`, 3 of 3 alone),
-client 1949 passed. Same script on seed 7, L1: 1x and 20x states match at tick 400. Explicit headless
-20 s walk at 20x of 20 Hz: host 394–399 of 400 ticks/s (Town and L1), snapshot admission p95 0.4–1.2 ms,
-no `TooLate`, 148 of 155 Town steps on their tick (rest accepted 3–80 ticks late). Not run: Godot
-journeys at speed and a windowed check.
+After merging master `519569ef2`: Diablo 3939, client 2061 and server 2318 passed. One server
+failure, `CommandTimingLauncherContractTests` on `TownCaptureSmoke`, is already on master. Same
+script on seed 7, L1: 1x and 20x states match at tick 400. Explicit headless 20 s walk at 20x of
+20 Hz with level-scoped references: host 397â€“398 of 400 ticks/s (Town and L1), snapshot admission
+p95 â‰¤ 0.16 ms, no `TooLate`, 181 of 183 Town steps on their tick (2 accepted 6 and 27 ticks late).
+Release windowed Town smoke capture (1x) passed. Not run: Godot journeys at speed.
+
+### 2026-11-10 â€” Lighter, steadier client (2.6a)
+
+Suites on `de8a160ab`: Diablo 3939, client 2006 and server 2293 passed; native comparisons
+5 Domain and 261 Diablo cases. One server concurrency test timed out under load and passed
+5 of 5 in isolation. All seven headless journeys passed (normal L8, door, shrine, theme,
+sarcophagus, 10 Hz and 20 Hz micro). In-memory replays matched every receipt and state
+hash for the optimised path search (268 commands) and the cached prediction (153 clicks;
+all 12,544 Town cells). Offline Town pipeline allocation: 32.6 to 0.014 MB/s idle.
+Automated windowed capture (`tools/run-auto-capture.ps1`, 60 FPS + VSync, RTX 3070) on
+`aa1aaccda`: Release idle 62 ms CPU/s and 0.16 MB/s, walking 123 ms/s and 2.2 MB/s,
+p99 frame 17.8 ms; Debug idle 138 ms/s, walking 186 ms/s, p99 19.2 ms.
 
 ### 2026-11-07 â€” Responsive, smooth play (2.6a)
 

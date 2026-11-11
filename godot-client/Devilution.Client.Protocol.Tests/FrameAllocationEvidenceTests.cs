@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
+[Collection(AllocationMeasurementCollection.Name)]
 public sealed class FrameAllocationEvidenceTests
 {
     [Fact]
@@ -65,11 +66,12 @@ public sealed class FrameAllocationEvidenceTests
             var recorder = Create(root);
             var start = Stopwatch.GetTimestamp();
             var metrics = new ClientFrameCostMetrics(1, 2, 3, 4, 0, 20, null, null,
-                11, 22, 33, 44, 1, 1234, 55, 66);
+                11, 22, 33, 44, 1, 1234, 55, 66, 0, 5, 4, 0.75, 77, 88);
             for (var i = 0; i < 60; i++) {
                 var timestamp = start + i * Stopwatch.Frequency / 60;
                 recorder.RecordFrameCost(timestamp, metrics);
                 recorder.RecordFrame(timestamp, timestamp, timestamp);
+                recorder.RecordProcessCost(timestamp, 12);
             }
             recorder.RecordFrameCost(start + Stopwatch.Frequency, default);
             recorder.Stop("test-complete", true);
@@ -83,6 +85,12 @@ public sealed class FrameAllocationEvidenceTests
             Assert.Equal(74040, sample.GetProperty("SnapshotWireBytesPerSecond").GetDouble());
             Assert.Equal(3300, sample.GetProperty("SnapshotDecodeAllocatedBytesPerSecond").GetDouble());
             Assert.Equal(3960, sample.GetProperty("SnapshotProcessingAllocatedBytesPerSecond").GetDouble());
+            Assert.Equal(12, sample.GetProperty("ProcessMillisecondsPerFrame").GetDouble());
+            Assert.Equal(5, sample.GetProperty("InputMillisecondsPerFrame").GetDouble());
+            Assert.Equal(4, sample.GetProperty("PredictionMillisecondsPerFrame").GetDouble());
+            Assert.Equal(0.75, sample.GetProperty("RenderFrameSetupCpuMillisecondsPerFrame").GetDouble());
+            Assert.Equal(4620, sample.GetProperty("InputAllocatedBytesPerSecond").GetDouble());
+            Assert.Equal(5280, sample.GetProperty("PredictionAllocatedBytesPerSecond").GetDouble());
             foreach (var name in new[] { "ManagedAllocationBytesPerSecond", "MainThreadAllocationBytesPerSecond",
                 "BackgroundAllocationBytesPerSecond", "Gen0CollectionsPerSecond", "Gen1CollectionsPerSecond",
                 "Gen2CollectionsPerSecond", "GcPauseMillisecondsPerSecond" })
@@ -118,12 +126,17 @@ public sealed class FrameAllocationEvidenceTests
             var start = Stopwatch.GetTimestamp();
             recorder.RecordFrameCost(start, default);
             recorder.RecordFrame(start, start, start);
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 1; i <= 4096; i++) {
-                recorder.RecordFrameCost(start + i, default);
-                recorder.RecordFrame(start + i, start + i, start + i);
-            }
-            Assert.InRange(GC.GetAllocatedBytesForCurrentThread() - before, 0, 256);
+            var timestamp = start;
+            Action<int> frame = _ => {
+                timestamp++;
+                recorder.RecordFrameCost(timestamp, new(1, 2, 3, 4, 0, 0, null, null,
+                    ProcessMilliseconds: 0, InputMilliseconds: 5, PredictionMilliseconds: 4, RenderFrameSetupCpuMilliseconds: 0.75));
+                recorder.RecordFrame(timestamp, timestamp, timestamp);
+                recorder.RecordProcessCost(timestamp, 12);
+            };
+            HotPathAllocation.Warm(frame); // Warm every API, including process-cost recording, within the same fake second.
+            var measured = HotPathAllocation.Measure(frame, 4096);
+            Assert.InRange(measured.Bytes, 0, 256);
             recorder.Stop("test-complete", true);
         } finally { DeleteRoot(root); }
     }

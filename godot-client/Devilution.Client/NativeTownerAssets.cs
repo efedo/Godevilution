@@ -18,6 +18,7 @@ internal sealed class NativeTownerAssets
     private readonly string? manifestPath;
     private readonly NativeTownerCatalog? catalog;
     private readonly Dictionary<int, Texture2D> textures = [];
+    private readonly Dictionary<int, NativeTownerOpacityMask> opacity = [];
     private readonly List<string> loadedPaths = [];
     private readonly List<string> missingPaths = [];
     private string? contentHash;
@@ -77,6 +78,8 @@ internal sealed class NativeTownerAssets
     public bool TryGetTexture(int atlasId, out Texture2D texture)
         => textures.TryGetValue(atlasId, out texture!);
 
+    public IReadOnlyDictionary<int, NativeTownerOpacityMask> PickingMasks => opacity;
+
     public NativeTownerPackObservation ObservePack()
         => new(manifestPath, catalog is not null, catalog?.PackId, contentHash, fingerprint,
             identityMatched, atlasesReady, diagnostic, loadedPaths.ToArray(), missingPaths.ToArray());
@@ -86,14 +89,14 @@ internal sealed class NativeTownerAssets
         foreach (var atlas in catalog!.Atlases) {
             if (!PresentationAssetPath.TryCombineResourcePath(manifestPath!, atlas.Path, out var path, out var error)) {
                 diagnostic = $"Native Town resident atlas path refused: {error}.";
-                textures.Clear();
+                textures.Clear(); opacity.Clear();
                 return false;
             }
             using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
             if (file is null || file.GetLength() is <= 0 or > NativeTownerCatalog.MaximumAtlasFileBytes) {
                 diagnostic = $"Native Town resident atlas '{path}' is missing or exceeds its bounded size.";
                 missingPaths.Add(path);
-                textures.Clear();
+                textures.Clear(); opacity.Clear();
                 return false;
             }
             var bytes = file.GetBuffer(checked((long)file.GetLength())).ToArray();
@@ -105,14 +108,24 @@ internal sealed class NativeTownerAssets
                 || BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(20, 4)) != atlas.Height) {
                 diagnostic = $"Native Town resident atlas '{path}' hash or bounded PNG dimensions differ from its declaration.";
                 missingPaths.Add(path);
-                textures.Clear();
+                textures.Clear(); opacity.Clear();
                 return false;
             }
             using var image = new Image();
             if (image.LoadPngFromBuffer(bytes) != Error.Ok || image.GetWidth() != atlas.Width || image.GetHeight() != atlas.Height) {
                 diagnostic = $"Native Town resident atlas '{path}' could not be decoded.";
                 missingPaths.Add(path);
-                textures.Clear();
+                textures.Clear(); opacity.Clear();
+                return false;
+            }
+            try {
+                if (NativeTownerPickingData.TryReadPng(bytes, atlas.Width, atlas.Height, out var pickingData)) {
+                    image.Convert(Image.Format.Rgba8);
+                    opacity.Add(atlas.Id, new NativeTownerOpacityMask(atlas.Width, atlas.Height, image.GetData(), pickingData));
+                }
+            } catch (InvalidDataException failure) {
+                diagnostic = $"Native resident picking metadata refused: {failure.Message}";
+                textures.Clear(); opacity.Clear();
                 return false;
             }
             textures.Add(atlas.Id, ImageTexture.CreateFromImage(image));

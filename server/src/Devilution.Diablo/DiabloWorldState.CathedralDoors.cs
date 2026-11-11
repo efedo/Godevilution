@@ -118,7 +118,7 @@ public sealed partial class DiabloWorldState
                     || value.IsMoving && At(value.FuturePositionX, value.FuturePositionY)))
             || CombatTargets.Values.Any(value => (value.HitPoints > 0
                     || value.DeathTicksRemaining > 0 || value.IsPetrified)
-                && (value.LevelId == levelId || value.LevelId == 0)
+                && Devilution.Shared.LevelMembership.IsOnLevel(value.LevelId, levelId)
                 && (At(value.PositionX, value.PositionY)
                     || value.IsMoving && At(value.FuturePositionX, value.FuturePositionY)))
             || WorldItems.Values.Any(value => value.LevelId == levelId && At(value.PositionX, value.PositionY))

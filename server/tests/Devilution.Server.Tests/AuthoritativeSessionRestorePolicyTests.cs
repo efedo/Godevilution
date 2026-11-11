@@ -164,7 +164,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
                 receiptStore: receiptStore);
             server.Start();
             using var timeout = CreateTimeout();
-            await WaitForStableValueAsync(() => executor.AdvanceCount, timeout.Token);
+            await WaitForStableValueAsync(() => executor.AdvanceCount, timeout.Token, executor.FirstAdvance.Task);
             var advancesBeforeRejectedSidecar = executor.AdvanceCount;
 
             using (var rejectedClient = new TcpClient()) {
@@ -676,7 +676,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
                 },
             }, cancellationToken);
             await WaitUntilAsync(() => server.PendingCommandCount == 1, cancellationToken);
-            await WaitForStableValueAsync(() => initial.AdvanceCount, cancellationToken);
+            await WaitForStableValueAsync(() => initial.AdvanceCount, cancellationToken, initial.FirstAdvance.Task);
             var advancesBeforeRejectedColdRestore = initial.AdvanceCount;
 
             new AuthoritativeSessionStore(root).Save(
@@ -822,13 +822,12 @@ public sealed class AuthoritativeSessionRestorePolicyTests
             await Task.Delay(TimeSpan.FromMilliseconds(10), deadline.Token);
     }
 
-    private static async Task WaitForStableValueAsync(Func<int> readValue, CancellationToken cancellationToken, Task? initialAdvance = null)
+    private static async Task WaitForStableValueAsync(Func<int> readValue, CancellationToken cancellationToken, Task initialAdvance)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(5));
         // Three zero samples do not prove that the initial periodic turn has run.
-        if (initialAdvance is not null)
-            await initialAdvance.WaitAsync(deadline.Token);
+        await initialAdvance.WaitAsync(deadline.Token);
         var previous = readValue();
         var stableSamples = 0;
         while (stableSamples < 3) {
@@ -1072,6 +1071,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
             TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource ImportEntered { get; } = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FirstAdvance { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public int ImportCount => Volatile.Read(ref importCount);
         public int AdvanceCount => Volatile.Read(ref advanceCount);
@@ -1084,6 +1084,7 @@ public sealed class AuthoritativeSessionRestorePolicyTests
         public void AdvanceTo(ulong tick)
         {
             Interlocked.Increment(ref advanceCount);
+            FirstAdvance.TrySetResult();
         }
 
         public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)

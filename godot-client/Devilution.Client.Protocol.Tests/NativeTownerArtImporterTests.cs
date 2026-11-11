@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
+using Devilution.Client.PresentationAssets;
 using Devilution.Tools.NativePlayerArt;
 using Devilution.Tools.NativeTownerArt;
 using Xunit;
@@ -143,6 +144,42 @@ public sealed class NativeTownerArtImporterTests
             0, 255, 0, 255, 0, 0, 0, 0,
             3, 252, 1, 255, 4, 251, 2, 255,
         }, decoded.Rgba);
+    }
+
+    [Fact]
+    public void PngPreservesShadowIndicesEvenWhenNonShadowPaletteColorsHaveIdenticalRgba()
+    {
+        // IsPointWithinClx distinguishes palette indices, not colors; Town index 127 can be black too.
+        var frame = new NativeTownerCelFrame(3, 1, [0, 127, 127], [255, 255, 0]);
+        var encoded = NativeTownerArtPng.EncodeAtlas(new([[frame]]), NativePlayerPalette.Parse(new byte[768], "synthetic duplicate black palette"));
+        var decoded = DecodePng(encoded.Png);
+        Assert.Equal(decoded.Rgba[..4], decoded.Rgba[4..8]);
+        Assert.True(NativeTownerPickingData.TryReadPng(encoded.Png, decoded.Width, decoded.Height, out var data));
+        Assert.False(NativeTownerPickingData.IsSelectable(data, 0));
+        Assert.True(NativeTownerPickingData.IsSelectable(data, 1));
+        Assert.False(NativeTownerPickingData.IsSelectable(data, 2));
+        var mask = new NativeTownerOpacityMask(decoded.Width, decoded.Height, decoded.Rgba, data);
+        var region = new NativeTownerFrame(0, 0, 0, 3, 1, 0, 0);
+        Assert.False(mask.HitTest(region, 96, 48, 0, 0, 0));
+        Assert.True(mask.HitTest(region, 96, 48, 0, 1, 0));
+        Assert.False(mask.HitTest(region, 96, 48, 0, 2, 0));
+    }
+
+    [Fact]
+    public void OptionalPickingChunkAllowsLegacyPngButRejectsMalformedOrDuplicateMetadata()
+    {
+        var png = NativeTownerArtPng.EncodeAtlas(new([[new NativeTownerCelFrame(1, 1, [1], [255])]]),
+            NativePlayerPalette.Parse(new byte[768], "synthetic palette")).Png;
+        const int start = 33; // Signature and IHDR precede the optional private chunk.
+        var size = (int)BinaryPrimitives.ReadUInt32BigEndian(png.AsSpan(start)) + 12;
+        var legacy = png[..start].Concat(png[(start + size)..]).ToArray();
+        Assert.False(NativeTownerPickingData.TryReadPng(legacy, 1, 1, out _));
+        var duplicate = png[..(start + size)].Concat(png[start..]).ToArray();
+        Assert.Throws<InvalidDataException>(() => NativeTownerPickingData.TryReadPng(duplicate, 1, 1, out _));
+        Assert.Throws<InvalidDataException>(() => NativeTownerPickingData.TryReadPng(png, 2, 1, out _));
+        Assert.Throws<InvalidDataException>(() => NativeTownerPickingData.TryReadPng(png[..(start + 10)], 1, 1, out _));
+        png[start + 8] = 2;
+        Assert.Throws<InvalidDataException>(() => NativeTownerPickingData.TryReadPng(png, 1, 1, out _));
     }
 
     [Fact]

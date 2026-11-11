@@ -15,10 +15,14 @@ public readonly record struct NativeScenePixelBounds(double X, double Y, int Wid
 /** Native dSpecial lookup and screen placement used by the scene renderer. */
 public static class NativeScenePlacement
 {
-    /** Native resident widths align to the tile center; raster bottoms are inclusive. */
+    /** world_renderer.cpp DrawMonsterHelper / Towner::getRenderingOffset draw from the tile's left edge. */
     public static NativeScenePixelBounds ResolveResidentBounds(double bottomX, double bottomY,
         int alignmentWidth, int rasterWidth, int rasterHeight)
-        => new(bottomX - (alignmentWidth - 64) / 2d, bottomY - rasterHeight + 1, rasterWidth, rasterHeight);
+    {
+        var tileLeftX = bottomX - NativeSceneViewport.HalfTileWidth;
+        var nativeOffsetX = (alignmentWidth - 2 * NativeSceneViewport.HalfTileWidth) / 2;
+        return new(tileLeftX - nativeOffsetX, bottomY - rasterHeight + 1, rasterWidth, rasterHeight);
+    }
 
     /**
      * Resolves the special shown while drawing a cell. Town looks one cell back on both axes;
