@@ -10,6 +10,7 @@ namespace Devilution.Client.Acceptance;
 public partial class SessionAcceptance
 {
     private readonly JourneyCombatSafety journeySafety = new();
+    private readonly JourneyCombatPositioning journeyPositioning = new();
     private Main? journeySafetyMain;
     private uint journeySafetyPlayer;
     private ulong journeySafetyRevision = ulong.MaxValue;
@@ -29,6 +30,7 @@ public partial class SessionAcceptance
         journeySafetyMain = main; journeySafetyPlayer = playerId;
         journeySafetyRevision = ulong.MaxValue; journeySafetySnapshot = null;
         journeySafety.Reset();
+        journeyPositioning.Reset();
     }
 
     private Snapshot JourneySafetySnapshot(Main main)
@@ -69,10 +71,12 @@ public partial class SessionAcceptance
         var result = main.ObservedCommandResult;
         var admitted = main.ObservedPendingCommandCount == 0 && (main.ObservedLastQueuedSequence == 0
             || AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence));
-        return new(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, nearby, adjacent,
+        var observation = new JourneyCombatSafety.Observation(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, nearby, adjacent,
             NativeHealingSupply(player), admitted, AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount),
             main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0,
             player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick);
+        journeyPositioning.Observe(observation, player.PositionX, player.PositionY);
+        return observation;
     }
 
     private JourneyCombatSafety.Decision JourneySafetyDecision(Main main)
@@ -141,12 +145,16 @@ public partial class SessionAcceptance
         var state = ObserveJourneySafety(main);
         var decision = journeySafety.Observe(state, fleeing ? JourneySafetyActivity.Retreat : activity);
         if (state.Level != sourceLevel || sourceLevel == 0
-            || !decision.Drink && (fleeing || !decision.StopWalking)) return;
+            || !decision.Drink && !decision.StopWalking) return;
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         await JourneyCombatSafety.ProtectRouteAsync(sourceLevel, () => ObserveJourneySafety(main).Level,
             () => !cancel.Disabled, () => StopNativeTravelAsync(main),
             () => WaitForNativeCommandBoundaryAsync(main, "Journey route safety pause", settlePlayer: false),
-            () => JourneySafetyCheckpointAsync(main, fleeing ? JourneySafetyActivity.Retreat : activity),
+            async () => {
+                await HaltJourneyDestinationWalkAsync(main);
+                if (ObserveJourneySafety(main).Level == sourceLevel)
+                    await JourneySafetyCheckpointAsync(main, fleeing ? JourneySafetyActivity.Stairs : activity);
+            },
             () => WaitForJourneySettlementAsync(main, "Journey route safety pause"), async () => {
             var sections = (TabContainer)main.FindChild("HudSections", true, false);
             await ClickControl(main, sections, 4, resumeControl);
@@ -198,6 +206,8 @@ public partial class SessionAcceptance
         var state = ObserveJourneySafety(main);
         if (!state.CommandsAdmitted || !state.Settled || state.Level == 0) return false;
         var snapshot = JourneySafetySnapshot(main); var player = JourneySafetyPlayer(main, snapshot);
+        if (player.CharacterClassId == 0 && state.HealingItems == 0)
+            return await TryJourneyCoverStepAsync(main);
         var geometry = snapshot.LevelGeometry.Single(level => level.LevelId == player.LevelId);
         var current = NativeThreatClearance(snapshot, player.LevelId, player.PositionX, player.PositionY);
         (int X, int Y)? best = null;
@@ -217,5 +227,41 @@ public partial class SessionAcceptance
         if (main.ObservedLastQueuedSequence == before) return false;
         var result = await WaitForJourneyCombatCommandAsync(main, before, "Take a safer retreat step");
         return AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+    }
+
+    private async Task<bool> TryJourneyCoverStepAsync(Main main)
+    {
+        var state = ObserveJourneySafety(main);
+        if (!state.CommandsAdmitted || !state.Settled || state.Level == 0) return false;
+        var snapshot = JourneySafetySnapshot(main); var player = JourneySafetyPlayer(main, snapshot);
+        var geometry = snapshot.LevelGeometry.Single(level => level.LevelId == player.LevelId);
+        var step = journeyPositioning.CoverStep(snapshot, player, geometry,
+            (x, y) => IsNativeApproachCellOpen(main, snapshot, player, geometry, x, y) && IsRenderedWorldTileVisible(main, x, y));
+        if (step is not { } cover) return false;
+        var before = main.ObservedLastQueuedSequence;
+        await Click(main.ObservedTileScreenPosition(cover.X, cover.Y), walk: true);
+        if (main.ObservedLastQueuedSequence == before) return false;
+        var result = await WaitForJourneyCombatCommandAsync(main, before, "Move onto known fighting ground");
+        return AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+    }
+
+    private async Task HaltJourneyDestinationWalkAsync(Main main)
+    {
+        var player = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
+        if (!player.NativeWalkPathPending) return;
+        // CaptureNativeDestinationPath replaces the server path for this ordinary MoveTo click.
+        // The current animation may finish first; returning one step is preferable to running into the pack.
+        var before = main.ObservedLastQueuedSequence;
+        await Click(main.ObservedTileScreenPosition(player.PositionX, player.PositionY), walk: true);
+        Require(main.ObservedLastQueuedSequence > before, "The real hold-position click queued no movement intent.");
+        await WaitForNativeCommandAppliedAsync(main, before, "Stop the queued native destination walk");
+        await WaitForJourneySettlementAsync(main, "Stop the queued native destination walk");
+    }
+
+    private async Task HoldNativeWarriorSwarmAsync(Main main, bool seekCover = true)
+    {
+        if (seekCover && await TryJourneyCoverStepAsync(main)) return;
+        // Let melee approach the choke rather than crossing the room to engage the entire pack.
+        await WaitTicksWhile(main, () => ObserveJourneySafety(main).Adjacent == 0, .25);
     }
 }

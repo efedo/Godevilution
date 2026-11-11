@@ -277,13 +277,18 @@ public partial class SessionAcceptance
                 bool AttackGoal(int x, int y) => AttackCell(target, x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
                 if (CanAttackNow(target)) return target;
+                if (!ranged && player.CharacterClassId == 0 && journeyPositioning.ShouldHold(ObserveJourneySafety(main))) {
+                    await HoldNativeWarriorSwarmAsync(main);
+                    moved = true;
+                    break;
+                }
                 var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackGoal,
                     nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null, openCells);
                 if (firstStep is null) continue;
                 approach.Follow(target.EntityId);
                 var sequence = main.ObservedLastQueuedSequence;
                 await Click(main.ObservedTileScreenPosition(firstStep.Value.X, firstStep.Value.Y), walk: true);
-                await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter");
+                await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter", healDuringWait: true);
                 await UseNativeHealingPotionIfNeeded(main);
                 moved = true;
                 break;

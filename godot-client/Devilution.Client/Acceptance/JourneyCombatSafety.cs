@@ -50,17 +50,21 @@ internal sealed class JourneyCombatSafety
         // A poll, a real UI click, scheduling lead and a round trip must fit before the next burst.
         var roundTrip = double.IsFinite(state.RoundTripMilliseconds) ? Math.Clamp(state.RoundTripMilliseconds, 0, 250) : 0;
         var reactionTicks = Math.Max(8, Math.Ceiling(Math.Max(1, state.TickRateHz) * (.35 + roundTrip / 1000)));
-        var threshold = state.Nearby switch { 0 => .70, 1 => .80, 2 => .85, 3 => .90, _ => .95 };
+        // Count alone must not spend a whole potion on a few percent of missing life.
+        // Only the measured loss forecast below can demand a near-full-life quick-use.
+        var threshold = state.Nearby switch { 0 => .70, 1 => .80, _ => .85 };
         // Stairs reveal an unknown pack, objects can release one, and retreat still has to reach safety.
         if (activity is JourneySafetyActivity.Stairs or JourneySafetyActivity.Retreat) threshold = Math.Max(threshold, .90);
         if (activity == JourneySafetyActivity.ObjectApproach) threshold = Math.Max(threshold, .85);
-        if (state.Adjacent > 0) threshold = Math.Max(threshold, Math.Min(.97, .77 + .06 * state.Adjacent));
+        if (state.Adjacent > 0) threshold = Math.Max(threshold, Math.Min(.87, .77 + .06 * state.Adjacent));
         threshold = Math.Clamp(Math.Max(threshold,
             .5 + (rate * reactionTicks + largest) / state.MaximumLife), .70, .97);
         var projected = state.Life - rate * reactionTicks;
-        var retreat = state.Adjacent >= 3 && state.Life < state.MaximumLife * .80
-            || state.Adjacent > 0 && state.HealingItems == 0 && state.Life < state.MaximumLife * .60
-            || rate > 0 && projected < state.MaximumLife * .20 && state.Life < state.MaximumLife * .90;
+        // With no quick-use left, healthy melee is safer than repeatedly yielding to a pursuing pack.
+        var retreat = state.HealingItems == 0
+            ? state.Life <= state.MaximumLife * .35 && (state.Nearby > 0 || rate > 0)
+            : state.Adjacent >= 3 && state.Life < state.MaximumLife * .80
+                || rate > 0 && projected < state.MaximumLife * .20 && state.Life < state.MaximumLife * .90;
         return new(state.HealingItems > 0 && state.Life < state.MaximumLife && state.Life <= state.MaximumLife * threshold,
             state.Nearby >= 3 || state.Adjacent >= 2 || rate > 0 && projected < state.MaximumLife * .5,
             retreat, threshold, rate, state.Nearby, state.Adjacent);
@@ -84,6 +88,7 @@ internal sealed class JourneyCombatSafety
         internal int Used { get; private set; }
         internal void Charge(Observation state)
         {
+            if (state.Life > state.MaximumLife * .35) return;
             if (++Used >= maximumSteps)
                 throw new InvalidOperationException($"Native Warrior cannot disengage on L{state.Level} after {Used}/{maximumSteps} retreat steps; "
                     + (state.HealingItems == 0 ? "out of potions" : $"potions={state.HealingItems}")

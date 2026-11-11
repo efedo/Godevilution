@@ -14,7 +14,9 @@ public sealed class JourneyCombatSafetyTests
     public void ASevenMonsterPackDrinksBeforeTheOldTwoThirdsThreshold()
     {
         var state = State(life: 9200, nearby: 7, adjacent: 4);
-        var decision = new JourneyCombatSafety().Observe(state);
+        var safety = new JourneyCombatSafety();
+        safety.Observe(state with { Tick = state.Tick - 1, Life = state.MaximumLife });
+        var decision = safety.Observe(state);
         Assert.True(state.Life > state.MaximumLife * 2 / 3);
         Assert.True(decision.Drink);
         Assert.True(decision.StopWalking);
@@ -75,7 +77,7 @@ public sealed class JourneyCombatSafetyTests
         var safety = new JourneyCombatSafety();
         Assert.False(safety.Observe(State(nearby: 7, adjacent: 7)).Drink);
         Assert.False(safety.Observe(State(life: 1000) with { Level = 0 }).Drink);
-        var exhausted = safety.Observe(State(life: 4000, potions: 0, nearby: 7, adjacent: 4));
+        var exhausted = safety.Observe(State(life: 3000, potions: 0, nearby: 7, adjacent: 4));
         Assert.False(exhausted.Drink);
         Assert.True(exhausted.Retreat);
     }
@@ -239,7 +241,7 @@ public sealed class JourneyCombatSafetyTests
     public void PursuitWithoutPotionsCannotResetTheFloorRetreatBudget(int stepsPerAttempt)
     {
         var budget = new JourneyCombatSafety.RetreatBudget(8);
-        var state = State(life: 4000, potions: 0);
+        var state = State(life: 3000, potions: 0);
         var attempts = 0;
         var attacks = 0;
         var error = Assert.Throws<InvalidOperationException>(() => {
@@ -404,5 +406,38 @@ public sealed class JourneyCombatSafetyTests
             Assert.Empty(fixture.Model.Snapshot!.Players[0].Inventory);
             Assert.Equal(64, fixture.Model.Snapshot.Players[0].Life);
         }
+    }
+
+    [Theory]
+    [InlineData(8923, 5)]
+    [InlineData(8984, 7)]
+    [InlineData(9204, 6)]
+    public void RecordedHealthyUnhealedWarriorsFightInsteadOfFailingRetreat(int life, int attackers)
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: life, potions: 0, nearby: attackers, adjacent: attackers, hz: 200)
+            with { MaximumLife = 11776 };
+        safety.Observe(state with { Tick = 99, Life = 11776 });
+        Assert.False(safety.Observe(state).Retreat); // Even a burst forecast cannot make high-life flight mandatory.
+        Assert.True(safety.Observe(state).StopWalking);
+        var budget = new JourneyCombatSafety.RetreatBudget(8);
+        for (var step = 0; step < 100; step++) budget.Charge(state);
+        Assert.Equal(0, budget.Used);
+        Assert.True(safety.Observe(state with { Tick = 101, Life = 3500 }).Retreat);
+    }
+
+    [Theory]
+    [InlineData(11388, false)]
+    [InlineData(10000, true)]
+    public void AStaticPackDoesNotWastePotionsButStillHealsBeforeLowLife(int life, bool drink)
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: life, nearby: 9, adjacent: 8, hz: 200) with { MaximumLife = 11776 };
+        Assert.Equal(drink, safety.Observe(state).Drink);
+        Assert.InRange(safety.Observe(state).HealingThreshold, .85, .87);
+        safety.Reset();
+        safety.Observe(state with { Tick = 99, Life = 11776 });
+        // The same near-full life demands a potion if actual incoming damage is rapid.
+        Assert.True(safety.Observe(state).Drink);
     }
 }
