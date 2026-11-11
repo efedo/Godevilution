@@ -11,6 +11,9 @@ public partial class SessionAcceptance
 {
     private readonly JourneyCombatSafety journeySafety = new();
     private readonly JourneyCombatPositioning journeyPositioning = new();
+    private readonly JourneyCombatThreats journeyThreats = new();
+    private IReadOnlyList<GameEvent> journeyDamageEvents = [];
+    private ulong journeyDamageSequence = ulong.MaxValue;
     private Main? journeySafetyMain;
     private uint journeySafetyPlayer;
     private ulong journeySafetyRevision = ulong.MaxValue;
@@ -31,6 +34,7 @@ public partial class SessionAcceptance
         journeySafetyRevision = ulong.MaxValue; journeySafetySnapshot = null;
         journeySafety.Reset();
         journeyPositioning.Reset();
+        journeyThreats.Reset(); journeyDamageEvents = []; journeyDamageSequence = ulong.MaxValue;
     }
 
     private Snapshot JourneySafetySnapshot(Main main)
@@ -38,6 +42,9 @@ public partial class SessionAcceptance
         if (journeySafetyMain != main || journeySafetySnapshot is null
             || journeySafetyRevision != main.ObservedSnapshotRevision || journeySafetyGeneration != main.ObservedModelGeneration) {
             var snapshot = main.ObservedSnapshot ?? throw new InvalidOperationException("Journey safety lost its authoritative snapshot.");
+            if (journeySafetyGeneration != main.ObservedModelGeneration) {
+                journeyThreats.Reset(); journeyDamageEvents = []; journeyDamageSequence = ulong.MaxValue;
+            }
             if (journeySafetyMain != main || journeySafetyPlayer == 0) {
                 Require(snapshot.Players.Count == 1, "A multiplayer journey must register its local safety participant.");
                 RegisterJourneySafety(main, snapshot.Players[0].EntityId);
@@ -57,24 +64,20 @@ public partial class SessionAcceptance
     {
         var snapshot = JourneySafetySnapshot(main);
         var player = JourneySafetyPlayer(main, snapshot);
-        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
-        var nearby = 0; var adjacent = 0;
-        if (player.LevelId != 0) foreach (var monster in snapshot.Monsters) {
-            if (!monster.Alive || monster.IsPlayerMinion || !LevelMembership.IsOnLevel(monster.LevelId, player.LevelId)) continue;
-            var distance = NativeMonsterDistance(player, monster);
-            if (distance > 6 || distance > 1 && !AuthoritativeNativeVisionVisibility.IsVisible(player.LevelId,
-                    monster.PositionX, monster.PositionY, player.LevelId, geometry, player.PositionX, player.PositionY,
-                    player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10)) continue;
-            nearby++;
-            if (distance <= 1) adjacent++;
+        var eventSequence = main.ObservedRecentEventSequenceEnd;
+        if (journeyDamageSequence != eventSequence) {
+            journeyDamageEvents = main.ObservedRecentEvents;
+            journeyDamageSequence = eventSequence;
         }
+        var threats = journeyThreats.Observe(snapshot, player, journeyDamageEvents,
+            main.ObservedRecentEventSequenceStart, eventSequence);
         var result = main.ObservedCommandResult;
         var admitted = main.ObservedPendingCommandCount == 0 && (main.ObservedLastQueuedSequence == 0
             || AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence));
-        var observation = new JourneyCombatSafety.Observation(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, nearby, adjacent,
+        var observation = new JourneyCombatSafety.Observation(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, threats.Nearby, threats.Adjacent,
             NativeHealingSupply(player), admitted, AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount),
             main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0,
-            player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick);
+            player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick, threats.Ranged, threats.RangedTarget);
         journeyPositioning.Observe(observation, player.PositionX, player.PositionY);
         return observation;
     }
@@ -172,7 +175,8 @@ public partial class SessionAcceptance
             var player = JourneySafetyPlayer(main, snapshot);
             if (player.LevelId == 0) return;
             if (snapshot.Players.Count == 1 && player.CharacterClassId == 0) {
-                await ClearNativeWarriorThreatsAsync(main, player.LevelId);
+                var shooter = JourneySafetyDecision(main).RangedTarget;
+                await ClearNativeWarriorThreatsAsync(main, player.LevelId, shooter == 0 ? null : shooter);
                 return;
             }
             // Ranged and multiplayer journeys use their equipped/readied real attack controls.

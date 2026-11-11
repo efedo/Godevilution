@@ -8,12 +8,37 @@ internal static class JourneyHealingSupplies
 {
     internal const int Target = 16;
     internal readonly record struct Purchase(int Index, uint Price, string Limit) { internal bool Buy => Index >= 0; }
+    internal readonly record struct RestockAttempt(int Supply, uint Gold, bool CouldBuy);
     internal static bool NeedsTownDeparturePreparation(PlayerSnapshot player, int supply)
         => player.LevelId == 0 && (player.Life < player.LifeMaximum || supply < Target);
 
-    internal static bool NeedsFloorResupply(PlayerSnapshot player, int supply, uint price)
-        => player.LevelId != 0 && supply < (player.LevelId >= 5 ? 12 : 6)
+    internal static bool NeedsFloorResupply(PlayerSnapshot player, int supply, uint price, bool beforeDeepDescent = false)
+        => player.LevelId != 0 && supply < (beforeDeepDescent ? Target : player.LevelId >= 5 ? 12 : 6)
             && price > 0 && player.Gold >= price && CanCarry(player);
+
+    /** Returning through the cleared floors may call the same departure checks; never nest resupply trips. */
+    internal sealed class ResupplyTrip
+    {
+        internal bool Active { get; private set; }
+        internal async Task RunAsync(Func<Task> visit)
+        {
+            if (Active) return;
+            Active = true;
+            try { await visit(); }
+            finally { Active = false; }
+        }
+    }
+
+    internal static RestockAttempt BeginRestock(PlayerSnapshot player, int supply, StoreSnapshot store)
+        => new(supply, player.Gold, NextPurchase(player, supply, store).Buy);
+
+    internal static void RequireRestocked(RestockAttempt before, PlayerSnapshot player, int supply, StoreSnapshot store, string limit)
+    {
+        if (supply < before.Supply || before.CouldBuy && supply <= before.Supply || NextPurchase(player, supply, store).Buy)
+            throw new InvalidOperationException($"Pepin restock did not buy the affordable healing supply: "
+                + $"potions={before.Supply}->{supply}, Gold={before.Gold}->{player.Gold}, limit={limit}, "
+                + $"couldBuyBefore={before.CouldBuy}, canCarry={CanCarry(player)}.");
+    }
 
     internal static bool CanCarry(PlayerSnapshot player)
         => Enumerable.Range(0, 8).Any(slot => player.Belt.All(item => item.Slot != slot))

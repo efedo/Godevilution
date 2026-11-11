@@ -193,10 +193,10 @@ public partial class SessionAcceptance
             + $"matchingItems={beforeCount}->{CountNativeHealingItemOccurrences(after, potionStableId, potionSeed)}, "
             + $"life={beforeLife}->{after.Life}, "
             + $"seed={potionSeed}, stableId={potionStableId}; {DescribeNativeHealingState(main)}.");
-        if (concurrentDamage)
-            GD.Print($"Native L{player.LevelId} potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
-                + $"observedTick={main.ObservedSnapshot!.Tick}, life={beforeLife}->{after.Life}, "
-                + $"netLifeDelta={after.Life - beforeLife}, exactSeed={potionSeed}, stableId={potionStableId}.");
+        GD.Print($"Native L{player.LevelId} potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
+            + $"observedTick={main.ObservedSnapshot!.Tick}, life={beforeLife}->{after.Life}, "
+            + $"potions={NativeHealingSupply(player)}->{NativeHealingSupply(after)}, concurrentDamage={concurrentDamage}, "
+            + $"netLifeDelta={after.Life - beforeLife}, exactSeed={potionSeed}, stableId={potionStableId}.");
     }
 
     private static bool IsNativeProgressionCombatFloor(Main main)

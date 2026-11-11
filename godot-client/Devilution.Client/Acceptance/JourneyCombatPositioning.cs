@@ -37,7 +37,7 @@ internal sealed class JourneyCombatPositioning
     }
 
     private static bool UnhealedSwarm(JourneyCombatSafety.Observation state)
-        => state.Level != 0 && state.HealingItems == 0 && state.Nearby >= 3;
+        => state.Level != 0 && state.HealingItems == 0 && state.Nearby >= 3 && state.RangedTarget == 0;
 
     /** Two positioning opportunities per swarm; stationary shooters must not suppress pathfinding. */
     internal bool ShouldHold(JourneyCombatSafety.Observation state, long? nearestDistance = null)

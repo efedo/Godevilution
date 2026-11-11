@@ -50,6 +50,7 @@ public partial class SessionAcceptance
     private const int NativeWarriorPotionSupply = JourneyHealingSupplies.Target;
     private uint nativeWarriorHealingPrice = 50;
     private bool nativeWarriorHealingStockAvailable = true;
+    private readonly JourneyHealingSupplies.ResupplyTrip nativeWarriorResupply = new();
     private const int NativeWarriorPotionReserve = 2;
     // L5-L8 packs pin the Warrior for longer, so the walk out keeps more.
     private const int NativeWarriorCatacombsPotionReserve = 6;
@@ -306,12 +307,17 @@ public partial class SessionAcceptance
     private async Task VisitNativeWarriorTownAsync(Main main)
     {
         using var timed = NativeWarriorStep("town", "healer and restock");
+        var arrived = main.ObservedSnapshot!.Players.Single();
+        GD.Print($"Native Warrior restock starting: potions={NativeHealingSupply(arrived)}, Gold={arrived.Gold}");
         await HealNativeWarriorInTownAsync(main);
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var openSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "OpenHealer4");
         await AcceptedAndSettled(main, openSequence, "Open Pepin's native Healer stock");
         await Until(() => main.ObservedSnapshot!.ActiveStore?.StoreId == 4, "Pepin's native Healer stock did not open.", 5);
+        var initial = main.ObservedSnapshot!.Players.Single();
+        var restock = JourneyHealingSupplies.BeginRestock(initial, NativeHealingSupply(initial), main.ObservedSnapshot.ActiveStore!);
+        var bought = 0;
         var limit = "purchase attempt budget";
         for (var purchases = 0; purchases < 2 * NativeWarriorPotionSupply; purchases++) {
             var player = main.ObservedSnapshot!.Players.Single();
@@ -335,39 +341,45 @@ public partial class SessionAcceptance
             await Until(() => NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == supply + 1
                 && main.ObservedSnapshot.Players.Single().Gold == player.Gold - purchase.Price,
                 "Pepin's healing potion purchase did not add a potion and debit its exact price.", 5);
+            bought++;
         }
         if (limit == "purchase attempt budget") {
             var finalPurchase = JourneyHealingSupplies.NextPurchase(main.ObservedSnapshot!.Players.Single(),
                 NativeHealingSupply(main.ObservedSnapshot.Players.Single()), main.ObservedSnapshot.ActiveStore!);
             if (!finalPurchase.Buy) limit = finalPurchase.Limit;
         }
+        var stocked = main.ObservedSnapshot!.Players.Single();
+        GD.Print($"Native Warrior restocked in Town: potions={restock.Supply}->{NativeHealingSupply(stocked)}; "
+            + $"Gold={restock.Gold}->{stocked.Gold}; bought={bought}; limit={limit}");
+        JourneyHealingSupplies.RequireRestocked(restock, stocked, NativeHealingSupply(stocked), main.ObservedSnapshot.ActiveStore!, limit);
         var closeSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "CloseStore");
         await AcceptedAndSettled(main, closeSequence, "Close Pepin's Healer store");
         var restocked = main.ObservedSnapshot!.Players.Single();
-        GD.Print($"Native Warrior restocked in Town: potions={NativeHealingSupply(restocked)}; gold={restocked.Gold}; limit={limit}");
         Require(limit != "purchase attempt budget" || NativeHealingSupply(restocked) >= NativeWarriorPotionSupply,
             $"Pepin restock exhausted its {2 * NativeWarriorPotionSupply} purchase attempts; "
                 + $"potions={NativeHealingSupply(restocked)}, gold={restocked.Gold}. Refusing to descend without the affordable supply.");
     }
 
     /** Check before optional object work too; skipped-fight floors and resume need supplies as well. */
-    private async Task EnsureNativeWarriorFloorSuppliesAsync(Main main, string directory)
+    private async Task EnsureNativeWarriorFloorSuppliesAsync(Main main, string directory, bool beforeDeepDescent = false)
     {
         var player = main.ObservedSnapshot!.Players.Single();
-        if (!nativeWarriorHealingStockAvailable
-            || !JourneyHealingSupplies.NeedsFloorResupply(player, NativeHealingSupply(player), nativeWarriorHealingPrice)) return;
+        if (nativeWarriorResupply.Active || !nativeWarriorHealingStockAvailable
+            || !JourneyHealingSupplies.NeedsFloorResupply(player, NativeHealingSupply(player), nativeWarriorHealingPrice, beforeDeepDescent)) return;
         var depth = player.LevelId;
         GD.Print($"Native Warrior resupplying before L{depth} work: potions={NativeHealingSupply(player)}, gold={player.Gold}");
-        // The first journey must still demonstrate opening L5's warp at its existing final stage.
-        var lowest = depth >= NativeWarriorTownWarpDepth && NativeWarriorTownWarpOpen(main) ? (int)NativeWarriorTownWarpDepth : 0;
-        for (var up = (int)depth - 1; up >= lowest; up--)
-            await TravelNativeWarriorAsync(main, directory, (uint)up, flee: true);
-        if (lowest != 0) await TravelNativeWarriorAsync(main, directory, 0, flee: true);
-        await VisitNativeWarriorTownAsync(main);
-        var first = lowest != 0 ? NativeWarriorTownWarpDepth : 1U;
-        for (var down = first; down <= depth; down++)
-            await TravelNativeWarriorAsync(main, directory, down);
+        await nativeWarriorResupply.RunAsync(async () => {
+            // The first journey must still demonstrate opening L5's warp at its existing final stage.
+            var lowest = depth >= NativeWarriorTownWarpDepth && NativeWarriorTownWarpOpen(main) ? (int)NativeWarriorTownWarpDepth : 0;
+            for (var up = (int)depth - 1; up >= lowest; up--)
+                await TravelNativeWarriorAsync(main, directory, (uint)up, flee: true);
+            if (lowest != 0) await TravelNativeWarriorAsync(main, directory, 0, flee: true);
+            await VisitNativeWarriorTownAsync(main);
+            var first = lowest != 0 ? NativeWarriorTownWarpDepth : 1U;
+            for (var down = first; down <= depth; down++)
+                await TravelNativeWarriorAsync(main, directory, down);
+        });
     }
 
     /** The played-character facts a per-floor test hero reproduces. */
@@ -394,6 +406,10 @@ public partial class SessionAcceptance
                 return (player, NativeHealingSupply(player));
             }, () => VisitNativeWarriorTownAsync(main));
         var origin = main.ObservedSnapshot!.Players.Single().LevelId;
+        if (destination >= NativeWarriorTownWarpDepth && destination > origin)
+            await EnsureNativeWarriorFloorSuppliesAsync(main, directory, beforeDeepDescent: true);
+        var supplied = main.ObservedSnapshot!.Players.Single();
+        GD.Print($"Native Warrior departure L{supplied.LevelId}->L{destination}: potions={NativeHealingSupply(supplied)}, Gold={supplied.Gold}");
         using var timed = NativeWarriorStep("travel", $"L{origin}->L{destination}");
         for (var attempt = 0; attempt < NativeWarriorTravelAttempts; attempt++) {
             // An interrupted walk can still finish on the trigger; let a pending transition land first.
@@ -872,8 +888,11 @@ public partial class SessionAcceptance
             // The reserve plans a Town visit; it never withholds a needed dose during a fight.
             if (danger.Retreat && NativeHealingSupply(player) == 0)
                 throw new NativeWarriorRetreatException(
-                    $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
+                    $"{danger.Attackers} attackers ({danger.Adjacent} melee, {danger.RangedAttackers} ranged), "
+                        + $"life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
             if (adjacent is null) {
+                if (danger.RangedTarget != 0 && !journeyThreats.IsRangedAttacker(targetId))
+                    targetId = danger.RangedTarget; // Keep closing on this shooter while it remains a damaging source.
                 var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                     .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
                 if (pauses.TryHold(ObserveJourneySafety(main), nearest)) {

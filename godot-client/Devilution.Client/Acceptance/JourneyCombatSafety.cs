@@ -7,9 +7,13 @@ internal sealed class JourneyCombatSafety
 {
     internal readonly record struct Observation(uint Player, uint Level, ulong Tick, int Life, int MaximumLife,
         int Nearby, int Adjacent, int HealingItems, bool CommandsAdmitted, bool Settled,
-        uint TickRateHz = 20, double RoundTripMilliseconds = 0, bool HitRecovery = false, ulong HitRecoveryEndTick = 0);
+        uint TickRateHz = 20, double RoundTripMilliseconds = 0, bool HitRecovery = false, ulong HitRecoveryEndTick = 0,
+        int RangedAttackers = 0, uint RangedTarget = 0);
     internal readonly record struct Decision(bool Drink, bool StopWalking, bool Retreat,
-        double HealingThreshold, double LossPerTick, int Nearby, int Adjacent);
+        double HealingThreshold, double LossPerTick, int Nearby, int Adjacent, int RangedAttackers = 0, uint RangedTarget = 0)
+    {
+        internal int Attackers => Adjacent + RangedAttackers;
+    }
     private readonly (ulong Tick, ulong Interval, int Loss)[] losses = new (ulong, ulong, int)[32];
     private int count, cursor;
     private Observation? previous;
@@ -61,13 +65,17 @@ internal sealed class JourneyCombatSafety
             .5 + (rate * reactionTicks + largest) / state.MaximumLife), .70, .97);
         var projected = state.Life - rate * reactionTicks;
         // With no quick-use left, healthy melee is safer than repeatedly yielding to a pursuing pack.
+        // A completed kill can retain loss history before corpse conversion; require a live threat to retreat.
         var retreat = state.HealingItems == 0
-            ? state.Life <= state.MaximumLife * .35 && (state.Nearby > 0 || rate > 0)
+            ? state.Life <= state.MaximumLife * .35 && state.Nearby > 0
             : state.Adjacent >= 3 && state.Life < state.MaximumLife * .80
                 || rate > 0 && projected < state.MaximumLife * .20 && state.Life < state.MaximumLife * .90;
+        // Yielding indefinitely cannot disengage stationary shooters. Close on a confirmed
+        // damage source, defending adjacent interceptors, unless melee already surrounds us.
+        if (state.HealingItems == 0 && state.RangedTarget != 0 && state.Adjacent < 3) retreat = false;
         return new(state.HealingItems > 0 && state.Life < state.MaximumLife && state.Life <= state.MaximumLife * threshold,
-            state.Nearby >= 3 || state.Adjacent >= 2 || rate > 0 && projected < state.MaximumLife * .5,
-            retreat, threshold, rate, state.Nearby, state.Adjacent);
+            state.Nearby >= 3 || state.Adjacent >= 2 || state.RangedTarget != 0 || rate > 0 && projected < state.MaximumLife * .5,
+            retreat, threshold, rate, state.Nearby, state.Adjacent, state.RangedAttackers, state.RangedTarget);
     }
 
     internal static void RequireAlive(Observation state)
