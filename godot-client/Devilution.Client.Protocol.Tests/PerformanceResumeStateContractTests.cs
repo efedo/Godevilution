@@ -188,6 +188,28 @@ public sealed class PerformanceResumeStateContractTests
             baseline, command, 122, finalPlayer with { FacingDirection = PlayerDirection.South.ToString() }, control));
     }
 
+    [Theory]
+    [InlineData(1UL)] [InlineData(2UL)]
+    public void ACorrelatedRetryCanSettleTheNextInputWhileUnrelatedCommandsStillFail(ulong retry)
+    {
+        var baseline = CreateBaseline();
+        var root = baseline.LastCommand.ClientSequence + 1;
+        var command = new PerformanceResumeCommandReceipt(root + retry, 26, 121,
+            CommandStatus.Accepted.ToString(), CommandRejectReason.Unspecified.ToString());
+        var control = new PerformanceResumeLegalControl(PerformanceResumeDirection.Right, 1, 3, PlayerDirection.SouthEast);
+        var player = baseline.Player with { PositionX = control.TargetX, PositionY = control.TargetY,
+            FacingDirection = control.ExpectedFacing.ToString() };
+        PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, command, root);
+        Assert.True(PerformanceResumeStateContract.IsSettledAtControlTarget(baseline, command, 122, player, control, root));
+        PerformanceResumeStateContract.ValidateNextCommand(baseline, command, 122, player, control, root);
+        Assert.Throws<InvalidDataException>(() => PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, command));
+        Assert.Throws<InvalidDataException>(() => PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, command, root + 1));
+        Assert.Throws<InvalidDataException>(() => PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline,
+            command with { ClientSequence = root + 3 }, root));
+        Assert.Throws<InvalidDataException>(() => PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline,
+            command with { Status = CommandStatus.Rejected.ToString(), RejectReason = CommandRejectReason.TooLate.ToString() }, root));
+    }
+
     [Fact]
     public void RejectsUnspecifiedResumeCommandStatusWithOtherwiseValidCursor()
     {

@@ -6,6 +6,16 @@ namespace Devilution.Client.Acceptance;
 /** A drained transport ledger can precede main-thread admission of its receipt and snapshot. */
 internal static class AcceptanceCommandBoundary
 {
+    internal static bool QueuedCommandMatchesIntent(ulong queuedSequence, ulong queuedIntentSequence, ulong expectedSequence)
+        => AuthoritativeCommandOutcome.IsQueuedForIntent(queuedSequence, queuedIntentSequence, expectedSequence);
+
+    internal static void RequireExpectedQueuedIntent(ulong queuedSequence, ulong queuedIntentSequence,
+        ulong expectedSequence, string context)
+    {
+        if (queuedSequence > expectedSequence && !QueuedCommandMatchesIntent(queuedSequence, queuedIntentSequence, expectedSequence))
+            throw new InvalidOperationException($"An unexpected command overtook {context} sequence {expectedSequence}; queued={queuedSequence}, intent={queuedIntentSequence}.");
+    }
+
     /** A carried-item cursor can turn a world click into a drop; its receipt cannot prove an opening. */
     internal static void RequireObjectOperation(ulong previousSequence, ulong queuedSequence,
         Command.IntentOneofCase intent, uint queuedObjectEntityId, uint expectedObjectEntityId, string context)

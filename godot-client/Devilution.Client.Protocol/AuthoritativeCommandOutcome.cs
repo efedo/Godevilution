@@ -9,6 +9,9 @@ public static class AuthoritativeCommandOutcome
                 RejectReason: CommandRejectReason.TooLate }
             && contexts?.Any(context => context.ClientSequence == result.ClientSequence && context.IntentSequence > 0 && context.RetryPending) == true;
 
+    public static bool IsQueuedForIntent(ulong queuedSequence, ulong queuedIntentSequence, ulong expectedSequence)
+        => expectedSequence > 0 && (queuedSequence == expectedSequence || queuedIntentSequence == expectedSequence);
+
     /** Correlates a terminal receipt to the input; its wire sequence and rejection remain authoritative. */
     public static bool IsForIntent(CommandResult? result, ulong intentSequence, ulong expectedIntentSequence)
         => result is { ClientSequence: > 0 } && expectedIntentSequence > 0

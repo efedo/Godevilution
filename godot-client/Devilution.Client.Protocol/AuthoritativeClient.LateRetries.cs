@@ -12,6 +12,16 @@ public sealed partial class AuthoritativeClient
     private sealed record RetiredLateAttempt(CommandResult Receipt, AuthoritativeCommandReceiptContext Context);
     private sealed record LateRejection(CommandResult Receipt, long Generation, ulong SnapshotRevision, long Deadline);
 
+    /** Local cancellation/selection is new intent even when it does not queue a gameplay command. */
+    public void CancelRetainedIntentRetries()
+    {
+        lock (pendingLock) {
+            latestQueuedIntentSequence = 0;
+            // Known refusals are terminal immediately; unknown transmitted commands retain their frozen identity.
+            ExpireLateRetriesLocked(ElapsedMilliseconds);
+        }
+    }
+
     private static bool IsLedgerBackedTooLate(CommandResult result) => result.ServerReceiptSequence > 0
         && result.Status is CommandStatus.Rejected or CommandStatus.Duplicate && result.RejectReason == CommandRejectReason.TooLate;
 

@@ -671,7 +671,7 @@ public partial class SessionAcceptance
             var attemptClock = progressionCombat ? System.Diagnostics.Stopwatch.StartNew() : null;
             await ClickWorld(main, attackTile.Value.X, attackTile.Value.Y, MouseButton.Right);
             if (progressionCombat) {
-                if (main.ObservedLastQueuedSequence != expectedSequence
+                if (!main.ObservedQueuedCommandMatchesIntent(expectedSequence)
                     && !main.ObservedReceiptMatchesIntent(main.ObservedCommandResult, expectedSequence)) {
                     throw new InvalidOperationException(
                         $"Progression L2 attack did not queue exact sequence {expectedSequence}: "
@@ -819,11 +819,11 @@ public partial class SessionAcceptance
         }
 
         await Until(() => {
-            Require(main.ObservedLastQueuedSequence <= expectedSequence,
+            Require(main.ObservedLastQueuedSequence <= expectedSequence || main.ObservedQueuedCommandMatchesIntent(expectedSequence),
                 $"Unexpected command overtook progression L2 attack {expectedSequence}: "
                 + $"queued={main.ObservedLastQueuedSequence}; {DescribeNativeHealingState(main)}.");
             var result = main.ObservedCommandResult;
-            if (result is { } observed && observed.ClientSequence > expectedSequence)
+            if (result is { } observed && observed.ClientSequence > expectedSequence && !main.ObservedReceiptMatchesIntent(observed, expectedSequence))
                 throw new InvalidOperationException(
                     $"Progression L2 attack receipt advanced past {expectedSequence}: {observed.ClientSequence}.");
             return main.ObservedReceiptMatchesIntent(result, expectedSequence);
@@ -832,7 +832,7 @@ public partial class SessionAcceptance
             $"{failure} The exact receipt poll exceeded its bound; {DescribeNativeHealingState(main)}.");
 
         var receipt = main.ObservedCommandResult!;
-        Require(main.ObservedLastQueuedSequence == expectedSequence,
+        Require(main.ObservedQueuedCommandMatchesIntent(expectedSequence),
             $"Progression L2 attack receipt {expectedSequence} disagrees with queued sequence "
             + $"{main.ObservedLastQueuedSequence}.");
         await Until(() => {
@@ -983,13 +983,13 @@ public partial class SessionAcceptance
             var snapshot = main.ObservedSnapshot;
             if (snapshot is null)
                 return false;
-            Require(main.ObservedLastQueuedSequence <= expectedSequence,
-                $"An unexpected native movement command overtook sequence {expectedSequence}.");
+            AcceptanceCommandBoundary.RequireExpectedQueuedIntent(main.ObservedLastQueuedSequence,
+                main.ObservedLastQueuedIntentSequence, expectedSequence, "native movement");
             var result = main.ObservedCommandResult;
             if (result is null || result.ClientSequence < expectedSequence)
                 return false;
             Require(main.ObservedReceiptMatchesIntent(result, expectedSequence)
-                && main.ObservedLastQueuedSequence == expectedSequence,
+                && main.ObservedQueuedCommandMatchesIntent(expectedSequence),
                 $"Native movement did not produce exact sequence {expectedSequence}; "
                 + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
             // Native refuses a walk while the player is mid-action (hit recovery). Wait for the
@@ -1033,13 +1033,13 @@ public partial class SessionAcceptance
             var snapshot = main.ObservedSnapshot;
             if (snapshot is null)
                 return false;
-            Require(main.ObservedLastQueuedSequence <= expectedSequence,
-                $"An unexpected command overtook {action} sequence {expectedSequence}.");
+            AcceptanceCommandBoundary.RequireExpectedQueuedIntent(main.ObservedLastQueuedSequence,
+                main.ObservedLastQueuedIntentSequence, expectedSequence, action);
             var result = main.ObservedCommandResult;
             if (result is null || result.ClientSequence < expectedSequence)
                 return false;
             Require(main.ObservedReceiptMatchesIntent(result, expectedSequence)
-                && main.ObservedLastQueuedSequence == expectedSequence,
+                && main.ObservedQueuedCommandMatchesIntent(expectedSequence),
                 $"{action} did not produce exact sequence {expectedSequence}; "
                 + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
             Require(IsAcceptedOrSuccessfulDuplicate(result),

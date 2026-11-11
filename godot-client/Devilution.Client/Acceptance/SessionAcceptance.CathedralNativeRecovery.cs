@@ -151,7 +151,7 @@ public partial class SessionAcceptance
             if (main.ObservedLastQueuedSequence == sequence && useButton.Visible && !useButton.Disabled)
                 await Click(useButton.GetGlobalRect().GetCenter());
         }
-        Require(main.ObservedLastQueuedSequence == expectedSequence
+        Require(main.ObservedQueuedCommandMatchesIntent(expectedSequence)
             && (main.ObservedPendingCommandCount > 0
                 || main.ObservedReceiptMatchesIntent(main.ObservedCommandResult, expectedSequence)),
             $"The ordinary consumable control did not queue the exact healing item; expected sequence={expectedSequence}, "
