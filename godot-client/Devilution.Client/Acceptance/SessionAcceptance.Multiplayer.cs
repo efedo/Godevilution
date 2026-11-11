@@ -212,11 +212,11 @@ public partial class SessionAcceptance
                 Observe("AwaitingOutcome");
                 var result = main.ObservedCommandResult;
                 if (result is not null && result.ClientSequence > previousSequence) {
-                    Require(result.ClientSequence == previousSequence + 1, "Input advanced an unexpected command sequence.");
+                    Require(main.ObservedReceiptMatchesIntent(result, previousSequence + 1), "Input advanced an unexpected command sequence.");
                     Require(IsAcceptedOrSuccessfulDuplicate(result), $"Input {key} rejected: {result}.");
                 }
                 var snapshot = main.ObservedSnapshot;
-                return result is not null && result.ClientSequence == previousSequence + 1
+                return result is not null && main.ObservedReceiptMatchesIntent(result, previousSequence + 1)
                     && main.ObservedLastQueuedSequence == result.ClientSequence && main.ObservedPendingCommandCount == 0
                     && snapshot is not null && snapshot.Tick >= result.AppliedTick && settled(snapshot);
             }, $"Acceptance input {key} did not settle: {expected}", 10);
@@ -352,7 +352,7 @@ public partial class SessionAcceptance
                 && moved.PositionY == localAfter.PositionY,
             "Post-reconnect actual control settled for the same durable local entity.");
         var result = main.ObservedCommandResult!;
-        Require(result.ClientSequence == previousSequence + 1 && IsAcceptedOrSuccessfulDuplicate(result)
+        Require(main.ObservedReceiptMatchesIntent(result, previousSequence + 1) && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ServerReceiptSequence > previous.ReceiptSequence
             && result.AppliedTick >= reconnected.Tick && result.AppliedTick > previous.AppliedTick,
             "Post-reconnect control did not produce a new accepted receipt.");

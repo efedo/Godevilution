@@ -361,7 +361,7 @@ public partial class SessionAcceptance
         await Until(() => main.ObservedLastQueuedSequence > queuedBefore,
             "Dungeon travel did not queue a new authoritative command.", 5);
         var inputSequence = main.ObservedLastQueuedSequence;
-        await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == inputSequence
+        await Until(() => main.ObservedCommandResult is { } result && main.ObservedReceiptMatchesIntent(result, inputSequence)
             && IsAcceptedOrSuccessfulDuplicate(result) && result.ServerReceiptSequence > 0 && result.AppliedTick > 0,
             "Dungeon travel did not receive an authoritative receipt.");
         if (stageNearStair) {
@@ -422,7 +422,7 @@ public partial class SessionAcceptance
             await ClickWorld(main, target.PositionX, target.PositionY, MouseButton.Right);
             var inputSequence = main.ObservedLastQueuedSequence;
             Require(inputSequence > queuedBefore, $"{action} did not queue a new authoritative command.");
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == inputSequence,
+            await Until(() => main.ObservedCommandResult is { } result && main.ObservedReceiptMatchesIntent(result, inputSequence),
                 $"{action} did not receive an authoritative command receipt.", 15);
             var receipt = main.ObservedCommandResult!;
             Require(IsAcceptedOrSuccessfulDuplicate(receipt), $"{action} was rejected: {receipt.RejectReason}.");
@@ -493,7 +493,7 @@ public partial class SessionAcceptance
             await Click(main.ObservedTileScreenPosition(x, y), walk: true);
             var inputSequence = main.ObservedLastQueuedSequence;
             Require(inputSequence > queuedBefore, "The cooperative movement did not queue a new authoritative command.");
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == inputSequence
+            await Until(() => main.ObservedCommandResult is { } result && main.ObservedReceiptMatchesIntent(result, inputSequence)
                 && IsAcceptedOrSuccessfulDuplicate(result) && result.ServerReceiptSequence > 0 && result.AppliedTick > 0
                 && FindCooperativePlayer(main.ObservedSnapshot!, ParseLocalSlot()) is { } moved
                 && moved.PositionX == x && moved.PositionY == y && moved.CurrentAction is null

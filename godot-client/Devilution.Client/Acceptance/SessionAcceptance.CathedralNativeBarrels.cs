@@ -303,13 +303,14 @@ public partial class SessionAcceptance
             Input.FlushBufferedEvents();
             await Frame();
             var sequence = main.ObservedLastQueuedSequence;
-            Require(sequence == checked(previousSequence + 1),
+            Require(main.ObservedQueuedCommandMatchesIntent(checked(previousSequence + 1)),
                 "The cardinal chest-approach key did not queue exactly one fresh movement command.");
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
             Input.FlushBufferedEvents();
             CommandResult receipt;
             try {
-                receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native barrel approach command", 10);
+                receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native barrel approach command", 10,
+                    expectedSequence: checked(previousSequence + 1));
             } catch (InvalidOperationException) {
                 var diagnostic = main.ObservedSnapshot!.Players.Single();
                 GD.Print($"Barrel approach failed: object={entityId}@({chest.PositionX},{chest.PositionY}); "
@@ -323,7 +324,7 @@ public partial class SessionAcceptance
                     + DescribeNativeBarrelNearbyActors(main.ObservedSnapshot, diagnostic));
                 throw;
             }
-            Require(receipt.ClientSequence == sequence && receipt.Status == CommandStatus.Accepted
+            Require(receipt.Status == CommandStatus.Accepted
                 && receipt.RejectReason == CommandRejectReason.Unspecified,
                 $"The cardinal native chest approach was rejected: object={entityId}@({chest.PositionX},{chest.PositionY}); "
                 + $"from=({player.PositionX},{player.PositionY}), requested=({step.X},{step.Y}); "
@@ -444,7 +445,7 @@ public partial class SessionAcceptance
                 var queued = main.ObservedLastQueuedSequence;
                 var player = snapshot?.Players.SingleOrDefault();
                 var conditionsHold = snapshot is not null && player is not null && result is not null
-                    && queued > 0 && result.ClientSequence == queued
+                    && queued > 0 && main.ObservedReceiptMatchesIntent(result, queued)
                     && AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result) && result.AppliedTick > 0
                     && snapshot.Tick >= result.AppliedTick
                     && main.ObservedPendingCommandCount == 0 && Settled(main)

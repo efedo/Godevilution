@@ -130,7 +130,7 @@ public partial class SessionAcceptance
         await Click(main.ObservedTileScreenPosition(x, y), walk: true);
         Require(main.ObservedLastQueuedSequence > sequence,
             "The first ordinary door movement did not advance the acknowledged/saved sequence floor.");
-        Require(savedSequenceFloor == 0 || main.ObservedLastQueuedSequence == checked(savedSequenceFloor + 1),
+        Require(savedSequenceFloor == 0 || main.ObservedQueuedCommandMatchesIntent(checked(savedSequenceFloor + 1)),
             "The first resumed door command did not continue at exactly saved sequence plus one.");
         await AcceptedAndSettled(main, sequence, "Ordinary Cathedral door movement");
         var moved = main.ObservedSnapshot!.Players.Single();

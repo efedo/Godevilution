@@ -96,7 +96,7 @@ public partial class SessionAcceptance
             var firstResumeMove = main.ObservedCommandResult!;
             if (authoredDiagnostic) {
                 Require(firstResumeMove.Status == CommandStatus.Accepted
-                    && firstResumeMove.ClientSequence == checked(previous.Sequence + 1)
+                    && main.ObservedReceiptMatchesIntent(firstResumeMove, checked(previous.Sequence + 1))
                     && firstResumeMove.ClientSequence > sequence,
                     "The first fresh-host movement was not the next accepted command after the saved journey.");
             } else {
@@ -796,7 +796,7 @@ public partial class SessionAcceptance
         Require(sequence > oldSequence, "The native depth wall key did not queue fresh ordinary input.");
         await Frame();
         Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
-        await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == sequence
+        await Until(() => main.ObservedCommandResult is { } result && main.ObservedReceiptMatchesIntent(result, sequence)
             && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main), "Native depth wall input did not settle.", 10);
         var receipt = main.ObservedCommandResult!;
         var after = main.ObservedSnapshot!.Players.Single();

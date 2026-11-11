@@ -114,14 +114,23 @@ public partial class SessionAcceptance
     }
 
     /** Retain the attack receipt before a potion can become the client's latest admitted command. */
-    private async Task<CommandResult> WaitForJourneyCombatCommandAsync(Main main, ulong sequence, string context, double seconds = 20)
+    private async Task<CommandResult> WaitForJourneyCombatCommandAsync(Main main, ulong sequence, string context, double seconds = 20,
+        ulong expectedSequence = 0)
     {
         return await JourneyCombatSafety.PreserveReceiptAsync(async () => {
+            CommandResult? receipt = null;
             await Until(() => {
                 var state = ObserveJourneySafety(main); JourneyCombatSafety.RequireAlive(state);
-                return state.CommandsAdmitted && main.ObservedCommandResult is { } result && result.ClientSequence > sequence;
+                if (expectedSequence > 0) {
+                    receipt = AcceptanceCommandBoundary.AppliedIntentReceipt(ObserveNativeCommandBoundary(main),
+                        main.ObservedLastQueuedIntentSequence, expectedSequence, context);
+                    return receipt is not null;
+                }
+                // Ordinary clicks may approach first and submit their attack on arrival.
+                receipt = main.ObservedCommandResult;
+                return state.CommandsAdmitted && receipt is not null && receipt.ClientSequence > sequence;
             }, $"{context} did not reach its authoritative receipt.", seconds);
-            return main.ObservedCommandResult!;
+            return receipt!;
         }, () => WaitForJourneySettlementAsync(main, context, seconds));
     }
 

@@ -6,6 +6,16 @@ namespace Devilution.Client.Acceptance;
 /** A drained transport ledger can precede main-thread admission of its receipt and snapshot. */
 internal static class AcceptanceCommandBoundary
 {
+    internal static bool QueuedCommandMatchesIntent(ulong queuedSequence, ulong queuedIntentSequence, ulong expectedSequence)
+        => AuthoritativeCommandOutcome.IsQueuedForIntent(queuedSequence, queuedIntentSequence, expectedSequence);
+
+    internal static void RequireExpectedQueuedIntent(ulong queuedSequence, ulong queuedIntentSequence,
+        ulong expectedSequence, string context)
+    {
+        if (queuedSequence > expectedSequence && !QueuedCommandMatchesIntent(queuedSequence, queuedIntentSequence, expectedSequence))
+            throw new InvalidOperationException($"An unexpected command overtook {context} sequence {expectedSequence}; queued={queuedSequence}, intent={queuedIntentSequence}.");
+    }
+
     /** A carried-item cursor can turn a world click into a drop; its receipt cannot prove an opening. */
     internal static void RequireObjectOperation(ulong previousSequence, ulong queuedSequence,
         Command.IntentOneofCase intent, uint queuedObjectEntityId, uint expectedObjectEntityId, string context)
@@ -44,6 +54,19 @@ internal static class AcceptanceCommandBoundary
         => receipt is {ClientSequence: > 0} && receipt.ClientSequence == lastQueuedSequence
             && snapshotTick >= receipt.AppliedTick;
 
+    /** Validate correlation before healing can replace the model's latest receipt/intent pair. */
+    internal static CommandResult? AppliedIntentReceipt(Observation state, ulong queuedIntentSequence,
+        ulong expectedSequence, string context)
+    {
+        RequireAlive(state, context);
+        RequireExpectedQueuedIntent(state.LastQueuedSequence, queuedIntentSequence, expectedSequence, context);
+        if (state.Receipt is not { } receipt || receipt.ClientSequence < expectedSequence) return null;
+        if (!AuthoritativeCommandOutcome.IsForIntent(receipt, state.ReceiptIntentSequence, expectedSequence)
+            || !QueuedCommandMatchesIntent(state.LastQueuedSequence, queuedIntentSequence, expectedSequence))
+            throw new InvalidOperationException($"{context} did not produce intent {expectedSequence}; {state.Describe()}.");
+        return state.CommandsAdmitted ? receipt : null;
+    }
+
     /** Real potion input can admit another command; plan or operate only from its settled snapshot. */
     internal static async Task PrepareObjectAsync(Func<Task> waitForBoundary, Func<Task> heal)
     {
@@ -62,11 +85,13 @@ internal static class AcceptanceCommandBoundary
     internal static bool CommandSettled(Observation state, ulong sequence, string context)
     {
         RequireAlive(state, context);
-        return state.LastQueuedSequence == sequence && state.CommandsAdmitted && state.PlayerSettled;
+        return (state.LastQueuedSequence == sequence || AuthoritativeCommandOutcome.IsForIntent(state.Receipt,
+                state.ReceiptIntentSequence, sequence)) && state.CommandsAdmitted && state.PlayerSettled;
     }
 
     /** Keeps command admission separate from animation settlement: native quick-use can run during an action. */
-    internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount)
+    internal readonly record struct Observation(Snapshot? Snapshot, CommandResult? Receipt, ulong LastQueuedSequence, int PendingCount,
+        ulong ReceiptIntentSequence = 0)
     {
         internal PlayerSnapshot? Player => Snapshot?.ParticipantCount == 1 ? Snapshot.Players[0] : null;
         internal bool CommandsAdmitted => Snapshot is not null && PendingCount == 0

@@ -33,6 +33,7 @@
              Link="Presentation/WorldPresentation.CanvasTransforms.cs" />
     <Compile Include="../Devilution.Client/WorldPresentation.ActorPositions.cs"
              Link="Presentation/WorldPresentation.ActorPositions.cs" />
+    <Compile Include="../Devilution.Client/Main.Travel.cs" Link="Presentation/Main.Travel.cs" />
     <Compile Include="../Devilution.Client/Main.AuthoritativeAdmission.cs"
              Link="Presentation/Main.AuthoritativeAdmission.cs" />
     <Compile Include="../Devilution.Client/Main.Session.cs"

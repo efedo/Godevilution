@@ -225,6 +225,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         try {
             commandClock.Reset();
             lock (pendingLock) {
+                retrySnapshot = null;
                 timingProbe = null;
                 timingEpoch = 0;
                 lastTimingProbeRequestMs = null;
@@ -512,6 +513,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 && supportsQueuedRangedAttacks
                 && queuedCommand.IntentCase == Command.IntentOneofCase.AttackRequested)
                 queuedCommand.AttackRequested.QueueDuringMove = true;
+            latestQueuedIntentSequence = sequence;
             var queuedAt = ElapsedMilliseconds;
             var queuedTimestamp = CommandTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
             if (replacement is not null) {
@@ -519,9 +521,12 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 replacement.ObservedTick = observedTick;
                 replacement.QueuedElapsedMilliseconds = queuedAt;
                 replacement.QueuedStopwatchTimestamp = queuedTimestamp;
+                replacement.RetryContext = AuthoritativeCommandRetryPolicy.Capture(queuedCommand, retrySnapshot);
             } else {
                 pending.Add(sequence, new PendingCommand(queuedCommand, observedTick) {
                     CoalescedMovement = coalesceMovement,
+                    IntentSequence = sequence,
+                    RetryContext = AuthoritativeCommandRetryPolicy.Capture(queuedCommand, retrySnapshot),
                     QueuedElapsedMilliseconds = queuedAt,
                     QueuedStopwatchTimestamp = queuedTimestamp,
                 });
@@ -551,17 +556,17 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
             var pollTimingRecorder = CommandTimingRecorder;
             var expirationStopwatchTimestamp = pollTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
             lock (pendingLock) {
+                ExpireLateRetriesLocked(now);
                 expiredTimingProbe = ExpireTimingProbeLocked(now, expirationStopwatchTimestamp);
                 needsTimingCalibration = IsClockGatedCommandScheduling
                     && !timingCalibrationReady
                     && pending.Values.Any(command =>
-                        !command.TransmissionStarted && command.ObservedTick.HasValue);
+                        NeedsRealtimeCalibration(command));
                 timingCalibrationTimedOut = this.timingCalibrationTimedOut;
                 dueCommands = pending.Values
                     .Where(command => IsCommandDue(command, now, normalRetryMilliseconds)
                         && (!needsTimingCalibration
-                            || command.TransmissionStarted
-                            || !command.ObservedTick.HasValue))
+                            || !NeedsRealtimeCalibration(command)))
                     .OrderBy(command => command.Command.ClientSequence)
                     .ToArray();
             }
@@ -618,66 +623,69 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                         });
                     };
                 }
+                var dispatchEntry = entry;
                 try {
                     await WriteEnvelopeAsync(() => {
                         lock (pendingLock) {
-                            if (!pending.ContainsKey(entry.Command.ClientSequence))
-                                return null;
-                            if (!entry.TransmissionStarted) {
+                            if (!pending.ContainsKey(entry.Command.ClientSequence)) return null;
+                            var activeEntry = PrepareLateRetryLocked(entry, ElapsedMilliseconds);
+                            if (activeEntry is null) return null;
+                            dispatchEntry = activeEntry;
+                            if (!activeEntry.TransmissionStarted) {
                                 // A snapshot in flight must not block new input. The host still
                                 // serializes command admission and publishes ordered durable responses.
-                                if (entry.ObservedTick is { } observedTick)
-                                    entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
-                                entry.FirstDispatchLeadTicks = SchedulingLeadTicks();
-                                entry.FirstDispatchGeneration = Volatile.Read(ref transportGeneration);
+                                if (activeEntry.ObservedTick is { } observedTick)
+                                    activeEntry.Command.RequestedTick = SuggestedCommandTick(observedTick);
+                                activeEntry.FirstDispatchLeadTicks = SchedulingLeadTicks();
+                                activeEntry.FirstDispatchGeneration = Volatile.Read(ref transportGeneration);
                             }
-                            entry.Retransmitted |= entry.TransmissionStarted;
+                            activeEntry.Retransmitted |= activeEntry.TransmissionStarted;
                             // Freeze before any write: cancellation/partial writes may
                             // leave the server with this exact command identity.
-                            entry.EverTransmitted = true;
-                            entry.TransmissionStarted = true;
+                            activeEntry.EverTransmitted = true;
+                            activeEntry.TransmissionStarted = true;
                             if (commandTimingRecorder is not null)
-                                entry.DispatchAttempt++;
+                                activeEntry.DispatchAttempt++;
                             var freezeElapsedMilliseconds = ElapsedMilliseconds;
                             var freezeStopwatchTimestamp = commandTimingRecorder is null
                                 ? 0
                                 : Stopwatch.GetTimestamp();
-                            entry.LastSentMs = freezeElapsedMilliseconds;
+                            activeEntry.LastSentMs = freezeElapsedMilliseconds;
                             if (IsClockGatedCommandScheduling)
-                                entry.RetryNotBeforeMs = ComputeRetryNotBeforeMs(
-                                    entry.Command.RequestedTick,
-                                    entry.LastSentMs.Value);
+                                activeEntry.RetryNotBeforeMs = ComputeRetryNotBeforeMs(
+                                    activeEntry.Command.RequestedTick,
+                                    activeEntry.LastSentMs.Value);
                             if (commandTimingRecorder is not null)
                                 commandDispatch = new CommandDispatchCapture(
-                                    entry.Command.ClientSequence,
+                                    activeEntry.Command.ClientSequence,
                                     Volatile.Read(ref transportGeneration),
-                                    entry.Retransmitted
+                                    activeEntry.Retransmitted
                                         ? AuthoritativeClientCommandDispatchKind.Retransmission
                                         : AuthoritativeClientCommandDispatchKind.FirstDispatch,
-                                    entry.DispatchAttempt,
-                                    entry.ObservedTick,
-                                    entry.Command.RequestedTick,
+                                    activeEntry.DispatchAttempt,
+                                    activeEntry.ObservedTick,
+                                    activeEntry.Command.RequestedTick,
                                     freezeElapsedMilliseconds,
                                     freezeStopwatchTimestamp,
                                     Volatile.Read(ref roundTripMilliseconds),
                                     timingCalibrationReady,
-                                    CaptureCommandIntent(entry.Command),
-                                    entry.QueuedElapsedMilliseconds, entry.QueuedStopwatchTimestamp,
+                                    CaptureCommandIntent(activeEntry.Command),
+                                    activeEntry.QueuedElapsedMilliseconds, activeEntry.QueuedStopwatchTimestamp,
                                     SchedulingLeadTicks(),
                                     IsClockGatedCommandScheduling ? schedulingRoundTripMilliseconds : roundTripMilliseconds,
                                     IsClockGatedCommandScheduling && isLocalConnection);
                             CommandLog?.Append(new CommandLogRecord {
-                                ClientSent = new ClientSentRecord { Command = entry.Command.Clone() },
+                                ClientSent = new ClientSentRecord { Command = activeEntry.Command.Clone() },
                             });
-                            return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
+                            return new Envelope { CommandBatch = new CommandBatch { Commands = { activeEntry.Command } } };
                         }
                     }, cancellationToken, commandWriteObserver);
                 } catch {
                     lock (pendingLock) {
-                        if (pending.TryGetValue(entry.Command.ClientSequence, out var current) && ReferenceEquals(current, entry))
+                        if (pending.TryGetValue(dispatchEntry.Command.ClientSequence, out var current) && ReferenceEquals(current, dispatchEntry))
                         {
-                            entry.LastSentMs = null;
-                            entry.RetryNotBeforeMs = null;
+                            dispatchEntry.LastSentMs = null;
+                            dispatchEntry.RetryNotBeforeMs = null;
                         }
                     }
                     throw;
@@ -695,7 +703,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                 forceTimingProbe = IsClockGatedCommandScheduling
                     && !timingCalibrationReady
                     && pending.Values.Any(command =>
-                        !command.TransmissionStarted && command.ObservedTick.HasValue);
+                        NeedsRealtimeCalibration(command));
             }
             if (laterExpiredTimingProbe is not null)
                 TryRecordProbeOutcome(pollTimingRecorder, laterExpiredTimingProbe);
@@ -804,7 +812,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                     var requiresCalibration = forceCalibration
                         && !timingCalibrationReady
                         && pending.Values.Any(command =>
-                            !command.TransmissionStarted && command.ObservedTick.HasValue);
+                            NeedsRealtimeCalibration(command));
                     var probeInterval = requiresCalibration
                         ? TimingCalibrationRetryInterval.TotalMilliseconds
                         : SnapshotPollIntervalMilliseconds;
@@ -1277,6 +1285,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
 
     private bool IsCommandDue(PendingCommand command, long now, double retryMilliseconds)
     {
+        if (command.LateRejection is not null) return LateRetryReady(command, now);
         if (command.LastSentMs is null)
             return true;
         if (now - command.LastSentMs.Value < retryMilliseconds)
@@ -1363,7 +1372,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
         if (probe.RequiresCalibration
             && ++timingCalibrationProbeAttempts >= MaximumCalibrationProbeAttempts) {
             timingCalibrationTimedOut = pending.Values.Any(command =>
-                !command.TransmissionStarted && command.ObservedTick.HasValue);
+                NeedsRealtimeCalibration(command));
         }
         return CommandTimingRecorder is null
             ? null
@@ -1425,12 +1434,7 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                     && removedCommand is not null) {
                     trackedPendingCommand = true;
                     wasRetransmitted = removedCommand.Retransmitted;
-                    if (result.Status == CommandStatus.Rescheduled && removedCommand.TransmissionStarted
-                        && transportGenerationForRecord == Volatile.Read(ref transportGeneration)) {
-                        (acknowledgedCommands ??= []).Add(new(removedCommand.Command.ClientSequence,
-                            removedCommand.Command.RequestedTick, removedCommand.Command.IntentCase));
-                    }
-                    if (IsClockGatedCommandScheduling && !wasRetransmitted
+                    if (removedCommand.LateRejection is null && IsClockGatedCommandScheduling && !wasRetransmitted
                         && removedCommand.TransmissionStarted
                         && removedCommand.FirstDispatchGeneration == transportGenerationForRecord
                         && transportGenerationForRecord == Volatile.Read(ref transportGeneration)
@@ -1440,9 +1444,13 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
                         schedulingLead.ObserveLateAdmission(now, ServerTickRateHz,
                             removedCommand.FirstDispatchLeadTicks, result.AppliedTick - removedCommand.Command.RequestedTick);
                     }
-                    if (!wasRetransmitted && removedCommand.LastSentMs is { } lastSentMs)
+                    if (removedCommand.LateRejection is null && !wasRetransmitted && removedCommand.LastSentMs is { } lastSentMs)
                         commandRoundTripMilliseconds = now - lastSentMs;
+                    var retryPending = RetainLateRejectionLocked(removedCommand, result, transportGenerationForRecord, now);
+                    (acknowledgedCommands ??= []).Add(ReceiptContext(removedCommand, retryPending));
                 }
+                else if (RetiredLateContextLocked(result) is { } retiredContext)
+                    (acknowledgedCommands ??= []).Add(retiredContext);
                 if (commandRoundTripMilliseconds is { } commandRoundTrip
                     && !IsClockGatedCommandScheduling) {
                     // An ACK after retransmission cannot identify which send it times.
@@ -1637,6 +1645,11 @@ public sealed partial class AuthoritativeClient : IAsyncDisposable
     {
         public Command Command { get; set; } = command;
         public bool CoalescedMovement { get; init; }
+        public ulong IntentSequence { get; init; }
+        public int LateRetryCount { get; init; }
+        public AuthoritativeCommandRetryPolicy.Context? RetryContext { get; set; }
+        public LateRejection? LateRejection { get; set; }
+        public IReadOnlyList<RetiredLateAttempt> RetiredLateAttempts { get; init; } = [];
         public long QueuedElapsedMilliseconds { get; set; }
         public long QueuedStopwatchTimestamp { get; set; }
         public ulong? ObservedTick { get; set; } = observedTick;

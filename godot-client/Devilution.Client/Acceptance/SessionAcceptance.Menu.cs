@@ -92,7 +92,7 @@ public partial class SessionAcceptance
         await Frame();
         Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = false });
         await Until(() => IsAcceptedOrSuccessfulDuplicate(main.ObservedCommandResult)
-            && main.ObservedCommandResult!.ClientSequence == initialSequence + 1
+            && main.ObservedReceiptMatchesIntent(main.ObservedCommandResult!, initialSequence + 1)
             && main.ObservedPendingCommandCount == 0
             && main.ObservedSnapshot?.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
             && player.PositionX == initial.PositionX && player.PositionY == initial.PositionY + 1,
@@ -383,7 +383,7 @@ public partial class SessionAcceptance
             await Click(finalMovementClickPoint, walk: true);
             finalMovementClickCompleted = true;
             await Until(() => main.ObservedCommandResult is { } result
-                && result.ClientSequence == finalMovementInitialSequence + 1
+                && main.ObservedReceiptMatchesIntent(result, finalMovementInitialSequence + 1)
                 && IsAcceptedOrSuccessfulDuplicate(result)
                 && main.ObservedPendingCommandCount == 0
                 && main.ObservedSnapshot?.Players.Single() is { } player
@@ -520,7 +520,7 @@ public partial class SessionAcceptance
         var previousBatchCount = main.ObservedEventBatchCount;
         await Click(main.ObservedTileScreenPosition(target.PositionX, target.PositionY));
         await Until(() => main.ObservedCommandResult is { } result
-            && result.ClientSequence == previousSequence + 1
+            && main.ObservedReceiptMatchesIntent(result, previousSequence + 1)
             && result.ClientSequence == main.ObservedLastQueuedSequence
             && IsAcceptedOrSuccessfulDuplicate(result)
             && main.ObservedPendingCommandCount == 0

@@ -162,7 +162,7 @@ public partial class SessionAcceptance
         var repeatReason = CommandRejectReason.Unspecified.ToString();
         if (queued > previousQueued) {
             Require(queued == checked(previousQueued + 1), "Repeated sarcophagus click queued more than one command.");
-            await Until(() => main.ObservedCommandResult?.ClientSequence == queued
+            await Until(() => main.ObservedReceiptMatchesIntent(main.ObservedCommandResult, queued)
                 && main.ObservedPendingCommandCount == 0 && Settled(main)
                 && main.ObservedSnapshot!.Tick >= main.ObservedCommandResult.AppliedTick,
                 "The ordinary opened-sarcophagus click did not settle.", 12);

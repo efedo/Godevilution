@@ -164,8 +164,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   bug. Do not change native rules merely to make a bot pass.
 - A per-cell Town roaming trial reached `TooLate` after about 640 ms waiting for
   the authority lock. Host admission latency remains unresolved.
-- A command the host refuses as `TooLate` is dropped, not retried (pre-existing); a
-  bounded retry with a fresh sequence is proposed.
+- Since 2.6d the client retries the latest eligible `TooLate` intent at most twice,
+  with fresh sequences and adaptive ticks, after model-admitted state confirms its
+  actor and target are unchanged; uncertain, superseded and final refusals stay failures.
 - Optional original player, Town, resident and Cathedral object art pass scoped
   native comparisons; see [test history](test-history.md). Live animation phase,
   lighting, palette cycling, transparency and rendered comparisons remain open.

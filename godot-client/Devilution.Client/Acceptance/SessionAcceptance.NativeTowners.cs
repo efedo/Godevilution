@@ -123,7 +123,7 @@ public partial class SessionAcceptance
                     await Click(main.ObservedTileScreenPosition(next!.Value.X, next.Value.Y), walk: true);
                     await AcceptedAndSettled(main, sequence, "Native cow viewing walk");
                     var arrived = main.ObservedSnapshot!.Players.Single();
-                    Require(main.ObservedCommandResult!.ClientSequence == sequence + 1
+                    Require(main.ObservedReceiptMatchesIntent(main.ObservedCommandResult!, sequence + 1)
                         && arrived.LevelId == 0 && arrived.PositionX == next.Value.X && arrived.PositionY == next.Value.Y,
                         "Native cow viewing walk did not accept its exact receipt and arrive at the clicked waypoint.");
                     Require(step < 47, "Cow viewing walk exceeded its bounded path.");

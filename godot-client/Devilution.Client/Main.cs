@@ -44,6 +44,7 @@ public partial class Main : Node2D
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
     internal bool ObservedCommandWasApplied => model.LastCommandWasApplied;
+    internal ulong ObservedCommandIntentSequence => model.LastCommandIntentSequence;
     internal long ObservedModelGeneration => modelGeneration;
     internal int ObservedRecentEventCount => model.RecentEvents.Count;
     internal ulong ObservedRecentEventSequenceStart => model.RecentEventsStartSequence;
@@ -67,6 +68,7 @@ public partial class Main : Node2D
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal ulong ObservedLastQueuedIntentSequence { get; private set; }
     internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
     internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal bool ObservedSpellSourceArmed => spellSourceArmed;
@@ -354,15 +356,10 @@ public partial class Main : Node2D
         // Session return replaces the model; resolve it when the button is used.
         hud.ClearEventsRequested += () => model.ClearRecentEvents();
         hud.SpellSourceSelected += SelectSpellSource;
-        hud.TravelRequested += warpId => {
-            interactionTravel.Cancel();
-            routeTravel.Start(model.Snapshot, warpId, client?.IsConnected == true);
-        };
-        hud.CancelTravelRequested += () => {
-            routeTravel.Cancel();
-            interactionTravel.Cancel();
-        };
+        hud.TravelRequested += SelectTravelRoute;
+        hud.CancelTravelRequested += () => CancelTravel();
         hud.DestinationRequested += destination => {
+            CancelTravel("Travel cancelled by a new destination.");
             var interaction = destination.CreateInteraction();
             if (AuthoritativeWorldDestinationSelector.IsPresent(model.Snapshot, destination.X, destination.Y, interaction))
                 QueueInteractionAfterMove(new Vector2I(destination.X, destination.Y), interaction);
@@ -628,8 +625,7 @@ public partial class Main : Node2D
 
         if (@event is InputEventKey key && key.Pressed && !key.Echo && client?.IsConnected == true) {
             if (key.Keycode == Key.Escape && (routeTravel.Active || interactionTravel.Active)) {
-                routeTravel.Cancel();
-                interactionTravel.Cancel();
+                CancelTravel();
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -692,8 +688,7 @@ public partial class Main : Node2D
         if (@event is InputEventMouseButton mouse && mouse.Pressed && client?.IsConnected == true) {
             if (!worldFrame.GetGlobalRect().HasPoint(mouse.Position))
                 return;
-            routeTravel.Cancel("Travel cancelled by manual input.");
-            interactionTravel.Cancel();
+            CancelTravel("Travel cancelled by manual input.");
             var target = world?.ScreenToTile(mouse.Position) ?? Vector2I.Zero;
             world?.SetTargetPreview(target);
 
@@ -931,8 +926,7 @@ public partial class Main : Node2D
 
     private void QueueInteractionAfterMove(Vector2I target, Command interaction)
     {
-        routeTravel.Cancel("Travel cancelled by an interaction.");
-        interactionTravel.Start(model.Snapshot, target.X, target.Y, interaction, client?.IsConnected == true);
+        SelectInteractionTravel(target.X, target.Y, interaction);
         TrySubmitPendingWorldInteraction();
     }
 
@@ -1255,13 +1249,13 @@ public partial class Main : Node2D
         if (!automaticInput) {
             if (command.IntentCase != Command.IntentOneofCase.UseConsumableRequested)
                 heldEntityAttack.Release();
-            routeTravel.Cancel("Travel cancelled by another action.");
-            interactionTravel.Cancel();
+            CancelTravel("Travel cancelled by another action.");
         }
         var sequence = !automaticInput && command.IntentCase == Command.IntentOneofCase.MoveRequested
             ? client!.QueueRealtimeMovement(command, model.CurrentTick)
             : client!.QueueRealtime(command, model.CurrentTick);
         ObservedLastQueuedSequence = sequence;
+        ObservedLastQueuedIntentSequence = sequence;
         ObservedLastQueuedIntent = command.IntentCase;
         ObservedLastQueuedObjectEntityId = command.OperateObjectRequested?.ObjectEntityId ?? 0;
         if (command.MoveRequested is { } move) {

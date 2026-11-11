@@ -233,7 +233,7 @@ public partial class SessionAcceptance
         Require(inputSequence > sequence, "The wall key did not queue a fresh ordinary movement command.");
         await Frame();
         Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
-        await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence == inputSequence
+        await Until(() => main.ObservedCommandResult is { } result && main.ObservedReceiptMatchesIntent(result, inputSequence)
             && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main), "The wall-collision input did not settle.", 10);
         var receipt = main.ObservedCommandResult!;
         var after = main.ObservedSnapshot!.Players.Single();
@@ -278,19 +278,19 @@ public partial class SessionAcceptance
                 var current = main.ObservedSnapshot!.Players.Single();
                 if (result is null || result.ClientSequence < inputSequence || current.LevelId != 1)
                     return false;
-                Require(result.ClientSequence == inputSequence,
+                Require(main.ObservedReceiptMatchesIntent(result, inputSequence),
                     "A Cathedral wall-setup step was overtaken by another command receipt.");
                 Require(IsAcceptedOrSuccessfulDuplicate(result),
                     $"Cathedral wall setup was rejected: {result.Status}/{result.RejectReason}.");
                 var distance = Math.Abs(current.PositionX - target.X) + Math.Abs(current.PositionY - target.Y);
-                return main.ObservedLastQueuedSequence == inputSequence
+                return main.ObservedQueuedCommandMatchesIntent(inputSequence)
                     && main.ObservedSnapshot.Tick >= result.AppliedTick && Settled(main)
                     && distance < previousDistance;
             }, "An ordinary Cathedral wall-setup step did not settle with authoritative progress.", 10);
             var settled = main.ObservedSnapshot!.Players.Single();
             Require((settled.PositionX, settled.PositionY) != previousPosition,
                 "A Cathedral wall-setup step settled without authoritative movement.");
-            Require(main.ObservedCommandResult!.ClientSequence == inputSequence
+            Require(main.ObservedReceiptMatchesIntent(main.ObservedCommandResult, inputSequence)
                 && main.ObservedCommandResult.AppliedTick >= previousAppliedTick,
                 "Cathedral wall setup lost the exact fresh receipt or applied tick.");
             steps++;

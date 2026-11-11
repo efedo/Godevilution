@@ -245,12 +245,11 @@ public partial class SessionAcceptance
         var repeatRejectReason = CommandRejectReason.Unspecified.ToString();
         ulong repeatSequence = priorResultSequence;
         if (queuedAfterClick > priorQueued) {
-            var repeatResult = await WaitForJourneyCombatCommandAsync(main, priorQueued, "The duplicate native chest request", 12);
-            Require(queuedAfterClick == checked(priorQueued + 1)
-                && repeatResult.ClientSequence == queuedAfterClick
-                && (AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(repeatResult)
+            var repeatResult = await WaitForJourneyCombatCommandAsync(main, priorQueued, "The duplicate native chest request", 12,
+                expectedSequence: checked(priorQueued + 1));
+            Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(repeatResult)
                     || (repeatResult.Status == CommandStatus.Rejected
-                        && repeatResult.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget)),
+                        && repeatResult.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget),
                 "The ordinary click on an opened chest did not receive a valid settled fallback receipt.");
             repeatSequence = repeatResult.ClientSequence;
             repeatStatus = repeatResult.Status.ToString();
@@ -419,14 +418,14 @@ public partial class SessionAcceptance
             try {
                 await Frame();
                 sequence = main.ObservedLastQueuedSequence;
-                Require(sequence == checked(previousSequence + 1),
+                Require(main.ObservedQueuedCommandMatchesIntent(checked(previousSequence + 1)),
                     "The cardinal chest-approach key did not queue exactly one fresh movement command.");
             } finally {
                 Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
                 Input.FlushBufferedEvents();
             }
-            var receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native chest approach command", 10);
-            Require(receipt.ClientSequence == sequence, "The cardinal native chest approach lost its exact movement receipt.");
+            var receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native chest approach command", 10,
+                expectedSequence: checked(previousSequence + 1));
             // A wall trap can start Block/GetHit after the standing snapshot that
             // queued this key. Keep the target and retry from a fresh settled boundary.
             var actorBlocked = receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.InvalidTarget }
@@ -473,7 +472,8 @@ public partial class SessionAcceptance
     }
 
     private static AcceptanceCommandBoundary.Observation ObserveNativeCommandBoundary(Main main)
-        => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount);
+        => new(main.ObservedSnapshot, main.ObservedCommandResult, main.ObservedLastQueuedSequence, main.ObservedPendingCommandCount,
+            main.ObservedCommandIntentSequence);
 
     private Task PrepareNativeObjectAsync(Main main, string context)
         => AcceptanceCommandBoundary.PrepareObjectAsync(

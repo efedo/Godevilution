@@ -308,21 +308,15 @@ public partial class SessionAcceptance
         return count == 0 ? 0 : total / count;
     }
 
-    /** Runs one real-control action; a clock-gated TooLate refusal changes nothing, so it is repeated. */
+    /** The protocol owns bounded TooLate retries; only the terminal receipt settles this input. */
     private async Task SubmitNativeWarriorCommandAsync(Main main, string action, Func<Task> submit)
     {
-        for (var attempt = 0; attempt < 4; attempt++) {
-            var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-            await submit();
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
-                && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main), $"{action} did not settle.", 10);
-            var receipt = main.ObservedCommandResult!;
-            if (receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.TooLate })
-                continue;
-            Require(main.ObservedCommandWasApplied,
-                $"{action}: {receipt.Status}/{receipt.RejectReason}.");
-            return;
-        }
-        throw new InvalidOperationException($"{action} stayed too late after four attempts.");
+        var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+        await submit();
+        await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
+            && main.ObservedPendingCommandCount == 0
+            && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main), $"{action} did not settle.", 10);
+        var receipt = main.ObservedCommandResult!;
+        Require(main.ObservedCommandWasApplied, $"{action}: {receipt.Status}/{receipt.RejectReason}.");
     }
 }

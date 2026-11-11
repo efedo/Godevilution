@@ -159,7 +159,7 @@ public partial class SessionAcceptance
             await AcceptedAndSettled(main, priorSequence, "Disarm and operate the native Cathedral trap door");
             var receipt = main.ObservedCommandResult
                 ?? throw new InvalidDataException("The native Rogue Disarm Trap button produced no command receipt.");
-            Require(receipt.ClientSequence == checked(priorSequence + 1)
+            Require(main.ObservedReceiptMatchesIntent(receipt, checked(priorSequence + 1))
                 && receipt.Status == CommandStatus.Accepted
                 && receipt.RejectReason == CommandRejectReason.Unspecified
                 && receipt.AppliedTick > 0,

@@ -378,7 +378,7 @@ public partial class SessionAcceptance
             var result = main.ObservedCommandResult!;
             var after = main.ObservedSnapshot!.Players.Single();
             Require(result is { Status: CommandStatus.Accepted, RejectReason: CommandRejectReason.Unspecified }
-                && result.ClientSequence == checked(sequence + 1) && result.AppliedTick > 0
+                && main.ObservedReceiptMatchesIntent(result, checked(sequence + 1)) && result.AppliedTick > 0
                 && after.Gold == checked(goldBeforePickup + source.State.Value)
                 && main.ObservedSnapshot.WorldItems.All(item => item.EntityId != source.EntityId),
                 "The native gold pickup did not produce the exact wallet delta and accepted receipt.");
@@ -480,7 +480,7 @@ public partial class SessionAcceptance
             var addedOccurrences = addedSeedCounts.Sum(entry => entry.Added);
             var countAfter = NativeHealingSupply(purchasedPlayer);
             Require(receipt is { Status: CommandStatus.Accepted, RejectReason: CommandRejectReason.Unspecified }
-                && receipt.ClientSequence == checked(sequence + 1) && receipt.AppliedTick > 0
+                && main.ObservedReceiptMatchesIntent(receipt, checked(sequence + 1)) && receipt.AppliedTick > 0
                 && purchasedPlayer.Gold == checked(playerGoldBefore - (int)row.Price)
                 && addedOccurrences == 1 && addedSeedCounts.Length == 1
                 && countAfter == countBefore + 1,

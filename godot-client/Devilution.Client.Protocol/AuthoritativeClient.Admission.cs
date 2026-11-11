@@ -26,6 +26,12 @@ public sealed partial class AuthoritativeClient
                     || Interlocked.Read(ref initialConnectionAttemptEpoch) == Interlocked.Read(ref rejectedSnapshotAttempt)))
                 throw new InvalidDataException("A new connection's complete authoritative snapshot is required after admission failure.");
             model.Apply(message);
+            if (message.Snapshot is not null && model.AcceptedSnapshotRevision != admittedRevision) {
+                lock (pendingLock) {
+                    retrySnapshot = model.Snapshot;
+                    retrySnapshotRevision++;
+                }
+            }
             if (recovering && message.Snapshot is not null && model.AcceptedSnapshotRevision != admittedRevision)
                 Volatile.Write(ref snapshotAdmissionRejected, 0);
         } catch {

@@ -325,12 +325,15 @@ internal static class PerformanceResumeStateContract
 
     public static void ValidateNextCommandReceipt(
         PerformanceResumeBaseline baseline,
-        PerformanceResumeCommandReceipt command)
+        PerformanceResumeCommandReceipt command, ulong intentSequence = 0)
     {
         ValidateBaseline(baseline);
         ArgumentNullException.ThrowIfNull(command);
+        var expected = checked(baseline.LastCommand.ClientSequence + 1);
+        var original = intentSequence == 0 ? command.ClientSequence : intentSequence;
         if (baseline.LastCommand.ClientSequence == ulong.MaxValue - 1
-            || command.ClientSequence != baseline.LastCommand.ClientSequence + 1
+            || original != expected || command.ClientSequence < expected
+            || command.ClientSequence - expected > AuthoritativeClient.MaximumTooLateRetries
             || command.ServerReceiptSequence <= baseline.LastCommand.ServerReceiptSequence
             || command.AppliedTick <= baseline.LastCommand.AppliedTick
             || command.AppliedTick == 0
@@ -344,14 +347,14 @@ internal static class PerformanceResumeStateContract
         PerformanceResumeCommandReceipt command,
         ulong snapshotTick,
         PerformanceResumePlayerState player,
-        PerformanceResumeLegalControl control)
+        PerformanceResumeLegalControl control, ulong intentSequence = 0)
     {
         ValidateBaseline(baseline);
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(control);
         ValidateFinalActorPreservesBaseline(baseline.Player, player);
-        ValidateNextCommandReceipt(baseline, command);
+        ValidateNextCommandReceipt(baseline, command, intentSequence);
         return snapshotTick >= command.AppliedTick
             && player.PositionX == control.TargetX
             && player.PositionY == control.TargetY
@@ -366,11 +369,11 @@ internal static class PerformanceResumeStateContract
         PerformanceResumeCommandReceipt command,
         ulong finalSnapshotTick,
         PerformanceResumePlayerState finalPlayer,
-        PerformanceResumeLegalControl control)
+        PerformanceResumeLegalControl control, ulong intentSequence = 0)
     {
         ArgumentNullException.ThrowIfNull(finalPlayer);
         ArgumentNullException.ThrowIfNull(control);
-        if (!IsSettledAtControlTarget(baseline, command, finalSnapshotTick, finalPlayer, control))
+        if (!IsSettledAtControlTarget(baseline, command, finalSnapshotTick, finalPlayer, control, intentSequence))
             throw new InvalidDataException("The post-Resume command did not settle at its prevalidated destination.");
     }
 

@@ -500,14 +500,14 @@ public partial class SessionAcceptance
         await PerformanceUntil(() => {
             var result = main.ObservedCommandResult;
             if (result is not null && result.ClientSequence > previousSequence) {
-                Require(result.ClientSequence == previousSequence + 1,
+                Require(main.ObservedReceiptMatchesIntent(result, previousSequence + 1),
                     "Performance input advanced an unexpected command sequence.");
                 Require(IsAcceptedOrSuccessfulDuplicate(result),
                     $"Performance input {key} was rejected.");
             }
             var snapshot = main.ObservedSnapshot;
             if (result is null
-                || result.ClientSequence != previousSequence + 1
+                || !main.ObservedReceiptMatchesIntent(result, previousSequence + 1)
                 || !IsAcceptedOrSuccessfulDuplicate(result)
                 || main.ObservedPendingCommandCount != 0
                 || snapshot is null)

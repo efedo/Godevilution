@@ -325,4 +325,84 @@ public sealed class JourneyCombatSafetyTests
         Assert.NotEqual(latest.ClientSequence, JourneyCombatSafety.KillAttackSequence(123U, shots));
         Assert.Throws<InvalidOperationException>(() => JourneyCombatSafety.KillAttackSequence(789U, shots));
     }
+
+    [Theory]
+    [InlineData(CommandStatus.Accepted)]
+    [InlineData(CommandStatus.Duplicate)]
+    [InlineData(CommandStatus.Rejected)]
+    public void JourneyAndHealingBoundariesRequireTheCorrelatedAppliedIntent(CommandStatus status)
+    {
+        var snapshot = new Snapshot { Tick = 120,
+            Players = { new PlayerSnapshot { EntityId = 1, Life = 4000, LifeMaximum = 10000 } } };
+        var receipt = new CommandResult { ClientSequence = 3, AppliedTick = 120, Status = status,
+            RejectReason = status == CommandStatus.Rejected ? CommandRejectReason.TooLate : CommandRejectReason.Unspecified };
+        var state = new AcceptanceCommandBoundary.Observation(snapshot, receipt, 3, 0, ReceiptIntentSequence: 1);
+        Assert.Same(receipt, AcceptanceCommandBoundary.AppliedIntentReceipt(state, 1, 1, "Quick-use retry"));
+        Assert.Equal(status != CommandStatus.Rejected, AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt));
+        Assert.Null(AcceptanceCommandBoundary.AppliedIntentReceipt(state with { PendingCount = 1 }, 1, 1, "Quick-use retry"));
+        snapshot.Tick = 119;
+        Assert.Null(AcceptanceCommandBoundary.AppliedIntentReceipt(state, 1, 1, "Quick-use retry"));
+        snapshot.Tick = 120;
+        Assert.Throws<InvalidOperationException>(() => AcceptanceCommandBoundary.AppliedIntentReceipt(
+            state with { ReceiptIntentSequence = 2 }, 1, 1, "Unrelated receipt"));
+        Assert.Throws<InvalidOperationException>(() => AcceptanceCommandBoundary.AppliedIntentReceipt(state, 2, 1, "Unrelated queued input"));
+        snapshot.Players[0].Life = 0;
+        Assert.Contains("character died", Assert.Throws<InvalidOperationException>(() =>
+            AcceptanceCommandBoundary.AppliedIntentReceipt(state, 1, 1, "Quick-use retry")).Message);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(7)]
+    public async Task RealRetriedWalkAndPotionReceiptsAreValidatedBeforeHealingReplacesTheModelPair(int kind)
+    {
+        await using var fixture = await TooLateRetryPeer.StartAsync();
+        fixture.World.Players[0].Life = 32;
+        fixture.World.Players[0].Inventory.Add(TooLateRetryPolicyTests.World().Players[0].Inventory[0].Clone());
+        var secondPotion = fixture.World.Players[0].Inventory[0].Clone();
+        secondPotion.ItemSeed++;
+        secondPotion.State.StableItemId++;
+        fixture.World.Players[0].Inventory.Add(secondPotion);
+        await fixture.SnapshotAsync();
+        await fixture.UntilAsync(() => fixture.Model.Snapshot!.Players[0].Inventory.Count == 2);
+        var root = fixture.Client.QueueRealtime(TooLateRetryPolicyTests.Intent(kind), fixture.World.Tick);
+        var first = await fixture.NextAsync();
+        await fixture.ResultAsync(first);
+        var retry = await fixture.NextAsync();
+        AcceptanceCommandBoundary.Observation Observe(ulong queued)
+            => new(fixture.Model.Snapshot, fixture.Model.LastCommandResult, queued, fixture.Client.PendingCommandCount,
+                fixture.Model.LastCommandIntentSequence);
+        Assert.Null(AcceptanceCommandBoundary.AppliedIntentReceipt(Observe(retry.ClientSequence), root, root, "Retried journey intent"));
+        if (kind == 7) {
+            fixture.World.Players[0].Inventory.RemoveAt(0);
+            fixture.World.Players[0].Life = 48;
+        }
+        await fixture.ResultAsync(retry, CommandRejectReason.Unspecified, CommandStatus.Accepted);
+        var preserved = await JourneyCombatSafety.PreserveReceiptAsync(async () => {
+            await fixture.UntilAsync(() => AcceptanceCommandBoundary.AppliedIntentReceipt(
+                Observe(retry.ClientSequence), root, root, "Retried journey intent") is not null);
+            return AcceptanceCommandBoundary.AppliedIntentReceipt(Observe(retry.ClientSequence), root, root, "Retried journey intent")!;
+        }, async () => {
+            // A real later quick-use changes the model pair while the earlier action is settling.
+            var potion = fixture.Model.Snapshot!.Players[0].Inventory[0];
+            var healing = fixture.Client.QueueRealtime(new() { UseConsumableRequested = new() { Item = new() { StableItemId = potion.State.StableItemId } } },
+                fixture.World.Tick);
+            var command = await fixture.NextAsync();
+            Assert.Equal(healing, command.ClientSequence);
+            fixture.World.Players[0].Inventory.RemoveAt(0);
+            fixture.World.Players[0].Life += 16;
+            await fixture.ResultAsync(command, CommandRejectReason.Unspecified, CommandStatus.Accepted);
+            await fixture.UntilAsync(() => fixture.Model.LastCommandResult?.ClientSequence == healing && fixture.Client.PendingCommandCount == 0
+                && fixture.Model.Snapshot!.Tick >= fixture.Model.LastCommandResult.AppliedTick);
+        });
+        Assert.Equal(retry.ClientSequence, preserved.ClientSequence);
+        Assert.NotEqual(root, preserved.ClientSequence);
+        Assert.NotEqual(preserved.ClientSequence, fixture.Model.LastCommandResult!.ClientSequence);
+        Assert.Throws<InvalidOperationException>(() => AcceptanceCommandBoundary.AppliedIntentReceipt(
+            Observe(fixture.Model.LastCommandResult.ClientSequence), fixture.Model.LastCommandIntentSequence, root, "Later quick-use"));
+        if (kind == 7) {
+            Assert.Empty(fixture.Model.Snapshot!.Players[0].Inventory);
+            Assert.Equal(64, fixture.Model.Snapshot.Players[0].Life);
+        }
+    }
 }

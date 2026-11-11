@@ -86,6 +86,12 @@ public sealed class AuthoritativeRouteTravel
         } };
     }
 
+    /** The same input was refused before execution and dispatched with a fresh command identity. */
+    public void ObserveRetry(AuthoritativeCommandRetry retry)
+    {
+        if (pendingSequence == retry.PreviousSequence) pendingSequence = retry.ClientSequence;
+    }
+
     public void Submitted(ulong sequence, PlayerSnapshot player)
     {
         if (!Active || pendingSequence is not null || sequence == 0)

@@ -147,7 +147,7 @@ public partial class SessionAcceptance
                 var result = activeMain.ObservedCommandResult;
                 if (result is null || result.ClientSequence <= baseline.LastCommand.ClientSequence)
                     return false;
-                Require(result.ClientSequence == expectedSequence,
+                Require(activeMain.ObservedReceiptMatchesIntent(result, expectedSequence),
                     "PerformanceResume observed an unexpected client command after the saved cursor.");
                 PerformanceResumeStateContract.ValidateNextCommandReceipt(
                     baseline,
@@ -156,7 +156,7 @@ public partial class SessionAcceptance
                         result.ServerReceiptSequence,
                         result.AppliedTick,
                         result.Status.ToString(),
-                        result.RejectReason.ToString()));
+                        result.RejectReason.ToString()), activeMain.ObservedCommandIntentSequence);
                 return true;
             }, "PerformanceResume did not receive the exact next accepted command receipt.");
 
@@ -165,7 +165,7 @@ public partial class SessionAcceptance
                 var result = activeMain.ObservedCommandResult;
                 if (result is null || result.ClientSequence < expectedSequence)
                     return false;
-                Require(result.ClientSequence == expectedSequence,
+                Require(activeMain.ObservedReceiptMatchesIntent(result, expectedSequence),
                     "PerformanceResume observed an unexpected client command after the saved cursor.");
                 var command = new PerformanceResumeCommandReceipt(
                     result.ClientSequence,
@@ -173,8 +173,8 @@ public partial class SessionAcceptance
                     result.AppliedTick,
                     result.Status.ToString(),
                     result.RejectReason.ToString());
-                PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, command);
-                if (activeMain.ObservedLastQueuedSequence != expectedSequence
+                PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, command, activeMain.ObservedCommandIntentSequence);
+                if (!activeMain.ObservedQueuedCommandMatchesIntent(expectedSequence)
                     || activeMain.ObservedPendingCommandCount != 0)
                     return false;
 
@@ -187,7 +187,7 @@ public partial class SessionAcceptance
                     command,
                     snapshot.Tick,
                     PerformanceResumeStateContract.Project(player),
-                    legalControl);
+                    legalControl, activeMain.ObservedCommandIntentSequence);
             }, "PerformanceResume did not settle the accepted command at its prevalidated destination.");
 
             RequirePerformanceResumeAttemptCurrent(activeMain, observation, attemptEpoch);
@@ -204,13 +204,13 @@ public partial class SessionAcceptance
                 finalReceipt.RejectReason.ToString());
             var finalProjection = PerformanceResumeStateContract.Project(finalPlayer);
             PerformanceResumeStateContract.ValidateNextCommand(
-                baseline, finalCommand, finalSnapshot.Tick, finalProjection, legalControl);
+                baseline, finalCommand, finalSnapshot.Tick, finalProjection, legalControl, activeMain.ObservedCommandIntentSequence);
             var currentResult = activeMain.ObservedCommandResult
                 ?? throw new InvalidDataException("PerformanceResume final command receipt disappeared.");
             RequirePerformanceResumeAttemptCurrent(activeMain, observation, attemptEpoch);
-            Require(activeMain.ObservedLastQueuedSequence == expectedSequence
+            Require(activeMain.ObservedQueuedCommandMatchesIntent(expectedSequence)
                 && activeMain.ObservedPendingCommandCount == 0
-                && currentResult.ClientSequence == expectedSequence,
+                && activeMain.ObservedReceiptMatchesIntent(currentResult, expectedSequence),
                 "PerformanceResume lost its accepted cursor before final evidence capture.");
             var currentCommand = new PerformanceResumeCommandReceipt(
                 currentResult.ClientSequence,
@@ -220,7 +220,7 @@ public partial class SessionAcceptance
                 currentResult.RejectReason.ToString());
             Require(currentCommand == finalCommand,
                 "PerformanceResume receipt changed before final evidence capture.");
-            PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, currentCommand);
+            PerformanceResumeStateContract.ValidateNextCommandReceipt(baseline, currentCommand, activeMain.ObservedCommandIntentSequence);
 
             WriteEvidence(directory, "performance-resume.json", new {
                 Passed = true,

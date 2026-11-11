@@ -28,6 +28,7 @@ public partial class Main : IAsyncDisposable
     internal Action<CommandAck>? AcceptanceAcknowledgementObserver { get; set; }
     internal Action<Snapshot>? AcceptanceSnapshotObserver { get; set; }
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal ulong ObservedLastQueuedIntentSequence { get; private set; }
     internal Command.IntentOneofCase ObservedLastQueuedIntent { get; private set; }
     internal uint ObservedLastQueuedObjectEntityId { get; private set; }
     internal AuthoritativeClientModel AdmissionModel => model;
@@ -40,6 +41,19 @@ public partial class Main : IAsyncDisposable
     internal ulong AdmissionPublishedSnapshotCount => snapshotRevision;
     internal void SetAdmissionBookmarkWarning(string warning) => localSessionWarning = warning;
     internal void SetReconnectTime(TimeProvider time) => reconnectTime = time;
+    internal void AttachTravelForTest(AuthoritativeClient candidate, Snapshot snapshot)
+    {
+        client = candidate;
+        model.Apply(new(Snapshot: snapshot));
+    }
+    internal void DetachTravelForTest() => client = null;
+    internal void CancelTravelForTest() => CancelTravel();
+    internal void SelectTravelForTest(uint warp) => SelectTravelRoute(warp);
+    internal void SelectInteractionForTest() => SelectInteractionTravel(0, 3, new() { OperateObjectRequested = new() { ObjectEntityId = 2 } });
+    internal Command? NextTravelForTest() => routeTravel.Active
+        ? routeTravel.Next(model.Snapshot, model.LastCommandResult, client?.IsConnected == true, client?.PendingCommandCount ?? 0)
+        : interactionTravel.Next(model.Snapshot, model.LastCommandResult, client?.IsConnected == true, client?.PendingCommandCount ?? 0, true, false);
+
 
     internal async Task ConnectAdmissionSceneAsync(AuthoritativeClient candidate, ClientConnectionOptions options)
     {
