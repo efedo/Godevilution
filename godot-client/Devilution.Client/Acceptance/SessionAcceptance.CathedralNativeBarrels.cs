@@ -307,10 +307,9 @@ public partial class SessionAcceptance
                 "The cardinal chest-approach key did not queue exactly one fresh movement command.");
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
             Input.FlushBufferedEvents();
+            CommandResult receipt;
             try {
-                await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), sequence,
-                        "The cardinal native barrel approach command"),
-                    "The cardinal native barrel approach command did not settle.", stageSeconds: 10);
+                receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native barrel approach command", 10);
             } catch (InvalidOperationException) {
                 var diagnostic = main.ObservedSnapshot!.Players.Single();
                 GD.Print($"Barrel approach failed: object={entityId}@({chest.PositionX},{chest.PositionY}); "
@@ -324,8 +323,7 @@ public partial class SessionAcceptance
                     + DescribeNativeBarrelNearbyActors(main.ObservedSnapshot, diagnostic));
                 throw;
             }
-            var receipt = main.ObservedCommandResult!;
-            Require(receipt.Status == CommandStatus.Accepted
+            Require(receipt.ClientSequence == sequence && receipt.Status == CommandStatus.Accepted
                 && receipt.RejectReason == CommandRejectReason.Unspecified,
                 $"The cardinal native chest approach was rejected: object={entityId}@({chest.PositionX},{chest.PositionY}); "
                 + $"from=({player.PositionX},{player.PositionY}), requested=({step.X},{step.Y}); "

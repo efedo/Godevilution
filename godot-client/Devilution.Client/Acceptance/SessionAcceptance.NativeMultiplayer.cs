@@ -68,6 +68,7 @@ public partial class SessionAcceptance
             "No authoritative native multiplayer snapshot arrived.", 120);
         var identity = main.ObservedIdentity!;
         var local = NativeMultiplayerLocal(main, name);
+        RegisterJourneySafety(main, local.EntityId);
         Require(identity.GameMode == GameMode.Multiplayer && local.CharacterClassId == classId && local.Life > 0,
             "The participant did not enter native multiplayer as its selected class.");
         if (resuming) {
@@ -190,7 +191,8 @@ public partial class SessionAcceptance
                 return (player.LevelId == target || cancel.Disabled) && main.ObservedPendingCommandCount == 0
                     && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
                         main.ObservedCommandResult, main.ObservedLastQueuedSequence);
-            }, $"The participant's travel neither stopped nor reached L{target}.", 120);
+            }, $"The participant's travel neither stopped nor reached L{target}.", 120,
+                beforePoll: () => GuardJourneyTravelAsync(main, 0));
             if (NativeMultiplayerLocal(main, name).LevelId == target) {
                 await Until(() => main.ObservedPendingCommandCount == 0
                     && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
@@ -215,6 +217,7 @@ public partial class SessionAcceptance
         var before = NativeMultiplayerLocal(main, name);
         var attacks = 0;
         for (var work = 0; work < 200; work++) {
+            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single(candidate => candidate.CharacterName == name);
             Require(player.Life > 0 && player.LevelId == levelId, $"The participant died or left L{levelId} while fighting.");
@@ -240,10 +243,7 @@ public partial class SessionAcceptance
             await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
                 && main.ObservedSnapshot!.Tick >= result.AppliedTick,
                 $"A native multiplayer fight command got no receipt: queued {main.ObservedLastQueuedSequence} after {sequence}, last {main.ObservedCommandResult}.", 15);
-            // Monster hits can keep interrupting the player; settle when possible, then reassess.
-            for (var frame = 0; frame < 300 && !AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name),
-                main.ObservedPendingCommandCount); frame++)
-                await Frame();
+            await WaitForJourneySettlementAsync(main, "Native multiplayer combat action boundary");
         }
         throw new InvalidOperationException("The participant earned no experience within its fight budget.");
     }

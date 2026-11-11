@@ -68,16 +68,21 @@ public partial class SessionAcceptance
 
     private IDisposable? NativeWarriorStep(string kind, string label) => nativeWarriorTiming?.Step(kind, label);
 
-    /** Waits while `waiting` holds, for at most `referenceSeconds` of game time at 20 Hz; never fails. */
+    /** Bounded wait in native ticks; health checks remain live and death always fails. */
     private async Task WaitTicksWhile(Main main, Func<bool> waiting, double referenceSeconds)
     {
+        _ = JourneySafetyDecision(main);
         var budget = AcceptanceTickBudget.Ticks(referenceSeconds);
         var start = main.ObservedSnapshot!.Tick;
         var wallLimit = AcceptanceTickBudget.WallBackstopSeconds(budget, AcceptanceTickBudget.EffectiveRate(main.ObservedIdentity?.TickRateHz));
         var backstop = Stopwatch.StartNew();
         while (waiting() && backstop.Elapsed.TotalSeconds < wallLimit
             && !(AcceptanceTickBudget.Expired(main.ObservedSnapshot!.Tick, start, budget)
-                && AcceptanceTickBudget.PastWallFloor(referenceSeconds, backstop.Elapsed.TotalSeconds)))
+                && AcceptanceTickBudget.PastWallFloor(referenceSeconds, backstop.Elapsed.TotalSeconds))) {
+            if (JourneySafetyControlsReleased)
+                await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             await Frame();
+        }
+        _ = JourneySafetyDecision(main);
     }
 }

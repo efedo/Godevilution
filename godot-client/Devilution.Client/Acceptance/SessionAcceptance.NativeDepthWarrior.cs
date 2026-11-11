@@ -374,10 +374,7 @@ public partial class SessionAcceptance
             await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
             var player = main.ObservedSnapshot!.Players.Single();
             if (player.LevelId == destination) {
-                await Until(() => Settled(main) && (main.ObservedLastQueuedSequence == 0
-                    || AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
-                        main.ObservedCommandResult, main.ObservedLastQueuedSequence)),
-                    $"The final arrival command on L{destination} was not admitted.", 10);
+                await WaitForNativeCommandBoundaryAsync(main, $"The final arrival command on L{destination}");
                 await UseNativeHealingPotionIfNeeded(main);
                 return;
             }
@@ -408,7 +405,7 @@ public partial class SessionAcceptance
                 // Walking continuity is the route tests' concern; the journey needs only the transition.
                 await TravelCathedralRoute(main, routeDirectory, route.WarpId, destination, stopEarly: false,
                     minimumDistinctPositions: 1, distanceBoundedApproachDeadline: true,
-                    interrupt: () => NativeHealingThresholdReached(main) && NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > 0);
+                    interrupt: null, fleeing: flee);
                 Require(main.ObservedSnapshot!.Players.Single().LevelId == destination,
                     $"The ordinary route did not reach level {destination}.");
                 // An interrupt can finish on the trigger; still perform the healing it requested.
@@ -505,8 +502,7 @@ public partial class SessionAcceptance
                 refusals[door.EntityId] = refusals.GetValueOrDefault(door.EntityId) + 1;
                 GD.Print($"Native Warrior door {door.EntityId} refused ({refused.Message[..Math.Min(refused.Message.Length, 120)]}); "
                     + DescribeNativeWarriorSurroundings(main));
-                await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
-                    "The refused native Catacombs door operate did not settle.", 15);
+                await WaitForJourneySettlementAsync(main, "The refused native Catacombs door operate", 15);
                 continue;
             }
             GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
@@ -690,6 +686,7 @@ public partial class SessionAcceptance
     {
         var skipped = new HashSet<uint>();
         for (var kills = 0; kills < 12; kills++) {
+            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             // Fighting can step onto stairs; the caller's travel loop takes the Warrior back.
@@ -710,8 +707,10 @@ public partial class SessionAcceptance
                 return;
             } catch (NativeWarriorRetreatException) {
                 // Walking on through a pack only takes more hits: drink and fight on while potions last.
-                if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0)
-                    return;
+                if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0) {
+                    _ = await TryJourneyRetreatStepAsync(main);
+                    throw;
+                }
                 await UseNativeHealingPotionIfNeeded(main);
                 continue;
             }
@@ -732,8 +731,7 @@ public partial class SessionAcceptance
         var doorCommands = new Dictionary<uint, int>();
         var work = new NativeCombatWorkBudget();
         while (attacks < NativeWarriorAttacksPerFloor) {
-            if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > NativeWarriorPotionReserveOn(levelId))
-                await UseNativeHealingPotionIfNeeded(main);
+            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             MonsterSnapshot target;
             try {
                 target = await FindNativeClassTargetAsync(main, ranged: false, levelId, NativeWarriorSearchMoves);
@@ -790,9 +788,9 @@ public partial class SessionAcceptance
 
     /**
      * Ordinary right-click melee: always strike the weakest monster already adjacent (the ones
-     * hitting the Warrior), and otherwise close in on the target. In melee below 60% life with
-     * only `reserve` potions left (kept undrunk for the walk out), or below 70% surrounded by three
-     * or more attackers, it throws NativeWarriorRetreatException. Returns the
+     * hitting the Warrior), and otherwise close in on the target. The shared damage forecast
+     * drinks without reserving doses and takes a safer step when possible. Exhausted healing
+     * under lethal pressure throws NativeWarriorRetreatException. Returns the
      * first attacked monster that dies, or null when the target escapes, is unreachable, or the
      * budget ends.
      */
@@ -807,6 +805,9 @@ public partial class SessionAcceptance
         var swings = new List<string>();
         // Approaches are bounded so a fading, retreating or unreachable monster cannot hold the loop.
         while (attacks < budget && approaches < NativeWarriorTargetApproaches) {
+            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
+            var danger = JourneySafetyDecision(main);
+            if (danger.Retreat && await TryJourneyRetreatStepAsync(main)) { approaches++; continue; }
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0, $"The Warrior died on L{levelId} during combat; last swings [{string.Join("; ", swings.TakeLast(12))}]; "
@@ -822,15 +823,10 @@ public partial class SessionAcceptance
             var adjacent = adjacentMonsters.Where(monster => !unattackable.Contains(monster.EntityId))
                 .OrderBy(monster => monster.HitPointsQ6)
                 .ThenBy(monster => monster.EntityId == targetId ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
-            if (adjacentMonsters.Length >= 1 && (long)player.Life * 5 < (long)player.LifeMaximum * 3
-                    && NativeHealingSupply(player) <= reserve
-                || adjacentMonsters.Length >= 3 && (long)player.Life * 10 < (long)player.LifeMaximum * 7)
+            // The reserve plans a Town visit; it never withholds a needed dose during a fight.
+            if (danger.Retreat && NativeHealingSupply(player) == 0)
                 throw new NativeWarriorRetreatException(
-                    $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, potions {NativeHealingSupply(player)}");
-            // Every pass drinks, including those that only approach or skip a monster that cannot be struck;
-            // the reserve is kept for the retreat walk, which the 60% rule above starts.
-            if (NativeHealingSupply(player) > reserve)
-                await UseNativeHealingPotionIfNeeded(main);
+                    $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
             if (adjacent is null) {
                 var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
                 if (target is null)
@@ -871,9 +867,8 @@ public partial class SessionAcceptance
                     + $"pending {main.ObservedPendingCommandCount}; next command tick {main.ObservedSuggestedCommandTick} (round trip {main.ObservedRoundTripMilliseconds:0} ms); last receipt "
                     + $"{last?.ClientSequence}/{last?.AppliedTick}/{last?.Status}/{last?.RejectReason}.", exception);
             }
-            await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
-                "Native Warrior melee did not reach its action boundary.", 30);
-            var receipt = main.ObservedCommandResult!;
+            var receipt = main.ObservedCommandResult!; // Keep the attack receipt if quick-use follows it.
+            await WaitForJourneySettlementAsync(main, "Native Warrior melee action boundary", 30);
             var after = main.ObservedSnapshot!;
             swings.Add($"{adjacent.EntityId}:hp{adjacent.HitPoints}->{after.Monsters.SingleOrDefault(monster => monster.EntityId == adjacent.EntityId)?.HitPoints}"
                 + $":{receipt.Status}/{receipt.RejectReason}:life{after.Players.Single().Life}");

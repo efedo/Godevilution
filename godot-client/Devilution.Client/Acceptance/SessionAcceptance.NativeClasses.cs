@@ -111,11 +111,8 @@ public partial class SessionAcceptance
             var hpBefore = target.HitPointsQ6;
             var sequence = main.ObservedLastQueuedSequence;
             await ClickWorld(main, target.PositionX, target.PositionY, classId == 2 ? MouseButton.Left : MouseButton.Right);
-            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
-                && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
-                "Native class combat did not reach its authoritative receipt and action boundary.", 15);
+            var receipt = await WaitForJourneyCombatCommandAsync(main, sequence, "Native class combat", 15);
             Require(main.ObservedSnapshot!.Players.Single().Life > 0, "The native class died after an ordinary attack.");
-            var receipt = main.ObservedCommandResult!;
             if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)) {
                 Require(receipt.Status == CommandStatus.Rejected
                     && receipt.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget,
@@ -125,8 +122,8 @@ public partial class SessionAcceptance
                 refusals.Add(new { Target = target.EntityId, receipt.ClientSequence, receipt.AppliedTick, Reason = receipt.RejectReason.ToString() });
                 continue;
             }
-            attacks.Add(new { Target = target.EntityId, Sequence = main.ObservedCommandResult!.ClientSequence,
-                AppliedTick = main.ObservedCommandResult.AppliedTick, HitPointsBefore = hpBefore });
+            attacks.Add(new { Target = target.EntityId, Sequence = receipt.ClientSequence,
+                AppliedTick = receipt.AppliedTick, HitPointsBefore = hpBefore });
             if (main.ObservedSnapshot!.Corpses.Any(corpse => corpse.EntityId == target.EntityId)
                 && main.ObservedSnapshot.Players.Single().Experience > experienceBefore)
                 defeated = target.EntityId;
@@ -257,6 +254,7 @@ public partial class SessionAcceptance
     {
         var approach = new NativeCombatApproachTarget(requiredTarget);
         for (var movement = 0; movement < maximumMoves; movement++) {
+            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0 && player.LevelId == levelId, $"Native class combat left its living L{levelId} context.");

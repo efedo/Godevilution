@@ -1,0 +1,235 @@
+using Devilution.Client.Acceptance;
+using Devilution.Protocol.V1;
+using Xunit;
+
+namespace Devilution.Client.Protocol.Tests;
+
+public sealed class JourneyCombatSafetyTests
+{
+    private static JourneyCombatSafety.Observation State(int life = 10000, ulong tick = 100,
+        int nearby = 1, int adjacent = 1, int potions = 6, bool admitted = true, bool settled = true, uint hz = 20)
+        => new(1, 5, tick, life, 10000, nearby, adjacent, potions, admitted, settled, hz);
+
+    [Fact]
+    public void ASevenMonsterPackDrinksBeforeTheOldTwoThirdsThreshold()
+    {
+        var state = State(life: 9200, nearby: 7, adjacent: 4);
+        var decision = new JourneyCombatSafety().Observe(state);
+        Assert.True(state.Life > state.MaximumLife * 2 / 3);
+        Assert.True(decision.Drink);
+        Assert.True(decision.StopWalking);
+        Assert.InRange(decision.HealingThreshold, .95, .97);
+    }
+
+    [Fact]
+    public void RecentLifeLossRaisesTheThresholdEvenAgainstOneMonster()
+    {
+        var safety = new JourneyCombatSafety();
+        safety.Observe(State());
+        var burst = State(life: 9000, tick: 101);
+        Assert.False(new JourneyCombatSafety().Observe(burst).Drink);
+        Assert.True(safety.Observe(burst).Drink);
+    }
+
+    [Fact]
+    public void AcceleratedTicksAndRoundTripLeaveTimeForTheRealPotionCommand()
+    {
+        var ordinary = new JourneyCombatSafety(); var accelerated = new JourneyCombatSafety();
+        ordinary.Observe(State()); accelerated.Observe(State(hz: 200));
+        Assert.False(ordinary.Observe(State(life: 8500, tick: 110)).Drink);
+        Assert.True(accelerated.Observe(State(life: 8500, tick: 110, hz: 200)).Drink);
+        var local = new JourneyCombatSafety(); var distant = new JourneyCombatSafety();
+        local.Observe(State()); distant.Observe(State());
+        Assert.False(local.Observe(State(life: 8800, tick: 105)).Drink);
+        Assert.True(distant.Observe(State(life: 8800, tick: 105) with { RoundTripMilliseconds = 250 }).Drink);
+    }
+
+    [Fact]
+    public void DuplicateObservationsDoNotInventDamageAndOldLossAgesOut()
+    {
+        var safety = new JourneyCombatSafety(); safety.Observe(State());
+        var burst = State(life: 9000, tick: 101);
+        var first = safety.Observe(burst);
+        for (var frame = 0; frame < 100; frame++) Assert.Equal(first, safety.Observe(burst));
+        var quiet = safety.Observe(burst with { Tick = 142 });
+        Assert.Equal(0, quiet.LossPerTick);
+        Assert.False(quiet.Drink);
+    }
+
+    [Theory]
+    [InlineData(2U, 5U, 10000, 102UL)]
+    [InlineData(1U, 6U, 10000, 102UL)]
+    [InlineData(1U, 5U, 12000, 102UL)]
+    [InlineData(1U, 5U, 10000, 1UL)]
+    public void IdentityLevelMaximumOrClockChangesResetTheDamageHistory(uint player, uint level, int maximum, ulong tick)
+    {
+        var safety = new JourneyCombatSafety(); safety.Observe(State());
+        safety.Observe(State(life: 9000, tick: 101));
+        var next = State(tick: tick) with { Player = player, Level = level, MaximumLife = maximum, Life = maximum };
+        Assert.Equal(0, safety.Observe(next).LossPerTick);
+    }
+
+    [Fact]
+    public void TownAndFullLifeDoNotWastePotionsAndExhaustionRequestsRetreat()
+    {
+        var safety = new JourneyCombatSafety();
+        Assert.False(safety.Observe(State(nearby: 7, adjacent: 7)).Drink);
+        Assert.False(safety.Observe(State(life: 1000) with { Level = 0 }).Drink);
+        var exhausted = safety.Observe(State(life: 4000, potions: 0, nearby: 7, adjacent: 4));
+        Assert.False(exhausted.Drink);
+        Assert.True(exhausted.Retreat);
+    }
+
+    [Theory]
+    [InlineData((int)JourneySafetyActivity.Travel, true)]
+    [InlineData((int)JourneySafetyActivity.ObjectApproach, true)]
+    [InlineData((int)JourneySafetyActivity.Stairs, true)]
+    [InlineData((int)JourneySafetyActivity.Combat, false)]
+    [InlineData((int)JourneySafetyActivity.Retreat, false)]
+    public async Task EveryLoopUsesTheSamePolicyAndReobservesAfterRealConsumption(int kind, bool defend)
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 8200, nearby: 7, adjacent: 4);
+        var actions = new List<string>();
+        await safety.CheckpointAsync((JourneySafetyActivity)kind, () => state, () => {
+            actions.Add("real potion control");
+            state = state with { Tick = state.Tick + 1, Life = 10000, HealingItems = state.HealingItems - 1 };
+            return Task.CompletedTask;
+        }, () => {
+            Assert.Equal(10000, state.Life);
+            actions.Add("fight or safer retreat");
+            state = state with { Nearby = 0, Adjacent = 0 };
+            return Task.CompletedTask;
+        });
+        Assert.Equal(defend ? new[] { "real potion control", "fight or safer retreat" } : ["real potion control"], actions);
+    }
+
+    [Fact]
+    public async Task PendingReceiptPreventsASecondCommandAndDeathFailsBeforeAnyInput()
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 1000, admitted: false);
+        Assert.False(await safety.CheckpointAsync(JourneySafetyActivity.Combat, () => state,
+            () => throw new InvalidOperationException("Overtook the pending receipt.")));
+        state = state with { Life = 0 };
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => safety.CheckpointAsync(
+            JourneySafetyActivity.Travel, () => state, () => throw new InvalidOperationException("Healed a dead character.")));
+        Assert.Contains("character died", error.Message);
+        Assert.Contains("level=5", error.Message);
+        Assert.Contains("tick 100", error.Message);
+    }
+
+    [Fact]
+    public async Task HitRecoveryCanDrinkBeforeStandWithoutLosingTheAttacksReceipt()
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 6000, settled: false);
+        var latest = new CommandResult { ClientSequence = 40, AppliedTick = 100, Status = CommandStatus.Accepted };
+        var drinks = 0; var frames = 0;
+        var attack = await JourneyCombatSafety.PreserveReceiptAsync(() => Task.FromResult(latest),
+            () => safety.WaitForSettlementAsync(() => state, () => {
+                frames++;
+                state = state with { Tick = state.Tick + 1, Settled = true };
+                return Task.CompletedTask;
+            }, () => {
+                Assert.False(state.Settled);
+                drinks++;
+                latest = new CommandResult { ClientSequence = 41, AppliedTick = 101, Status = CommandStatus.Accepted };
+                state = state with { Tick = 101, Life = 10000, HealingItems = 5 };
+                return Task.CompletedTask;
+            }, _ => frames >= 3, "Between native melee swings"));
+        Assert.Equal(1, drinks);
+        Assert.Equal(40UL, attack.ClientSequence);
+        Assert.Equal(41UL, latest.ClientSequence);
+    }
+
+    [Theory]
+    [InlineData(CommandStatus.Accepted)]
+    [InlineData(CommandStatus.Rejected)]
+    public async Task ObjectApproachRetainsItsMovementOutcomeWhileHealingDuringHitRecovery(CommandStatus status)
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 7000, nearby: 3, settled: false);
+        var move = new CommandResult { ClientSequence = 50, AppliedTick = 100, Status = status };
+        var latest = move;
+        var frames = 0;
+        var result = await JourneyCombatSafety.PreserveReceiptAsync(() => Task.FromResult(latest),
+            () => safety.WaitForSettlementAsync(() => state, () => {
+                frames++;
+                state = state with { Tick = state.Tick + 1, Settled = true };
+                return Task.CompletedTask;
+            }, () => {
+                Assert.False(state.Settled);
+                latest = new CommandResult { ClientSequence = 51, AppliedTick = 101, Status = CommandStatus.Accepted };
+                state = state with { Tick = 101, Life = 10000, HealingItems = 5 };
+                return Task.CompletedTask;
+            }, _ => frames > 2, "Cardinal native object approach"));
+        Assert.Same(move, result);
+        Assert.Equal(status, result.Status);
+        Assert.Equal(51UL, latest.ClientSequence);
+    }
+
+    [Fact]
+    public async Task ASettledDeathCannotPassAndAnUnendingActionStillHasABound()
+    {
+        var safety = new JourneyCombatSafety();
+        var state = State(life: 0);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => safety.WaitForSettlementAsync(() => state,
+            () => throw new InvalidOperationException("Pumped after death"), () => Task.CompletedTask, _ => false, "Fight"));
+        state = State(settled: false);
+        var frames = 0;
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => safety.WaitForSettlementAsync(() => state,
+            () => { frames++; return Task.CompletedTask; }, () => Task.CompletedTask, _ => frames == 2, "Fight"));
+        Assert.Contains("Fight did not settle", error.Message);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task TravelStopsBeforeHealingAndDoesNotRestartACompletedStairTransition(bool running, bool arrived)
+    {
+        var calls = new List<string>();
+        var level = 5U;
+        var drained = false;
+        await JourneyCombatSafety.ProtectRouteAsync(5, () => level, () => running,
+            () => { calls.Add("cancel real travel"); return Task.CompletedTask; },
+            () => { drained = true; calls.Add("admitted boundary"); return Task.CompletedTask; },
+            () => {
+                Assert.True(drained);
+                calls.Add("potion and defense");
+                if (arrived) level = 6;
+                return Task.CompletedTask;
+            },
+            () => { calls.Add("settle"); return Task.CompletedTask; },
+            () => { calls.Add("resume selected route"); return Task.CompletedTask; });
+        Assert.Equal(running, calls.Contains("cancel real travel"));
+        Assert.Equal(!arrived, calls.Contains("resume selected route"));
+        Assert.True(calls.IndexOf("admitted boundary") < calls.IndexOf("potion and defense"));
+        Assert.True(calls.IndexOf("potion and defense") < calls.IndexOf("settle"));
+    }
+
+    [Fact]
+    public async Task ArrivalWhileCancelDrainsDoesNotFightOnTheNewFloorBeforeItsEntryEvidence()
+    {
+        var level = 5U; var settled = false;
+        await JourneyCombatSafety.ProtectRouteAsync(5, () => level, () => true, () => Task.CompletedTask,
+            () => { level = 6; return Task.CompletedTask; },
+            () => throw new InvalidOperationException("Mutated the destination before arrival evidence."),
+            () => { settled = true; return Task.CompletedTask; },
+            () => throw new InvalidOperationException("Restarted the old route."));
+        Assert.True(settled);
+    }
+
+    [Theory]
+    [InlineData((int)JourneySafetyActivity.Stairs)]
+    [InlineData((int)JourneySafetyActivity.Retreat)]
+    [InlineData((int)JourneySafetyActivity.ObjectApproach)]
+    public void QuietStairsObjectsAndRetreatTopUpBeforeExposingTheNextThreat(int activity)
+    {
+        var safety = new JourneyCombatSafety();
+        var quiet = State(life: 8000, nearby: 0, adjacent: 0);
+        Assert.False(safety.Observe(quiet).Drink);
+        Assert.True(safety.Observe(quiet, (JourneySafetyActivity)activity).Drink);
+    }
+}

@@ -753,8 +753,7 @@ public partial class SessionAcceptance
                     break;
             } else {
                 try {
-                    await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack");
-                    var legacyReceipt = main.ObservedCommandResult!;
+                    var legacyReceipt = await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack", healDuringWait: true);
                     acceptedShots.Add(new NativeAcceptedShotEvidence(targetId, legacyReceipt.ClientSequence,
                         attackTile.Value.X, attackTile.Value.Y, legacyReceipt.AppliedTick));
                 } catch (InvalidOperationException exception) {
@@ -958,7 +957,7 @@ public partial class SessionAcceptance
             return false;
 
         var clearance = NativeThreatClearance(snapshot, player.LevelId, player.PositionX, player.PositionY);
-        var belowHealingThreshold = (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
+        var belowHealingThreshold = NativeHealingThresholdReached(main);
         if (clearance < NativeRangedMinimumThreatSpacing && belowHealingThreshold
             && !lowHealthEscapeStepUsed && movement < NativeMaximumRangedApproachCommands) {
             var destinationWalk = UsesNativeDestinationWalk(main, player.LevelId);
@@ -1046,8 +1045,8 @@ public partial class SessionAcceptance
                 $"{action} sequence {expectedSequence} was {result.Status}/{result.RejectReason}.");
             if (main.ObservedPendingCommandCount != 0 || snapshot.Tick < result.AppliedTick)
                 return false;
-            Require(snapshot.Players.Single().Life > 0,
-                $"The Rogue died before {action} applied; {DescribeNativeHealingState(main)}.");
+            Require(JourneySafetyPlayer(main, snapshot).Life > 0,
+                $"The character died before {action} applied; {DescribeNativeHealingState(main)}.");
             return true;
         }, $"{action} did not reach its accepted, applied snapshot.", stageSeconds: 10);
     }
@@ -1103,7 +1102,7 @@ public partial class SessionAcceptance
             var hasClearShot = CanSelectNativeRangedTarget(main, snapshot, player, target, geometry, targetTile)
                 && HasClearNativeRangedLane(snapshot, geometry, missileBlockedCells, player.LevelId,
                     player.PositionX, player.PositionY, target, targetTile);
-            var belowHealingThreshold = (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
+            var belowHealingThreshold = NativeHealingThresholdReached(main);
             if (hasClearShot
                 && (currentThreatClearance >= NativeRangedMinimumThreatSpacing
                     || !belowHealingThreshold || lowHealthEscapeStepUsed
@@ -1850,10 +1849,14 @@ public partial class SessionAcceptance
 
     private async Task UseNativeHealingPotionIfNeeded(Main main)
     {
-        var player = main.ObservedSnapshot!.Players.Single();
-        Require(player.Life > 0, $"The Rogue died before a native healing command could be dispatched; {DescribeNativeHealingState(main)}.");
+        var player = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
+        Require(player.Life > 0, $"The character died before a healing command could be dispatched; {DescribeNativeHealingState(main)}.");
         if (!NativeHealingThresholdReached(main))
             return;
+        var safety = JourneySafetyDecision(main);
+        GD.Print($"Journey healing L{player.LevelId}: life={player.Life}/{player.LifeMaximum}, "
+            + $"threshold={safety.HealingThreshold:P0}, lossPerTick={safety.LossPerTick:0.##}, "
+            + $"nearby={safety.Nearby}, adjacent={safety.Adjacent}, mode={player.CombatMode}.");
         var beltPotion = player.Belt.OrderBy(item => item.Slot)
             .FirstOrDefault(item => IsNativeHealingConsumable(item.State));
         var inventoryPotion = beltPotion is null
@@ -1885,7 +1888,7 @@ public partial class SessionAcceptance
         Require(useButton.Visible && !useButton.Disabled,
             $"The ordinary consumable control was unavailable; life={player.Life}/{player.LifeMaximum}.");
         await WaitForNativeCommandBoundaryAsync(main, "Native healing quick-use before clicking", settlePlayer: false);
-        player = main.ObservedSnapshot!.Players.Single();
+        player = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
         var beforeLife = player.Life;
         var beforeTick = main.ObservedSnapshot!.Tick;
         var beforeAction = player.CurrentAction?.Kind;
@@ -1893,8 +1896,6 @@ public partial class SessionAcceptance
         var potionSeed = beltPotion?.ItemSeed ?? inventoryPotion.Item!.ItemSeed;
         var potionStableId = beltPotion?.State.StableItemId ?? inventoryPotion.Item!.State.StableItemId;
         var beforeCount = CountNativeHealingItemOccurrences(player, potionStableId, potionSeed);
-        var preserveActiveNativeWalk = SupportsNativeQueuedRangedAttacks(main)
-            && IsNativeWalkAction(player);
         var sequence = NativeProgressionCommandCursor(main);
         var expectedSequence = checked(sequence + 1);
         await Click(useButton.GetGlobalRect().GetCenter());
@@ -1911,13 +1912,11 @@ public partial class SessionAcceptance
             + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}, "
             + $"result={main.ObservedCommandResult?.ClientSequence}.");
         try {
-            if (preserveActiveNativeWalk)
-                await WaitForNativeCommandAppliedAsync(main, sequence, "Use native-route healing consumable");
-            else
-                await AcceptedAndSettled(main, sequence, "Use native-route healing consumable");
+            // Native quick-use does not require Stand, including melee and repeated hit recovery.
+            await WaitForNativeCommandAppliedAsync(main, sequence, "Use native-route healing consumable");
         } catch (InvalidOperationException exception) {
             var afterSnapshot = main.ObservedSnapshot;
-            var afterPlayer = afterSnapshot?.Players.SingleOrDefault();
+            var afterPlayer = afterSnapshot is null ? null : JourneySafetyPlayer(main, afterSnapshot);
             var failureReceipt = main.ObservedCommandResult;
             throw new InvalidOperationException(
                 $"{exception.Message} Native healing context: before[tick={beforeTick},life={beforeLife}/{player.LifeMaximum},"
@@ -1929,13 +1928,8 @@ public partial class SessionAcceptance
                 exception);
         }
         var result = main.ObservedCommandResult;
-        var after = main.ObservedSnapshot!.Players.Single();
-        var progressionCombat = IsNativeProgressionCombatFloor(main);
-        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        // The depth journeys (Rogue to L4, Warrior to L8) fight while drinking.
-        var depthProgressionCombat = player.LevelId is >= 1 and <= 8
-            && (IsNativeDepthProgressionPhase(phase) || phase is "NativeDepthJourney" or "NativeDepthResume");
-        var concurrentCombat = progressionCombat || depthProgressionCombat;
+        var after = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
+        var concurrentCombat = player.LevelId != 0;
         var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;
         // Damage can arrive between the accepted potion and the settled snapshot.
         // Combat requires exact accepted consumption and survival, not net life gain.
@@ -1966,23 +1960,19 @@ public partial class SessionAcceptance
             || level is >= 2 and <= 4 && IsNativeDepthProgressionPhase(phase);
     }
 
-    private static bool NativeHealingThresholdReached(Main main)
+    private bool NativeHealingThresholdReached(Main main)
     {
-        var player = main.ObservedSnapshot!.Players.Single();
-        if (player.Life <= 0 || player.LifeMaximum <= 0)
-            return false;
-        return IsNativeProgressionCombatFloor(main)
-            ? (long)player.Life * 100 <= (long)player.LifeMaximum * 90
-            : (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
+        var observation = ObserveJourneySafety(main);
+        var decision = journeySafety.Observe(observation, journeySafetyActivity);
+        return observation.Level != 0 && observation.Life < observation.MaximumLife
+            && observation.Life <= observation.MaximumLife * decision.HealingThreshold;
     }
 
     private static bool NativeHealingPotionAvailable(PlayerSnapshot player)
         => player.Belt.Any(item => IsNativeHealingConsumable(item.State))
             || player.Inventory.Any(item => IsNativeHealingConsumable(item.State));
 
-    private static bool NativeHealingIsDue(Main main)
-        => main.ObservedSnapshot?.Players.SingleOrDefault() is { } player
-            && NativeHealingThresholdReached(main) && NativeHealingPotionAvailable(player);
+    private bool NativeHealingIsDue(Main main) => JourneySafetyDecision(main).Drink;
 
     private async Task WaitForNativeArrowSettlementAsync(Main main, uint targetId, uint playerId)
     {
@@ -1991,13 +1981,14 @@ public partial class SessionAcceptance
                 && projectile.TargetEntityId == targetId);
 
         var failure = $"The native arrow against target {targetId} did not settle within its existing 20-second bound.";
-        await Until(ArrowSettled, failure, 20);
+        await Until(ArrowSettled, failure, 20,
+            beforePoll: () => JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat));
     }
 
     private static string DescribeNativeHealingState(Main main)
     {
         var snapshot = main.ObservedSnapshot;
-        var player = snapshot?.Players.SingleOrDefault();
+        var player = snapshot?.Players.FirstOrDefault();
         var result = main.ObservedCommandResult;
         return $"tick={snapshot?.Tick},life={player?.Life}/{player?.LifeMaximum},mode={player?.CombatMode},"
             + $"action={player?.CurrentAction?.Kind},queued={main.ObservedLastQueuedSequence},"

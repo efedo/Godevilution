@@ -495,7 +495,8 @@ public partial class SessionAcceptance
                 && ((Button)main.FindChild("CancelTravel", true, false)).Disabled
                 && result is not null && result.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(result)
                 && AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence);
-        }, $"Server-controlled approach and interaction failed for {key}.", deadlineSeconds);
+        }, $"Server-controlled approach and interaction failed for {key}.", deadlineSeconds,
+            beforePoll: () => GuardJourneyTravelAsync(main, target.LevelId, resumeControl: "ApproachDestination"));
         var arrivedPlayer = main.ObservedSnapshot!.Players.Single();
         WriteEvidence(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")!,
             $"destination-approach-{main.ObservedCommandResult!.ClientSequence}.json", new {

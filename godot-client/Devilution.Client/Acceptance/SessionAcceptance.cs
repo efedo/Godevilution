@@ -529,11 +529,13 @@ public partial class SessionAcceptance : Node
     }
 
     /** Polls each frame; `stageSeconds` is game time at 20 Hz on a faster or slower test server (AcceptanceTickBudget). */
-    private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null)
+    private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null, Func<Task>? beforePoll = null)
     {
         var stage = Stopwatch.StartNew();
         var stageTick = timingObservedMain?.ObservedSnapshot?.Tick;
-        while (!condition()) {
+        while (true) {
+            if (beforePoll is not null) await beforePoll();
+            if (condition()) return;
             var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
             var sessionMenuPhase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1"
                 && phase is "Create" or "Resume";
@@ -625,6 +627,7 @@ public partial class SessionAcceptance : Node
         else
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         nativeObjectStageBudget?.Check();
+        ObserveJourneySafetyFrame();
     }
 
     private async Task Capture(string path)

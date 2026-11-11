@@ -88,10 +88,11 @@ public partial class SessionAcceptance
     }
 
     private async Task TravelCathedralRoute(Main main, string directory, uint warpId, uint destinationLevel, bool stopEarly,
-        int minimumDistinctPositions = 8, bool distanceBoundedApproachDeadline = false, Func<bool>? interrupt = null)
+        int minimumDistinctPositions = 8, bool distanceBoundedApproachDeadline = false, Func<bool>? interrupt = null,
+        bool fleeing = false)
     {
         var interrupted = false;
-        await Until(() => Settled(main), "Generated-route start did not settle.");
+        await WaitForNativeCommandBoundaryAsync(main, "Generated-route start");
         var origin = main.ObservedSnapshot!.Players.Single().Clone();
         var routes = main.ObservedSnapshot.LevelGeometry.Single(level => level.LevelId == origin.LevelId)
             .WarpTriggers.OrderBy(route => route.WarpId).ToArray();
@@ -143,7 +144,8 @@ public partial class SessionAcceptance
                     return false;
                 boundary = FindAdjacentCathedralWall(main);
                 return boundary is not null;
-            }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds);
+            }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds,
+                beforePoll: () => GuardJourneyTravelAsync(main, origin.LevelId, fleeing, activity: JourneySafetyActivity.Stairs));
             if (interrupted) {
                 var arrived = await AcceptanceCommandBoundary.ArrivedAfterTravelCancellationAsync(
                     () => StopNativeTravelAsync(main),
