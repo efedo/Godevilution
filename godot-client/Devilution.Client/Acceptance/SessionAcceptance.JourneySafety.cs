@@ -77,7 +77,8 @@ public partial class SessionAcceptance
         var observation = new JourneyCombatSafety.Observation(player.EntityId, player.LevelId, snapshot.Tick, player.Life, player.LifeMaximum, threats.Nearby, threats.Adjacent,
             NativeHealingSupply(player), admitted, AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount),
             main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0,
-            player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick, threats.Ranged, threats.RangedTarget);
+            player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick, threats.Ranged, threats.RangedTarget,
+            player.NativeWalkPathPending && player.CurrentAction is null && player.CombatMode == PlayerCombatMode.Stand);
         journeyPositioning.Observe(observation, player.PositionX, player.PositionY);
         return observation;
     }
@@ -117,7 +118,7 @@ public partial class SessionAcceptance
             if (!journeyDrinking && JourneySafetyControlsReleased)
                 await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
         }, state => AcceptanceTickBudget.StageExpired(seconds, clock.Elapsed.TotalSeconds,
-            state.TickRateHz, tick, state.Tick), context);
+            state.TickRateHz, tick, state.Tick), context, () => CancelJourneyDestinationWalkAsync(main));
     }
 
     /** Retain the attack receipt before a potion can become the client's latest admitted command. */
@@ -251,6 +252,13 @@ public partial class SessionAcceptance
 
     private async Task HaltJourneyDestinationWalkAsync(Main main)
     {
+        if (!JourneySafetyPlayer(main, JourneySafetySnapshot(main)).NativeWalkPathPending) return;
+        await CancelJourneyDestinationWalkAsync(main);
+        await WaitForJourneySettlementAsync(main, "Stop the queued native destination walk");
+    }
+
+    private async Task CancelJourneyDestinationWalkAsync(Main main)
+    {
         var player = JourneySafetyPlayer(main, JourneySafetySnapshot(main));
         if (!player.NativeWalkPathPending) return;
         // CaptureNativeDestinationPath replaces the server path for this ordinary MoveTo click.
@@ -259,13 +267,21 @@ public partial class SessionAcceptance
         await Click(main.ObservedTileScreenPosition(player.PositionX, player.PositionY), walk: true);
         Require(main.ObservedLastQueuedSequence > before, "The real hold-position click queued no movement intent.");
         await WaitForNativeCommandAppliedAsync(main, before, "Stop the queued native destination walk");
-        await WaitForJourneySettlementAsync(main, "Stop the queued native destination walk");
+    }
+
+    private uint ReachableJourneyShooter(Main main, Snapshot snapshot, PlayerSnapshot player)
+    {
+        var geometry = DepthGeometry(main, player.LevelId);
+        var openCells = new Dictionary<(int X, int Y), bool>();
+        return journeyThreats.ClosestReachableShooter(snapshot, player, target => NativeMonsterDistance(player, target) <= 1
+            || FindNativeClassApproachStep(main, snapshot, player, geometry,
+                (x, y) => NativeDistance(x, y, target.PositionX, target.PositionY) <= 1, openCells: openCells) is not null);
     }
 
     private async Task HoldNativeWarriorSwarmAsync(Main main, bool seekCover = true)
     {
         if (seekCover && await TryJourneyCoverStepAsync(main)) return;
         // Let melee approach the choke rather than crossing the room to engage the entire pack.
-        await WaitTicksWhile(main, () => ObserveJourneySafety(main).Adjacent == 0, .25);
+        await WaitTicksWhile(main, () => ObserveJourneySafety(main).Adjacent == 0 && !JourneySafetyDecision(main).TakingDamage, .25);
     }
 }

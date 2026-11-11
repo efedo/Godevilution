@@ -17,6 +17,13 @@ internal sealed class JourneyCombatThreats
     internal void Reset() { sources.Clear(); ranged.Clear(); initialized = false; eventSequence = 0; }
     internal bool IsRangedAttacker(uint entity) => ranged.Contains(entity);
 
+    /** Distance alone cannot pick a shooter behind a wall over one with a usable native approach. */
+    internal uint ClosestReachableShooter(Snapshot snapshot, PlayerSnapshot player, Func<MonsterSnapshot, bool> reachable)
+        => snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && ranged.Contains(monster.EntityId)
+                && AuthoritativeLevelVisibility.IsVisible(monster.LevelId, player.LevelId))
+            .OrderBy(monster => Distance(player, monster)).ThenBy(monster => monster.HitPointsQ6).ThenBy(monster => monster.EntityId)
+            .FirstOrDefault(reachable)?.EntityId ?? 0;
+
     internal Counts Observe(Snapshot snapshot, PlayerSnapshot player, IReadOnlyList<GameEvent> events,
         ulong firstSequence, ulong lastSequence)
     {

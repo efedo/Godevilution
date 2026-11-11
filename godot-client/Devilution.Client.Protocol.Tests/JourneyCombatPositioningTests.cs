@@ -7,6 +7,32 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class JourneyCombatPositioningTests
 {
     [Fact]
+    public void FireWithoutAReachableShooterMovesOntoExploredClearedGroundInsteadOfHolding()
+    {
+        var positioning = new JourneyCombatPositioning(); var safety = new JourneyCombatSafety();
+        var state = new JourneyCombatSafety.Observation(1, 6, 100, 6546, 11776, 0, 0, 0, true, true, 200);
+        positioning.Observe(state, 3, 4); // This narrow cell was explored with no threats alive nearby.
+        safety.Observe(state);
+        state = state with { Tick = 120, Life = 5190, Nearby = 8 };
+        var player = new PlayerSnapshot { EntityId = 1, LevelId = 6, PositionX = 4, PositionY = 4,
+            Life = state.Life, LifeMaximum = state.MaximumLife };
+        var geometry = new LevelGeometrySnapshot { LevelId = 6, Width = 12, Height = 12 };
+        geometry.BlockedCells.Add(new[] { 3 * 12 + 3, 5 * 12 + 3 });
+        var snapshot = new Snapshot { Tick = state.Tick, Players = { player }, LevelGeometry = { geometry } };
+        for (uint index = 0; index < 8; index++) snapshot.Monsters.Add(new MonsterSnapshot {
+            EntityId = index + 2, LevelId = 6, Alive = true, PositionX = 7 + (int)index % 2, PositionY = 3 + (int)index / 2,
+            HitPoints = 20, MaxHitPoints = 20, HitPointsQ6 = 1280, MaxHitPointsQ6 = 1280 });
+        positioning.Observe(state, 4, 4);
+        Assert.False(positioning.BeginSearch().TryHold(state, 3, safety.Observe(state).TakingDamage));
+        bool Open(int x, int y) => x >= 0 && y >= 0 && x < 12 && y < 12 && !geometry.BlockedCells.Contains(y * 12 + x);
+        Assert.Equal((3, 4), positioning.CoverStep(snapshot, player, geometry, Open));
+        var model = new AuthoritativeClientModel();
+        model.Apply(new(Snapshot: snapshot));
+        model.TrackPredictedMoveTo(1, 3, 4);
+        Assert.Equal(new ClientPosition(3, 4), model.LocalMovementTarget);
+    }
+
+    [Fact]
     public void ThirteenMonsterSwarmFallsBackToVisitedClearedChokeRatherThanUnexploredRoom()
     {
         var positioning = new JourneyCombatPositioning();

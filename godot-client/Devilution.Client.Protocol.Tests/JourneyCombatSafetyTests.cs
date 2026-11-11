@@ -11,16 +11,16 @@ public sealed class JourneyCombatSafetyTests
         => new(1, 5, tick, life, 10000, nearby, adjacent, potions, admitted, settled, hz);
 
     [Fact]
-    public void ASevenMonsterPackDrinksBeforeTheOldTwoThirdsThreshold()
+    public void ASevenMonsterPackDoesNotSpendAPotionAboveTwoThirdsLife()
     {
         var state = State(life: 9200, nearby: 7, adjacent: 4);
         var safety = new JourneyCombatSafety();
         safety.Observe(state with { Tick = state.Tick - 1, Life = state.MaximumLife });
         var decision = safety.Observe(state);
         Assert.True(state.Life > state.MaximumLife * 2 / 3);
-        Assert.True(decision.Drink);
+        Assert.False(decision.Drink);
         Assert.True(decision.StopWalking);
-        Assert.InRange(decision.HealingThreshold, .95, .97);
+        Assert.Equal(.65, decision.HealingThreshold);
     }
 
     [Fact]
@@ -28,22 +28,22 @@ public sealed class JourneyCombatSafetyTests
     {
         var safety = new JourneyCombatSafety();
         safety.Observe(State());
-        var burst = State(life: 9000, tick: 101);
+        var burst = State(life: 6000, tick: 101);
         Assert.False(new JourneyCombatSafety().Observe(burst).Drink);
         Assert.True(safety.Observe(burst).Drink);
     }
 
     [Fact]
-    public void AcceleratedTicksAndRoundTripLeaveTimeForTheRealPotionCommand()
+    public void AcceleratedTicksAndRoundTripDoNotSpendPotionsAtHigherLife()
     {
         var ordinary = new JourneyCombatSafety(); var accelerated = new JourneyCombatSafety();
         ordinary.Observe(State()); accelerated.Observe(State(hz: 200));
-        Assert.False(ordinary.Observe(State(life: 8500, tick: 110)).Drink);
-        Assert.True(accelerated.Observe(State(life: 8500, tick: 110, hz: 200)).Drink);
+        Assert.True(ordinary.Observe(State(life: 6000, tick: 110)).Drink);
+        Assert.True(accelerated.Observe(State(life: 6000, tick: 110, hz: 200)).Drink);
         var local = new JourneyCombatSafety(); var distant = new JourneyCombatSafety();
         local.Observe(State()); distant.Observe(State());
         Assert.False(local.Observe(State(life: 8800, tick: 105)).Drink);
-        Assert.True(distant.Observe(State(life: 8800, tick: 105) with { RoundTripMilliseconds = 250 }).Drink);
+        Assert.False(distant.Observe(State(life: 8800, tick: 105) with { RoundTripMilliseconds = 250 }).Drink);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class JourneyCombatSafetyTests
     public async Task EveryLoopUsesTheSamePolicyAndReobservesAfterRealConsumption(int kind, bool defend)
     {
         var safety = new JourneyCombatSafety();
-        var state = State(life: 8200, nearby: 7, adjacent: 4);
+        var state = State(life: 4900, nearby: 7, adjacent: 4);
         var actions = new List<string>();
         await safety.CheckpointAsync((JourneySafetyActivity)kind, () => state, () => {
             actions.Add("real potion control");
@@ -125,7 +125,7 @@ public sealed class JourneyCombatSafetyTests
     public async Task HitRecoveryCanDrinkBeforeStandWithoutLosingTheAttacksReceipt()
     {
         var safety = new JourneyCombatSafety();
-        var state = State(life: 6000, settled: false);
+        var state = State(life: 4900, settled: false);
         var latest = new CommandResult { ClientSequence = 40, AppliedTick = 100, Status = CommandStatus.Accepted };
         var drinks = 0; var frames = 0;
         var attack = await JourneyCombatSafety.PreserveReceiptAsync(() => Task.FromResult(latest),
@@ -151,7 +151,7 @@ public sealed class JourneyCombatSafetyTests
     public async Task ObjectApproachRetainsItsMovementOutcomeWhileHealingDuringHitRecovery(CommandStatus status)
     {
         var safety = new JourneyCombatSafety();
-        var state = State(life: 7000, nearby: 3, settled: false);
+        var state = State(life: 4900, nearby: 3, settled: false);
         var move = new CommandResult { ClientSequence = 50, AppliedTick = 100, Status = status };
         var latest = move;
         var frames = 0;
@@ -227,12 +227,13 @@ public sealed class JourneyCombatSafetyTests
     [InlineData((int)JourneySafetyActivity.Stairs)]
     [InlineData((int)JourneySafetyActivity.Retreat)]
     [InlineData((int)JourneySafetyActivity.ObjectApproach)]
-    public void QuietStairsObjectsAndRetreatTopUpBeforeExposingTheNextThreat(int activity)
+    public void QuietStairsObjectsAndRetreatUseTheSameEconomicalThreshold(int activity)
     {
         var safety = new JourneyCombatSafety();
         var quiet = State(life: 8000, nearby: 0, adjacent: 0);
         Assert.False(safety.Observe(quiet).Drink);
-        Assert.True(safety.Observe(quiet, (JourneySafetyActivity)activity).Drink);
+        Assert.False(safety.Observe(quiet, (JourneySafetyActivity)activity).Drink);
+        Assert.True(safety.Observe(quiet with { Life = 4900 }, (JourneySafetyActivity)activity).Drink);
     }
 
     [Theory]
@@ -428,16 +429,17 @@ public sealed class JourneyCombatSafetyTests
 
     [Theory]
     [InlineData(11388, false)]
-    [InlineData(10000, true)]
+    [InlineData(10000, false)]
+    [InlineData(5800, true)]
     public void AStaticPackDoesNotWastePotionsButStillHealsBeforeLowLife(int life, bool drink)
     {
         var safety = new JourneyCombatSafety();
         var state = State(life: life, nearby: 9, adjacent: 8, hz: 200) with { MaximumLife = 11776 };
         Assert.Equal(drink, safety.Observe(state).Drink);
-        Assert.InRange(safety.Observe(state).HealingThreshold, .85, .87);
+        Assert.Equal(.5, safety.Observe(state).HealingThreshold);
         safety.Reset();
         safety.Observe(state with { Tick = 99, Life = 11776 });
-        // The same near-full life demands a potion if actual incoming damage is rapid.
-        Assert.True(safety.Observe(state).Drink);
+        // Even a measured burst cannot waste most of a potion on a nearly full life bulb.
+        Assert.Equal(drink, safety.Observe(state).Drink);
     }
 }

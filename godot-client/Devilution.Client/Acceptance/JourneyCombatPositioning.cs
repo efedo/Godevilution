@@ -11,9 +11,9 @@ internal sealed class JourneyCombatPositioning
     internal sealed class PauseBudget(JourneyCombatPositioning positioning)
     {
         internal int Used { get; private set; }
-        internal bool TryHold(JourneyCombatSafety.Observation state, long? nearestDistance = null)
+        internal bool TryHold(JourneyCombatSafety.Observation state, long? nearestDistance = null, bool takingDamage = false)
         {
-            if (Used >= MaximumHoldPauses || !positioning.ShouldHold(state, nearestDistance)) return false;
+            if (Used >= MaximumHoldPauses || !positioning.ShouldHold(state, nearestDistance, takingDamage)) return false;
             Used++;
             return true;
         }
@@ -40,9 +40,10 @@ internal sealed class JourneyCombatPositioning
         => state.Level != 0 && state.HealingItems == 0 && state.Nearby >= 3 && state.RangedTarget == 0;
 
     /** Two positioning opportunities per swarm; stationary shooters must not suppress pathfinding. */
-    internal bool ShouldHold(JourneyCombatSafety.Observation state, long? nearestDistance = null)
+    internal bool ShouldHold(JourneyCombatSafety.Observation state, long? nearestDistance = null, bool takingDamage = false)
     {
         if (!UnhealedSwarm(state)) { ResetHold(); return false; }
+        if (takingDamage) { approachReleased = true; return false; }
         if (lastHold is { } old) {
             if (old.Player != state.Player || old.Level != state.Level) ResetHold();
             else if (state.Adjacent == 0 && state.Life < old.Life

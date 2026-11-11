@@ -212,8 +212,7 @@ public partial class SessionAcceptance
     {
         var observation = ObserveJourneySafety(main);
         var decision = journeySafety.Observe(observation, journeySafetyActivity);
-        return observation.Level != 0 && observation.Life < observation.MaximumLife
-            && observation.Life <= observation.MaximumLife * decision.HealingThreshold;
+        return decision.Drink;
     }
 
     private static bool NativeHealingPotionAvailable(PlayerSnapshot player)

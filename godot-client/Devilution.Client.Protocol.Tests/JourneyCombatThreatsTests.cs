@@ -28,6 +28,33 @@ public sealed class JourneyCombatThreatsTests
     internal static GameEvent Hit(uint source, uint target = 1)
         => new() { Damage = new DamageEvent { SourceEntityId = source, TargetEntityId = target, AmountQ6 = 100 } };
 
+    [Fact]
+    public void CounterFireChoosesTheNearestReachableSourceInsteadOfAnIsolatedCloserShooter()
+    {
+        var geometry = new LevelGeometrySnapshot { LevelId = 6, Width = 10, Height = 10 };
+        // A synthetic sealed cell holds the nearer shooter. The other has an ordinary open approach.
+        foreach (var (x, y) in new[] { (3, 3), (4, 3), (5, 3), (3, 4), (5, 4), (3, 5), (4, 5), (5, 5) })
+            geometry.BlockedCells.Add(y * 10 + x);
+        var snapshot = new Snapshot { Tick = 100,
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 6, PositionX = 2, PositionY = 4,
+                Life = 5190, LifeMaximum = 11776 } },
+            LevelGeometry = { geometry },
+            Monsters = {
+                new MonsterSnapshot { EntityId = 10, LevelId = 6, Alive = true, PositionX = 4, PositionY = 4 },
+                new MonsterSnapshot { EntityId = 20, LevelId = 6, Alive = true, PositionX = 7, PositionY = 4 },
+            } };
+        foreach (var monster in snapshot.Monsters) snapshot.Projectiles.Add(new ProjectileSnapshot {
+            SourceEntityId = monster.EntityId, TargetEntityId = 1, LevelId = 6, RemainingTicks = 20, NativeMissileId = "Arrow" });
+        var threats = new JourneyCombatThreats();
+        Assert.Equal(10U, threats.Observe(snapshot, snapshot.Players[0], [], 0, 0).RangedTarget);
+        bool Reachable(MonsterSnapshot monster) => NativeObjectApproachPath.Find(snapshot, geometry, new ObjectSnapshot {
+            PositionX = monster.PositionX, PositionY = monster.PositionY, LevelId = 6 }, pickup: true) is not null;
+        Assert.False(Reachable(snapshot.Monsters[0]));
+        Assert.True(Reachable(snapshot.Monsters[1]));
+        Assert.Equal(20U, threats.ClosestReachableShooter(snapshot, snapshot.Players[0], Reachable));
+        Assert.Equal(0U, threats.ClosestReachableShooter(snapshot, snapshot.Players[0], _ => false));
+    }
+
     [Theory]
     [InlineData(3858)]
     [InlineData(3128)]

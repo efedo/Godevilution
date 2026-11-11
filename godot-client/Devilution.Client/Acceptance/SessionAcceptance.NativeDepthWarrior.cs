@@ -892,10 +892,15 @@ public partial class SessionAcceptance
                     $"{danger.Attackers} attackers ({danger.Adjacent} melee, {danger.RangedAttackers} ranged), "
                         + $"life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
             if (adjacent is null) {
-                attackTarget.PreferRanged(danger.RangedTarget, journeyThreats.IsRangedAttacker(attackTarget.Current));
+                var shooter = ReachableJourneyShooter(main, snapshot, player);
+                attackTarget.PreferRanged(shooter, attackTarget.Current == shooter);
+                if (danger.TakingDamage && shooter == 0 && await TryJourneyCoverStepAsync(main)) {
+                    approaches++;
+                    continue;
+                }
                 var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
                     .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
-                if (pauses.TryHold(ObserveJourneySafety(main), nearest)) {
+                if (pauses.TryHold(ObserveJourneySafety(main), nearest, danger.TakingDamage)) {
                     await HoldNativeWarriorSwarmAsync(main);
                     continue;
                 }
