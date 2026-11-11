@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Devilution.Client/Acceptance/TownCaptureSequence.cs" Link="Acceptance/TownCaptureSequence.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/TownCaptureRun.cs" Link="Acceptance/TownCaptureRun.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/TownCaptureRoute.cs" Link="Acceptance/TownCaptureRoute.cs" />
+    <Compile Include="../Devilution.Client/Diagnostics/ClientFrameEvidenceRecorder.Phases.cs" Link="Diagnostics/ClientFrameEvidenceRecorder.Phases.cs" />
     <Compile Include="../Devilution.Client/Acceptance/NativeLevelRetentionEvidence.cs"
              Link="Acceptance/NativeLevelRetentionEvidence.cs" />
     <Compile Include="../Devilution.Client/Acceptance/LevelScopedSnapshotEvidence.cs"

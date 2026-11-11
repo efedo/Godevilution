@@ -91,7 +91,7 @@ public sealed partial class ClientFrameEvidenceRecorder
             costSnapshots / seconds, costSnapshotBytes / seconds, costDecodeBytes / seconds, costProcessingBytes / seconds,
             costProcess / costFrames, costInput / costFrames, costPrediction / costFrames,
             costFrameSetupSamples == 0 ? null : costFrameSetup / costFrameSetupSamples,
-            costInputBytes / seconds, costPredictionBytes / seconds));
+            costInputBytes / seconds, costPredictionBytes / seconds, capturePhase));
         costWindowStart = timestamp; costAllocatedStart = allocated; costMainAllocatedStart = mainAllocated; costCpuStart = cpu;
         costThread = Environment.CurrentManagedThreadId; costGen0 = gen0; costGen1 = gen1; costGen2 = gen2; costPauseStart = pause;
         costFrames = 0; costAdmission = costWorld = costHud = costDraw = costDrawCalls = costRenderCpu = costRenderGpu = 0;
@@ -125,4 +125,4 @@ public sealed record ClientSecondFrameCostSample(double StartSeconds, double Dur
     double SnapshotDecodeAllocatedBytesPerSecond = 0, double SnapshotProcessingAllocatedBytesPerSecond = 0,
     double ProcessMillisecondsPerFrame = 0, double InputMillisecondsPerFrame = 0, double PredictionMillisecondsPerFrame = 0,
     double? RenderFrameSetupCpuMillisecondsPerFrame = null, double InputAllocatedBytesPerSecond = 0,
-    double PredictionAllocatedBytesPerSecond = 0);
+    double PredictionAllocatedBytesPerSecond = 0, string? Phase = null);

@@ -7,8 +7,9 @@ namespace Devilution.Client;
 public partial class WorldPresentation
 {
     private Snapshot? appliedPresentationSnapshot;
-    private readonly bool recordDrawDiagnostics = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE"))
-        || System.Environment.GetEnvironmentVariable("GODEVILUTION_PRESENTATION_HISTORY") == "1";
+    private readonly bool recordDrawDiagnostics = Diagnostics.ClientFrameEvidenceRecorder.RequestsDetailedPresentationHistory(
+        System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE"),
+        System.Environment.GetEnvironmentVariable("GODEVILUTION_PRESENTATION_HISTORY"));
     private ulong? appliedPresentationRevision;
     private bool snapshotDataChanged;
     private readonly HashSet<uint> activePresentationEntities = [];

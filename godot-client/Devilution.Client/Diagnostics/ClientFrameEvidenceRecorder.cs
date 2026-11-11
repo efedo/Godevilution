@@ -208,7 +208,7 @@ public sealed partial class ClientFrameEvidenceRecorder
         if (frameTimestamp < activeAtTimestamp)
             return;
         if (frameTimestamp >= stopAtTimestamp) {
-            Stop("measurement-window-ended", configuration.FrameCostOnly, frameTimestamp);
+            Stop("measurement-window-ended", configuration.FrameCostOnly && !requiresWorkloadCompletion, frameTimestamp);
             return;
         }
 
@@ -237,6 +237,7 @@ public sealed partial class ClientFrameEvidenceRecorder
                 sceneEndTimestamp - sceneStartTimestamp);
         }
         previousFrameTimestamp = frameTimestamp;
+        RecordPhaseFrame(frameTimestamp);
         if (configuration.FrameCostOnly) return;
         if (sampleCount >= samples.Length) {
             droppedSampleCount++;
@@ -260,6 +261,7 @@ public sealed partial class ClientFrameEvidenceRecorder
         stoppedAtUtc = createdAtUtc + Stopwatch.GetElapsedTime(createdAtTimestamp, timestamp);
         measurementStopTimestamp = timestamp;
         FlushFrameCosts(measurementStopTimestamp);
+        FinishPhase(measurementStopTimestamp);
         var capturedQuality = EvaluateQuality(measurementStopTimestamp);
         quality = capturedQuality;
         outcomeKind = reason;
@@ -343,7 +345,8 @@ public sealed partial class ClientFrameEvidenceRecorder
             NonMonotonicTimestampCount: nonMonotonicTimestampCount,
             InvalidTimestampCount: invalidTimestampCount,
             Quality: quality ?? EvaluateQuality(measurementStopTimestamp),
-            Samples: samples[..sampleCount], FrameCosts: frameCostSamples, MenuFrameCosts: menuFrameCostSamples);
+            Samples: samples[..sampleCount], FrameCosts: frameCostSamples, MenuFrameCosts: menuFrameCostSamples,
+            PhaseSummaries: phaseSummaries.Count == 0 ? null : phaseSummaries, Partial: !outcomeSucceeded);
         var options = new JsonSerializerOptions { WriteIndented = true };
         using var stream = new FileStream(
             EvidenceFilePath,
@@ -522,4 +525,6 @@ public sealed record ClientFrameEvidenceDocument(
     ClientFrameEvidenceQuality Quality,
     IReadOnlyList<ClientFrameEvidenceSample> Samples,
     IReadOnlyList<ClientSecondFrameCostSample>? FrameCosts = null,
-    IReadOnlyList<ClientSecondFrameCostSample>? MenuFrameCosts = null);
+    IReadOnlyList<ClientSecondFrameCostSample>? MenuFrameCosts = null,
+    IReadOnlyList<ClientFramePhaseSummary>? PhaseSummaries = null,
+    bool Partial = false);
