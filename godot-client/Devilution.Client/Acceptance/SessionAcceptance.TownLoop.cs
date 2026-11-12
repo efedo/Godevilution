@@ -112,7 +112,7 @@ public partial class SessionAcceptance
             if (visible)
                 await Capture(System.IO.Path.Combine(directory, "townloop-portal-return.png"));
         } else {
-            await SelectRoute(routes, 1);
+            await SelectRoute(main, routes, 1);
             await ClickControl(main, sections, 4, "Travel");
             await Until(() => main.ObservedSnapshot!.Players.Single().LevelId == 0 && Settled(main),
                 "The authored return stair did not reach town.", 15);
@@ -462,7 +462,7 @@ public partial class SessionAcceptance
         await RevealControl(sections, 4, destinations);
         Require(destinations.ItemCount == targetList.Count && destinations.GetItemText(index) == target.Label,
             "The actual destination selector does not match authoritative metadata.");
-        await SelectRoute(destinations, index);
+        await SelectRoute(main, destinations, index);
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 4, "ApproachDestination");
         if (verifyCancellation) {
@@ -545,16 +545,23 @@ public partial class SessionAcceptance
             $"{control.Name} {control.GetGlobalRect()} remains clipped by its tab {((Control)sections.GetChild(page)).GetGlobalRect()}.");
     }
 
-    private async Task SelectRoute(OptionButton routes, int index)
+    private async Task SelectRoute(Main main, OptionButton routes, int index)
     {
-        await Click(routes.GetGlobalRect().GetCenter());
+        var context = $"The {routes.Name} selection";
+        void Validate() => AcceptanceControlClick.RequireAvailable(ObserveNativeCommandBoundary(main), !routes.Disabled, context);
+        await AcceptanceControlClick.RequireClickAsync(() => ObserveNativeCommandBoundary(main), () => !routes.Disabled,
+            validate => Click(routes.GetGlobalRect().GetCenter(), validate: validate), context);
         var popup = routes.GetPopup();
         Require(popup.Visible, "The route selection popup did not open.");
-        for (var attempt = 0; popup.GetFocusedItem() != index && attempt <= routes.ItemCount; attempt++)
+        for (var attempt = 0; popup.GetFocusedItem() != index && attempt <= routes.ItemCount; attempt++) {
+            Validate();
             await PressControlKey(popup, Key.Down);
+        }
+        Validate();
         Require(popup.GetFocusedItem() == index,
             $"Keyboard input did not focus route {index}: focused={popup.GetFocusedItem()}, window={popup.GetWindowId()}, embedded={popup.IsEmbedded()}.");
         await PressControlKey(popup, Key.Enter);
+        Validate();
         Require(routes.Selected == index && !popup.Visible, "The route popup did not accept the selected route.");
     }
 

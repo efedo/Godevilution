@@ -104,7 +104,7 @@ public partial class SessionAcceptance
             : 120;
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, 4);
-        await SelectRoute((OptionButton)main.FindChild("Routes", true, false), index);
+        await SelectRoute(main, (OptionButton)main.FindChild("Routes", true, false), index);
         await ClickControl(main, sections, 4, "Travel");
         // The click is dispatched by the next scene input/process cycle. Do
         // not treat the unchanged pre-dispatch HUD as stopped travel.

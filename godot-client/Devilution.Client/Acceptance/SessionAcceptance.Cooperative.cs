@@ -350,7 +350,7 @@ public partial class SessionAcceptance
         var routes = (OptionButton)main.FindChild("Routes", true, false);
         await SelectTab(sections, sections.GetTabCount() - 1);
         Require(routes.ItemCount > 0, "The town-loop-preview did not expose a dungeon route.");
-        await SelectRoute(routes, routeIndex);
+        await SelectRoute(main, routes, routeIndex);
         var travel = (Button)main.FindChild("Travel", true, false);
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         Require(!travel.Disabled, "The projected cooperative dungeon route is disabled.");
