@@ -176,7 +176,7 @@ public partial class SessionAcceptance
         Require(index >= 0, $"Native multiplayer Town did not publish its route to L{target}.");
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, 4);
-        await SelectRoute((OptionButton)main.FindChild("Routes", true, false), index);
+        await SelectRoute(main, (OptionButton)main.FindChild("Routes", true, false), index);
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         // Travel stops when its path is blocked (Town residents walk); restart it from the new position.
         for (var attempt = 0; attempt < 6; attempt++) {

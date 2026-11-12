@@ -72,7 +72,7 @@ public partial class SessionAcceptance
             .WarpTriggers.First(trigger => trigger.Available).Clone();
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, sections.GetTabCount() - 1);
-        await SelectRoute((OptionButton)main.FindChild("Routes", true, false), 0);
+        await SelectRoute(main, (OptionButton)main.FindChild("Routes", true, false), 0);
         var travel = (Button)main.FindChild("Travel", true, false);
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         var sequence = main.ObservedCommandResult!.ClientSequence;
@@ -125,18 +125,23 @@ public partial class SessionAcceptance
         Require(sections.CurrentTab == index, $"The real tab control did not select {index}.");
     }
 
-    private async Task Click(Vector2 position, bool walk = false, MouseButton button = MouseButton.Left)
+    private async Task Click(Vector2 position, bool walk = false, MouseButton button = MouseButton.Left, Action? validate = null)
     {
         Require(GetViewport().GetVisibleRect().HasPoint(position), "Acceptance tried to click outside the viewport.");
+        validate?.Invoke();
         Input.ParseInputEvent(new InputEventMouseMotion { Position = position, GlobalPosition = position });
         await Frame();
+        validate?.Invoke();
         Input.ParseInputEvent(new InputEventMouseButton {
             ButtonIndex = button, Position = position, GlobalPosition = position, Pressed = true, CtrlPressed = walk,
         });
+        try { await Frame(); }
+        finally {
+            Input.ParseInputEvent(new InputEventMouseButton {
+                ButtonIndex = button, Position = position, GlobalPosition = position, Pressed = false, CtrlPressed = walk,
+            });
+        }
         await Frame();
-        Input.ParseInputEvent(new InputEventMouseButton {
-            ButtonIndex = button, Position = position, GlobalPosition = position, Pressed = false, CtrlPressed = walk,
-        });
-        await Frame();
+        validate?.Invoke();
     }
 }

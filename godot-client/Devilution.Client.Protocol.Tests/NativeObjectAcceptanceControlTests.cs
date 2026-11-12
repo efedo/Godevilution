@@ -41,6 +41,77 @@ public sealed class NativeObjectAcceptanceControlTests
     }
 
     [Fact]
+    public async Task ARejectedLivingTravelCanSelectAndStartAnotherRouteWithoutQueuingACancellation()
+    {
+        var state = RejectedSarcophagusReturn();
+        var route = new AuthoritativeRouteTravel();
+        Assert.True(route.Start(state.Snapshot, 1101, connected: true));
+        route.Submitted(372, state.Player!);
+        Assert.Null(route.Next(state.Snapshot, state.Receipt, connected: true, pendingCommands: 0));
+        Assert.False(route.Active);
+        var clicked = false;
+        await AcceptanceControlClick.RequireClickAsync(() => state, () => state.Player!.Life > 0, validate => {
+            validate(); // The real click rechecks after hovering, before pressing the selector.
+            clicked = true;
+            return Task.CompletedTask;
+        }, "The Routes selection");
+        Assert.True(clicked);
+        Assert.True(route.Start(state.Snapshot, 1101, connected: true));
+        var next = route.Next(state.Snapshot, state.Receipt, connected: true, pendingCommands: 0);
+        Assert.NotNull(next);
+        Assert.Equal((70, 46), (next.MoveRequested.TargetX, next.MoveRequested.TargetY));
+    }
+
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(2)]
+    public async Task DeathDuringRouteSelectionIsReportedInsteadOfAMissingPopup(int deathStage)
+    {
+        var state = RejectedSarcophagusReturn();
+        void Die() {
+            state.Snapshot!.Tick = 21386;
+            state.Player!.Life = 0;
+            state.Player.CombatMode = PlayerCombatMode.Death;
+        }
+        if (deathStage == 0) Die();
+        var pressed = false;
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceControlClick.RequireClickAsync(
+            () => state, () => state.Player!.Life > 0, validate => {
+                if (deathStage == 1) Die(); // A snapshot arrives during the real hover frame.
+                validate();
+                pressed = true;
+                if (deathStage == 2) Die(); // Or during press/release, before the popup assertion.
+                return Task.CompletedTask;
+            }, "The Routes selection"));
+        Assert.Equal(deathStage == 2, pressed);
+        Assert.Contains("character died", failure.Message);
+        Assert.Contains("L3 at (49,72)", failure.Message);
+        Assert.Contains("snapshotTick=21386", failure.Message);
+        Assert.Contains("pending=0", failure.Message);
+    }
+
+    [Fact]
+    public async Task ALivingDisabledSelectorStillFailsBeforeAnyClick()
+    {
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => AcceptanceControlClick.RequireClickAsync(
+            RejectedSarcophagusReturn, () => false,
+            _ => throw new InvalidOperationException("A disabled selector must never be clicked."), "The Routes selection"));
+        Assert.Contains("The Routes selection is disabled", failure.Message);
+        Assert.Contains("life=241", failure.Message);
+    }
+
+    private static AcceptanceCommandBoundary.Observation RejectedSarcophagusReturn()
+    {
+        var snapshot = new Snapshot { Tick = 21346 };
+        snapshot.Players.Add(new PlayerSnapshot { EntityId = 1, LevelId = 3, PositionX = 49, PositionY = 72,
+            Life = 241, LifeMaximum = 11776, CombatMode = PlayerCombatMode.Stand });
+        snapshot.LevelGeometry.Add(new LevelGeometrySnapshot { LevelId = 3, WarpTriggers = {
+            new WarpTriggerSnapshot { WarpId = 1101, Available = true, TargetLevelId = 2, TriggerX = 70, TriggerY = 46 },
+        } });
+        return new(snapshot, new CommandResult { ClientSequence = 372, ServerReceiptSequence = 372, AppliedTick = 21346,
+            Status = CommandStatus.Rejected, RejectReason = CommandRejectReason.NotAllowed }, 372, 0);
+    }
+
+    [Fact]
     public void TheChestBudgetAccumulatesAcrossFloorsWithoutChargingOrdinaryTravel()
     {
         var now = 0.0;
