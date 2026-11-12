@@ -79,11 +79,9 @@ public partial class SessionAcceptance
             Require(steps.Length > 0, "No ordinary visible waypoint reaches the native object.");
             var waypoint = steps[^1]; var sequence = main.ObservedLastQueuedSequence;
             await Click(main.ObservedTileScreenPosition(waypoint.X, waypoint.Y), walk: true);
-            await AcceptedAndSettled(main, sequence, "Native object viewing walk");
-            var arrived = main.ObservedSnapshot!.Players.Single();
-            Require(main.ObservedReceiptMatchesIntent(main.ObservedCommandResult!, sequence + 1)
-                && arrived.PositionX == waypoint.X && arrived.PositionY == waypoint.Y,
-                "The ordinary object-art waypoint did not accept its exact receipt and arrive.");
+            await AcceptanceCommandBoundary.WaypointAsync(
+                () => AcceptedAndSettled(main, sequence, "Native object viewing walk", expectedSequence: checked(sequence + 1)),
+                () => ObserveNativeCommandBoundary(main), waypoint.X, waypoint.Y, "The ordinary object-art waypoint");
             Require(work < 63, "The native object-art approach exceeded its bounded work.");
         }
         var before = FindNativeChest(main.ObservedSnapshot!, candidate!.EntityId).Clone();
@@ -92,10 +90,9 @@ public partial class SessionAcceptance
         var beforeDraw = await AwaitNativeObjectDraw(main, before.EntityId, before.AnimationFrame);
         var geometry = HashProto(DepthGeometry(main, 1)); var prior = main.ObservedLastQueuedSequence;
         await ClickWorld(main, before.PositionX, before.PositionY);
-        await AcceptedAndSettled(main, prior, "Open native chest with optional original art");
+        var receipt = await AcceptedAndSettled(main, prior, "Open native chest with optional original art", expectedSequence: checked(prior + 1));
         var after = FindNativeChest(main.ObservedSnapshot!, before.EntityId);
-        var receipt = main.ObservedCommandResult!.Clone();
-        Require(main.ObservedReceiptMatchesIntent(receipt, prior + 1) && after.NativeObjectId == before.NativeObjectId
+        Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt) && after.NativeObjectId == before.NativeObjectId
             && after.Activated && !after.Destroyed && !after.NativeChestInteractable
             && after.AnimationFrame == before.AnimationFrame + 2 && HashProto(DepthGeometry(main, 1)) == geometry,
             "The ordinary native chest interaction changed its frame mapping, identity or collision geometry.");

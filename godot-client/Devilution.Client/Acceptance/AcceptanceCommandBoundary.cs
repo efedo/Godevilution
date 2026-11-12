@@ -67,6 +67,19 @@ internal static class AcceptanceCommandBoundary
         return state.CommandsAdmitted ? receipt : null;
     }
 
+    /** The move owns its admitted receipt; a later quick-use may be the model's latest command. */
+    internal static async Task<CommandResult> WaypointAsync(Func<Task<CommandResult>> moveAndSettle,
+        Func<Observation> observe, int x, int y, string context)
+    {
+        var receipt = await moveAndSettle();
+        var state = observe();
+        RequireAlive(state, context);
+        if (!AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)
+            || state.Player is not { } player || player.PositionX != x || player.PositionY != y)
+            throw new InvalidOperationException($"{context} did not retain its accepted movement receipt and arrive at ({x},{y}); {state.Describe()}.");
+        return receipt;
+    }
+
     /** Real potion input can admit another command; plan or operate only from its settled snapshot. */
     internal static async Task PrepareObjectAsync(Func<Task> waitForBoundary, Func<Task> heal)
     {

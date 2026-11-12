@@ -227,16 +227,17 @@ public partial class SessionAcceptance
     }
 
     private async Task<CommandResult> AcceptedAndSettled(Main main, ulong previousSequence, string action,
-        Action<Snapshot>? observe = null, double stageSeconds = 10, bool healDuringWait = false)
+        Action<Snapshot>? observe = null, double stageSeconds = 10, bool healDuringWait = false, ulong expectedSequence = 0)
     {
-        // Movement settlement is always a health-aware wait once this journey owns its player.
-        healDuringWait |= journeySafetyMain == main && main.ObservedLastQueuedIntent == Command.IntentOneofCase.MoveRequested;
+        // Healing stays explicit: legacy callers can observe exact resources and receipts.
         CommandResult? applied = null;
         await Until(() => {
             var snapshot = main.ObservedSnapshot!;
             observe?.Invoke(snapshot);
             Require(snapshot.Players.Single().Life > 0, $"{action}: the character died at tick {snapshot.Tick}.");
-            var result = main.ObservedCommandResult;
+            var result = expectedSequence == 0 ? main.ObservedCommandResult
+                : AcceptanceCommandBoundary.AppliedIntentReceipt(ObserveNativeCommandBoundary(main),
+                    main.ObservedLastQueuedIntentSequence, expectedSequence, action);
             if (result is null || result.ClientSequence <= previousSequence
                 || !AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence))
                 return false;

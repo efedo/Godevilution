@@ -1147,16 +1147,14 @@ public partial class SessionAcceptance
             } else {
                 await AcceptedAndSettled(main, previousSequence, movementDescription);
             }
-            await UseNativeHealingPotionIfNeeded(main);
-            if (queueCapabilityNegotiated)
-                _ = RemainingNativeApproachSeconds(approachClock!);
-            if (interruptAttackTile is not null
-                && TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
-                    movement, lowHealthEscapeStepUsed, out var currentAttackTile))
-                return currentAttackTile;
-            if (interruptAttackTile is not null)
-                await AcceptedAndSettled(main, previousSequence, movementDescription,
-                    stageSeconds: RemainingNativeApproachSeconds(approachClock!));
+            var readyShot = await JourneyCombatSafety.FinishRangedApproachAsync(() => UseNativeHealingPotionIfNeeded(main), () => {
+                if (queueCapabilityNegotiated) _ = RemainingNativeApproachSeconds(approachClock!);
+                return interruptAttackTile is not null
+                    && TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
+                        movement, lowHealthEscapeStepUsed, out var tile) ? tile : null;
+            }, () => WaitForJourneySettlementAsync(main, movementDescription,
+                queueCapabilityNegotiated ? RemainingNativeApproachSeconds(approachClock!) : 10));
+            if (readyShot is { } currentAttackTile) return currentAttackTile;
             if (queueCapabilityNegotiated)
                 _ = RemainingNativeApproachSeconds(approachClock!);
             var after = main.ObservedSnapshot!.Players.Single();

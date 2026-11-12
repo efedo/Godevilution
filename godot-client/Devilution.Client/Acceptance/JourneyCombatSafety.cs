@@ -67,8 +67,8 @@ internal sealed class JourneyCombatSafety
         // A completed kill can retain loss history before corpse conversion; require a live threat to retreat.
         var retreat = state.HealingItems == 0
             ? state.Life <= state.MaximumLife * .35 && state.Nearby > 0
-            : state.Adjacent >= 3 && state.Life < state.MaximumLife * .80
-                || rate > 0 && projected < state.MaximumLife * .20 && state.Life < state.MaximumLife * .90;
+            : state.Life < state.MaximumLife * .70
+                && (state.Adjacent >= 3 || rate > 0 && projected < state.MaximumLife * .20);
         // Yielding indefinitely cannot disengage stationary shooters. Close on a confirmed
         // damage source, defending adjacent interceptors, unless melee already surrounds us.
         if (state.HealingItems == 0 && state.RangedTarget != 0 && state.Adjacent < 3) retreat = false;
@@ -147,8 +147,7 @@ internal sealed class JourneyCombatSafety
             var state = observe();
             var decision = Observe(state);
             if (previousWalk is not { } old || old.Player != state.Player || old.Level != state.Level
-                || state.Tick < old.Tick || old.PositionX != state.PositionX || old.PositionY != state.PositionY
-                || !state.InterruptibleWalk)
+                || state.Tick < old.Tick || old.PositionX != state.PositionX || old.PositionY != state.PositionY)
                 idleWalkSince = state.Tick;
             previousWalk = state;
             if (state.CommandsAdmitted && state.Settled) return;
@@ -159,8 +158,8 @@ internal sealed class JourneyCombatSafety
                 await frame();
                 continue;
             }
-            // Stand between native steps is not a stall. Require a native second with no position
-            // or action progress before replacing a blocked destination, irrespective of host Hz.
+            // Require a native second without position progress. Repeated hit recovery does not
+            // advance the walk; it only defers cancellation until the next interruptible Stand.
             // A blocked native destination may remain pending in Stand indefinitely. Replace it
             // once through the ordinary control. Replacing that replacement walks back and forth
             // between stale snapshot cells and starves both healing and the original approach.
@@ -195,6 +194,16 @@ internal sealed class JourneyCombatSafety
     {
         var decision = Observe(state);
         return state.CommandsAdmitted && (state.Settled || decision.Drink);
+    }
+
+    /** Quick-use can finish in GotHit. Only a legal queued shot may bypass renewed settlement. */
+    internal static async Task<(int X, int Y)?> FinishRangedApproachAsync(Func<Task> heal,
+        Func<(int X, int Y)?> queuedShot, Func<Task> settle)
+    {
+        await heal();
+        if (queuedShot() is { } tile) return tile;
+        await settle();
+        return null;
     }
 
     internal static async Task ProtectRouteAsync(uint sourceLevel, Func<uint> level, Func<bool> active,
