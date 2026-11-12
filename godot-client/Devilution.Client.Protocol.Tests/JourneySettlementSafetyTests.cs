@@ -148,13 +148,14 @@ public sealed class JourneySettlementSafetyTests
     }
 
     [Theory]
-    [InlineData(3, (int)JourneySafetyActivity.Travel)]
-    [InlineData(7, (int)JourneySafetyActivity.Travel)]
-    [InlineData(11, (int)JourneySafetyActivity.Travel)]
-    [InlineData(3, (int)JourneySafetyActivity.ObjectApproach)]
-    [InlineData(7, (int)JourneySafetyActivity.ObjectApproach)]
-    [InlineData(11, (int)JourneySafetyActivity.ObjectApproach)]
-    public async Task AQuietNearbyGroupDoesNotStartAnOptionalRoomClearingFightButItsFirstDamageDoes(int nearby, int activity)
+    [InlineData(3, (int)JourneySafetyActivity.Travel, true)]
+    [InlineData(7, (int)JourneySafetyActivity.Travel, true)]
+    [InlineData(11, (int)JourneySafetyActivity.Travel, true)]
+    [InlineData(3, (int)JourneySafetyActivity.ObjectApproach, false)]
+    [InlineData(7, (int)JourneySafetyActivity.ObjectApproach, false)]
+    [InlineData(11, (int)JourneySafetyActivity.ObjectApproach, false)]
+    public async Task QuietGroupsDoNotStartFightsAndIncomingFireDoesNotDivertObjectApproaches(
+        int nearby, int activity, bool defendAfterDamage)
     {
         var safety = new JourneyCombatSafety();
         var state = State(10655) with { Nearby = nearby, Settled = true, InterruptibleWalk = false };
@@ -170,9 +171,9 @@ public sealed class JourneySettlementSafetyTests
         // Aiming at the player is enough to stop, even before the first projectile takes life.
         Assert.True(safety.Observe(state with { RangedTarget = 42, RangedAttackers = 1 }).StopWalking);
         state = state with { Tick = state.Tick + 1, Life = 10155 };
-        Assert.True(await safety.CheckpointAsync((JourneySafetyActivity)activity, () => state,
+        Assert.Equal(defendAfterDamage, await safety.CheckpointAsync((JourneySafetyActivity)activity, () => state,
             () => throw new InvalidOperationException("Wasted a healthy potion."), Defend));
-        Assert.Equal(1, fights);
+        Assert.Equal(defendAfterDamage ? 1 : 0, fights);
     }
 
     [Theory]

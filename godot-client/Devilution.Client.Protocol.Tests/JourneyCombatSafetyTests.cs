@@ -84,7 +84,7 @@ public sealed class JourneyCombatSafetyTests
 
     [Theory]
     [InlineData((int)JourneySafetyActivity.Travel, true)]
-    [InlineData((int)JourneySafetyActivity.ObjectApproach, true)]
+    [InlineData((int)JourneySafetyActivity.ObjectApproach, false)]
     [InlineData((int)JourneySafetyActivity.Stairs, true)]
     [InlineData((int)JourneySafetyActivity.Combat, false)]
     [InlineData((int)JourneySafetyActivity.Retreat, false)]
