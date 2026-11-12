@@ -632,15 +632,15 @@ public partial class SessionAcceptance
         var opening = new NativeCatacombsDoorTrapObservation.Opened(baseline, operatedTick,
             checked(operatedTick + 5UL * (main.ObservedIdentity?.TickRateHz ?? 20)));
         await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
-            $"Native Catacombs door {door.EntityId} did not open.", 5);
+            $"Native Catacombs door {door.EntityId} did not open.", 5, healWhileWaiting: true);
         await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
-            $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
+            $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5, healWhileWaiting: true);
         nativeWarriorCatacombsDoorDraws++;
         await Until(() => main.ObservedSnapshot!.Tick > operatedTick,
-            "The opened Catacombs door did not receive its native object tick.", 5);
+            "The opened Catacombs door did not receive its native object tick.", 5, healWhileWaiting: true);
         if (door.TrapArmed) {
             await Until(() => !main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).TrapArmed,
-                "The opened native Catacombs door did not consume its linked trap.");
+                "The opened native Catacombs door did not consume its linked trap.", healWhileWaiting: true);
         }
         if (opening.Find(main.ObservedSnapshot!) is { } firing) RecordNativeCatacombsDoorFiring(firing);
         return opening;

@@ -253,7 +253,7 @@ public partial class SessionAcceptance
             }
             return value.Activated && !value.NativeSarcophagusInteractable
                 && value.AnimationFrame > initialFrame && snapshot.Tick >= lastChange + 6;
-        }, "The native sarcophagus opening animation did not advance and settle.", 15);
+        }, "The native sarcophagus opening animation did not advance and settle.", 15, healWhileWaiting: true);
         return lastFrame;
     }
 

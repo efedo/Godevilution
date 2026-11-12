@@ -8,7 +8,7 @@ internal sealed class JourneyCombatSafety
     internal readonly record struct Observation(uint Player, uint Level, ulong Tick, int Life, int MaximumLife,
         int Nearby, int Adjacent, int HealingItems, bool CommandsAdmitted, bool Settled,
         uint TickRateHz = 20, double RoundTripMilliseconds = 0, bool HitRecovery = false, ulong HitRecoveryEndTick = 0,
-        int RangedAttackers = 0, uint RangedTarget = 0, bool InterruptibleWalk = false);
+        int RangedAttackers = 0, uint RangedTarget = 0, bool InterruptibleWalk = false, int PositionX = 0, int PositionY = 0);
     internal readonly record struct Decision(bool Drink, bool StopWalking, bool Retreat,
         double HealingThreshold, double LossPerTick, int Nearby, int Adjacent, int RangedAttackers = 0, uint RangedTarget = 0,
         bool TakingDamage = false)
@@ -72,8 +72,10 @@ internal sealed class JourneyCombatSafety
         // Yielding indefinitely cannot disengage stationary shooters. Close on a confirmed
         // damage source, defending adjacent interceptors, unless melee already surrounds us.
         if (state.HealingItems == 0 && state.RangedTarget != 0 && state.Adjacent < 3) retreat = false;
+        // The six-tile scan is not a request to clear a quiet room. Actual incoming fire,
+        // adjacent pressure and the existing blocked-route recovery still stop the walk.
         return new(state.HealingItems > 0 && state.Life < state.MaximumLife && state.Life <= state.MaximumLife * threshold,
-            state.Nearby >= 3 || state.Adjacent >= 2 || state.RangedTarget != 0 || takingDamage && state.Adjacent == 0
+            state.Adjacent >= 2 || state.RangedTarget != 0 || takingDamage && state.Adjacent == 0
                 || rate > 0 && projected < state.MaximumLife * .5,
             retreat, threshold, rate, state.Nearby, state.Adjacent, state.RangedAttackers, state.RangedTarget, takingDamage);
     }
@@ -138,19 +140,35 @@ internal sealed class JourneyCombatSafety
     internal async Task WaitForSettlementAsync(Func<Observation> observe, Func<Task> frame, Func<Task> drink,
         Func<Observation, bool> expired, string context, Func<Task>? interruptWalk = null)
     {
+        var walkInterrupted = false;
+        Observation? previousWalk = null;
+        ulong idleWalkSince = 0;
         while (true) {
             var state = observe();
             var decision = Observe(state);
+            if (previousWalk is not { } old || old.Player != state.Player || old.Level != state.Level
+                || state.Tick < old.Tick || old.PositionX != state.PositionX || old.PositionY != state.PositionY
+                || !state.InterruptibleWalk)
+                idleWalkSince = state.Tick;
+            previousWalk = state;
             if (state.CommandsAdmitted && state.Settled) return;
             if (expired(state)) throw new InvalidOperationException($"{context} did not settle at tick {state.Tick}; life={state.Life}/{state.MaximumLife}.");
-            // A blocked native destination may remain pending in Stand indefinitely. Replace it
-            // through the ordinary movement control, then require the replacement to settle too.
-            if (state.CommandsAdmitted && state.InterruptibleWalk && decision.TakingDamage && interruptWalk is not null) {
-                await interruptWalk();
+            // Quick-use must run before any nested movement/receipt wait can take control.
+            if (state.CommandsAdmitted && decision.Drink) {
+                await drink();
                 await frame();
                 continue;
             }
-            if (state.CommandsAdmitted && decision.Drink) await drink();
+            // Stand between native steps is not a stall. Require a native second with no position
+            // or action progress before replacing a blocked destination, irrespective of host Hz.
+            // A blocked native destination may remain pending in Stand indefinitely. Replace it
+            // once through the ordinary control. Replacing that replacement walks back and forth
+            // between stale snapshot cells and starves both healing and the original approach.
+            if (!walkInterrupted && state.CommandsAdmitted && state.InterruptibleWalk && state.Tick - idleWalkSince >= 20
+                && decision.TakingDamage && interruptWalk is not null) {
+                walkInterrupted = true;
+                await interruptWalk();
+            }
             await frame();
         }
     }
@@ -160,6 +178,23 @@ internal sealed class JourneyCombatSafety
         var receipt = await admit();
         await settle();
         return receipt;
+    }
+
+    /** State-only waits own no pending receipt: finish first, otherwise keep quick-use live. */
+    internal async Task<bool> PollAsync(Func<bool> complete, Func<Observation> observe, Func<Task> drink)
+    {
+        var state = observe();
+        var decision = Observe(state);
+        if (complete()) return true;
+        if (state.CommandsAdmitted && decision.Drink) await drink();
+        return false;
+    }
+
+    /** A queued ranged approach yields to its caller's quick-use after owning the movement receipt. */
+    internal bool MovementWaitReady(Observation state)
+    {
+        var decision = Observe(state);
+        return state.CommandsAdmitted && (state.Settled || decision.Drink);
     }
 
     internal static async Task ProtectRouteAsync(uint sourceLevel, Func<uint> level, Func<bool> active,

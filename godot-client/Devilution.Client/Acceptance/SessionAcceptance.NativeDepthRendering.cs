@@ -53,7 +53,7 @@ public partial class SessionAcceptance
                 && draw.MissingAtlasPaths.Count == 0
                 && (!playerArt || main.ObservedNativePlayerDrawing is { IsLoaded: true, UsedFallback: false })
                 && (levelId < NativeWarriorTownWarpDepth || CatacombsDrawReady(main)),
-                failure, 15);
+                failure, 15, healWhileWaiting: true);
         } catch (InvalidOperationException exception) when (exception.Message == failure) {
             throw new InvalidOperationException($"{failure} State: {DescribeNativeWarriorDraw(main, playerArt)}.", exception);
         }
@@ -84,7 +84,7 @@ public partial class SessionAcceptance
                 && draw.LevelId == value.LevelId && draw.SnapshotTick >= tick && draw.Activated == value.Activated
                 && draw.NativeArt && !draw.GenericFallback && draw.AnchorInsideViewport),
             $"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} did not draw with native art; "
-                + "regenerate the native object pack if it predates theme objects.", 10);
+                + "regenerate the native object pack if it predates theme objects.", 10, healWhileWaiting: true);
         if (value.LevelId is >= 5 and <= 8) nativeWarriorCatacombsOperatedObjectDraws++;
         var observed = main.ObservedNativeObjectDrawing.Last(draw => draw.EntityId == value.EntityId && draw.NativeArt);
         GD.Print($"Operated native object {value.EntityId} (type {value.NativeObjectId}) on L{value.LevelId} drew natively: "
@@ -250,7 +250,7 @@ public partial class SessionAcceptance
             await WaitTicksWhile(main, () => main.ObservedSnapshot!.Players.Single() is { } held
                 && Math.Max(Math.Abs(held.PositionX - start.PositionX), Math.Abs(held.PositionY - start.PositionY)) < 3, 3);
             Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
-            await Until(() => Settled(main), "The held walk did not stop after the key was released.", 5);
+            await WaitForJourneySettlementAsync(main, "The held walk after the key was released", 5);
             var end = main.ObservedSnapshot!.Players.Single();
             var tiles = Math.Max(Math.Abs(end.PositionX - start.PositionX), Math.Abs(end.PositionY - start.PositionY));
             heldTrace.Add($"{key} ({start.PositionX},{start.PositionY})->({end.PositionX},{end.PositionY}) {main.ObservedCommandResult?.Status}/{main.ObservedCommandResult?.RejectReason}");

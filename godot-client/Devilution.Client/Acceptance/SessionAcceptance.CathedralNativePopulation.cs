@@ -773,7 +773,7 @@ public partial class SessionAcceptance
         }
         await Until(() => main.ObservedSnapshot!.Corpses.Any(corpse => corpse.EntityId == targetId)
             && main.ObservedSnapshot.Players.Single().Experience > experienceBefore,
-            $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10);
+            $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10, healWhileWaiting: true);
         var corpse = main.ObservedSnapshot!.Corpses.Single(item => item.EntityId == targetId);
         Require(!progressionCombat || acceptedShots.Any(shot => shot.TargetEntityId == targetId),
             $"Native target {targetId} produced a corpse and XP without an accepted ordinary shot aimed at it.");
@@ -996,7 +996,8 @@ public partial class SessionAcceptance
             if (result.Status == CommandStatus.Rejected && result.RejectReason == CommandRejectReason.NotAllowed) {
                 Require(snapshot.Players.Single().Life > 0,
                     $"The Rogue died while its native movement {expectedSequence} was refused; {DescribeNativeHealingState(main)}.");
-                return main.ObservedPendingCommandCount == 0 && snapshot.Tick >= result.AppliedTick && Settled(main);
+                return main.ObservedPendingCommandCount == 0 && snapshot.Tick >= result.AppliedTick
+                    && journeySafety.MovementWaitReady(ObserveJourneySafety(main));
             }
             Require(IsAcceptedOrSuccessfulDuplicate(result),
                 $"Native movement {expectedSequence} was {result.Status}/{result.RejectReason}.");
@@ -1005,7 +1006,9 @@ public partial class SessionAcceptance
             var player = snapshot.Players.Single();
             Require(player.Life > 0,
                 $"The Rogue died while awaiting native movement {expectedSequence}; {DescribeNativeHealingState(main)}.");
-            if (Settled(main))
+            // The caller immediately uses the real potion control. Yield after admission rather
+            // than starving that check behind hit recovery or a still-pending destination path.
+            if (journeySafety.MovementWaitReady(ObserveJourneySafety(main)))
                 return true;
             if (TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
                     movement, lowHealthEscapeStepUsed, out var tile)) {

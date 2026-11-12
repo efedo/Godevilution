@@ -78,7 +78,8 @@ public partial class SessionAcceptance
             NativeHealingSupply(player), admitted, AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount),
             main.ObservedIdentity?.TickRateHz ?? 20, main.ObservedRoundTripMilliseconds ?? 0,
             player.CombatMode == PlayerCombatMode.GotHit, player.CombatModeEndTick, threats.Ranged, threats.RangedTarget,
-            player.NativeWalkPathPending && player.CurrentAction is null && player.CombatMode == PlayerCombatMode.Stand);
+            player.NativeWalkPathPending && player.CurrentAction is null && player.CombatMode == PlayerCombatMode.Stand,
+            player.PositionX, player.PositionY);
         journeyPositioning.Observe(observation, player.PositionX, player.PositionY);
         return observation;
     }
@@ -106,6 +107,10 @@ public partial class SessionAcceptance
     }
 
     /** Quick-use is legal in hit recovery and an attack: do not wait for Stand before using the real control. */
+    private Task HealWhileJourneyWaitsAsync(Main main)
+        => !journeyDrinking && JourneySafetyControlsReleased
+            ? JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat) : Task.CompletedTask;
+
     private async Task WaitForJourneySettlementAsync(Main main, string context, double seconds = 20, Action<Snapshot>? observe = null)
     {
         var clock = Stopwatch.StartNew();
@@ -114,10 +119,7 @@ public partial class SessionAcceptance
             var state = ObserveJourneySafety(main);
             observe?.Invoke(JourneySafetySnapshot(main));
             return state;
-        }, Frame, async () => {
-            if (!journeyDrinking && JourneySafetyControlsReleased)
-                await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
-        }, state => AcceptanceTickBudget.StageExpired(seconds, clock.Elapsed.TotalSeconds,
+        }, Frame, () => HealWhileJourneyWaitsAsync(main), state => AcceptanceTickBudget.StageExpired(seconds, clock.Elapsed.TotalSeconds,
             state.TickRateHz, tick, state.Tick), context, () => CancelJourneyDestinationWalkAsync(main));
     }
 

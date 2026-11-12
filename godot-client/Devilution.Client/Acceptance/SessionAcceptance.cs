@@ -529,13 +529,18 @@ public partial class SessionAcceptance : Node
     }
 
     /** Polls each frame; `stageSeconds` is game time at 20 Hz on a faster or slower test server (AcceptanceTickBudget). */
-    private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null, Func<Task>? beforePoll = null)
+    private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null, Func<Task>? beforePoll = null,
+        bool healWhileWaiting = false)
     {
         var stage = Stopwatch.StartNew();
         var stageTick = timingObservedMain?.ObservedSnapshot?.Tick;
         while (true) {
             if (beforePoll is not null) await beforePoll();
-            if (condition()) return;
+            // Only state observations opt in; a receipt owner must capture and validate its
+            // original result before quick-use can replace the model's latest command pair.
+            if (healWhileWaiting && journeySafetyMain is { } main) {
+                if (await journeySafety.PollAsync(condition, () => ObserveJourneySafety(main), () => HealWhileJourneyWaitsAsync(main))) return;
+            } else if (condition()) return;
             var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
             var sessionMenuPhase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1"
                 && phase is "Create" or "Resume";

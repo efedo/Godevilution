@@ -229,6 +229,8 @@ public partial class SessionAcceptance
     private async Task<CommandResult> AcceptedAndSettled(Main main, ulong previousSequence, string action,
         Action<Snapshot>? observe = null, double stageSeconds = 10, bool healDuringWait = false)
     {
+        // Movement settlement is always a health-aware wait once this journey owns its player.
+        healDuringWait |= journeySafetyMain == main && main.ObservedLastQueuedIntent == Command.IntentOneofCase.MoveRequested;
         CommandResult? applied = null;
         await Until(() => {
             var snapshot = main.ObservedSnapshot!;

@@ -94,7 +94,7 @@ public sealed class JourneyEconomicalCombatTests
             safety.WaitForSettlementAsync(() => state, () => {
                 frames++;
                 // The replacement is still required to reach its authoritative boundary before replanning.
-                state = state with { Tick = state.Tick + 1, CommandsAdmitted = true,
+                state = state with { Tick = state.Tick + 20, CommandsAdmitted = true,
                     Settled = cancels > 0, InterruptibleWalk = cancels == 0 };
                 return Task.CompletedTask;
             }, () => throw new InvalidOperationException("No potion remains."), _ => frames >= 3, "Approach under fire", () => {
@@ -105,7 +105,7 @@ public sealed class JourneyEconomicalCombatTests
             }));
         Assert.Same(move, receipt);
         Assert.Equal(1, cancels);
-        Assert.Equal(1, frames);
+        Assert.Equal(2, frames);
         Assert.True(state.Settled);
         Assert.Equal(5190, state.Life);
     }

@@ -194,11 +194,7 @@ public partial class SessionAcceptance
     {
         if (!IsNativeDepthProgressionPhase(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE")))
             return;
-        await Until(() => main.ObservedPendingCommandCount == 0 && Settled(main)
-            && (main.ObservedLastQueuedSequence == 0
-                || AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
-                    main.ObservedCommandResult, main.ObservedLastQueuedSequence)),
-            $"Native depth-progression {context} did not reach a settled command boundary.", stageSeconds: 10);
+        await WaitForNativeCommandBoundaryAsync(main, $"Native depth-progression {context}");
     }
 
     private static void VerifyNativeDepthProgressionRetention(Main main, NativeDepthProgressionTownCheckpoint expected)

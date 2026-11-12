@@ -104,22 +104,21 @@ public partial class SessionAcceptance
             // One participant fights at a time, so neither attack races the other's target.
             if (slot == 2)
                 await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-fought.json")),
-                    "The first participant did not finish its fight.", 600);
+                    "The first participant did not finish its fight.", 600, healWhileWaiting: true);
             fight = await NativeMultiplayerFightAsync(main, name, target);
             WriteEvidence(directory, prefix + "-fought.json", new { Fought = true });
             await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-fought.json")),
-                "The peer did not finish its fight.", 600);
+                "The peer did not finish its fight.", 600, healWhileWaiting: true);
         }
         if (resuming) {
             // The restored participant accepts the exact next ordinary command.
             var first = await NativeMultiplayerStepAsync(main, name);
             Require(first == saved!.Sequence + 1, $"The resumed participant's first command took sequence {first}, not {saved.Sequence + 1}.");
         }
-        await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount),
-            "The participant did not settle before its checkpoint.", 30);
+        await WaitForJourneySettlementAsync(main, "The participant before its checkpoint", 30);
         WriteEvidence(directory, prefix + "-settled.json", new { Settled = true });
         await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-settled.json")),
-            "The peer did not settle.", 120);
+            "The peer did not settle.", 120, healWhileWaiting: true);
         var final = main.ObservedSnapshot!;
         local = final.Players.Single(player => player.CharacterName == name);
         peer = final.Players.Single(player => player.CharacterName == peerName);
@@ -170,8 +169,7 @@ public partial class SessionAcceptance
     /** Travels the Town route to L1 (Cathedral stairs) or L5 (the multiplayer Town warp). */
     private async Task NativeMultiplayerTravelAsync(Main main, string name, uint target)
     {
-        await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount),
-            "The native multiplayer Town did not settle.");
+        await WaitForJourneySettlementAsync(main, "The native multiplayer Town");
         var routes = main.ObservedSnapshot!.LevelGeometry.Single(level => level.LevelId == 0)
             .WarpTriggers.OrderBy(route => route.WarpId).ToArray();
         var index = Array.FindIndex(routes, route => route.Available && route.TargetLevelId == target);
@@ -203,10 +201,7 @@ public partial class SessionAcceptance
             var stopped = NativeMultiplayerLocal(main, name);
             GD.Print($"Native multiplayer travel stopped at {stopped.PositionX},{stopped.PositionY}: "
                 + $"{((Label)main.FindChild("TravelStatus", true, false)).Text}; {main.ObservedCommandResult}");
-            await Until(() => AuthoritativePlayerSettlement.IsSettled(NativeMultiplayerLocal(main, name), main.ObservedPendingCommandCount)
-                && AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
-                    main.ObservedCommandResult, main.ObservedLastQueuedSequence),
-                "The stopped travel did not settle.", 15);
+            await WaitForJourneySettlementAsync(main, "The stopped native multiplayer travel", 15);
         }
         throw new InvalidOperationException($"The participant did not reach native multiplayer L{target} after six travel attempts.");
     }
