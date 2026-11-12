@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-11-12 — Bounded late-input retry (2.6d)
+
+Suites on `d64531dd8`: server 2319, Diablo 3939 and client 2113 passed; native comparisons
+5 Domain and 261 Diablo cases. All seven headless journeys passed (normal L8, door, shrine,
+theme, sarcophagus, 10 Hz and 20 Hz micro). A journey-bot healing experiment (merged as
+`59def2ebb`, reverted in `d64531dd8`) passed normal and sarcophagus 3 of 6, against 6 of 6
+before 2.6d; its failures were deaths without potions on L4 and L6.
+
 ### 2026-11-10 — Game speed (2.6c)
 
 After merging master `519569ef2`: Diablo 3939, client 2061 and server 2318 passed. One server

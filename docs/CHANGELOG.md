@@ -5,6 +5,14 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-11-12
+
+- Bounded late-input retry (2.6d): when the host refuses a still-valid, ledger-backed intent as
+  `TooLate`, the client retries the latest one at most twice with a raised adaptive lead;
+  cancelling or choosing a new route drops it, and acceptance correlates outcomes by intent.
+  A death during acceptance route selection is now reported as a death. An experimental
+  in-fight healing policy for the journey bot was reverted because it lost more journeys.
+
 ## 2026-11-10
 
 - Game speed (2.6c): `+`/`-` run a single-player host at 1x–20x through an additive, negotiated
