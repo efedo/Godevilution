@@ -12,10 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../Devilution.Client/Acceptance/JourneyCombatSafety.cs" Link="Acceptance/JourneyCombatSafety.cs" />
-    <Compile Include="../Devilution.Client/Acceptance/JourneyCombatThreats.cs" Link="Acceptance/JourneyCombatThreats.cs" />
-    <Compile Include="../Devilution.Client/Acceptance/JourneyHealingSupplies.cs" Link="Acceptance/JourneyHealingSupplies.cs" />
-    <Compile Include="../Devilution.Client/Acceptance/JourneyCombatPositioning.cs" Link="Acceptance/JourneyCombatPositioning.cs" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
 

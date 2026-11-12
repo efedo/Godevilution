@@ -55,8 +55,18 @@ public partial class SessionAcceptance
         try {
             while (main.ObservedSnapshot!.Monsters.Any(monster => monster.EntityId == monsterId && monster.Alive)) {
                 var current = main.ObservedSnapshot.Players.Single();
-                await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
-                healingPotionsUsed = 2 - main.ObservedSnapshot!.Players.Single().Belt.Count;
+                if (current.Life <= current.LifeMaximum / 2 && current.Belt.Any(item => item.State.BaseName == "Potion of Healing")) {
+                    var healingSequence = main.ObservedCommandResult!.ClientSequence;
+                    var healingSlot = current.Belt.OrderBy(item => item.Slot).ToList()
+                        .FindIndex(item => item.State.BaseName == "Potion of Healing");
+                    var sections = (TabContainer)main.FindChild("HudSections", true, false);
+                    await ClickListItem(sections, 1, (ItemList)main.FindChild("BeltItems", true, false), healingSlot);
+                    await ClickControl(main, sections, 1, "UseConsumable");
+                    await AcceptedAndSettled(main, healingSequence, "Use starting healing potion");
+                    await Until(() => main.ObservedSnapshot!.Players.Single().Belt.Count == current.Belt.Count - 1,
+                        "The starting healing potion was not consumed.", 5);
+                    healingPotionsUsed++;
+                }
                 Require(++attacks <= 30 && main.ObservedSnapshot.Players.Single().Life > 0,
                     "The authored encounter was not defeated through normal combat.");
                 var monster = main.ObservedSnapshot.Monsters.Single(candidate => candidate.EntityId == monsterId);
@@ -72,19 +82,17 @@ public partial class SessionAcceptance
                         player.PositionX, player.PositionY, Sequence = main.ObservedCommandResult?.ClientSequence,
                         Mode = player.CombatMode.ToString(), Action = player.CurrentAction?.ToString(),
                         Target = target?.ToString(), Projectiles = snapshot.Projectiles.Select(item => item.ToString()).ToArray() });
-                }, healDuringWait: true);
+                });
                 // A ranged action can finish one tick before its arrow lands.
                 // Observe that outcome before submitting another attack against
                 // a monster which the in-flight arrow is about to defeat.
                 await Until(() => !main.ObservedSnapshot!.Monsters.Any(target => target.EntityId == monsterId && target.Alive)
                     || !main.ObservedSnapshot.Projectiles.Any(projectile => projectile.SourceEntityId == current.EntityId
-                        && projectile.TargetEntityId == monsterId), "The acknowledged attack projectiles did not settle.", 5,
-                    beforePoll: () => JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat));
+                        && projectile.TargetEntityId == monsterId), "The acknowledged attack projectiles did not settle.", 5);
             }
         } finally {
             WriteEvidence(directory, prefix + "-combat-trace.json", trace);
         }
-        healingPotionsUsed = 2 - main.ObservedSnapshot!.Players.Single().Belt.Count;
         Require(main.ObservedSnapshot!.Players.Single().Experience > initialPlayer.Experience,
             "The defeated monster did not grant authoritative experience.");
         await Until(() => main.ObservedSnapshot!.WorldItems.Any(item => item.EntityId == 1000009),
@@ -226,26 +234,19 @@ public partial class SessionAcceptance
         await AcceptedAndSettled(main, previousSequence, action);
     }
 
-    private async Task<CommandResult> AcceptedAndSettled(Main main, ulong previousSequence, string action,
-        Action<Snapshot>? observe = null, double stageSeconds = 10, bool healDuringWait = false, ulong expectedSequence = 0)
+    private async Task AcceptedAndSettled(Main main, ulong previousSequence, string action,
+        Action<Snapshot>? observe = null, double stageSeconds = 10)
     {
-        // Healing stays explicit: legacy callers can observe exact resources and receipts.
-        CommandResult? applied = null;
         await Until(() => {
             var snapshot = main.ObservedSnapshot!;
             observe?.Invoke(snapshot);
             Require(snapshot.Players.Single().Life > 0, $"{action}: the character died at tick {snapshot.Tick}.");
-            var result = expectedSequence == 0 ? main.ObservedCommandResult
-                : AcceptanceCommandBoundary.AppliedIntentReceipt(ObserveNativeCommandBoundary(main),
-                    main.ObservedLastQueuedIntentSequence, expectedSequence, action);
+            var result = main.ObservedCommandResult;
             if (result is null || result.ClientSequence <= previousSequence
                 || !AcceptanceCommandBoundary.HasLatestAppliedReceipt(snapshot.Tick, result, main.ObservedLastQueuedSequence))
                 return false;
             Require(main.ObservedCommandWasApplied, $"{action}: {result.Status}/{result.RejectReason}.");
-            applied = result;
-            return main.ObservedSnapshot!.Tick >= result.AppliedTick && (healDuringWait || Settled(main));
+            return main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main);
         }, $"{action} did not finish.", stageSeconds: stageSeconds);
-        if (healDuringWait) await WaitForJourneySettlementAsync(main, action, stageSeconds, observe);
-        return applied!;
     }
 }

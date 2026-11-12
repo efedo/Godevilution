@@ -111,8 +111,11 @@ public partial class SessionAcceptance
             var hpBefore = target.HitPointsQ6;
             var sequence = main.ObservedLastQueuedSequence;
             await ClickWorld(main, target.PositionX, target.PositionY, classId == 2 ? MouseButton.Left : MouseButton.Right);
-            var receipt = await WaitForJourneyCombatCommandAsync(main, sequence, "Native class combat", 15);
+            await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
+                && main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main),
+                "Native class combat did not reach its authoritative receipt and action boundary.", 15);
             Require(main.ObservedSnapshot!.Players.Single().Life > 0, "The native class died after an ordinary attack.");
+            var receipt = main.ObservedCommandResult!;
             if (!Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(receipt)) {
                 Require(receipt.Status == CommandStatus.Rejected
                     && receipt.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget,
@@ -122,8 +125,8 @@ public partial class SessionAcceptance
                 refusals.Add(new { Target = target.EntityId, receipt.ClientSequence, receipt.AppliedTick, Reason = receipt.RejectReason.ToString() });
                 continue;
             }
-            attacks.Add(new { Target = target.EntityId, Sequence = receipt.ClientSequence,
-                AppliedTick = receipt.AppliedTick, HitPointsBefore = hpBefore });
+            attacks.Add(new { Target = target.EntityId, Sequence = main.ObservedCommandResult!.ClientSequence,
+                AppliedTick = main.ObservedCommandResult.AppliedTick, HitPointsBefore = hpBefore });
             if (main.ObservedSnapshot!.Corpses.Any(corpse => corpse.EntityId == target.EntityId)
                 && main.ObservedSnapshot.Players.Single().Experience > experienceBefore)
                 defeated = target.EntityId;
@@ -253,9 +256,7 @@ public partial class SessionAcceptance
         int maximumMoves = 48, uint? requiredTarget = null)
     {
         var approach = new NativeCombatApproachTarget(requiredTarget);
-        var pauses = journeyPositioning.BeginSearch();
         for (var movement = 0; movement < maximumMoves; movement++) {
-            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0 && player.LevelId == levelId, $"Native class combat left its living L{levelId} context.");
@@ -278,20 +279,13 @@ public partial class SessionAcceptance
                 bool AttackGoal(int x, int y) => AttackCell(target, x, y)
                     && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
                 if (CanAttackNow(target)) return target;
-                if (!ranged && player.CharacterClassId == 0 && pauses.TryHold(ObserveJourneySafety(main),
-                        NativeMonsterDistance(player, target), JourneySafetyDecision(main).TakingDamage)) {
-                    await HoldNativeWarriorSwarmAsync(main);
-                    movement--; // A bounded observation/cover pause is not a failed pathfinding step.
-                    moved = true;
-                    break;
-                }
                 var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackGoal,
                     nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null, openCells);
                 if (firstStep is null) continue;
                 approach.Follow(target.EntityId);
                 var sequence = main.ObservedLastQueuedSequence;
                 await Click(main.ObservedTileScreenPosition(firstStep.Value.X, firstStep.Value.Y), walk: true);
-                await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter", healDuringWait: true);
+                await AcceptedAndSettled(main, sequence, "Approach a generated native class encounter");
                 await UseNativeHealingPotionIfNeeded(main);
                 moved = true;
                 break;

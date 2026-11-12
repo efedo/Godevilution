@@ -53,7 +53,6 @@ public partial class SessionAcceptance
         var identity = main.ObservedIdentity!;
         Require(identity.GameMode == GameMode.Multiplayer, "Cooperative acceptance did not connect to multiplayer mode.");
         var local = FindCooperativePlayer(main.ObservedSnapshot!, slot);
-        RegisterJourneySafety(main, local.EntityId);
         if (previous is not null) {
             Require(identity.ContentManifestHash == previous.ContentHash && identity.RulesetIdentityHash == previous.RulesetHash,
                 "Cooperative resume changed the content or ruleset identity.");
@@ -415,7 +414,6 @@ public partial class SessionAcceptance
     {
         var local = FindCooperativePlayer(main.ObservedSnapshot!, ParseLocalSlot());
         for (var attempt = 0; attempt < 12; attempt++) {
-            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var target = main.ObservedSnapshot!.Monsters.Single(monster => monster.EntityId == monsterId);
             var before = target.HitPoints;
             var queuedBefore = main.ObservedLastQueuedSequence;
@@ -445,8 +443,7 @@ public partial class SessionAcceptance
                     && snapshot.Projectiles.All(projectile => projectile.SourceEntityId != localEntityId
                         || projectile.TargetEntityId != monsterId);
                 return settled;
-            }, $"{action} accepted but did not settle its damage outcome.", 15,
-                beforePoll: () => JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat));
+            }, $"{action} accepted but did not settle its damage outcome.", 15);
             if (landed) {
                 Require(local.EntityId == FindCooperativePlayer(main.ObservedSnapshot!, ParseLocalSlot()).EntityId,
                     $"{action} changed the local durable player identity.");
@@ -468,9 +465,6 @@ public partial class SessionAcceptance
     private async Task MoveCooperativeOneTileAsync(Main main, PlayerSnapshot local, PlayerSnapshot? peer,
         bool preferVertical = false)
     {
-        await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Travel);
-        local = FindCooperativePlayer(main.ObservedSnapshot!, ParseLocalSlot());
-        if (peer is not null) peer = main.ObservedSnapshot!.Players.SingleOrDefault(player => player.EntityId == peer.EntityId);
         var geometry = main.ObservedSnapshot!.LevelGeometry.Single(level => level.LevelId == local.LevelId);
         var offsets = preferVertical
             ? new[] { (X: 0, Y: 1), (X: 0, Y: -1), (X: 1, Y: 0), (X: -1, Y: 0) }

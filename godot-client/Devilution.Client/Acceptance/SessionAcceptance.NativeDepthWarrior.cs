@@ -42,15 +42,16 @@ public partial class SessionAcceptance
     private const int NativeWarriorDoorApproachAttempts = 3;
     private const int NativeWarriorDoorObstructionTries = 6;
     private const int NativeWarriorPackRadius = 6;
+    // Below this many potions the Warrior restocks in Town before the next floor.
+    private const int NativeWarriorPotionRestock = 6;
     private const int NativeWarriorTargetApproaches = 8;
+    // An L6-L8 kill can cost a dozen potions, so the Catacombs restock comes back with a near-full stock.
+    private const int NativeWarriorCatacombsPotionRestock = 12;
     private const int NativeWarriorPackSize = 3;
     // Surrounded, hurt and out of potions, a player walks back to the Town healer and returns.
     private const int NativeWarriorRetreats = 8;
     // A full belt plus a row of inventory; the retreat keeps a reserve for the walk out.
-    private const int NativeWarriorPotionSupply = JourneyHealingSupplies.Target;
-    private uint nativeWarriorHealingPrice = 50;
-    private bool nativeWarriorHealingStockAvailable = true;
-    private readonly JourneyHealingSupplies.ResupplyTrip nativeWarriorResupply = new();
+    private const int NativeWarriorPotionSupply = 16;
     private const int NativeWarriorPotionReserve = 2;
     // L5-L8 packs pin the Warrior for longer, so the walk out keeps more.
     private const int NativeWarriorCatacombsPotionReserve = 6;
@@ -108,7 +109,6 @@ public partial class SessionAcceptance
             for (uint depth = 1; depth <= target; depth++) {
                 await TravelNativeWarriorAsync(main, directory, depth);
                 draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, depth));
-                await EnsureNativeWarriorFloorSuppliesAsync(main, directory);
                 await TryNativeTrappedSarcophagusAsync(main);
                 await TryNativeThemeObjectAsync(main);
                 await TryNativeShrineAsync(main);
@@ -122,12 +122,21 @@ public partial class SessionAcceptance
                 }
                 var floor = await DefeatNativeWarriorFloorAsync(main, directory, depth);
                 floors.Add(floor);
-                await EnsureNativeWarriorFloorSuppliesAsync(main, directory);
                 if (depth >= 5)
                     nativeCatacombsObjects = await TryNativeCatacombsObjectsAsync(main);
                 var afterKill = main.ObservedSnapshot!.Players.Single();
                 GD.Print($"Native Warrior L{depth} kill; XP={floor.ExperienceBefore}->{floor.ExperienceAfter}; life={afterKill.Life}");
-                if (depth < target) await EnsureNativeWarriorFloorSuppliesAsync(main, directory);
+                if (depth < target && ((long)afterKill.Life * 2 < afterKill.LifeMaximum
+                        || NativeHealingSupply(afterKill) < (depth >= NativeWarriorTownWarpDepth
+                            ? NativeWarriorCatacombsPotionRestock : NativeWarriorPotionRestock))) {
+                    // Back up to the Town healer and potion stock, then down again; the retained floors keep their state.
+                    for (var up = (int)depth - 1; up >= 0; up--)
+                        await TravelNativeWarriorAsync(main, directory, (uint)up);
+                    await VisitNativeWarriorTownAsync(main);
+                    for (uint down = 1; down <= depth; down++)
+                        await TravelNativeWarriorAsync(main, directory, down);
+                    GD.Print($"Native Warrior healed in Town and returned to L{depth}");
+                }
             }
             NativeCatacombsChestStage.VerifyAvailability(target,
                 System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_CATACOMBS_SEED"), nativeCatacombsObjects?.ChestEntity > 0);
@@ -144,7 +153,7 @@ public partial class SessionAcceptance
                     + draws.Where(draw => draw.LevelId >= NativeWarriorTownWarpDepth).Sum(draw => draw.NativeObjects) > 0,
                 "No Catacombs object was drawn with native art on L5-L8.");
             var townWarp = target >= NativeWarriorTownWarpDepth ? await NativeWarriorTownWarpLegAsync(main, directory) : null;
-            await VisitNativeWarriorTownAsync(main);
+            await HealNativeWarriorInTownAsync(main);
             await Until(() => Settled(main), "The four-floor journey did not settle in Town.");
             draws.Add(await VerifyNativeWarriorFloorDrawAsync(main, directory, 0));
             var snapshot = main.ObservedSnapshot!;
@@ -201,7 +210,6 @@ public partial class SessionAcceptance
             Require(main.ObservedSnapshot!.Players.Single().LevelId == depth,
                 $"The retained native revisit did not publish L{depth}'s actual receiving view.");
             VerifyNativeWarriorRetention(main, expected);
-            await EnsureNativeWarriorFloorSuppliesAsync(main, directory);
             await VerifyNativeThemeObjectReuseAsync(main, expected.ThemeObject);
         }
         for (var destination = (int)target - 1; destination >= 0; destination--) {
@@ -214,7 +222,6 @@ public partial class SessionAcceptance
         }
         Require(expected.ThemeObject is null || !NativeThemeObjectJourneyEvidence.IsReusable(expected.ThemeObject.Type)
                 || nativeThemeObjectReuseVerified, "The fresh host did not reoperate the required reusable theme fountain.");
-        await VisitNativeWarriorTownAsync(main);
         var final = main.ObservedSnapshot!.Players.Single();
         Require(final.LevelId == 0 && final.Life > 0, "The resumed four-floor journey did not return alive to Town.");
         WriteEvidence(directory, "nativedepthresume.json", new {
@@ -307,27 +314,21 @@ public partial class SessionAcceptance
     private async Task VisitNativeWarriorTownAsync(Main main)
     {
         using var timed = NativeWarriorStep("town", "healer and restock");
-        var arrived = main.ObservedSnapshot!.Players.Single();
-        GD.Print($"Native Warrior restock starting: potions={NativeHealingSupply(arrived)}, Gold={arrived.Gold}");
         await HealNativeWarriorInTownAsync(main);
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var openSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "OpenHealer4");
         await AcceptedAndSettled(main, openSequence, "Open Pepin's native Healer stock");
         await Until(() => main.ObservedSnapshot!.ActiveStore?.StoreId == 4, "Pepin's native Healer stock did not open.", 5);
-        var initial = main.ObservedSnapshot!.Players.Single();
-        var restock = JourneyHealingSupplies.BeginRestock(initial, NativeHealingSupply(initial), main.ObservedSnapshot.ActiveStore!);
-        var bought = 0;
-        var limit = "purchase attempt budget";
         for (var purchases = 0; purchases < 2 * NativeWarriorPotionSupply; purchases++) {
             var player = main.ObservedSnapshot!.Players.Single();
+            var rows = main.ObservedSnapshot!.ActiveStore!.Items.OrderBy(item => item.StoreSlot).ToArray();
+            var index = Array.FindIndex(rows, item => item.State.ItemActionKind == ItemActionKind.RestorePartialLife);
             var supply = NativeHealingSupply(player);
-            var purchase = JourneyHealingSupplies.NextPurchase(player, supply, main.ObservedSnapshot!.ActiveStore!);
-            if (purchase.Price > 0) nativeWarriorHealingPrice = purchase.Price;
-            nativeWarriorHealingStockAvailable = purchase.Limit != "no healing stock";
-            if (!purchase.Buy) { limit = purchase.Limit; break; }
+            if (supply >= NativeWarriorPotionSupply || index < 0 || player.Gold < rows[index].Price)
+                break;
             var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-            await ClickListItem(sections, 2, (ItemList)main.FindChild("StoreItems", true, false), purchase.Index);
+            await ClickListItem(sections, 2, (ItemList)main.FindChild("StoreItems", true, false), index);
             sequence = main.ObservedCommandResult?.ClientSequence ?? sequence;
             await ClickControl(main, sections, 2, "BuySelected");
             await Until(() => main.ObservedCommandResult is { } result && result.ClientSequence > sequence
@@ -338,48 +339,14 @@ public partial class SessionAcceptance
                 continue;
             Require(Devilution.Client.Protocol.AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(main.ObservedCommandResult!),
                 $"Buy a healing potion from Pepin: {main.ObservedCommandResult!.Status}/{main.ObservedCommandResult.RejectReason}.");
-            await Until(() => NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == supply + 1
-                && main.ObservedSnapshot.Players.Single().Gold == player.Gold - purchase.Price,
-                "Pepin's healing potion purchase did not add a potion and debit its exact price.", 5);
-            bought++;
+            await Until(() => NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == supply + 1,
+                "Pepin's healing potion purchase did not add a potion.", 5);
         }
-        if (limit == "purchase attempt budget") {
-            var finalPurchase = JourneyHealingSupplies.NextPurchase(main.ObservedSnapshot!.Players.Single(),
-                NativeHealingSupply(main.ObservedSnapshot.Players.Single()), main.ObservedSnapshot.ActiveStore!);
-            if (!finalPurchase.Buy) limit = finalPurchase.Limit;
-        }
-        var stocked = main.ObservedSnapshot!.Players.Single();
-        GD.Print($"Native Warrior restocked in Town: potions={restock.Supply}->{NativeHealingSupply(stocked)}; "
-            + $"Gold={restock.Gold}->{stocked.Gold}; bought={bought}; limit={limit}");
-        JourneyHealingSupplies.RequireRestocked(restock, stocked, NativeHealingSupply(stocked), main.ObservedSnapshot.ActiveStore!, limit);
         var closeSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "CloseStore");
         await AcceptedAndSettled(main, closeSequence, "Close Pepin's Healer store");
         var restocked = main.ObservedSnapshot!.Players.Single();
-        Require(limit != "purchase attempt budget" || NativeHealingSupply(restocked) >= NativeWarriorPotionSupply,
-            $"Pepin restock exhausted its {2 * NativeWarriorPotionSupply} purchase attempts; "
-                + $"potions={NativeHealingSupply(restocked)}, gold={restocked.Gold}. Refusing to descend without the affordable supply.");
-    }
-
-    /** Check before optional object work too; skipped-fight floors and resume need supplies as well. */
-    private async Task EnsureNativeWarriorFloorSuppliesAsync(Main main, string directory, bool beforeDeepDescent = false)
-    {
-        var player = main.ObservedSnapshot!.Players.Single();
-        if (nativeWarriorResupply.Active || !nativeWarriorHealingStockAvailable
-            || !JourneyHealingSupplies.NeedsFloorResupply(player, NativeHealingSupply(player), nativeWarriorHealingPrice, beforeDeepDescent)) return;
-        var depth = player.LevelId;
-        GD.Print($"Native Warrior resupplying before L{depth} work: potions={NativeHealingSupply(player)}, gold={player.Gold}");
-        await nativeWarriorResupply.RunAsync(async () => {
-            // The first journey must still demonstrate opening L5's warp at its existing final stage.
-            var lowest = depth >= NativeWarriorTownWarpDepth && NativeWarriorTownWarpOpen(main) ? (int)NativeWarriorTownWarpDepth : 0;
-            for (var up = (int)depth - 1; up >= lowest; up--)
-                await TravelNativeWarriorAsync(main, directory, (uint)up, flee: true);
-            if (lowest != 0) await TravelNativeWarriorAsync(main, directory, 0, flee: true);
-            await VisitNativeWarriorTownAsync(main);
-            var first = lowest != 0 ? NativeWarriorTownWarpDepth : 1U;
-            for (var down = first; down <= depth; down++)
-                await TravelNativeWarriorAsync(main, directory, down);
-        });
+        GD.Print($"Native Warrior restocked in Town: potions={NativeHealingSupply(restocked)}; gold={restocked.Gold}");
     }
 
     /** The played-character facts a per-floor test hero reproduces. */
@@ -400,23 +367,17 @@ public partial class SessionAcceptance
     /** Ordinary route travel; an interrupted walk clears the nearby attackers and retries. */
     private async Task TravelNativeWarriorAsync(Main main, string directory, uint destination, bool flee = false)
     {
-        if (destination != 0)
-            await JourneyHealingSupplies.PrepareTownDepartureAsync(() => {
-                var player = main.ObservedSnapshot!.Players.Single();
-                return (player, NativeHealingSupply(player));
-            }, () => VisitNativeWarriorTownAsync(main));
         var origin = main.ObservedSnapshot!.Players.Single().LevelId;
-        if (destination >= NativeWarriorTownWarpDepth && destination > origin)
-            await EnsureNativeWarriorFloorSuppliesAsync(main, directory, beforeDeepDescent: true);
-        var supplied = main.ObservedSnapshot!.Players.Single();
-        GD.Print($"Native Warrior departure L{supplied.LevelId}->L{destination}: potions={NativeHealingSupply(supplied)}, Gold={supplied.Gold}");
         using var timed = NativeWarriorStep("travel", $"L{origin}->L{destination}");
         for (var attempt = 0; attempt < NativeWarriorTravelAttempts; attempt++) {
             // An interrupted walk can still finish on the trigger; let a pending transition land first.
             await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
             var player = main.ObservedSnapshot!.Players.Single();
             if (player.LevelId == destination) {
-                await WaitForNativeCommandBoundaryAsync(main, $"The final arrival command on L{destination}");
+                await Until(() => Settled(main) && (main.ObservedLastQueuedSequence == 0
+                    || AcceptanceCommandBoundary.HasLatestAppliedReceipt(main.ObservedSnapshot!.Tick,
+                        main.ObservedCommandResult, main.ObservedLastQueuedSequence)),
+                    $"The final arrival command on L{destination} was not admitted.", 10);
                 await UseNativeHealingPotionIfNeeded(main);
                 return;
             }
@@ -447,7 +408,7 @@ public partial class SessionAcceptance
                 // Walking continuity is the route tests' concern; the journey needs only the transition.
                 await TravelCathedralRoute(main, routeDirectory, route.WarpId, destination, stopEarly: false,
                     minimumDistinctPositions: 1, distanceBoundedApproachDeadline: true,
-                    interrupt: null, fleeing: flee);
+                    interrupt: () => NativeHealingThresholdReached(main) && NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > 0);
                 Require(main.ObservedSnapshot!.Players.Single().LevelId == destination,
                     $"The ordinary route did not reach level {destination}.");
                 // An interrupt can finish on the trigger; still perform the healing it requested.
@@ -461,17 +422,6 @@ public partial class SessionAcceptance
                 await WaitTicksWhile(main, () => !Settled(main) && main.ObservedSnapshot!.Players.Single().Life > 0, 10);
                 // Give the interrupted walk's last queued command time to return its receipt.
                 await WaitTicksWhile(main, () => main.ObservedCommandResult?.ClientSequence != main.ObservedLastQueuedSequence, 2);
-                if (main.ObservedSnapshot!.Players.Single().LevelId == player.LevelId
-                    && main.ObservedLastQueuedIntent == Command.IntentOneofCase.MoveRequested
-                    && main.ObservedCommandResult is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.InvalidTarget }) {
-                    await WaitForNativeCommandBoundaryAsync(main, "Rejected native stair path recovery");
-                    await AcceptanceRouteRecovery.ClearBlockedRouteAsync(ObserveNativeCommandBoundary(main),
-                        main.ObservedLastQueuedIntent, destination, async blocker => {
-                        GD.Print($"Native Warrior stair path to L{destination} blocked by {blocker.EntityId} "
-                            + $"at ({blocker.PositionX},{blocker.PositionY}); approaching and clearing");
-                        await ClearNativeWarriorThreatsAsync(main, player.LevelId, blocker.EntityId);
-                    });
-                }
             })) return;
         }
         throw new InvalidOperationException($"The Warrior could not reach level {destination} within {NativeWarriorTravelAttempts} attempts.");
@@ -555,7 +505,8 @@ public partial class SessionAcceptance
                 refusals[door.EntityId] = refusals.GetValueOrDefault(door.EntityId) + 1;
                 GD.Print($"Native Warrior door {door.EntityId} refused ({refused.Message[..Math.Min(refused.Message.Length, 120)]}); "
                     + DescribeNativeWarriorSurroundings(main));
-                await WaitForJourneySettlementAsync(main, "The refused native Catacombs door operate", 15);
+                await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
+                    "The refused native Catacombs door operate did not settle.", 15);
                 continue;
             }
             GD.Print($"Native Warrior opened Catacombs door {door.EntityId} at ({door.PositionX},{door.PositionY}) toward L{destination}");
@@ -632,15 +583,15 @@ public partial class SessionAcceptance
         var opening = new NativeCatacombsDoorTrapObservation.Opened(baseline, operatedTick,
             checked(operatedTick + 5UL * (main.ObservedIdentity?.TickRateHz ?? 20)));
         await Until(() => main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).MissilePassable,
-            $"Native Catacombs door {door.EntityId} did not open.", 5, healWhileWaiting: true);
+            $"Native Catacombs door {door.EntityId} did not open.", 5);
         await Until(() => main.ObservedNativeObjectDrawing.Any(item => item.EntityId == door.EntityId && item.NativeArt),
-            $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5, healWhileWaiting: true);
+            $"Opened native Catacombs door {door.EntityId} was not drawn with native art.", 5);
         nativeWarriorCatacombsDoorDraws++;
         await Until(() => main.ObservedSnapshot!.Tick > operatedTick,
-            "The opened Catacombs door did not receive its native object tick.", 5, healWhileWaiting: true);
+            "The opened Catacombs door did not receive its native object tick.", 5);
         if (door.TrapArmed) {
             await Until(() => !main.ObservedSnapshot!.Objects.Single(item => item.EntityId == door.EntityId).TrapArmed,
-                "The opened native Catacombs door did not consume its linked trap.", healWhileWaiting: true);
+                "The opened native Catacombs door did not consume its linked trap.");
         }
         if (opening.Find(main.ObservedSnapshot!) is { } firing) RecordNativeCatacombsDoorFiring(firing);
         return opening;
@@ -735,11 +686,10 @@ public partial class SessionAcceptance
     }
 
     /** Kills every live monster within reach of the Warrior before it walks on. */
-    private async Task ClearNativeWarriorThreatsAsync(Main main, uint levelId, uint? routeBlocker = null)
+    private async Task ClearNativeWarriorThreatsAsync(Main main, uint levelId)
     {
         var skipped = new HashSet<uint>();
         for (var kills = 0; kills < 12; kills++) {
-            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             // Fighting can step onto stairs; the caller's travel loop takes the Warrior back.
@@ -747,10 +697,8 @@ public partial class SessionAcceptance
                 return;
             var threat = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId
                     && !skipped.Contains(monster.EntityId)
-                    && (monster.EntityId == routeBlocker
-                        || NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 4))
-                .OrderBy(monster => monster.EntityId == routeBlocker ? 0 : 1)
-                .ThenBy(monster => NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY))
+                    && NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY) <= 4)
+                .OrderBy(monster => NativeDistance(player.PositionX, player.PositionY, monster.PositionX, monster.PositionY))
                 .ThenBy(monster => monster.EntityId).FirstOrDefault();
             if (threat is null || skipped.Contains(threat.EntityId))
                 return;
@@ -762,10 +710,8 @@ public partial class SessionAcceptance
                 return;
             } catch (NativeWarriorRetreatException) {
                 // Walking on through a pack only takes more hits: drink and fight on while potions last.
-                if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0) {
-                    _ = await TryJourneyRetreatStepAsync(main);
-                    throw;
-                }
+                if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) == 0)
+                    return;
                 await UseNativeHealingPotionIfNeeded(main);
                 continue;
             }
@@ -786,7 +732,8 @@ public partial class SessionAcceptance
         var doorCommands = new Dictionary<uint, int>();
         var work = new NativeCombatWorkBudget();
         while (attacks < NativeWarriorAttacksPerFloor) {
-            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
+            if (NativeHealingSupply(main.ObservedSnapshot!.Players.Single()) > NativeWarriorPotionReserveOn(levelId))
+                await UseNativeHealingPotionIfNeeded(main);
             MonsterSnapshot target;
             try {
                 target = await FindNativeClassTargetAsync(main, ranged: false, levelId, NativeWarriorSearchMoves);
@@ -843,9 +790,9 @@ public partial class SessionAcceptance
 
     /**
      * Ordinary right-click melee: always strike the weakest monster already adjacent (the ones
-     * hitting the Warrior), and otherwise close in on the target. The shared damage forecast
-     * drinks without reserving doses and takes a safer step when possible. Exhausted healing
-     * under lethal pressure throws NativeWarriorRetreatException. Returns the
+     * hitting the Warrior), and otherwise close in on the target. In melee below 60% life with
+     * only `reserve` potions left (kept undrunk for the walk out), or below 70% surrounded by three
+     * or more attackers, it throws NativeWarriorRetreatException. Returns the
      * first attacked monster that dies, or null when the target escapes, is unreachable, or the
      * budget ends.
      */
@@ -854,20 +801,12 @@ public partial class SessionAcceptance
     {
         var attacks = 0;
         var approaches = 0;
-        var attackTarget = new NativeCombatAttackTarget(targetId);
-        var pauses = journeyPositioning.BeginSearch();
         var attacked = new HashSet<uint>();
         // Monsters whose click queued nothing or was refused, for example diagonally past a door corner.
         var unattackable = new HashSet<uint>();
         var swings = new List<string>();
         // Approaches are bounded so a fading, retreating or unreachable monster cannot hold the loop.
         while (attacks < budget && approaches < NativeWarriorTargetApproaches) {
-            await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
-            var danger = JourneySafetyDecision(main);
-            if (danger.Retreat && await TryJourneyRetreatStepAsync(main)) {
-                approaches++;
-                continue;
-            }
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.Life > 0, $"The Warrior died on L{levelId} during combat; last swings [{string.Join("; ", swings.TakeLast(12))}]; "
@@ -882,37 +821,29 @@ public partial class SessionAcceptance
             // Focus the weakest attacker so a pack loses members before its regeneration catches up.
             var adjacent = adjacentMonsters.Where(monster => !unattackable.Contains(monster.EntityId))
                 .OrderBy(monster => monster.HitPointsQ6)
-                .ThenBy(monster => monster.EntityId == attackTarget.Current ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
-            // The reserve plans a Town visit; it never withholds a needed dose during a fight.
-            if (danger.Retreat && NativeHealingSupply(player) == 0)
+                .ThenBy(monster => monster.EntityId == targetId ? 0 : 1).ThenBy(monster => monster.EntityId).FirstOrDefault();
+            if (adjacentMonsters.Length >= 1 && (long)player.Life * 5 < (long)player.LifeMaximum * 3
+                    && NativeHealingSupply(player) <= reserve
+                || adjacentMonsters.Length >= 3 && (long)player.Life * 10 < (long)player.LifeMaximum * 7)
                 throw new NativeWarriorRetreatException(
-                    $"{danger.Attackers} attackers ({danger.Adjacent} melee, {danger.RangedAttackers} ranged), "
-                        + $"life {player.Life}/{player.LifeMaximum}, no healing items (reserve {reserve})");
+                    $"{adjacentMonsters.Length} attackers, life {player.Life}/{player.LifeMaximum}, potions {NativeHealingSupply(player)}");
+            // Every pass drinks, including those that only approach or skip a monster that cannot be struck;
+            // the reserve is kept for the retreat walk, which the 60% rule above starts.
+            if (NativeHealingSupply(player) > reserve)
+                await UseNativeHealingPotionIfNeeded(main);
             if (adjacent is null) {
-                var shooter = ReachableJourneyShooter(main, snapshot, player);
-                attackTarget.PreferRanged(shooter, attackTarget.Current == shooter);
-                if (danger.TakingDamage && shooter == 0 && await TryJourneyCoverStepAsync(main)) {
-                    approaches++;
-                    continue;
-                }
-                var nearest = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == levelId)
-                    .Select(monster => NativeMonsterDistance(player, monster)).DefaultIfEmpty(long.MaxValue).Min();
-                if (pauses.TryHold(ObserveJourneySafety(main), nearest, danger.TakingDamage)) {
-                    await HoldNativeWarriorSwarmAsync(main);
-                    continue;
-                }
-                var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == attackTarget.Current && monster.Alive);
-                if (target is null) {
-                    if (attackTarget.FallBack()) continue;
+                var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
+                if (target is null)
                     return (null, attacks);
-                }
                 approaches++;
-                var approached = await attackTarget.ApproachAsync(
-                    required => FindNativeClassTargetAsync(main, ranged: false, levelId, requiredTarget: required),
-                    (monster, required) => monster.EntityId == required
-                        || NativeMonsterDistance(main.ObservedSnapshot!.Players.Single(), monster) <= 1,
-                    () => main.ObservedSnapshot!.Players.Single() is { Life: > 0 } alive && alive.LevelId == levelId);
-                if (approached is null)
+                MonsterSnapshot approached;
+                try {
+                    approached = await FindNativeClassTargetAsync(main, ranged: false, levelId, requiredTarget: targetId);
+                } catch (InvalidOperationException) when (main.ObservedSnapshot!.Players.Single().Life > 0) {
+                    return (null, attacks); // Not reachable from here (for example behind a wall).
+                }
+                if (approached.EntityId != targetId
+                    && NativeDistance(player.PositionX, player.PositionY, approached.PositionX, approached.PositionY) > 1)
                     return (null, attacks);
                 continue;
             }
@@ -940,8 +871,9 @@ public partial class SessionAcceptance
                     + $"pending {main.ObservedPendingCommandCount}; next command tick {main.ObservedSuggestedCommandTick} (round trip {main.ObservedRoundTripMilliseconds:0} ms); last receipt "
                     + $"{last?.ClientSequence}/{last?.AppliedTick}/{last?.Status}/{last?.RejectReason}.", exception);
             }
-            var receipt = main.ObservedCommandResult!; // Keep the attack receipt if quick-use follows it.
-            await WaitForJourneySettlementAsync(main, "Native Warrior melee action boundary", 30);
+            await Until(() => Settled(main) || main.ObservedSnapshot!.Players.Single().Life <= 0,
+                "Native Warrior melee did not reach its action boundary.", 30);
+            var receipt = main.ObservedCommandResult!;
             var after = main.ObservedSnapshot!;
             swings.Add($"{adjacent.EntityId}:hp{adjacent.HitPoints}->{after.Monsters.SingleOrDefault(monster => monster.EntityId == adjacent.EntityId)?.HitPoints}"
                 + $":{receipt.Status}/{receipt.RejectReason}:life{after.Players.Single().Life}");

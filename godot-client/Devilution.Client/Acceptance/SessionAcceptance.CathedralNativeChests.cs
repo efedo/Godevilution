@@ -245,11 +245,15 @@ public partial class SessionAcceptance
         var repeatRejectReason = CommandRejectReason.Unspecified.ToString();
         ulong repeatSequence = priorResultSequence;
         if (queuedAfterClick > priorQueued) {
-            var repeatResult = await WaitForJourneyCombatCommandAsync(main, priorQueued, "The duplicate native chest request", 12,
-                expectedSequence: checked(priorQueued + 1));
-            Require(AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(repeatResult)
+            await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), queuedAfterClick,
+                    "The duplicate native chest request"),
+                "The duplicate native chest request did not settle.", stageSeconds: 12);
+            var repeatResult = main.ObservedCommandResult!;
+            Require(queuedAfterClick == checked(priorQueued + 1)
+                && main.ObservedReceiptMatchesIntent(repeatResult, queuedAfterClick)
+                && (AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(repeatResult)
                     || (repeatResult.Status == CommandStatus.Rejected
-                        && repeatResult.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget),
+                        && repeatResult.RejectReason is CommandRejectReason.NotAllowed or CommandRejectReason.InvalidTarget)),
                 "The ordinary click on an opened chest did not receive a valid settled fallback receipt.");
             repeatSequence = repeatResult.ClientSequence;
             repeatStatus = repeatResult.Status.ToString();
@@ -418,14 +422,16 @@ public partial class SessionAcceptance
             try {
                 await Frame();
                 sequence = main.ObservedLastQueuedSequence;
-                Require(main.ObservedQueuedCommandMatchesIntent(checked(previousSequence + 1)),
+                Require(sequence == checked(previousSequence + 1),
                     "The cardinal chest-approach key did not queue exactly one fresh movement command.");
             } finally {
                 Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
                 Input.FlushBufferedEvents();
             }
-            var receipt = await WaitForJourneyCombatCommandAsync(main, previousSequence, "The cardinal native chest approach command", 10,
-                expectedSequence: checked(previousSequence + 1));
+            await Until(() => AcceptanceCommandBoundary.CommandSettled(ObserveNativeCommandBoundary(main), sequence,
+                    "The cardinal native chest approach command"),
+                "The cardinal native chest approach command did not settle.", stageSeconds: 10);
+            var receipt = main.ObservedCommandResult!;
             // A wall trap can start Block/GetHit after the standing snapshot that
             // queued this key. Keep the target and retry from a fresh settled boundary.
             var actorBlocked = receipt is { Status: CommandStatus.Rejected, RejectReason: CommandRejectReason.InvalidTarget }
@@ -477,19 +483,16 @@ public partial class SessionAcceptance
 
     private Task PrepareNativeObjectAsync(Main main, string context)
         => AcceptanceCommandBoundary.PrepareObjectAsync(
-            () => WaitForNativeCommandBoundaryAsync(main, context),
-            () => JourneySafetyCheckpointAsync(main, JourneySafetyActivity.ObjectApproach));
+            () => WaitForNativeCommandBoundaryAsync(main, context), () => UseNativeHealingPotionIfNeeded(main));
 
     /** Wait before reading the next route snapshot; recovery or admission can change its starting cell. */
-    private async Task WaitForNativeCommandBoundaryAsync(Main main, string context, bool settlePlayer = true)
+    private Task WaitForNativeCommandBoundaryAsync(Main main, string context, bool settlePlayer = true)
     {
         var clock = System.Diagnostics.Stopwatch.StartNew();
         var startTick = main.ObservedSnapshot?.Tick;
-        _ = ObserveJourneySafety(main);
-        await AcceptanceCommandBoundary.WaitAsync(() => ObserveNativeCommandBoundary(main), Frame,
+        return AcceptanceCommandBoundary.WaitAsync(() => ObserveNativeCommandBoundary(main), Frame,
             state => AcceptanceTickBudget.StageExpired(10, clock.Elapsed.TotalSeconds,
-                main.ObservedIdentity?.TickRateHz, startTick, state.Snapshot?.Tick), context, settlePlayer: false);
-        if (settlePlayer) await WaitForJourneySettlementAsync(main, context, 10);
+                main.ObservedIdentity?.TickRateHz, startTick, state.Snapshot?.Tick), context, settlePlayer);
     }
 
     private static ObjectSnapshot FindNativeChest(Snapshot snapshot, uint entityId)

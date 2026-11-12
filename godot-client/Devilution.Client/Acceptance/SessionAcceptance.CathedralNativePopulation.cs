@@ -753,7 +753,8 @@ public partial class SessionAcceptance
                     break;
             } else {
                 try {
-                    var legacyReceipt = await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack", healDuringWait: true);
+                    await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack");
+                    var legacyReceipt = main.ObservedCommandResult!;
                     acceptedShots.Add(new NativeAcceptedShotEvidence(targetId, legacyReceipt.ClientSequence,
                         attackTile.Value.X, attackTile.Value.Y, legacyReceipt.AppliedTick));
                 } catch (InvalidOperationException exception) {
@@ -773,7 +774,7 @@ public partial class SessionAcceptance
         }
         await Until(() => main.ObservedSnapshot!.Corpses.Any(corpse => corpse.EntityId == targetId)
             && main.ObservedSnapshot.Players.Single().Experience > experienceBefore,
-            $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10, healWhileWaiting: true);
+            $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10);
         var corpse = main.ObservedSnapshot!.Corpses.Single(item => item.EntityId == targetId);
         Require(!progressionCombat || acceptedShots.Any(shot => shot.TargetEntityId == targetId),
             $"Native target {targetId} produced a corpse and XP without an accepted ordinary shot aimed at it.");
@@ -798,7 +799,7 @@ public partial class SessionAcceptance
                 && !startingItems.Contains(item.EntityId)).Select(item => item.EntityId).ToArray();
         return new NativeKillEvidence(targetId, initial.MonsterId, experienceBefore,
             main.ObservedSnapshot!.Players.Single().Experience, corpse.PositionX, corpse.PositionY,
-            JourneyCombatSafety.KillAttackSequence(targetId, acceptedShots.Select(shot => (shot.TargetEntityId, shot.Sequence))),
+            progressionCombat ? acceptedShots[^1].Sequence : main.ObservedCommandResult!.ClientSequence,
             dropEntityIds, encounterCorpses,
             acceptedShots.ToArray(), localRefusals.ToArray(),
             progressionCombat ? "EncounterAreaCandidates" : "TargetCorpse");
@@ -957,7 +958,7 @@ public partial class SessionAcceptance
             return false;
 
         var clearance = NativeThreatClearance(snapshot, player.LevelId, player.PositionX, player.PositionY);
-        var belowHealingThreshold = NativeHealingThresholdReached(main);
+        var belowHealingThreshold = (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
         if (clearance < NativeRangedMinimumThreatSpacing && belowHealingThreshold
             && !lowHealthEscapeStepUsed && movement < NativeMaximumRangedApproachCommands) {
             var destinationWalk = UsesNativeDestinationWalk(main, player.LevelId);
@@ -996,8 +997,7 @@ public partial class SessionAcceptance
             if (result.Status == CommandStatus.Rejected && result.RejectReason == CommandRejectReason.NotAllowed) {
                 Require(snapshot.Players.Single().Life > 0,
                     $"The Rogue died while its native movement {expectedSequence} was refused; {DescribeNativeHealingState(main)}.");
-                return main.ObservedPendingCommandCount == 0 && snapshot.Tick >= result.AppliedTick
-                    && journeySafety.MovementWaitReady(ObserveJourneySafety(main));
+                return main.ObservedPendingCommandCount == 0 && snapshot.Tick >= result.AppliedTick && Settled(main);
             }
             Require(IsAcceptedOrSuccessfulDuplicate(result),
                 $"Native movement {expectedSequence} was {result.Status}/{result.RejectReason}.");
@@ -1006,9 +1006,7 @@ public partial class SessionAcceptance
             var player = snapshot.Players.Single();
             Require(player.Life > 0,
                 $"The Rogue died while awaiting native movement {expectedSequence}; {DescribeNativeHealingState(main)}.");
-            // The caller immediately uses the real potion control. Yield after admission rather
-            // than starving that check behind hit recovery or a still-pending destination path.
-            if (journeySafety.MovementWaitReady(ObserveJourneySafety(main)))
+            if (Settled(main))
                 return true;
             if (TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
                     movement, lowHealthEscapeStepUsed, out var tile)) {
@@ -1035,13 +1033,21 @@ public partial class SessionAcceptance
             var snapshot = main.ObservedSnapshot;
             if (snapshot is null)
                 return false;
-            var result = AcceptanceCommandBoundary.AppliedIntentReceipt(ObserveNativeCommandBoundary(main),
+            AcceptanceCommandBoundary.RequireExpectedQueuedIntent(main.ObservedLastQueuedSequence,
                 main.ObservedLastQueuedIntentSequence, expectedSequence, action);
-            if (result is null) return false;
+            var result = main.ObservedCommandResult;
+            if (result is null || result.ClientSequence < expectedSequence)
+                return false;
+            Require(main.ObservedReceiptMatchesIntent(result, expectedSequence)
+                && main.ObservedQueuedCommandMatchesIntent(expectedSequence),
+                $"{action} did not produce exact sequence {expectedSequence}; "
+                + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
             Require(IsAcceptedOrSuccessfulDuplicate(result),
                 $"{action} sequence {expectedSequence} was {result.Status}/{result.RejectReason}.");
-            Require(JourneySafetyPlayer(main, snapshot).Life > 0,
-                $"The character died before {action} applied; {DescribeNativeHealingState(main)}.");
+            if (main.ObservedPendingCommandCount != 0 || snapshot.Tick < result.AppliedTick)
+                return false;
+            Require(snapshot.Players.Single().Life > 0,
+                $"The Rogue died before {action} applied; {DescribeNativeHealingState(main)}.");
             return true;
         }, $"{action} did not reach its accepted, applied snapshot.", stageSeconds: 10);
     }
@@ -1097,7 +1103,7 @@ public partial class SessionAcceptance
             var hasClearShot = CanSelectNativeRangedTarget(main, snapshot, player, target, geometry, targetTile)
                 && HasClearNativeRangedLane(snapshot, geometry, missileBlockedCells, player.LevelId,
                     player.PositionX, player.PositionY, target, targetTile);
-            var belowHealingThreshold = NativeHealingThresholdReached(main);
+            var belowHealingThreshold = (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
             if (hasClearShot
                 && (currentThreatClearance >= NativeRangedMinimumThreatSpacing
                     || !belowHealingThreshold || lowHealthEscapeStepUsed
@@ -1147,14 +1153,16 @@ public partial class SessionAcceptance
             } else {
                 await AcceptedAndSettled(main, previousSequence, movementDescription);
             }
-            var readyShot = await JourneyCombatSafety.FinishRangedApproachAsync(() => UseNativeHealingPotionIfNeeded(main), () => {
-                if (queueCapabilityNegotiated) _ = RemainingNativeApproachSeconds(approachClock!);
-                return interruptAttackTile is not null
-                    && TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
-                        movement, lowHealthEscapeStepUsed, out var tile) ? tile : null;
-            }, () => WaitForJourneySettlementAsync(main, movementDescription,
-                queueCapabilityNegotiated ? RemainingNativeApproachSeconds(approachClock!) : 10));
-            if (readyShot is { } currentAttackTile) return currentAttackTile;
+            await UseNativeHealingPotionIfNeeded(main);
+            if (queueCapabilityNegotiated)
+                _ = RemainingNativeApproachSeconds(approachClock!);
+            if (interruptAttackTile is not null
+                && TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
+                    movement, lowHealthEscapeStepUsed, out var currentAttackTile))
+                return currentAttackTile;
+            if (interruptAttackTile is not null)
+                await AcceptedAndSettled(main, previousSequence, movementDescription,
+                    stageSeconds: RemainingNativeApproachSeconds(approachClock!));
             if (queueCapabilityNegotiated)
                 _ = RemainingNativeApproachSeconds(approachClock!);
             var after = main.ObservedSnapshot!.Players.Single();

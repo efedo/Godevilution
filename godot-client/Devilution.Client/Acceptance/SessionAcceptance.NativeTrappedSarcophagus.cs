@@ -40,7 +40,7 @@ public partial class SessionAcceptance
         var receipt = main.ObservedCommandResult!.Clone();
         var deadline = checked(receipt.AppliedTick + 10UL * (main.ObservedIdentity?.TickRateHz ?? 20));
         await Until(() => opening.Find(main.ObservedSnapshot!, receipt.AppliedTick, deadline) is not null,
-            "The opened sarcophagus did not fire its linked wall trap on a newer native object tick.", 10, healWhileWaiting: true);
+            "The opened sarcophagus did not fire its linked wall trap on a newer native object tick.", 10);
         var after = main.ObservedSnapshot!.Clone();
         var frame = await ObserveNativeSarcophagusAnimation(main, target.EntityId, target.AnimationFrame);
         nativeTrappedSarcophagus = NativeTrappedSarcophagusJourneyEvidence.Capture(before, after, target.EntityId, receipt, deadline, frame);
