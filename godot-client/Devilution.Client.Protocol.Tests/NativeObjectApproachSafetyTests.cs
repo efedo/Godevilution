@@ -39,6 +39,82 @@ public sealed class NativeObjectApproachSafetyTests
         Assert.Equal(3, frames);
     }
 
+    [Theory]
+    [InlineData(20U, 7, 3, 0U)]
+    [InlineData(200U, 7, 3, 0U)]
+    [InlineData(20U, 13, 0, 20U)]
+    [InlineData(200U, 13, 0, 20U)]
+    public async Task ReachableObjectPreparationHealsWithoutDivertingIntoNearbyRooms(
+        uint hz, int nearby, int adjacent, uint shooter)
+    {
+        // Synthetic floor: a real cardinal route exists despite melee pressure or incoming fire.
+        var player = new PlayerSnapshot { EntityId = 1, LevelId = 4, PositionX = 9, PositionY = 6,
+            Life = 5827, LifeMaximum = 11776 };
+        var target = new ObjectSnapshot { EntityId = 10, LevelId = 4, PositionX = 2, PositionY = 2 };
+        var geometry = new LevelGeometrySnapshot { LevelId = 4, Width = 16, Height = 10,
+            StaticObjectBlockedCells = { 2 * 16 + 2 } };
+        var snapshot = new Snapshot { Tick = 100, Players = { player }, Objects = { target }, Monsters = {
+            new MonsterSnapshot { EntityId = 20, LevelId = 4, PositionX = 13, PositionY = 2, Alive = true },
+            new MonsterSnapshot { EntityId = 21, LevelId = 4, PositionX = 10, PositionY = 6, Alive = true },
+            new MonsterSnapshot { EntityId = 22, LevelId = 4, PositionX = 10, PositionY = 7, Alive = true },
+            new MonsterSnapshot { EntityId = 23, LevelId = 4, PositionX = 9, PositionY = 7, Alive = true },
+        } };
+        var safety = new JourneyCombatSafety();
+        var potions = 14; var drinks = 0; var boundaries = 0; var moves = 0;
+        JourneyCombatSafety.Observation Observe() => new(player.EntityId, player.LevelId, snapshot.Tick,
+            player.Life, player.LifeMaximum, nearby, adjacent, potions, true, true, hz,
+            RangedAttackers: shooter == 0 ? 0 : 3, RangedTarget: shooter,
+            PositionX: player.PositionX, PositionY: player.PositionY);
+        Task Boundary() { boundaries++; return Task.CompletedTask; }
+        async Task Prepare() => await AcceptanceCommandBoundary.PrepareObjectAsync(Boundary,
+            async () => await safety.CheckpointAsync(JourneySafetyActivity.ObjectApproach, Observe, () => {
+                drinks++; potions--; player.Life = player.LifeMaximum; snapshot.Tick++;
+                return Task.CompletedTask;
+            }, () => throw new InvalidOperationException("A usable object route was abandoned to clear another room.")));
+
+        while (!NativeObjectApproachPath.IsInRange(player.PositionX, player.PositionY,
+                target.PositionX, target.PositionY, pickup: false)) {
+            Assert.True(moves < 12, "The synthetic direct approach did not arrive within its path length.");
+            await Prepare();
+            var path = NativeObjectApproachPath.Find(snapshot, geometry, target);
+            Assert.NotNull(path);
+            Assert.NotEmpty(path);
+            var step = path[0];
+            player.PositionX = step.X; player.PositionY = step.Y;
+            snapshot.Tick += 8;
+            player.Life -= 64; // Walking under fire must not turn every settled step into a new encounter.
+            moves++;
+        }
+        await Prepare(); // Preparing the operation in range uses the same healing-only checkpoint.
+        Assert.Equal(10, moves);
+        Assert.Equal(1, drinks);
+        Assert.Equal(13, potions);
+        Assert.Equal(2 * (moves + 1), boundaries);
+        Assert.True(safety.Observe(Observe()).StopWalking); // Threat evidence still reaches actual combat/recovery.
+    }
+
+    [Fact]
+    public async Task HealingOnlyPreparationDoesNotIgnoreAnActualActorObstruction()
+    {
+        var snapshot = new Snapshot { Tick = 100, Players = {
+            new PlayerSnapshot { EntityId = 1, LevelId = 4, PositionX = 1, PositionY = 1, Life = 10000, LifeMaximum = 10000 },
+        }, Monsters = {
+            new MonsterSnapshot { EntityId = 20, LevelId = 4, PositionX = 3, PositionY = 1, Alive = true },
+        } };
+        var target = new ObjectSnapshot { EntityId = 10, LevelId = 4, PositionX = 5, PositionY = 1 };
+        var geometry = new LevelGeometrySnapshot { LevelId = 4, Width = 7, Height = 3 };
+        for (var x = 0; x < 7; x++) { geometry.BlockedCells.Add(x); geometry.BlockedCells.Add(14 + x); }
+        await new JourneyCombatSafety().CheckpointAsync(JourneySafetyActivity.ObjectApproach,
+            () => new(1, 4, snapshot.Tick, 10000, 10000, 1, 0, 14, true, true, 200,
+                RangedAttackers: 1, RangedTarget: 20), () => throw new InvalidOperationException("Healthy character drank."),
+            () => throw new InvalidOperationException("Preparation, rather than the obstruction resolver, picked a fight."));
+        Assert.Null(NativeObjectApproachPath.Find(snapshot, geometry, target));
+        Assert.NotNull(NativeObjectApproachPath.Find(snapshot, geometry, target, ignoreActors: true));
+        // The existing caller must resolve this real blocker before the route becomes usable.
+        snapshot.Monsters[0].Alive = false;
+        Assert.NotNull(NativeObjectApproachPath.Find(snapshot, geometry, target));
+    }
+
     [Fact]
     public async Task HealingWaitsForTheOriginalCommandAndFreshSnapshotBeforePlanning()
     {

@@ -146,7 +146,9 @@ internal sealed class JourneyCombatSafety
             await drink(); changed = true;
             state = observe(); decision = Observe(state, activity);
         }
-        if (activity is JourneySafetyActivity.Travel or JourneySafetyActivity.ObjectApproach or JourneySafetyActivity.Stairs
+        // Object approaches already clear actual obstructions. Chasing nearby shooters here
+        // abandons a usable path and pulls other rooms before the next cardinal step.
+        if (activity is JourneySafetyActivity.Travel or JourneySafetyActivity.Stairs
             && state.Settled && decision.StopWalking && defend is not null) {
             await defend(); changed = true;
             Observe(observe(), activity);
