@@ -153,7 +153,10 @@ public sealed class JourneyHealingReviewRegressionTests
         var state = State(life: life) with { Adjacent = 4 };
         safety.Observe(state with { Tick = 99, Life = 10000 });
         Assert.False(safety.Observe(state).Retreat);
-        Assert.True(safety.Observe(state with { Tick = 101, Life = 6900 }).Retreat);
+        Assert.False(safety.Observe(state with { Tick = 101, Life = 6900 }).Retreat);
+        var critical = safety.Observe(state with { Tick = 102, Life = 4900 });
+        Assert.True(critical.Drink);
+        Assert.True(critical.Retreat);
     }
 
     [Theory]

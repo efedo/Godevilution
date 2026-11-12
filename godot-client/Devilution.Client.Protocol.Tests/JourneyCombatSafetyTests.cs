@@ -421,9 +421,6 @@ public sealed class JourneyCombatSafetyTests
         safety.Observe(state with { Tick = 99, Life = 11776 });
         Assert.False(safety.Observe(state).Retreat); // Even a burst forecast cannot make high-life flight mandatory.
         Assert.True(safety.Observe(state).StopWalking);
-        var budget = new JourneyCombatSafety.RetreatBudget(8);
-        for (var step = 0; step < 100; step++) budget.Charge(state);
-        Assert.Equal(0, budget.Used);
         Assert.True(safety.Observe(state with { Tick = 101, Life = 3500 }).Retreat);
     }
 

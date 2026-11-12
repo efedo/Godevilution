@@ -229,11 +229,14 @@ public partial class SessionAcceptance
             if (candidate > clearance && IsRenderedWorldTileVisible(main, x, y)) { best = (x, y); clearance = candidate; }
         }
         if (best is not { } step) return false;
+        if (player.CharacterClassId == 0) journeySafety.RequireRetreatAvailable(state);
         var before = main.ObservedLastQueuedSequence;
         await Click(main.ObservedTileScreenPosition(step.X, step.Y), walk: true);
         if (main.ObservedLastQueuedSequence == before) return false;
         var result = await WaitForJourneyCombatCommandAsync(main, before, "Take a safer retreat step");
-        return AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+        var accepted = AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+        if (accepted && player.CharacterClassId == 0) journeySafety.RecordRetreat(state);
+        return accepted;
     }
 
     private async Task<bool> TryJourneyCoverStepAsync(Main main)
@@ -245,11 +248,14 @@ public partial class SessionAcceptance
         var step = journeyPositioning.CoverStep(snapshot, player, geometry,
             (x, y) => IsNativeApproachCellOpen(main, snapshot, player, geometry, x, y) && IsRenderedWorldTileVisible(main, x, y));
         if (step is not { } cover) return false;
+        if (player.CharacterClassId == 0) journeySafety.RequireRetreatAvailable(state);
         var before = main.ObservedLastQueuedSequence;
         await Click(main.ObservedTileScreenPosition(cover.X, cover.Y), walk: true);
         if (main.ObservedLastQueuedSequence == before) return false;
         var result = await WaitForJourneyCombatCommandAsync(main, before, "Move onto known fighting ground");
-        return AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+        var accepted = AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result);
+        if (accepted && player.CharacterClassId == 0) journeySafety.RecordRetreat(state);
+        return accepted;
     }
 
     private async Task HaltJourneyDestinationWalkAsync(Main main)

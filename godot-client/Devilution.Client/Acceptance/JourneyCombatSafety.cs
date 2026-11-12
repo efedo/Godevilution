@@ -16,12 +16,13 @@ internal sealed class JourneyCombatSafety
         internal int Attackers => Adjacent + RangedAttackers;
     }
     private readonly (ulong Tick, ulong Interval, int Loss)[] losses = new (ulong, ulong, int)[32];
+    private readonly Dictionary<(uint Player, uint Level), RetreatBudget> retreatBudgets = [];
     private int count, cursor;
     private Observation? previous;
     private ulong? lastDamageTick;
     internal ulong DamageObservations { get; private set; }
 
-    internal void Reset() { previous = null; count = cursor = 0; lastDamageTick = null; DamageObservations = 0; }
+    internal void Reset() { previous = null; count = cursor = 0; lastDamageTick = null; DamageObservations = 0; retreatBudgets.Clear(); }
 
     internal Decision Observe(Observation state, JourneySafetyActivity activity = JourneySafetyActivity.Combat)
     {
@@ -63,18 +64,19 @@ internal sealed class JourneyCombatSafety
         var roundTrip = double.IsFinite(state.RoundTripMilliseconds) ? Math.Clamp(state.RoundTripMilliseconds, 0, 250) : 0;
         var reactionTicks = Math.Max(8, Math.Ceiling(Math.Max(1, state.TickRateHz) * (.35 + roundTrip / 1000)));
         var projected = state.Life - rate * reactionTicks;
+        var drink = state.HealingItems > 0 && state.Life < state.MaximumLife && state.Life <= state.MaximumLife * threshold;
         // With no quick-use left, healthy melee is safer than repeatedly yielding to a pursuing pack.
         // A completed kill can retain loss history before corpse conversion; require a live threat to retreat.
         var retreat = state.HealingItems == 0
             ? state.Life <= state.MaximumLife * .35 && state.Nearby > 0
-            : state.Life < state.MaximumLife * .70
-                && (state.Adjacent >= 3 || rate > 0 && projected < state.MaximumLife * .20);
+            // Do not force kiting at life where the same policy forbids using an available potion.
+            : drink && (state.Adjacent >= 3 || rate > 0 && projected < state.MaximumLife * .20);
         // Yielding indefinitely cannot disengage stationary shooters. Close on a confirmed
         // damage source, defending adjacent interceptors, unless melee already surrounds us.
         if (state.HealingItems == 0 && state.RangedTarget != 0 && state.Adjacent < 3) retreat = false;
         // The six-tile scan is not a request to clear a quiet room. Actual incoming fire,
         // adjacent pressure and the existing blocked-route recovery still stop the walk.
-        return new(state.HealingItems > 0 && state.Life < state.MaximumLife && state.Life <= state.MaximumLife * threshold,
+        return new(drink,
             state.Adjacent >= 2 || state.RangedTarget != 0 || takingDamage && state.Adjacent == 0
                 || rate > 0 && projected < state.MaximumLife * .5,
             retreat, threshold, rate, state.Nearby, state.Adjacent, state.RangedAttackers, state.RangedTarget, takingDamage);
@@ -92,14 +94,30 @@ internal sealed class JourneyCombatSafety
     internal bool HealingOutcomeValid(int before, int maximum, int after, ulong damageAtDispatch)
         => after > before || DamageObservations > damageAtDispatch && before < maximum && after > 0;
 
-    /** Shared by floor attempts: selecting the pursuer again must not replenish retreat work. */
+    /** Every completed Warrior retreat/cover step shares this floor budget, including after a kill or Town visit. */
+    private RetreatBudget FloorRetreatBudget(Observation state)
+    {
+        var key = (state.Player, state.Level);
+        if (!retreatBudgets.TryGetValue(key, out var budget)) retreatBudgets[key] = budget = new(8);
+        return budget;
+    }
+
+    internal void RecordRetreat(Observation state) => FloorRetreatBudget(state).Charge(state);
+    // A route retry can catch exhaustion. Reject its next input before another physical step occurs.
+    internal void RequireRetreatAvailable(Observation state) => FloorRetreatBudget(state).RequireAvailable(state);
+
+    /** Selecting the pursuer again, or recovering life during a step, cannot replenish retreat work. */
     internal sealed class RetreatBudget(int maximumSteps)
     {
         internal int Used { get; private set; }
         internal void Charge(Observation state)
         {
-            if (state.Life > state.MaximumLife * .35) return;
-            if (++Used >= maximumSteps)
+            Used++;
+            RequireAvailable(state);
+        }
+        internal void RequireAvailable(Observation state)
+        {
+            if (Used >= maximumSteps)
                 throw new InvalidOperationException($"Native Warrior cannot disengage on L{state.Level} after {Used}/{maximumSteps} retreat steps; "
                     + (state.HealingItems == 0 ? "out of potions" : $"potions={state.HealingItems}")
                     + $", life={state.Life}/{state.MaximumLife}, nearby={state.Nearby}, tick={state.Tick}.");

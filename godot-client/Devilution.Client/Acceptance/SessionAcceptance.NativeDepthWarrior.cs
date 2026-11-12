@@ -785,7 +785,6 @@ public partial class SessionAcceptance
         var doorEvidence = new List<NativeDoorOperationEvidence>();
         var doorCommands = new Dictionary<uint, int>();
         var work = new NativeCombatWorkBudget();
-        var retreatSteps = new JourneyCombatSafety.RetreatBudget(NativeWarriorTargetApproaches);
         while (attacks < NativeWarriorAttacksPerFloor) {
             await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             MonsterSnapshot target;
@@ -815,7 +814,7 @@ public partial class SessionAcceptance
             int used;
             try {
                 (killed, used) = await AttackNativeWarriorTargetAsync(main, levelId, target.EntityId, NativeWarriorAttacksPerFloor - attacks,
-                    NativeWarriorPotionReserveOn(levelId), retreatSteps);
+                    NativeWarriorPotionReserveOn(levelId));
             } catch (NativeWarriorRetreatException retreat) when (retreats < NativeWarriorRetreats) {
                 retreats++;
                 GD.Print($"Native Warrior retreating from L{levelId} ({retreat.Message})");
@@ -851,9 +850,8 @@ public partial class SessionAcceptance
      * budget ends.
      */
     private async Task<(uint? Killed, int Attacks)> AttackNativeWarriorTargetAsync(Main main, uint levelId, uint targetId, int budget,
-        int reserve = 0, JourneyCombatSafety.RetreatBudget? retreatSteps = null)
+        int reserve = 0)
     {
-        retreatSteps ??= new(NativeWarriorTargetApproaches);
         var attacks = 0;
         var approaches = 0;
         var attackTarget = new NativeCombatAttackTarget(targetId);
@@ -867,7 +865,6 @@ public partial class SessionAcceptance
             await JourneySafetyCheckpointAsync(main, JourneySafetyActivity.Combat);
             var danger = JourneySafetyDecision(main);
             if (danger.Retreat && await TryJourneyRetreatStepAsync(main)) {
-                retreatSteps.Charge(ObserveJourneySafety(main));
                 approaches++;
                 continue;
             }
