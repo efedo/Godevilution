@@ -152,7 +152,7 @@ public static class AuthoritativeCathedralMonsterLootGenerator
                     initialRandomState, random.State, rawDataLevel, effectiveMonsterLevel);
 
             selectedNativeItemIndex = random.GenerateRnd(100)
-                < request.Catalog.Rules.GoldPercent
+                >= 100 - request.Catalog.Rules.GoldPercent
                 ? FindGoldItem(request.Catalog)
                 : SelectWeightedItem(random, request.Catalog,
                     item => item.MinimumMonsterLevel <= unchecked((sbyte)effectiveMonsterLevel),

@@ -15,7 +15,7 @@
 #include <variant>
 
 #include <ankerl/unordered_dense.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "application/game_mode.hpp"
 #include "engine/gfx/clx_sprite.hpp"

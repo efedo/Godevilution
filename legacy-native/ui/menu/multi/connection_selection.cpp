@@ -16,7 +16,7 @@
 #include <SDL.h>
 #endif
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "engine/math/point.hpp"
 #include "engine/render/text_render.hpp"

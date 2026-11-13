@@ -6,6 +6,7 @@
 
 #include "tables/itemdat.h"
 
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -726,9 +727,16 @@ void LoadItemGenerationConfig()
 			reader.readString("alwaysMagicMisc", raw);
 			if (!raw.empty()) {
 				for (const std::string_view part : SplitByChar(raw, ',')) {
-					auto result = ParseItemMiscId(part);
-					if (result.has_value())
-						CurrentItemGenerationConfig.alwaysMagicMisc.push_back(result.value());
+					// The shipped table spells these in lower case; ParseItemMiscId expects upper case.
+					std::string upper(part);
+					for (char &ch : upper) {
+						if (ch >= 'a' && ch <= 'z')
+							ch = static_cast<char>(ch - 'a' + 'A');
+					}
+					auto result = ParseItemMiscId(upper);
+					if (!result.has_value())
+						DisplayFatalErrorAndExit("Loading Item Generation Failed", fmt::format("Unknown alwaysMagicMisc entry '{}' in {}.", part, filename));
+					CurrentItemGenerationConfig.alwaysMagicMisc.push_back(result.value());
 				}
 			}
 		}
